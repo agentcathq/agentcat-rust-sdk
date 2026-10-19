@@ -86,12 +86,6 @@ pub(crate) fn cap_chars(s: &str, max_chars: usize) -> Option<String> {
     Some(format!("{}...", &s[..end]))
 }
 
-/// JavaScript's `String.prototype.trim` whitespace set: Rust's `char::is_whitespace`
-/// without U+0085 (NEL), plus U+FEFF (BOM).
-pub(crate) fn js_trim(s: &str) -> &str {
-    s.trim_matches(|c: char| (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}')
-}
-
 /// Removes `key` and keeps the order of the other keys, as JavaScript's
 /// `delete` does.
 pub(crate) fn shift_remove(map: &mut serde_json::Map<String, serde_json::Value>, key: &str) {
@@ -140,11 +134,6 @@ mod tests {
         assert_eq!(cap_chars("abcdef", 6), None);
         assert_eq!(cap_chars("abcdefg", 6).as_deref(), Some("abc..."));
         assert_eq!(cap_chars("ééééééé", 6).as_deref(), Some("ééé..."));
-    }
-
-    #[test]
-    fn js_trim_matches_js() {
-        assert_eq!(js_trim("\u{feff} x \u{a0}\n"), "x");
     }
 
     #[test]

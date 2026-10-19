@@ -19,6 +19,7 @@ use crate::constants::{
     MCP_SESSION_SESSION_ID_DESCRIPTION, MCP_SESSION_STATUS_DESCRIPTION, SESSION_ID_PARAM,
     SESSION_ID_PARAM_DESCRIPTION, SESSION_ID_PARAM_PATTERN,
 };
+use crate::js::truthy;
 use crate::logging::write_to_log;
 
 /// Which AgentCat parameters were injected into one tool's input schema.
@@ -91,17 +92,6 @@ impl InjectMemory {
                 "WARN: This server registers its own \"{GET_MORE_TOOLS_NAME}\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enable_report_missing to false to keep yours reachable."
             ));
         }
-    }
-}
-
-/// JavaScript truthiness of a JSON value.
-fn truthy(v: Option<&Value>) -> bool {
-    match v {
-        None | Some(Value::Null) => false,
-        Some(Value::Bool(b)) => *b,
-        Some(Value::Number(n)) => n.as_f64().is_some_and(|f| f != 0.0),
-        Some(Value::String(s)) => !s.is_empty(),
-        Some(Value::Array(_) | Value::Object(_)) => true,
     }
 }
 

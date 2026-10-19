@@ -91,6 +91,7 @@ pub mod exporters;
 mod handles;
 mod hooks;
 mod inject;
+mod js;
 mod ksuid;
 mod logging;
 mod publisher;

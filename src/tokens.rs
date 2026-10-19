@@ -64,42 +64,7 @@ fn js_number_len(n: &serde_json::Number) -> usize {
     let Some(f) = n.as_f64() else {
         return n.to_string().len();
     };
-    js_number_string(f).len()
-}
-
-/// JavaScript's `Number.prototype.toString` (ECMA-262 `Number::toString`) for a
-/// finite double.
-pub(crate) fn js_number_string(f: f64) -> String {
-    if f == 0.0 {
-        return "0".into();
-    }
-    if !f.is_finite() {
-        return "null".into(); // JSON.stringify writes non-finite numbers as null
-    }
-    // Rust's `{:e}` gives the shortest round-trip digits, as JS requires.
-    let sci = format!("{:e}", f.abs());
-    let (mantissa, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
-    let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
-    let exp: i32 = exp.parse().unwrap_or(0);
-    let k = i32::try_from(digits.len()).unwrap_or(i32::MAX);
-    let n = exp + 1;
-    let body = if k <= n && n <= 21 {
-        format!("{digits}{}", "0".repeat(usize::try_from(n - k).unwrap_or(0)))
-    } else if 0 < n && n <= 21 {
-        let n = usize::try_from(n).unwrap_or(0);
-        format!("{}.{}", &digits[..n], &digits[n..])
-    } else if -6 < n && n <= 0 {
-        format!("0.{}{digits}", "0".repeat(usize::try_from(-n).unwrap_or(0)))
-    } else {
-        let sign = if n > 0 { "+" } else { "-" };
-        let e = (n - 1).abs();
-        if k == 1 {
-            format!("{digits}e{sign}{e}")
-        } else {
-            format!("{}.{}e{sign}{e}", &digits[..1], &digits[1..])
-        }
-    };
-    if f < 0.0 { format!("-{body}") } else { body }
+    crate::js::number_to_string(f).len()
 }
 
 /// Tokens the model spent emitting the call: the raw arguments object.
@@ -153,25 +118,6 @@ fn content_block_bytes(block: &Value) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn numbers_format_like_javascript() {
-        for (f, js) in [
-            (10.0, "10"),
-            (1.5, "1.5"),
-            (-0.25, "-0.25"),
-            (1e20, "100000000000000000000"),
-            (1e21, "1e+21"),
-            (1.5e21, "1.5e+21"),
-            (0.000001, "0.000001"),
-            (1e-7, "1e-7"),
-            (1.2345e-7, "1.2345e-7"),
-            (123.456, "123.456"),
-            (0.1, "0.1"),
-        ] {
-            assert_eq!(js_number_string(f), js, "{f}");
-        }
-    }
 
     #[test]
     fn json_length_matches_json_stringify() {

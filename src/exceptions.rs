@@ -42,7 +42,7 @@ pub(crate) fn capture_tool_result_error(result: &Value) -> ErrorData {
                 .join(" ")
         })
         .unwrap_or_default();
-    let trimmed = crate::util::js_trim(&text);
+    let trimmed = crate::js::trim(&text);
     ErrorData::new(if trimmed.is_empty() {
         "Unknown error"
     } else {

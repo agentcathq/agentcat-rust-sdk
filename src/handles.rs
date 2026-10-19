@@ -16,8 +16,9 @@ use crate::constants::{
     MINT_BACK_ISSUED_BODY, MINT_BACK_UNRECOGNIZED_BODY, SESSION_ID_PARAM, SESSION_START_SENTINEL,
     mint_back_session_line,
 };
+use crate::js::trim;
 use crate::ksuid::{derive_session_id, is_valid_session_id, new_session_id};
-use crate::util::{js_trim, utf16_prefix};
+use crate::util::utf16_prefix;
 
 /// How the session of a tool call was resolved.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -59,7 +60,7 @@ pub(crate) struct HandleResolution {
 /// strings only. Values are trusted verbatim, without shape checks.
 pub(crate) fn extract_handle(args: Option<&Map<String, Value>>, name: &str) -> Option<String> {
     let value = args?.get(name)?.as_str()?;
-    let trimmed = js_trim(value);
+    let trimmed = trim(value);
     (!trimmed.is_empty()).then(|| trimmed.to_owned())
 }
 
@@ -214,7 +215,7 @@ pub(crate) fn session_from_hook_value(
     hook_value: Option<&str>,
     project_id: Option<&str>,
 ) -> (String, SessionSource) {
-    match hook_value.map(js_trim).filter(|v| !v.is_empty()) {
+    match hook_value.map(trim).filter(|v| !v.is_empty()) {
         Some(value) => (derive_session_id(value, project_id), SessionSource::Hook),
         None => (new_session_id(), SessionSource::Minted),
     }
