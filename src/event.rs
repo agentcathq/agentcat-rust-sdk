@@ -9,7 +9,7 @@ use serde_json::{Map, Value};
 /// One analytics event, as the `redact_event` hook sees it.
 ///
 /// Tool calls publish `mcp:tools/call` events; `publish_custom_event`
-/// publishes `agentcat:custom` events. Field names match the `AgentCat` API.
+/// publishes `agentcat:custom` events. Field names match the AgentCat API.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct Event {
@@ -17,7 +17,7 @@ pub struct Event {
     pub id: String,
     /// `ses_` session ID; empty when the event has no session.
     pub session_id: String,
-    /// `AgentCat` project ID; `None` in telemetry-only mode.
+    /// AgentCat project ID; `None` in telemetry-only mode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
     /// `mcp:tools/call` or `agentcat:custom`.
@@ -95,7 +95,7 @@ pub struct Event {
     pub event_id: Option<String>,
 }
 
-/// Error details attached to an event, in the shape the `AgentCat` API groups.
+/// Error details attached to an event, in the shape the AgentCat API groups.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct ErrorData {

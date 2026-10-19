@@ -10,6 +10,13 @@ disallowed-methods = [
     { path = "std::io::stdout", reason = "stdout is the JSON-RPC channel of stdio servers" },
     { path = "std::io::stderr", reason = "AgentCat never writes to stderr" },
     { path = "std::process::exit", reason = "AgentCat never ends the host process" },
-    { path = "serde_json::map::Map::remove", reason = "with preserve_order this is swap_remove and reorders keys; JS delete keeps order: use shift_remove" },
-    { path = "serde_json::map::OccupiedEntry::remove", reason = "use shift_remove; JS delete keeps key order" },
+    { path = "serde_json::map::Map::remove", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove" },
+    { path = "serde_json::map::Map::remove_entry", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove" },
+    { path = "serde_json::map::Map::swap_remove", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove", allow-invalid = true },
+    { path = "serde_json::map::Map::swap_remove_entry", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove", allow-invalid = true },
+    { path = "serde_json::map::OccupiedEntry::remove", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove" },
+    { path = "serde_json::map::OccupiedEntry::remove_entry", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove" },
+    { path = "serde_json::map::OccupiedEntry::swap_remove", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove", allow-invalid = true },
+    { path = "serde_json::map::OccupiedEntry::swap_remove_entry", reason = "reorders keys under preserve_order; JS delete keeps order: use crate::util::shift_remove", allow-invalid = true },
 ]
+doc-valid-idents = ["AgentCat", "PostHog", "UUIDv7", ".."]

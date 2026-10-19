@@ -2,7 +2,7 @@
 //!
 //! Lengths count UTF-16 code units, like the TypeScript SDK, so the same
 //! input gives the same output in both SDKs (cuts never split a character).
-//! The varchar columns of the `AgentCat` API are the exception: names are
+//! The varchar columns of the AgentCat API are the exception: names are
 //! capped at 255 characters and versions at 50, which the API stores without
 //! failing the insert.
 

@@ -1,5 +1,5 @@
 //! Telemetry exporters: forward each event to OTLP, Datadog, Sentry or
-//! `PostHog`, alongside (or instead of) `AgentCat`.
+//! PostHog, alongside (or instead of) AgentCat.
 //!
 //! Exporters build their vendor's JSON by hand over the shared HTTP client,
 //! so they add no SDK dependencies and install no global state (no tracer
@@ -49,7 +49,7 @@ pub enum ExporterConfig {
     /// Sentry logs, errors and (optionally) transactions.
     #[cfg(feature = "sentry")]
     Sentry(SentryExporterConfig),
-    /// `PostHog` capture events.
+    /// PostHog capture events.
     #[cfg(feature = "posthog")]
     PostHog(PostHogExporterConfig),
 }

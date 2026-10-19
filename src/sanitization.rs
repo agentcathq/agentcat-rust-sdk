@@ -1,5 +1,5 @@
 //! Sanitization: replaces non-text content blocks in responses and large
-//! base64 strings in parameters, which `AgentCat` does not store.
+//! base64 strings in parameters, which AgentCat does not store.
 
 use serde_json::{Map, Value, json};
 

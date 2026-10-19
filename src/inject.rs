@@ -21,7 +21,7 @@ use crate::constants::{
 };
 use crate::logging::write_to_log;
 
-/// Which `AgentCat` parameters were injected into one tool's input schema.
+/// Which AgentCat parameters were injected into one tool's input schema.
 /// These are exactly the arguments stripped before the customer's handler
 /// runs.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -37,7 +37,7 @@ pub(crate) struct ToolInjection {
     /// Parameters to strip from this tool's arguments.
     pub(crate) strip: Injected,
     /// The customer's own schema declares `session_id`: the value is theirs,
-    /// never an `AgentCat` handle.
+    /// never an AgentCat handle.
     pub(crate) declares_session_id: bool,
     /// `mcp_session` was declared in this tool's output schema.
     pub(crate) output_injected: bool,
@@ -182,7 +182,7 @@ fn insert_property(schema: &mut Map<String, Value>, name: &str, definition: Valu
     }
 }
 
-/// Injects the `AgentCat` parameters into one tool's schemas, in place.
+/// Injects the AgentCat parameters into one tool's schemas, in place.
 ///
 /// Order matches the TypeScript SDK: customer parameters, then `session_id`,
 /// `agent_id`, then `context`. Both handles are schema-required with soft

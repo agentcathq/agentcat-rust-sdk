@@ -2,8 +2,8 @@
 //!
 //! It overrides `list_tools` (schema injection), `get_tool` (the advertised
 //! definition) and `call_tool` (handles, intent, mint-back and the event),
-//! and forwards every other method unchanged. `AgentCat` failures never reach
-//! the client: every `AgentCat` step degrades to the customer's own behavior.
+//! and forwards every other method unchanged. AgentCat failures never reach
+//! the client: every AgentCat step degrades to the customer's own behavior.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -66,7 +66,7 @@ struct Registry {
     /// A full listing (served or rebuilt) went through this instance.
     listed: AtomicBool,
     /// The customer's own listing contains a `get_more_tools` tool. Only the
-    /// customer's pages set this, never the copy `AgentCat` appends.
+    /// customer's pages set this, never the copy AgentCat appends.
     customer_report_missing: AtomicBool,
 }
 
@@ -105,7 +105,7 @@ enum Lookup {
     },
 }
 
-/// An rmcp server handler tracked by `AgentCat`. Create it with
+/// An rmcp server handler tracked by AgentCat. Create it with
 /// [`AgentCat::track`]; serve it like the handler it wraps.
 pub struct Tracked<H> {
     inner: H,
@@ -403,7 +403,7 @@ impl<H: ServerHandler> Tracked<H> {
         })
     }
 
-    /// `AgentCat`'s own `get_more_tools`, injected.
+    /// AgentCat's own `get_more_tools`, injected.
     fn report_missing_tool(&self) -> Option<(Tool, ToolInjection)> {
         let tool = tool_from_json(report_missing_descriptor())?;
         self.inject_one(&tool)

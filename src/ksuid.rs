@@ -150,7 +150,7 @@ pub(crate) fn new_event_id() -> String {
 
 /// Derives a session ID from a customer-supplied identifier. The same
 /// identifier and project always give the same `ses_` KSUID, across
-/// processes, restarts and `AgentCat` SDK languages.
+/// processes, restarts and AgentCat SDK languages.
 pub fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
     let input = match project_id {
         Some(p) if !p.is_empty() => format!("{id}:{p}"),

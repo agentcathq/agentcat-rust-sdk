@@ -103,7 +103,7 @@ pub(crate) fn shift_remove(map: &mut serde_json::Map<String, serde_json::Value>,
     map.retain(|k, _| k != key);
 }
 
-/// Runs `f`, turning a panic into `None`. `AgentCat` code on the request path
+/// Runs `f`, turning a panic into `None`. AgentCat code on the request path
 /// uses this so that its own bugs never reach the customer's server.
 pub(crate) fn catch<T>(f: impl FnOnce() -> T) -> Option<T> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).ok()

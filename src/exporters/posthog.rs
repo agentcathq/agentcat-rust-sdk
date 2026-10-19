@@ -1,4 +1,4 @@
-//! `PostHog` exporter: a capture event per `AgentCat` event, an `$exception` for
+//! PostHog exporter: a capture event per AgentCat event, an `$exception` for
 //! failures, and an optional `$ai_span` for tool calls.
 
 use std::sync::Arc;
@@ -13,15 +13,15 @@ use crate::ksuid::Ksuid;
 use crate::logging::write_to_log;
 use crate::util::{hex, iso_millis, sha256};
 
-/// Sends events to `PostHog`'s batch API.
+/// Sends events to PostHog's batch API.
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct PostHogExporterConfig {
     /// Project API key (`phc_…`).
     pub api_key: String,
-    /// `PostHog` host. Default `https://us.i.posthog.com`.
+    /// PostHog host. Default `https://us.i.posthog.com`.
     pub host: Option<String>,
-    /// Also send `$ai_span` events for tool calls (`PostHog` AI observability).
+    /// Also send `$ai_span` events for tool calls (PostHog AI observability).
     /// Customer tags and properties are spread onto the span and can
     /// override any default. Default false.
     pub enable_ai_tracing: bool,
@@ -52,7 +52,7 @@ impl PostHogExporterConfig {
     }
 }
 
-/// A deterministic `UUIDv7` from a prefixed KSUID (`ses_…`): the KSUID's time
+/// A deterministic UUIDv7 from a prefixed KSUID (`ses_…`): the KSUID's time
 /// for the timestamp bits and SHA-256 of the full ID for the rest. Inputs that
 /// are not KSUIDs take their timestamp from the hash too, so the same input
 /// always gives the same UUID.

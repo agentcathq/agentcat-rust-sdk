@@ -66,7 +66,7 @@ pub(crate) fn extract_handle(args: Option<&Map<String, Value>>, name: &str) -> O
 /// Resolves both handles for one request.
 ///
 /// `session_param_is_ours` is false when the tool declares its own
-/// `session_id` parameter: `AgentCat` never injected one there, so nothing in
+/// `session_id` parameter: AgentCat never injected one there, so nothing in
 /// the arguments is ours to read.
 pub(crate) fn resolve_handles(
     hook_mode: bool,

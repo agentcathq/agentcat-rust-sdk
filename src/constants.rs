@@ -21,7 +21,7 @@ pub(crate) const DIAGNOSTICS_SCOPE_NAME: &str = "agentcat-diagnostics";
 pub(crate) const DEFAULT_DIAGNOSTICS_ENDPOINT: &str = "https://otel.agentcat.com";
 
 /// Public shared ingestion key for SDK diagnostics. Not a secret: it ships in
-/// every published `AgentCat` SDK. It deters drive-by traffic to the collector,
+/// every published AgentCat SDK. It deters drive-by traffic to the collector,
 /// paired with a server-side rate limit. Override it with `DIAGNOSTICS_TOKEN`
 /// to point at a self-hosted collector.
 pub(crate) const DEFAULT_DIAGNOSTICS_TOKEN: &str = "dgk_sdk_diag_3f9a2c7e1b8d4065af2e9c1d7b6a4f80";
@@ -115,7 +115,7 @@ pub const CONTEXT_PARAM: &str = "context";
 
 // ── Report-missing tool ─────────────────────────────────────────────────────
 
-/// Name of the report-missing tool `AgentCat` adds to the tool list.
+/// Name of the report-missing tool AgentCat adds to the tool list.
 pub const GET_MORE_TOOLS_NAME: &str = "get_more_tools";
 /// Description of the report-missing tool.
 pub const GET_MORE_TOOLS_DESCRIPTION: &str = "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.";
@@ -139,5 +139,5 @@ pub const ERROR_PLATFORM: &str = "rust";
 /// This crate's version, sent as `agentcat_version`.
 pub const SDK_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-/// Default `AgentCat` API base URL.
+/// Default AgentCat API base URL.
 pub const DEFAULT_API_BASE_URL: &str = "https://api.agentcat.com";

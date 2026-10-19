@@ -1,6 +1,6 @@
 //! Token estimates for tool-call events.
 //!
-//! One divisor, pinned across the `AgentCat` SDKs: `ceil(utf8_bytes / 3.5)`.
+//! One divisor, pinned across the AgentCat SDKs: `ceil(utf8_bytes / 3.5)`.
 //! The input side counts the raw arguments the model emitted (injected
 //! parameters included); the output side counts the content-block text the
 //! harness feeds back. Nothing else counts.

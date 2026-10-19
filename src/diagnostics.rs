@@ -1,5 +1,5 @@
 //! Anonymous SDK diagnostics: every SDK log line is batched and sent as OTLP
-//! logs to `AgentCat`'s collector, so setup failures across the fleet are
+//! logs to AgentCat's collector, so setup failures across the fleet are
 //! visible. No event payloads or user data are sent.
 //!
 //! On by default. Off with `disable_diagnostics(true)` or the

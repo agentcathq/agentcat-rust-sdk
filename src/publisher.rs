@@ -31,7 +31,7 @@ use crate::logging::write_to_log;
 const QUEUE_CAPACITY: usize = 10_000;
 /// Events processed at once (hook waits included).
 const MAX_PROCESSING: usize = 256;
-/// Concurrent requests to the `AgentCat` API.
+/// Concurrent requests to the AgentCat API.
 const MAX_IN_FLIGHT_SENDS: usize = 5;
 /// Concurrent exporter requests.
 const MAX_IN_FLIGHT_EXPORTS: usize = 64;

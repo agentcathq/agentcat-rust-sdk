@@ -18,8 +18,8 @@ use crate::publisher::{self, Pending, QueuedEvent};
 #[cfg(feature = "rmcp")]
 use crate::tool_call::{IdentifyHook, PropertiesHook, SessionHook, TagsHook, ToolCallRequest};
 
-/// Errors from the `AgentCat` API surface. Tracking itself never fails: a
-/// problem in `AgentCat` degrades to an untracked call, never a failed one.
+/// Errors from the AgentCat API surface. Tracking itself never fails: a
+/// problem in AgentCat degrades to an untracked call, never a failed one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
@@ -93,6 +93,10 @@ impl Default for Options {
 }
 
 impl Options {
+    #[cfg_attr(
+        not(feature = "rmcp"),
+        allow(clippy::unused_self, reason = "hook mode needs the rmcp-only resolver")
+    )]
     pub(crate) fn hook_mode(&self) -> bool {
         #[cfg(feature = "rmcp")]
         {
@@ -147,7 +151,7 @@ impl Shared {
     }
 }
 
-/// `AgentCat` analytics for MCP servers.
+/// AgentCat analytics for MCP servers.
 ///
 /// Build one with [`AgentCat::builder`] (or [`AgentCat::new`] for the
 /// defaults), then wrap your rmcp server handler with [`AgentCat::track`].
@@ -192,7 +196,7 @@ impl AgentCat {
         }
     }
 
-    /// A builder without an `AgentCat` project: events go to the configured
+    /// A builder without an AgentCat project: events go to the configured
     /// exporters only.
     pub fn telemetry_only() -> AgentCatBuilder {
         AgentCatBuilder {
@@ -201,7 +205,7 @@ impl AgentCat {
         }
     }
 
-    /// The `AgentCat` project ID, or `None` in telemetry-only mode.
+    /// The AgentCat project ID, or `None` in telemetry-only mode.
     pub fn project_id(&self) -> Option<&str> {
         self.shared.project_id.as_deref()
     }
@@ -283,7 +287,7 @@ impl AgentCatBuilder {
         self
     }
 
-    /// Hook mode: you supply the session identifier per request, and `AgentCat`
+    /// Hook mode: you supply the session identifier per request, and AgentCat
     /// injects no `session_id` parameter and adds no issuance text. The
     /// value is combined with the project ID into a deterministic `ses_` ID.
     /// Return `None` to mint silently.
@@ -392,7 +396,7 @@ impl AgentCatBuilder {
         self
     }
 
-    /// The `AgentCat` API URL. Falls back to `AGENTCAT_API_URL`, then
+    /// The AgentCat API URL. Falls back to `AGENTCAT_API_URL`, then
     /// `MCPCAT_API_URL`, then `https://api.agentcat.com`. Process-wide: the
     /// first configured value wins.
     pub fn api_base_url(mut self, url: impl Into<String>) -> Self {

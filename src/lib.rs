@@ -1,6 +1,6 @@
-//! # `AgentCat` for Rust MCP servers
+//! # AgentCat for Rust MCP servers
 //!
-//! `AgentCat` is analytics for MCP servers: which tools agents call, why they
+//! AgentCat is analytics for MCP servers: which tools agents call, why they
 //! call them (intent), which tasks and agents the calls belong to, who the
 //! actor is, and how the calls fail. This crate instruments servers built
 //! with [`rmcp`](https://crates.io/crates/rmcp) 3.x.
@@ -22,7 +22,7 @@
 //! }
 //! ```
 //!
-//! What [`AgentCat::track`] does, in the same way as `AgentCat`'s TypeScript,
+//! What [`AgentCat::track`] does, in the same way as AgentCat's TypeScript,
 //! Python and Go SDKs:
 //!
 //! - **`tools/list`:** adds a required `context` parameter (the agent's
@@ -36,7 +36,7 @@
 //!   event with the request, the result, timing, token estimates and errors.
 //!
 //! Events are published from a background thread; your tool calls never wait
-//! for `AgentCat`, and `AgentCat` failures never fail a tool call.
+//! for AgentCat, and AgentCat failures never fail a tool call.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
@@ -227,7 +227,7 @@ pub mod __private {
         )
     }
 
-    /// `PostHog` `UUIDv7` derivation.
+    /// PostHog UUIDv7 derivation.
     #[cfg(feature = "posthog")]
     pub fn to_uuid_v7(id: &str) -> String {
         crate::exporters::posthog_uuid_v7(id)

@@ -1,7 +1,7 @@
 //! Error capture for tool calls: JSON-RPC errors, `is_error` results, and
 //! panics (with a parsed backtrace).
 //!
-//! Frames follow the rules the `AgentCat` API groups by for non-JavaScript
+//! Frames follow the rules the AgentCat API groups by for non-JavaScript
 //! platforms: every frame has a string `filename` and `function`, a `module`
 //! when the symbol has one, and `in_app: false` for the standard library,
 //! Cargo registry crates and the async runtime.
