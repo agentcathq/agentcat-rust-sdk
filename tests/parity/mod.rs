@@ -8,6 +8,7 @@
 mod completeness;
 mod constants;
 mod golden;
+mod handles;
 mod ksuid;
 mod posthog_uuidv7;
 mod support;

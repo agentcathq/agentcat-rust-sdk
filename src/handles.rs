@@ -193,14 +193,13 @@ pub(crate) fn build_handle_tags(
         tags.insert(AGENTCAT_TAG_AGENT_SOURCE.to_owned(), "supplied".to_owned());
     }
     if let Some(version) = protocol_version.filter(|v| !v.is_empty()) {
-        // Client-supplied too: clamped like the agent tag, or the API drops it.
-        tags.insert(AGENTCAT_TAG_PROTOCOL_VERSION.to_owned(), clamp_tag_value(version));
+        // Verbatim, unlike the agent tag: the TS SDK does not clamp it.
+        tags.insert(AGENTCAT_TAG_PROTOCOL_VERSION.to_owned(), version.to_owned());
     }
     tags
 }
 
-/// A tag value the API accepts: newlines become spaces, at most 200 UTF-16
-/// units.
+/// The agent tag copy: newlines become spaces, at most 200 UTF-16 units.
 fn clamp_tag_value(value: &str) -> String {
     let flat: String = value
         .chars()

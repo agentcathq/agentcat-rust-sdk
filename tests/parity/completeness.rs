@@ -10,6 +10,7 @@ const NOT_PORTED: &str = include_str!("NOT_PORTED.md");
 /// TS test files whose cases must all have Rust tests.
 const ENFORCED: &[&str] = &[
     "constants.test.ts",
+    "handles.test.ts",
     "ksuid.test.ts",
     "posthog-uuidv7.test.ts",
     "tokenEstimate.test.ts",
@@ -17,7 +18,44 @@ const ENFORCED: &[&str] = &[
 ];
 
 /// Cases of enforced files that a later plan ports: (TS file, TS test, plan).
-const DEFERRED: &[(&str, &str, u8)] = &[];
+const DEFERRED: &[(&str, &str, u8)] = &[
+    (
+        "handles.test.ts",
+        "appendMintBack > prepends a text block as the first content element",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "appendMintBack > prepends on isError results too",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "appendMintBack > leaves non-array content untouched",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "appendMintBack > does not mutate the original result",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "invokeSessionHook > resolves the hook value and forwards request/extra verbatim",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "invokeSessionHook > resolves null when the hook returns nullish",
+        4,
+    ),
+    (
+        "handles.test.ts",
+        "invokeSessionHook > contains a synchronous throw",
+        4,
+    ),
+    ("handles.test.ts", "invokeSessionHook > contains a rejection", 4),
+];
 
 struct Case {
     ts_file: &'static str,

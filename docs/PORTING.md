@@ -55,7 +55,6 @@ The Rust SDK ports the TypeScript SDK at `agentcat-typescript-sdk` commit `9b56e
 | 24 | A second `track()` on a tracked server is a no-op (TS) | Same: `track(track(h))` forwards without injecting or publishing twice | `tool_calls::tracking_twice_does_not_inject_or_publish_twice` |
 | 25 | A non-string `context` argument (number, object) makes truncation throw, and the event is dropped | Recorded as its JSON text | `tracked.rs` `intent_of` |
 | 26 | The API keeps the first 50 tags; TS sends customer tags first, so SDK tags are the ones dropped | The request map has no order, so customer tags are capped at 50 minus the SDK tags before the merge | publisher `apply_pending` |
-| 27 | `agentcat_protocol_version` copies the client's value unclamped; the API drops values over 200 characters or with newlines | Clamped like the agent tag | `handles::build_handle_tags` |
 | 28 | `timestamp` and `duration` include the registry rebuild | `timestamp` is the request's arrival, at millisecond precision; `duration` times the handler only | `tracked.rs` `call_tool` |
 | 29 | Token estimates count `JSON.stringify` bytes | Same bytes: numbers are counted as JavaScript writes them (`10`, not `10.0`) | `tokens` unit tests |
 

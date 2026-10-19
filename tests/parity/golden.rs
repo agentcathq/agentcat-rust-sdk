@@ -2,6 +2,7 @@
 
 use super::support::{fixture_json, fixture_text};
 use crate::constants::*;
+use crate::handles::{HandleResolution, SessionSource, build_mint_back_text, session_from_hook_value};
 use crate::ksuid::derive_session_id;
 use crate::util::{hex, sha256, utf16_len};
 
@@ -138,4 +139,79 @@ fn exporter_id_vectors_match() {
     assert_eq!(a.len(), 16);
     assert!(a.bytes().all(|c| c.is_ascii_hexdigit()));
     assert_ne!(a, b);
+}
+
+#[test]
+fn mint_back_blocks_match() {
+    let strings = fixture_json("php-audit/handles/strings.json");
+    let golden = fixture_text("php-audit/handles/golden.txt");
+    let golden_json: serde_json::Value = serde_json::from_str(
+        golden
+            .split_once("---JSON---\n")
+            .and_then(|(_, rest)| rest.split_once("---DERIVE---"))
+            .expect("golden.txt has a JSON section")
+            .0,
+    )
+    .expect("the JSON section is JSON");
+    let golden_line = |name: &str, value: &str| {
+        format!(
+            "{name}\tlen_utf16={}\tbytes={}\tsha256={}\temdash={}",
+            utf16_len(value),
+            value.len(),
+            hex(&sha256(value.as_bytes())),
+            value.matches('\u{2014}').count()
+        )
+    };
+    let block = |session_id: &str, session_source| {
+        build_mint_back_text(&HandleResolution {
+            session_id: session_id.to_owned(),
+            session_source,
+            hook_mode: false,
+            agent_id: None,
+        })
+        .expect("a mint-back block")
+    };
+
+    let id = "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm";
+    let minted = block(id, SessionSource::Minted);
+    assert_eq!(
+        Some(minted.as_str()),
+        strings[format!("MINTED_BLOCK_FOR_{id}")].as_str()
+    );
+    assert_eq!(
+        Some(minted.as_str()),
+        golden_json["MINTED_BLOCK_EXAMPLE"].as_str()
+    );
+    assert!(
+        golden
+            .lines()
+            .any(|l| l == golden_line("MINTED_BLOCK_EXAMPLE", &minted)),
+        "{}",
+        golden_line("MINTED_BLOCK_EXAMPLE", &minted)
+    );
+
+    let unrecognized = block("", SessionSource::Invalid);
+    assert_eq!(
+        Some(unrecognized.as_str()),
+        strings["UNRECOGNIZED_BLOCK"].as_str()
+    );
+    assert_eq!(
+        Some(unrecognized.as_str()),
+        golden_json["UNRECOGNIZED_BLOCK"].as_str()
+    );
+    assert!(
+        golden
+            .lines()
+            .any(|l| l == golden_line("UNRECOGNIZED_BLOCK", &unrecognized)),
+        "{}",
+        golden_line("UNRECOGNIZED_BLOCK", &unrecognized)
+    );
+
+    assert_eq!(
+        session_from_hook_value(Some(" corr-1 "), Some("proj_1")),
+        ("ses_2afjLT0irA6g3tOA5CklOPgcSqQ".to_owned(), SessionSource::Hook)
+    );
+    assert!(golden.contains(
+        r#"sessionFromHookValue(' corr-1 ', 'proj_1'): {"sessionId":"ses_2afjLT0irA6g3tOA5CklOPgcSqQ","sessionSource":"hook"}"#
+    ));
 }
