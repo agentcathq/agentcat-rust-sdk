@@ -36,7 +36,6 @@ The Rust SDK ports the TypeScript SDK at `agentcat-typescript-sdk` commit `9b56e
 | 4 | Exporters run again on every AgentCat retry | Each event is exported once | `exporters::every_exporter_receives_each_event_once` |
 | 5 | Wire body repeats every field in camelCase | snake_case only | `tool_calls::first_call_issues_a_session_and_publishes_one_event` |
 | 6 | Names truncated to 256 + `...` (259 chars), versions too; the API columns are 255 and 50, so such events fail to store | Names cap at 255 characters, versions at 50 | `ts_parity::truncation_matches` |
-| 7 | Tag keys may contain a space or start with `agentcat:`; the API drops them later | Validated with the API's rules up front, with a log line | `validation` unit tests, `hooks::tags_are_validated_and_sdk_tags_win` |
 | 8 | `identifyActorData` is string-redacted (the protected list names `identifyData`) | Actor data is protected, like the other identity fields | `hooks::string_redaction_applies_to_payloads_but_not_protected_fields` |
 | 9 | The string redactor sees content-block `type` discriminators and SDK metadata | Skipped | same test |
 | 10 | Custom events get no string redaction | The tracked configuration's `redact_sensitive_information` applies | `AgentCat::publish_custom_event` |

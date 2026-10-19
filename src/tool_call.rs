@@ -12,7 +12,7 @@ use crate::hooks::{BoxFuture, UserIdentity};
 pub(crate) type SessionHook = Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<String>> + Send + Sync>;
 pub(crate) type IdentifyHook = Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<UserIdentity>> + Send + Sync>;
 pub(crate) type TagsHook =
-    Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<Vec<(String, String)>>> + Send + Sync>;
+    Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<Vec<(String, Value)>>> + Send + Sync>;
 pub(crate) type PropertiesHook = Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<Value>> + Send + Sync>;
 
 /// A tool call as the `identify`, `resolve_session_id`, `event_tags` and

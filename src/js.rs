@@ -20,6 +20,16 @@ pub(crate) fn truthy(v: Option<&Value>) -> bool {
     }
 }
 
+/// JavaScript's `typeof` for a JSON value.
+pub(crate) fn type_of(v: &Value) -> &'static str {
+    match v {
+        Value::Null | Value::Array(_) | Value::Object(_) => "object",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+    }
+}
+
 /// JavaScript's `Number.prototype.toString` (ECMA-262 `Number::toString`) for a
 /// finite double.
 pub(crate) fn number_to_string(f: f64) -> String {
@@ -66,6 +76,20 @@ mod tests {
         assert_eq!(trim("\u{2028}x\u{3000}"), "x");
         assert_eq!(trim("\u{85}x"), "\u{85}x");
         assert_eq!(trim("\u{180e}x"), "\u{180e}x");
+    }
+
+    #[test]
+    fn type_of_matches_js() {
+        for (v, ty) in [
+            (json!(null), "object"),
+            (json!([1]), "object"),
+            (json!({}), "object"),
+            (json!(true), "boolean"),
+            (json!(1.5), "number"),
+            (json!("a"), "string"),
+        ] {
+            assert_eq!(type_of(&v), ty, "{v}");
+        }
     }
 
     #[test]

@@ -109,11 +109,9 @@ async fn tags_are_validated_and_sdk_tags_win() {
     let e = &api().events_for("tags", 1).await[0];
     let tags = e["tags"].as_object().unwrap();
     assert_eq!(tags["env"], "prod");
-    assert!(
-        !tags.contains_key("bad key")
-            && !tags.contains_key("agentcat:reserved")
-            && !tags.contains_key("multi")
-    );
+    assert_eq!(tags["bad key"], "x");
+    assert_eq!(tags["agentcat:reserved"], "x");
+    assert!(!tags.contains_key("multi"));
     assert_eq!(tags["agentcat_session_id_source"], "minted");
     assert_eq!(
         e["properties"],

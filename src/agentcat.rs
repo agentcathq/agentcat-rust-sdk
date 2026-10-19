@@ -315,8 +315,8 @@ impl AgentCatBuilder {
     }
 
     /// Attaches indexed string tags to each tool-call event. Keys: at most 32
-    /// chars of `[A-Za-z0-9$_.:-]`, not starting with `agentcat:`; values: at
-    /// most 200 chars, no newlines; at most 50 entries. Invalid entries are
+    /// UTF-16 units of `[A-Za-z0-9$_.:- ]`; values: at most 200 units, no
+    /// newlines; at most 50 entries. Invalid entries are
     /// dropped with a log line.
     #[cfg(feature = "rmcp")]
     pub fn event_tags<F, Fut, T, K, V>(mut self, hook: F) -> Self
@@ -333,8 +333,8 @@ impl AgentCatBuilder {
             Box::pin(async move {
                 fut.await.map(|tags| {
                     tags.into_iter()
-                        .map(|(k, v)| (k.into(), v.into()))
-                        .collect::<Vec<(String, String)>>()
+                        .map(|(k, v)| (k.into(), Value::String(v.into())))
+                        .collect::<Vec<(String, Value)>>()
                 })
             })
         }));
@@ -682,7 +682,8 @@ fn fill_custom(event: &mut Event, session_id: String, data: CustomEvent) {
     event.is_error = data.is_error;
     event.error = data.error;
     if let Some(tags) = data.tags {
-        event.tags = crate::validation::validate_tags(tags).map(|t| t.into_iter().collect());
+        event.tags = crate::validation::validate_tags(tags.into_iter().map(|(k, v)| (k, Value::String(v))))
+            .map(|t| t.into_iter().collect());
     }
     event.properties = data.properties.filter(|p| !p.is_empty());
 }

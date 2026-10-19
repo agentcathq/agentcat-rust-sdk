@@ -52,7 +52,7 @@ async fn custom_events_carry_their_data() {
             .duration(12)
             .error(error)
             .tag("source", "widget")
-            .tag("bad key", "dropped")
+            .tag("bad!key", "dropped")
             .properties(json!({"plan": "pro"})),
     );
     let e = &api().wait_for(1, |v| v["resource_name"] == "feedback").await[0];
