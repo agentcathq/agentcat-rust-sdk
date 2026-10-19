@@ -4,6 +4,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 export AGENTCAT_DISABLE_DIAGNOSTICS=1 DISABLE_DIAGNOSTICS=1
+# public-api.txt comes from this nightly (rustdoc JSON drifts between nightlies).
+# The public-api job in .github/workflows/ci.yml uses the same one.
+public_api_toolchain=nightly-2026-10-18
 full=0
 bless=0
 for arg in "$@"; do
@@ -31,8 +34,14 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 step deny
 cargo deny check
 step public-api
-if [ "$bless" = 1 ]; then cargo +nightly public-api --simplified > public-api.txt; fi
-cargo +nightly public-api --simplified | diff -u public-api.txt -
+if [ "$bless" = 1 ]; then
+  snapshot="$(mktemp)"
+  trap 'rm -f "$snapshot"' EXIT
+  cargo "+$public_api_toolchain" public-api --simplified > "$snapshot"
+  chmod 644 "$snapshot"
+  mv "$snapshot" public-api.txt
+fi
+cargo "+$public_api_toolchain" public-api --simplified | diff -u public-api.txt -
 if [ "$full" = 1 ]; then
   step msrv
   cargo +1.88 check --lib --all-features
