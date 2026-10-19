@@ -1,141 +1,131 @@
-# AgentCat for Rust MCP servers
+<div align="center">
+  <img alt="AgentCat — see exactly how agents experience your product" src="docs/static/og-image.png" width="80%">
+</div>
+<h3 align="center">
+    <a href="#getting-started">Getting Started</a>
+    <span> · </span>
+    <a href="#why-use-agentcat-">Features</a>
+    <span> · </span>
+    <a href="https://docs.agentcat.com">Docs</a>
+    <span> · </span>
+    <a href="https://agentcat.com">Website</a>
+    <span> · </span>
+    <a href="#free-for-open-source">Open Source</a>
+    <span> · </span>
+    <a href="https://meet.agentcat.com/meet">Schedule a Demo</a>
+</h3>
+<p align="center">
+  <a href="https://crates.io/crates/agentcat-sdk"><img src="https://img.shields.io/crates/v/agentcat-sdk.svg" alt="crates.io version"></a>
+  <a href="https://crates.io/crates/agentcat-sdk"><img src="https://img.shields.io/crates/d/agentcat-sdk.svg" alt="crates.io downloads"></a>
+  <a href="https://docs.rs/agentcat-sdk"><img src="https://docs.rs/agentcat-sdk/badge.svg" alt="docs.rs"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://www.rust-lang.org/"><img src="https://img.shields.io/badge/rust-1.88+-orange.svg?logo=rust" alt="Rust 1.88+"></a>
+  <a href="https://github.com/agentcathq/agentcat-rust-sdk/issues"><img src="https://img.shields.io/github/issues/agentcathq/agentcat-rust-sdk.svg" alt="GitHub issues"></a>
+  <a href="https://github.com/agentcathq/agentcat-rust-sdk/actions"><img src="https://github.com/agentcathq/agentcat-rust-sdk/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
 
-[![crates.io](https://img.shields.io/crates/v/agentcat-sdk.svg)](https://crates.io/crates/agentcat-sdk)
-[![docs.rs](https://docs.rs/agentcat-sdk/badge.svg)](https://docs.rs/agentcat-sdk)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+> [!NOTE]
+> AgentCat v2 introduces compatibility with the [MCP Protocol "Stateless" 2026-07-28 Update](https://blog.modelcontextprotocol.io/posts/2026-07-28/) and the coinciding [rmcp 3](https://github.com/modelcontextprotocol/rust-sdk) release that puts it into effect. The stateless transition has a massive impact on analytics, as sessions were a built-in concept tying related tool calls together. AgentCat has now migrated its session tracking under guidance of the MCP core team's recommendations of using [explicit handles (SEP-2567)](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2567).
+>
+> As a result AgentCat now injects a `session_id` on every MCP tool call to associate them under the same task umbrella. Our evals show much higher tool correlation accuracy at the cost of < 1% additional context pollution.
 
-AgentCat is an analytics platform for MCP server owners 🐱. It captures what agents try to do
-with your tools and why, so you can see what your users actually need.
+AgentCat is an analytics platform for MCP server owners 🐱. It captures user intentions and behavior patterns to help you understand what AI users actually need from your tools — eliminating guesswork and accelerating product development all with one-line of code.
 
-This crate instruments MCP servers built with [`rmcp`](https://crates.io/crates/rmcp) 3.x, the
-official Rust MCP SDK. It is a port of the
-[AgentCat TypeScript SDK](https://github.com/agentcathq/agentcat-typescript-sdk) and sends the
-same events, injects the same parameters, and uses the same agent-facing text. It can also
-forward telemetry to OpenTelemetry, Datadog, Sentry and PostHog.
+This SDK also provides a free and simple way to forward telemetry like logs, traces, and errors to any Open Telemetry collector or popular tools like Datadog, Sentry, and PostHog.
 
-```toml
-[dependencies]
-agentcat-sdk = "0.1"
+```bash
+# rmcp (v3.0.0 and later)
+cargo add agentcat-sdk
 ```
 
-The library is named `agentcat`: write `use agentcat::AgentCat;`.
+To learn more about us, check us out [here](https://agentcat.com). For detailed guides visit our [documentation](https://docs.agentcat.com).
+
+## Why use AgentCat? 🤔
+
+AgentCat helps builders of MCP servers, Claude Connectors, and ChatGPT Plugins learn how to improve them by capturing any agents goals and detecting when they get stuck.
+
+Use AgentCat for:
+
+- **Agent session replay** 🎬. Follow alongside your users and their agents to understand why they're using your MCP servers, what functionality you're missing, and what clients they're coming from.
+- **Trace debugging** 🔍. See where your users are getting stuck, track and find when LLMs get confused by your API, and debug sessions across all deployments of your MCP server.
+- **Existing platform support** 📊. Get logging and tracing out of the box for your existing observability platforms (OpenTelemetry, Datadog, Sentry) — eliminating the tedious work of implementing telemetry yourself.
+
+<img alt="AgentCat architecture — the AgentCat SDK inside your MCP server sends analytics to your observability vendors and session replay to the AgentCat dashboard" src="docs/static/architecture.png" />
 
 ## How it works
 
-`AgentCat::track` wraps your rmcp server handler. The wrapper changes two things:
+AgentCat works as a lightweight middleware inside your MCP server. When you call `track()`, it wraps your rmcp server handler and seamlessly modifies your tool schemas as they are listed, following the MCP core team's [explicit handles (SEP-2567)](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2567) guidelines. Concretely, AgentCat adds the following to your server:
 
-- **`tools/list`.** Every tool gets these input parameters:
-  - **`session_id`**, a task handle ([explicit handles, SEP-2567](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2567)).
-    The server issues a `ses_` ID on the agent's first call, and the agent sends it back on
-    every later call. Related calls then group into one task, also over stateless transports.
-    AgentCat rejects values it did not issue and tells the agent to re-send its ID.
-  - **`agent_id`** (off by default; enable it with `enable_agent_tracking(true)`), an ID that
-    each agent chooses for itself, so parallel agents on one task stay apart.
-  - **`context`**, where the agent explains in one sentence why it makes the call. This is the
-    intent data.
+- **`session_id`** — a parameter injected into each tool's input schema. Agents echo it back on every call, letting AgentCat group related tool calls into one task even over stateless transports. Values are validated: anything AgentCat did not issue is rejected rather than adopted, and the agent is told to re-send the ID it was given.
+- **`agent_id`** _(off by default)_ — enabled with `.enable_agent_tracking(true)`. Each agent self-generates its own ID, keeping parallel agents working the same task individually attributable.
+- **`context`** — a parameter asking the agent to explain, in one sentence, why it is making this call. This is where intent data comes from.
+- **`get_more_tools`** — an additional tool, prompt-engineered so that agents readily report the features and tools they looked for but couldn't find — surfacing your missing functionality directly from real usage.
 
-  The wrapper also adds a **`get_more_tools`** tool, where agents report the tools they looked
-  for and did not find.
-- **`tools/call`.** The wrapper removes the injected arguments before your handler runs, so your
-  code never sees them, even with `#[serde(deny_unknown_fields)]`. It returns issued session
-  IDs in a text block at the start of the result and, for tools with an output schema, in
-  `structuredContent.mcp_session`. It then publishes one event with the request, the result,
-  the timing, token estimates, and any error.
+Injected parameters are stripped from arguments before your tool handler runs, so your code never sees them — even with `#[serde(deny_unknown_fields)]`. For tools that declare an output schema, issued IDs are also mirrored into `structuredContent` (as `mcp_session`, its first key), so clients that only read structured results still receive them.
 
-Events go out from a background thread. Your tool calls never wait for AgentCat, and an AgentCat
-failure never fails a tool call.
+## Getting Started
 
-## Getting started
+To get started with AgentCat, first create an account and obtain your project ID by signing up at [agentcat.com](https://agentcat.com). For detailed setup instructions visit our [documentation](https://docs.agentcat.com).
 
-Create a project at [agentcat.com](https://agentcat.com) to get a project ID.
-
-### stdio
+Once you have your project ID, integrate AgentCat into your MCP server:
 
 ```rust
 use std::time::Duration;
-use agentcat::AgentCat;
 use rmcp::{ServiceExt, transport::stdio};
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    let agentcat = AgentCat::new("proj_0000000");
-
+    // Track the server with AgentCat
+    let agentcat = agentcat::AgentCat::new("proj_0000000");
     let service = agentcat.track(MyServer::new()).serve(stdio()).await?;
     service.waiting().await?;
 
-    // Send queued events before the process exits.
+    // Flush queued events before exit
     agentcat::shutdown(Duration::from_secs(5)).await;
     Ok(())
 }
 ```
 
-Call `agentcat::shutdown` (or `shutdown_blocking`) before your process exits. A stdio server
-stops when `main` returns, and events still in the queue are lost.
-
-### Streamable HTTP
-
-The `StreamableHttpService` factory creates a handler per session, or per request in stateless
-mode. Track each one. `AgentCat` is cheap to clone, and all instances share one queue:
+Stateless servers built on [MCP 2026-07-28](https://blog.modelcontextprotocol.io/posts/2026-07-28/) create a fresh server instance per request, and session-based servers one per connection (`StreamableHttpService`). Call `track()` inside the factory so every instance is tracked:
 
 ```rust
 use rmcp::transport::streamable_http_server::{
-    StreamableHttpService, StreamableHttpServerConfig, session::local::LocalSessionManager,
+    StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
 };
 
 let agentcat = agentcat::AgentCat::new("proj_0000000");
-let mcp = StreamableHttpService::new(
-    move || Ok(agentcat.track(MyServer::new())),
+let service = StreamableHttpService::new(
+    move || Ok(agentcat.track(MyServer::new())), // track every instance
     LocalSessionManager::default().into(),
     StreamableHttpServerConfig::default(),
 );
-let app = axum::Router::new().nest_service("/mcp", mcp);
+let app = axum::Router::new().nest_service("/mcp", service);
 ```
 
-See [`examples/`](examples) for complete servers.
-
-## Options
-
-```rust
-let agentcat = AgentCat::builder("proj_0000000")
-    .enable_agent_tracking(true)
-    .custom_context_description("Explain what you are trying to do for the user.")
-    .build();
-```
-
-| Builder method | Default | What it does |
-| --- | --- | --- |
-| `enable_tracing(bool)` | `true` | Track tool calls: handles, mint-back, events. |
-| `enable_tool_call_context(bool)` | `true` | Add the required `context` (intent) parameter. |
-| `custom_context_description(text)` | built-in text | Replace the `context` parameter's description. |
-| `enable_report_missing(bool)` | `true` | Add the `get_more_tools` tool. |
-| `enable_agent_tracking(bool)` | `false` | Add the required `agent_id` parameter. |
-| `identify(hook)` | none | Identify the actor of each call. |
-| `resolve_session_id(hook)` | none | Hook mode: you supply the session; no `session_id` parameter. |
-| `event_tags(hook)` / `event_properties(hook)` | none | Attach tags and JSON properties to each event. |
-| `redact_sensitive_information(f)` / `redact_event(f)` | none | Redact text, or rewrite and drop whole events (async variants too). |
-| `exporter(name, config)` | none | Forward events to OTLP, Datadog, Sentry or PostHog. |
-| `api_base_url(url)` | `AGENTCAT_API_URL`, then `https://api.agentcat.com` | Where events go. |
-| `server_info(name, version)` | from `get_info()` | Override the server identity on events. |
-| `disable_diagnostics(bool)` | `false` | Turn off anonymous SDK diagnostics (also `DISABLE_DIAGNOSTICS=1`). |
-| `log_file(bool)` | `true` | Write the SDK log to `~/agentcat.log` (or `$AGENTCAT_LOG_FILE`). |
-| `capture_panics(bool)` | `true` | Record panics in tool handlers with their backtrace. |
+Calling `track()` per instance is cheap — the event queue, telemetry exporters, and diagnostics are initialized once and shared across instances. Events are published from a background thread, so your tool calls never wait on AgentCat. Call `agentcat::shutdown()` (or `agentcat::shutdown_blocking()`) before your process exits to flush queued events. Complete runnable programs are in [`examples/`](examples).
 
 ### Identifying users
 
-Identify every actor you can. When you cannot resolve a real user, return a stable anonymous ID,
-such as a hash of the API key, so one user's events still group together.
+We strongly encourage identifying every actor. If you can't resolve a real user, return a stable anonymized ID instead — for example, a hash of the auth token or API key — so that all events from the same end user still roll up to one actor in your dashboard rather than scattering into anonymous one-off sessions.
 
-Hooks get a `ToolCallRequest`: the raw arguments and the handler's `RequestContext`. Over HTTP,
-`http_request()` returns the request head, including whatever your auth middleware put into its
-extensions. Hooks run while your tool runs and never delay it.
+`identify` (like every AgentCat hook) runs concurrently with your tool handler and never adds latency to tool calls: a slow lookup — or a hook that fails outright — costs analytics data for that event, never your tool's response time.
+
+The callback receives the tool call: the raw arguments and the rmcp `RequestContext` your handlers get. Over streamable HTTP, most identity signals live on the HTTP request — its headers, plus anything your auth middleware put into its extensions:
 
 ```rust
+use agentcat::{AgentCat, UserIdentity};
+
 let agentcat = AgentCat::builder("proj_0000000")
     .identify(|call| {
-        let token = call.header("authorization").map(str::to_owned);
+        let token = call.header("authorization").map(str::to_owned); // HTTP header
+        let org_id = call.header("x-org-id").map(str::to_owned);
         async move {
-            let user = my_api::user_for(token?).await.ok()?;
-            Some(agentcat::UserIdentity::new(user.id).name(user.name))
+            let user = myapi::get_user(token?).await.ok()?;
+            Some(
+                UserIdentity::new(user.id)
+                    .name(user.name)
+                    .data(serde_json::json!({ "orgId": org_id })),
+            )
         }
     })
     .build();
@@ -143,61 +133,122 @@ let agentcat = AgentCat::builder("proj_0000000")
 
 ### Redacting sensitive data
 
+AgentCat redacts all data sent to its servers and encrypts at rest, but for additional security, it offers a hook to do your own redaction on all text data returned back to our servers.
+
 ```rust
 let agentcat = AgentCat::builder("proj_0000000")
-    .redact_sensitive_information(|text| SECRET.replace_all(text, "[REDACTED]").into_owned())
-    .redact_event(|event| {
-        // Drop events from tools that handle secrets.
-        (event.resource_name.as_deref() != Some("get_credentials")).then_some(event)
+    .redact_sensitive_information(|text| redact(text))
+    // or, for an async redactor:
+    // .redact_sensitive_information_async(|text| async move { redact_async(text).await })
+    .build();
+```
+
+For redaction decisions that need more context than a single string — such as which tool was called or what type of event is being published — use the event-level `redact_event` hook. It receives the full event object and returns a modified event, or `None` to drop the event entirely. It may be sync or async (`redact_event_async`), and can be combined with `redact_sensitive_information`.
+
+```rust
+let agentcat = AgentCat::builder("proj_0000000")
+    .redact_event(|mut event| {
+        // Drop events from tools that handle secrets entirely
+        if event.resource_name.as_deref() == Some("get_credentials") {
+            return None;
+        }
+        // Strip response payloads from a specific tool
+        if event.resource_name.as_deref() == Some("export_report") {
+            event.response = None;
+        }
+        Some(event)
     })
     .build();
 ```
 
-AgentCat publishes inbound HTTP headers with each event, as the TypeScript SDK does, so
-remove anything sensitive (for example `authorization`) with `redact_event`.
+### Vendor Support
 
-### Custom events
-
-```rust
-agentcat.publish_custom_event(
-    agentcat::CustomEvent::new()
-        .session_id(session_id)
-        .resource_name("checkout")
-        .parameters(serde_json::json!({ "plan": "pro" })),
-);
-```
-
-### Telemetry exporters
+AgentCat seamlessly integrates with your existing observability stack, providing automatic logging and tracing without the tedious setup typically required. Export telemetry data to multiple platforms simultaneously:
 
 ```rust
-use agentcat::exporters::{OtlpExporterConfig, SentryExporterConfig};
+use agentcat::exporters::{
+    DatadogExporterConfig, OtlpExporterConfig, PostHogExporterConfig, SentryExporterConfig,
+};
 
-let agentcat = AgentCat::builder("proj_0000000") // or AgentCat::telemetry_only()
+// Use AgentCat::telemetry_only() instead if you just want to forward telemetry
+let agentcat = AgentCat::builder("proj_0000")
+    // /v1/traces is appended automatically
     .exporter("otlp", OtlpExporterConfig::new("http://localhost:4318"))
-    .exporter("sentry", SentryExporterConfig::new(std::env::var("SENTRY_DSN")?))
+    .exporter(
+        "datadog",
+        DatadogExporterConfig::new(std::env::var("DD_API_KEY")?, "datadoghq.com", "my-mcp-server"),
+    )
+    .exporter(
+        "sentry",
+        SentryExporterConfig::new(std::env::var("SENTRY_DSN")?).environment("production"),
+    )
+    .exporter(
+        "posthog",
+        // Optional: defaults to US region
+        PostHogExporterConfig::new(std::env::var("POSTHOG_API_KEY")?).host("https://us.i.posthog.com"),
+    )
     .build();
 ```
 
-Exporters write their vendor's JSON over the SDK's HTTP client. They install no global tracer,
-hub or subscriber.
+Learn more about our free and open source [telemetry integrations](https://docs.agentcat.com/telemetry/integrations).
 
-## Cargo features
+### Internal diagnostics
 
-| Feature | Default | Purpose |
+To help us catch and fix broken installs, the SDK sends AgentCat a small, anonymized
+signal when setup or runtime errors occur — never your tool calls, your responses,
+or anything about your users. Records carry only operational metadata, such as your
+project ID (or an anonymous install ID when none is set). Your local `~/agentcat.log`
+is unchanged.
+
+Diagnostics are on by default and can be turned off completely with either:
+
+- `AgentCat::builder("proj_0000000").disable_diagnostics(true)`, or
+- the `DISABLE_DIAGNOSTICS` environment variable.
+
+### Options
+
+Every option of the TypeScript SDK is available on the builder, in snake_case, plus a few Rust-specific ones:
+
+| Builder method | Default | Description |
 | --- | --- | --- |
-| `rmcp` | yes | The `Tracked<H>` wrapper for rmcp 3.x. |
-| `rustls` / `native-tls` | `rustls` | TLS for AgentCat and the exporters. One is required. |
-| `preserve-order` | yes | Turns on `serde_json/preserve_order` so injected parameters follow yours and `mcp_session` is the first key of structured results (agents that truncate long results still see it). It applies to your whole build. |
-| `exporters` (`otlp`, `datadog`, `sentry`, `posthog`) | yes | Telemetry exporters. They add no dependencies. |
+| `enable_tracing(bool)` | `true` | Track tool calls: session handles, issued IDs, and events. |
+| `enable_tool_call_context(bool)` | `true` | Inject the `context` parameter that captures agent intent. |
+| `custom_context_description(text)` | built-in | Custom description for the injected `context` parameter. |
+| `enable_report_missing(bool)` | `true` | Add the `get_more_tools` tool. |
+| `enable_agent_tracking(bool)` | `false` | Inject the `agent_id` parameter. |
+| `identify(hook)` | — | Identify the actor behind each tool call. |
+| `resolve_session_id(hook)` | — | Supply your own session identifier per request; AgentCat then injects no `session_id`. |
+| `event_tags(hook)` / `event_properties(hook)` | — | Attach indexed string tags or flexible JSON properties to every tool-call event. |
+| `redact_sensitive_information(f)` / `redact_event(f)` | — | Redact data before it leaves your server (async variants available). |
+| `exporter(name, config)` | — | Forward events to OpenTelemetry, Datadog, Sentry, or PostHog. |
+| `api_base_url(url)` | `https://api.agentcat.com` | Custom API URL; falls back to the `AGENTCAT_API_URL` environment variable. |
+| `disable_diagnostics(bool)` | `false` | Turn off internal diagnostics. |
+| `server_info(name, version)` | from `get_info()` | Override the server name and version reported on events. |
+| `log_file(bool)` | `true` | Write the SDK log to `~/agentcat.log` (or `$AGENTCAT_LOG_FILE`); it never goes to stdout. |
+| `capture_panics(bool)` | `true` | Record panics in tool handlers with their backtrace; the panic still propagates. |
 
-## Compatibility
+Custom events are published with `agentcat.publish_custom_event(CustomEvent::new()...)`.
 
-- rmcp `>= 3.0, < 4` (tested on 3.0.0 and the newest 3.x), with stdio, streamable HTTP
-  (sessions and stateless), the 2026-07-28 protocol, and any other rmcp transport.
-- Rust 1.88 or newer (the same MSRV as rmcp 3).
-- Behavior differences from the TypeScript SDK are listed in
-  [`docs/PORTING.md`](docs/PORTING.md).
+### Cargo features
 
-## License
+The defaults suit most servers: `rmcp`, `rustls`, `preserve-order`, and `exporters`. Use `native-tls` instead of `rustls` if you prefer the platform TLS library. `preserve-order` enables `serde_json/preserve_order` so that `mcp_session` stays the first key of structured results, where agents that truncate long results still see it; it applies to your whole build.
 
-MIT © AgentCat, Inc.
+## Free for open source
+
+AgentCat is free for qualified open source projects. We believe in supporting the ecosystem that makes MCP possible. If you maintain an open source MCP server, you can access our full analytics platform at no cost.
+
+**How to apply**: Email [hi@agentcat.com](mailto:hi@agentcat.com) with your repository link
+
+_Already using AgentCat? We'll upgrade your account immediately._
+
+## Community Cats 🐱
+
+Meet the cats behind AgentCat! Add your cat to our community by submitting a PR with your cat's photo in the `docs/cats/` directory.
+
+<div align="left">
+  <img src="docs/cats/bibi.png" alt="bibi" width="80" height="80">
+  <img src="docs/cats/zelda.jpg" alt="zelda" width="80" height="80">
+  <img src="docs/cats/void.jpg" alt="void" width="80" height="80">
+</div>
+
+_Want to add your cat? Create a PR adding your cat's photo to_ `docs/cats/` _and update this section!_
