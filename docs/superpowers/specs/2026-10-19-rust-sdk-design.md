@@ -66,8 +66,8 @@ shape). This design reworks that code in place, test first.
 
 The full log is [`DECISIONS.md`](../../DECISIONS.md). In short:
 
-- **Carried over from the PHP/C# log, unchanged:** D06, D07, D08, D09, D15, D16, D18, D33, D35, D36,
-  D40, D41, D43, D44, D45, D50, D60, D61.
+- **Carried over from the PHP/C# log, unchanged:** D05, D06, D07, D08, D09, D15, D16, D18, D32, D33,
+  D34, D35, D36, D40, D41, D43, D44, D45, D50, D60, D61, B09.
 - **Carried over with a Rust form:** D10 (dotted full path, R2), D31 (no automatic detection, R3),
   D03 (exception, R1).
 - **Rust-specific:** R1–R11 in the log.

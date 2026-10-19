@@ -24,10 +24,13 @@ Source: `agentcat-php-sdk/docs/audit/DECISIONS.md`. C# applies the same set
 | D16 | Session text block on unknown tools and validation errors as TS | Same where rmcp returns a result; rmcp answers unknown tools with a JSON-RPC error (as TS v2 and C#) |
 | D18 | Exporter identity strings as TS (`sentry_client=agentcat/1.0.0`) | Same |
 | D31 | Silent in test environments unless a fake is active | Replaced by R3 |
+| D32 | Never throw from runtime telemetry; `track()` returns the server it was given; a bad option value logs one line | `build()` and `track()` never fail; AgentCat errors and panics never reach the tool result |
+| D34 | `parameters.extra` in the TS v1 shape: `{sessionId?, requestId, _meta?, requestInfo?: {headers, url?}, authInfo?}` | Same keys from the rmcp request context; no `authInfo` (auth claims live in `http_request().extensions`); `url` only when the request URI is absolute (design §9.5) |
 | D35 | Hooks receive an immutable tool-call snapshot | `ToolCallRequest` |
 | D36 | A missing project ID reads `AGENTCAT_PROJECT_ID`; `""` means telemetry only | `AgentCat::builder(None)` |
 | D40 | Custom events take a typed value; TS validation errors carry the TS messages | `CustomEvent`; `Error::MissingProjectId` displays `projectId is required for publishCustomEvent` |
 | D41 | A fake records events for assertions | `agentcat::testing::fake()` → `AgentCatFake` |
+| D05 | Public `flush()` and `shutdown()` | Same; in Rust they are required before exit (R11) |
 | D43 | `flush()` returns `true` when every queued event was sent | `flush`, `shutdown` and their blocking variants return `bool` |
 | D44 | `AGENTCAT_ENABLED=false` turns everything off; `true` forces it on | Same (with R3 there is nothing to force on) |
 | D45 | One public configuration type per exporter, with TS key names | `OtlpExporter`, `DatadogExporter`, `SentryExporter`, `PostHogExporter`; `ExporterConfig::from_json` takes TS keys |
@@ -35,9 +38,9 @@ Source: `agentcat-php-sdk/docs/audit/DECISIONS.md`. C# applies the same set
 | D60, D61 | The SDK writes its own lines to its own `agentcat.log`, not the app's log | `~/agentcat.log` by default; `.log_to_tracing(true)` routes them to `tracing` |
 | B09 | `publishCustomEvent` quirks as TS, misleading log line included | Same |
 
-PHP decisions that do not apply to Rust: D01, D04, D05 (Rust has explicit flush anyway), D11–D14,
-D17, D19–D30, D32, D34 (applied through the design §9.5), D37–D39, D42, D46–D49, D51–D62. They cover
-PHP runtimes, PHP tooling, PHP frameworks, or PHP packaging.
+PHP decisions that do not apply to Rust: D01, D04, D11–D14, D17, D19–D30, D37–D39, D42, D46–D49,
+D51–D62. They cover PHP runtimes, PHP tooling, PHP frameworks, or PHP packaging; R1–R11 give the Rust
+answers where Rust needs one (identity, versions, lifecycle).
 
 ## Rust-specific decisions
 
