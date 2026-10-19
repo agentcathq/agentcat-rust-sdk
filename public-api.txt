@@ -1,0 +1,510 @@
+pub mod agentcat
+pub mod agentcat::constants
+pub const agentcat::constants::AGENTCAT_CUSTOM_EVENT_TYPE: &str
+pub const agentcat::constants::AGENTCAT_SOURCE: &str
+pub const agentcat::constants::AGENTCAT_TAG_AGENT_ID: &str
+pub const agentcat::constants::AGENTCAT_TAG_AGENT_SOURCE: &str
+pub const agentcat::constants::AGENTCAT_TAG_MRTR: &str
+pub const agentcat::constants::AGENTCAT_TAG_PROTOCOL_VERSION: &str
+pub const agentcat::constants::AGENTCAT_TAG_SESSION_SOURCE: &str
+pub const agentcat::constants::AGENT_ID_PARAM: &str
+pub const agentcat::constants::AGENT_ID_PARAM_DESCRIPTION: &str
+pub const agentcat::constants::CONTEXT_PARAM: &str
+pub const agentcat::constants::DEFAULT_API_BASE_URL: &str
+pub const agentcat::constants::DEFAULT_CONTEXT_PARAMETER_DESCRIPTION: &str
+pub const agentcat::constants::ERROR_PLATFORM: &str
+pub const agentcat::constants::GET_MORE_TOOLS_CONTEXT_DESCRIPTION: &str
+pub const agentcat::constants::GET_MORE_TOOLS_DESCRIPTION: &str
+pub const agentcat::constants::GET_MORE_TOOLS_NAME: &str
+pub const agentcat::constants::GET_MORE_TOOLS_RESPONSE: &str
+pub const agentcat::constants::GET_MORE_TOOLS_TITLE: &str
+pub const agentcat::constants::MCP_SESSION_AGENT_ID_DESCRIPTION: &str
+pub const agentcat::constants::MCP_SESSION_FIELD_DESCRIPTION: &str
+pub const agentcat::constants::MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE: &str
+pub const agentcat::constants::MCP_SESSION_KEY: &str
+pub const agentcat::constants::MCP_SESSION_SESSION_ID_DESCRIPTION: &str
+pub const agentcat::constants::MCP_SESSION_STATUS_DESCRIPTION: &str
+pub const agentcat::constants::MCP_TOOLS_CALL_EVENT_TYPE: &str
+pub const agentcat::constants::META_CLIENT_INFO_KEY: &str
+pub const agentcat::constants::META_PROTOCOL_VERSION_KEY: &str
+pub const agentcat::constants::MINT_BACK_HEADER_ISSUED: &str
+pub const agentcat::constants::MINT_BACK_HEADER_UNRECOGNIZED: &str
+pub const agentcat::constants::MINT_BACK_ISSUED_BODY: &str
+pub const agentcat::constants::MINT_BACK_UNRECOGNIZED_BODY: &str
+pub const agentcat::constants::SDK_LANGUAGE: &str
+pub const agentcat::constants::SDK_VERSION: &str
+pub const agentcat::constants::SESSION_ID_PARAM: &str
+pub const agentcat::constants::SESSION_ID_PARAM_DESCRIPTION: &str
+pub const agentcat::constants::SESSION_ID_PARAM_PATTERN: &str
+pub const agentcat::constants::SESSION_START_SENTINEL: &str
+pub const agentcat::constants::UNKNOWN_TOOL_NAME: &str
+pub fn agentcat::constants::mint_back_session_line(&str) -> alloc::string::String
+pub mod agentcat::exporters
+#[non_exhaustive] pub enum agentcat::exporters::ExporterConfig
+pub agentcat::exporters::ExporterConfig::Datadog(agentcat::exporters::DatadogExporterConfig)
+pub agentcat::exporters::ExporterConfig::Otlp(agentcat::exporters::OtlpExporterConfig)
+pub agentcat::exporters::ExporterConfig::PostHog(agentcat::exporters::PostHogExporterConfig)
+pub agentcat::exporters::ExporterConfig::Sentry(agentcat::exporters::SentryExporterConfig)
+impl core::clone::Clone for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::DatadogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::DatadogExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::OtlpExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::OtlpExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::PostHogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::PostHogExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::SentryExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::SentryExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::ExporterConfig
+impl core::marker::Send for agentcat::exporters::ExporterConfig
+impl core::marker::Sync for agentcat::exporters::ExporterConfig
+impl core::marker::Unpin for agentcat::exporters::ExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::ExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::ExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::ExporterConfig
+#[non_exhaustive] pub struct agentcat::exporters::DatadogExporterConfig
+pub agentcat::exporters::DatadogExporterConfig::api_key: alloc::string::String
+pub agentcat::exporters::DatadogExporterConfig::env: core::option::Option<alloc::string::String>
+pub agentcat::exporters::DatadogExporterConfig::service: alloc::string::String
+pub agentcat::exporters::DatadogExporterConfig::site: alloc::string::String
+impl agentcat::exporters::DatadogExporterConfig
+pub fn agentcat::exporters::DatadogExporterConfig::env(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::exporters::DatadogExporterConfig::new(impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::exporters::DatadogExporterConfig
+pub fn agentcat::exporters::DatadogExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::DatadogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::DatadogExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::DatadogExporterConfig
+pub fn agentcat::exporters::DatadogExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::DatadogExporterConfig
+impl core::marker::Send for agentcat::exporters::DatadogExporterConfig
+impl core::marker::Sync for agentcat::exporters::DatadogExporterConfig
+impl core::marker::Unpin for agentcat::exporters::DatadogExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::DatadogExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::DatadogExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::DatadogExporterConfig
+#[non_exhaustive] pub struct agentcat::exporters::OtlpExporterConfig
+pub agentcat::exporters::OtlpExporterConfig::endpoint: alloc::string::String
+pub agentcat::exporters::OtlpExporterConfig::headers: alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>
+impl agentcat::exporters::OtlpExporterConfig
+pub fn agentcat::exporters::OtlpExporterConfig::header(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::exporters::OtlpExporterConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::exporters::OtlpExporterConfig
+pub fn agentcat::exporters::OtlpExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::OtlpExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::OtlpExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::OtlpExporterConfig
+pub fn agentcat::exporters::OtlpExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::OtlpExporterConfig
+impl core::marker::Send for agentcat::exporters::OtlpExporterConfig
+impl core::marker::Sync for agentcat::exporters::OtlpExporterConfig
+impl core::marker::Unpin for agentcat::exporters::OtlpExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::OtlpExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::OtlpExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::OtlpExporterConfig
+#[non_exhaustive] pub struct agentcat::exporters::PostHogExporterConfig
+pub agentcat::exporters::PostHogExporterConfig::api_key: alloc::string::String
+pub agentcat::exporters::PostHogExporterConfig::enable_ai_tracing: bool
+pub agentcat::exporters::PostHogExporterConfig::host: core::option::Option<alloc::string::String>
+impl agentcat::exporters::PostHogExporterConfig
+pub fn agentcat::exporters::PostHogExporterConfig::enable_ai_tracing(self, bool) -> Self
+pub fn agentcat::exporters::PostHogExporterConfig::host(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::exporters::PostHogExporterConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::exporters::PostHogExporterConfig
+pub fn agentcat::exporters::PostHogExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::PostHogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::PostHogExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::PostHogExporterConfig
+pub fn agentcat::exporters::PostHogExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::PostHogExporterConfig
+impl core::marker::Send for agentcat::exporters::PostHogExporterConfig
+impl core::marker::Sync for agentcat::exporters::PostHogExporterConfig
+impl core::marker::Unpin for agentcat::exporters::PostHogExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::PostHogExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::PostHogExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::PostHogExporterConfig
+#[non_exhaustive] pub struct agentcat::exporters::SentryExporterConfig
+pub agentcat::exporters::SentryExporterConfig::dsn: alloc::string::String
+pub agentcat::exporters::SentryExporterConfig::enable_tracing: bool
+pub agentcat::exporters::SentryExporterConfig::environment: core::option::Option<alloc::string::String>
+pub agentcat::exporters::SentryExporterConfig::release: core::option::Option<alloc::string::String>
+impl agentcat::exporters::SentryExporterConfig
+pub fn agentcat::exporters::SentryExporterConfig::enable_tracing(self, bool) -> Self
+pub fn agentcat::exporters::SentryExporterConfig::environment(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::exporters::SentryExporterConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::exporters::SentryExporterConfig::release(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::exporters::SentryExporterConfig
+pub fn agentcat::exporters::SentryExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::SentryExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::SentryExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::SentryExporterConfig
+pub fn agentcat::exporters::SentryExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::SentryExporterConfig
+impl core::marker::Send for agentcat::exporters::SentryExporterConfig
+impl core::marker::Sync for agentcat::exporters::SentryExporterConfig
+impl core::marker::Unpin for agentcat::exporters::SentryExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::SentryExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::SentryExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::SentryExporterConfig
+#[non_exhaustive] pub enum agentcat::Error
+pub agentcat::Error::MissingProjectId
+impl core::clone::Clone for agentcat::Error
+pub fn agentcat::Error::clone(&self) -> Self
+impl core::cmp::Eq for agentcat::Error
+impl core::cmp::PartialEq for agentcat::Error
+pub fn agentcat::Error::eq(&self, &Self) -> bool
+impl core::error::Error for agentcat::Error
+impl core::fmt::Debug for agentcat::Error
+pub fn agentcat::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for agentcat::Error
+pub fn agentcat::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::Error
+impl core::marker::Freeze for agentcat::Error
+impl core::marker::Send for agentcat::Error
+impl core::marker::Sync for agentcat::Error
+impl core::marker::Unpin for agentcat::Error
+impl core::marker::UnsafeUnpin for agentcat::Error
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::Error
+impl core::panic::unwind_safe::UnwindSafe for agentcat::Error
+#[non_exhaustive] pub enum agentcat::ExporterConfig
+pub agentcat::ExporterConfig::Datadog(agentcat::exporters::DatadogExporterConfig)
+pub agentcat::ExporterConfig::Otlp(agentcat::exporters::OtlpExporterConfig)
+pub agentcat::ExporterConfig::PostHog(agentcat::exporters::PostHogExporterConfig)
+pub agentcat::ExporterConfig::Sentry(agentcat::exporters::SentryExporterConfig)
+impl core::clone::Clone for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::clone(&self) -> Self
+impl core::convert::From<agentcat::exporters::DatadogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::DatadogExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::OtlpExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::OtlpExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::PostHogExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::PostHogExporterConfig) -> Self
+impl core::convert::From<agentcat::exporters::SentryExporterConfig> for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::from(agentcat::exporters::SentryExporterConfig) -> Self
+impl core::fmt::Debug for agentcat::exporters::ExporterConfig
+pub fn agentcat::exporters::ExporterConfig::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::exporters::ExporterConfig
+impl core::marker::Send for agentcat::exporters::ExporterConfig
+impl core::marker::Sync for agentcat::exporters::ExporterConfig
+impl core::marker::Unpin for agentcat::exporters::ExporterConfig
+impl core::marker::UnsafeUnpin for agentcat::exporters::ExporterConfig
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::exporters::ExporterConfig
+impl core::panic::unwind_safe::UnwindSafe for agentcat::exporters::ExporterConfig
+pub struct agentcat::AgentCat
+impl agentcat::AgentCat
+pub fn agentcat::AgentCat::builder(impl core::convert::Into<alloc::string::String>) -> agentcat::AgentCatBuilder
+pub async fn agentcat::AgentCat::flush(&self, core::time::Duration) -> bool
+pub fn agentcat::AgentCat::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::AgentCat::project_id(&self) -> core::option::Option<&str>
+pub fn agentcat::AgentCat::publish_custom_event(&self, agentcat::CustomEvent)
+pub async fn agentcat::AgentCat::shutdown(&self, core::time::Duration) -> bool
+pub fn agentcat::AgentCat::telemetry_only() -> agentcat::AgentCatBuilder
+impl agentcat::AgentCat
+pub fn agentcat::AgentCat::track<H: rmcp::handler::server::ServerHandler>(&self, H) -> agentcat::Tracked<H>
+impl core::clone::Clone for agentcat::AgentCat
+pub fn agentcat::AgentCat::clone(&self) -> Self
+impl core::fmt::Debug for agentcat::AgentCat
+pub fn agentcat::AgentCat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::AgentCat
+impl core::marker::Send for agentcat::AgentCat
+impl core::marker::Sync for agentcat::AgentCat
+impl core::marker::Unpin for agentcat::AgentCat
+impl core::marker::UnsafeUnpin for agentcat::AgentCat
+impl !core::panic::unwind_safe::RefUnwindSafe for agentcat::AgentCat
+impl !core::panic::unwind_safe::UnwindSafe for agentcat::AgentCat
+pub struct agentcat::AgentCatBuilder
+impl agentcat::AgentCatBuilder
+pub fn agentcat::AgentCatBuilder::api_base_url(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::AgentCatBuilder::build(self) -> agentcat::AgentCat
+pub fn agentcat::AgentCatBuilder::capture_panics(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::custom_context_description(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::AgentCatBuilder::disable_diagnostics(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::enable_agent_tracking(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::enable_report_missing(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::enable_tool_call_context(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::enable_tracing(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::event_properties<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat::ToolCallRequest) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::option::Option<serde_json::value::Value>> + core::marker::Send + 'static
+pub fn agentcat::AgentCatBuilder::event_tags<F, Fut, T, K, V>(self, F) -> Self where F: core::ops::function::Fn(agentcat::ToolCallRequest) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::option::Option<T>> + core::marker::Send + 'static, T: core::iter::traits::collect::IntoIterator<Item = (K, V)>, K: core::convert::Into<alloc::string::String>, V: core::convert::Into<alloc::string::String>
+pub fn agentcat::AgentCatBuilder::exporter(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<agentcat::exporters::ExporterConfig>) -> Self
+pub fn agentcat::AgentCatBuilder::identify<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat::ToolCallRequest) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::option::Option<agentcat::UserIdentity>> + core::marker::Send + 'static
+pub fn agentcat::AgentCatBuilder::log_file(self, bool) -> Self
+pub fn agentcat::AgentCatBuilder::redact_event<F>(self, F) -> Self where F: core::ops::function::Fn(agentcat::Event) -> core::option::Option<agentcat::Event> + core::marker::Send + core::marker::Sync + 'static
+pub fn agentcat::AgentCatBuilder::redact_event_async<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat::Event) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::option::Option<agentcat::Event>> + core::marker::Send + 'static
+pub fn agentcat::AgentCatBuilder::redact_sensitive_information<F>(self, F) -> Self where F: core::ops::function::Fn(&str) -> alloc::string::String + core::marker::Send + core::marker::Sync + 'static
+pub fn agentcat::AgentCatBuilder::redact_sensitive_information_async<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(alloc::string::String) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = alloc::string::String> + core::marker::Send + 'static
+pub fn agentcat::AgentCatBuilder::resolve_session_id<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat::ToolCallRequest) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::option::Option<alloc::string::String>> + core::marker::Send + 'static
+pub fn agentcat::AgentCatBuilder::server_info(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::marker::Freeze for agentcat::AgentCatBuilder
+impl core::marker::Send for agentcat::AgentCatBuilder
+impl core::marker::Sync for agentcat::AgentCatBuilder
+impl core::marker::Unpin for agentcat::AgentCatBuilder
+impl core::marker::UnsafeUnpin for agentcat::AgentCatBuilder
+impl !core::panic::unwind_safe::RefUnwindSafe for agentcat::AgentCatBuilder
+impl !core::panic::unwind_safe::UnwindSafe for agentcat::AgentCatBuilder
+#[non_exhaustive] pub struct agentcat::ChainedErrorData
+pub agentcat::ChainedErrorData::error_type: core::option::Option<alloc::string::String>
+pub agentcat::ChainedErrorData::message: alloc::string::String
+impl core::clone::Clone for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::default() -> Self
+impl core::fmt::Debug for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::ChainedErrorData
+impl serde_core::ser::Serialize for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for agentcat::ChainedErrorData
+pub fn agentcat::ChainedErrorData::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for agentcat::ChainedErrorData
+impl core::marker::Send for agentcat::ChainedErrorData
+impl core::marker::Sync for agentcat::ChainedErrorData
+impl core::marker::Unpin for agentcat::ChainedErrorData
+impl core::marker::UnsafeUnpin for agentcat::ChainedErrorData
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::ChainedErrorData
+impl core::panic::unwind_safe::UnwindSafe for agentcat::ChainedErrorData
+#[non_exhaustive] pub struct agentcat::CustomEvent
+pub agentcat::CustomEvent::duration: core::option::Option<u64>
+pub agentcat::CustomEvent::error: core::option::Option<serde_json::value::Value>
+pub agentcat::CustomEvent::is_error: core::option::Option<bool>
+pub agentcat::CustomEvent::message: core::option::Option<alloc::string::String>
+pub agentcat::CustomEvent::parameters: core::option::Option<serde_json::value::Value>
+pub agentcat::CustomEvent::properties: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat::CustomEvent::resource_name: core::option::Option<alloc::string::String>
+pub agentcat::CustomEvent::response: core::option::Option<serde_json::value::Value>
+pub agentcat::CustomEvent::session_id: core::option::Option<alloc::string::String>
+pub agentcat::CustomEvent::tags: core::option::Option<alloc::vec::Vec<(alloc::string::String, alloc::string::String)>>
+impl agentcat::CustomEvent
+pub fn agentcat::CustomEvent::duration(self, u64) -> Self
+pub fn agentcat::CustomEvent::error(self, impl core::convert::Into<serde_json::value::Value>) -> Self
+pub fn agentcat::CustomEvent::message(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::CustomEvent::new() -> Self
+pub fn agentcat::CustomEvent::parameters(self, serde_json::value::Value) -> Self
+pub fn agentcat::CustomEvent::properties(self, serde_json::value::Value) -> Self
+pub fn agentcat::CustomEvent::resource_name(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::CustomEvent::response(self, serde_json::value::Value) -> Self
+pub fn agentcat::CustomEvent::session_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::CustomEvent::tag(self, impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::CustomEvent
+pub fn agentcat::CustomEvent::clone(&self) -> Self
+impl core::default::Default for agentcat::CustomEvent
+pub fn agentcat::CustomEvent::default() -> Self
+impl core::fmt::Debug for agentcat::CustomEvent
+pub fn agentcat::CustomEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::CustomEvent
+impl core::marker::Send for agentcat::CustomEvent
+impl core::marker::Sync for agentcat::CustomEvent
+impl core::marker::Unpin for agentcat::CustomEvent
+impl core::marker::UnsafeUnpin for agentcat::CustomEvent
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::CustomEvent
+impl core::panic::unwind_safe::UnwindSafe for agentcat::CustomEvent
+#[non_exhaustive] pub struct agentcat::ErrorData
+pub agentcat::ErrorData::chained_errors: core::option::Option<alloc::vec::Vec<agentcat::ChainedErrorData>>
+pub agentcat::ErrorData::error_type: core::option::Option<alloc::string::String>
+pub agentcat::ErrorData::frames: core::option::Option<alloc::vec::Vec<agentcat::StackFrame>>
+pub agentcat::ErrorData::message: alloc::string::String
+pub agentcat::ErrorData::platform: core::option::Option<alloc::string::String>
+pub agentcat::ErrorData::stack: core::option::Option<alloc::string::String>
+impl agentcat::ErrorData
+pub fn agentcat::ErrorData::from_error(&(dyn core::error::Error + 'static)) -> Self
+pub fn agentcat::ErrorData::from_error_typed<E: core::error::Error + 'static>(&E) -> Self
+pub fn agentcat::ErrorData::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::ErrorData::with_type(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::ErrorData
+pub fn agentcat::ErrorData::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat::ErrorData
+pub fn agentcat::ErrorData::eq(&self, &Self) -> bool
+impl core::convert::From<agentcat::ErrorData> for serde_json::value::Value
+pub fn serde_json::value::Value::from(agentcat::ErrorData) -> Self
+impl core::default::Default for agentcat::ErrorData
+pub fn agentcat::ErrorData::default() -> Self
+impl core::fmt::Debug for agentcat::ErrorData
+pub fn agentcat::ErrorData::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::ErrorData
+impl serde_core::ser::Serialize for agentcat::ErrorData
+pub fn agentcat::ErrorData::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for agentcat::ErrorData
+pub fn agentcat::ErrorData::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for agentcat::ErrorData
+impl core::marker::Send for agentcat::ErrorData
+impl core::marker::Sync for agentcat::ErrorData
+impl core::marker::Unpin for agentcat::ErrorData
+impl core::marker::UnsafeUnpin for agentcat::ErrorData
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::ErrorData
+impl core::panic::unwind_safe::UnwindSafe for agentcat::ErrorData
+#[non_exhaustive] pub struct agentcat::Event
+pub agentcat::Event::actor_id: core::option::Option<alloc::string::String>
+pub agentcat::Event::agentcat_version: core::option::Option<alloc::string::String>
+pub agentcat::Event::client_name: core::option::Option<alloc::string::String>
+pub agentcat::Event::client_version: core::option::Option<alloc::string::String>
+pub agentcat::Event::duration: core::option::Option<u64>
+pub agentcat::Event::error: core::option::Option<serde_json::value::Value>
+pub agentcat::Event::event_id: core::option::Option<alloc::string::String>
+pub agentcat::Event::event_type: alloc::string::String
+pub agentcat::Event::id: alloc::string::String
+pub agentcat::Event::identify_actor_data: core::option::Option<serde_json::value::Value>
+pub agentcat::Event::identify_actor_given_id: core::option::Option<alloc::string::String>
+pub agentcat::Event::identify_actor_name: core::option::Option<alloc::string::String>
+pub agentcat::Event::input_tokens: core::option::Option<u32>
+pub agentcat::Event::ip_address: core::option::Option<alloc::string::String>
+pub agentcat::Event::is_error: core::option::Option<bool>
+pub agentcat::Event::output_tokens: core::option::Option<u32>
+pub agentcat::Event::parameters: core::option::Option<serde_json::value::Value>
+pub agentcat::Event::project_id: core::option::Option<alloc::string::String>
+pub agentcat::Event::properties: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat::Event::resource_name: core::option::Option<alloc::string::String>
+pub agentcat::Event::response: core::option::Option<serde_json::value::Value>
+pub agentcat::Event::sdk_language: core::option::Option<alloc::string::String>
+pub agentcat::Event::server_name: core::option::Option<alloc::string::String>
+pub agentcat::Event::server_version: core::option::Option<alloc::string::String>
+pub agentcat::Event::session_id: alloc::string::String
+pub agentcat::Event::tags: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
+pub agentcat::Event::timestamp: chrono::datetime::DateTime<chrono::offset::utc::Utc>
+pub agentcat::Event::user_intent: core::option::Option<alloc::string::String>
+impl core::clone::Clone for agentcat::Event
+pub fn agentcat::Event::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat::Event
+pub fn agentcat::Event::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat::Event
+pub fn agentcat::Event::default() -> Self
+impl core::fmt::Debug for agentcat::Event
+pub fn agentcat::Event::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::Event
+impl serde_core::ser::Serialize for agentcat::Event
+pub fn agentcat::Event::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for agentcat::Event
+pub fn agentcat::Event::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for agentcat::Event
+impl core::marker::Send for agentcat::Event
+impl core::marker::Sync for agentcat::Event
+impl core::marker::Unpin for agentcat::Event
+impl core::marker::UnsafeUnpin for agentcat::Event
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::Event
+impl core::panic::unwind_safe::UnwindSafe for agentcat::Event
+#[non_exhaustive] pub struct agentcat::StackFrame
+pub agentcat::StackFrame::abs_path: core::option::Option<alloc::string::String>
+pub agentcat::StackFrame::colno: core::option::Option<u32>
+pub agentcat::StackFrame::filename: alloc::string::String
+pub agentcat::StackFrame::function: alloc::string::String
+pub agentcat::StackFrame::in_app: bool
+pub agentcat::StackFrame::lineno: core::option::Option<u32>
+pub agentcat::StackFrame::module: core::option::Option<alloc::string::String>
+impl core::clone::Clone for agentcat::StackFrame
+pub fn agentcat::StackFrame::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat::StackFrame
+pub fn agentcat::StackFrame::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat::StackFrame
+pub fn agentcat::StackFrame::default() -> Self
+impl core::fmt::Debug for agentcat::StackFrame
+pub fn agentcat::StackFrame::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::StackFrame
+impl serde_core::ser::Serialize for agentcat::StackFrame
+pub fn agentcat::StackFrame::serialize<__S>(&self, __S) -> core::result::Result<<__S as serde_core::ser::Serializer>::Ok, <__S as serde_core::ser::Serializer>::Error> where __S: serde_core::ser::Serializer
+impl<'de> serde_core::de::Deserialize<'de> for agentcat::StackFrame
+pub fn agentcat::StackFrame::deserialize<__D>(__D) -> core::result::Result<Self, <__D as serde_core::de::Deserializer>::Error> where __D: serde_core::de::Deserializer<'de>
+impl core::marker::Freeze for agentcat::StackFrame
+impl core::marker::Send for agentcat::StackFrame
+impl core::marker::Sync for agentcat::StackFrame
+impl core::marker::Unpin for agentcat::StackFrame
+impl core::marker::UnsafeUnpin for agentcat::StackFrame
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::StackFrame
+impl core::panic::unwind_safe::UnwindSafe for agentcat::StackFrame
+pub struct agentcat::ToolCallRequest
+impl agentcat::ToolCallRequest
+pub fn agentcat::ToolCallRequest::argument(&self, &str) -> core::option::Option<&serde_json::value::Value>
+pub fn agentcat::ToolCallRequest::arguments(&self) -> core::option::Option<&rmcp::model::JsonObject>
+pub fn agentcat::ToolCallRequest::context(&self) -> &rmcp::service::RequestContext<rmcp::service::server::RoleServer>
+pub fn agentcat::ToolCallRequest::header(&self, &str) -> core::option::Option<&str>
+pub fn agentcat::ToolCallRequest::http_request(&self) -> core::option::Option<&http::request::Parts>
+pub fn agentcat::ToolCallRequest::meta(&self) -> &rmcp::model::meta::RequestMetaObject
+pub fn agentcat::ToolCallRequest::params(&self) -> &rmcp::model::CallToolRequestParams
+pub fn agentcat::ToolCallRequest::tool_name(&self) -> &str
+impl core::clone::Clone for agentcat::ToolCallRequest
+pub fn agentcat::ToolCallRequest::clone(&self) -> Self
+impl core::fmt::Debug for agentcat::ToolCallRequest
+pub fn agentcat::ToolCallRequest::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Freeze for agentcat::ToolCallRequest
+impl core::marker::Send for agentcat::ToolCallRequest
+impl core::marker::Sync for agentcat::ToolCallRequest
+impl core::marker::Unpin for agentcat::ToolCallRequest
+impl core::marker::UnsafeUnpin for agentcat::ToolCallRequest
+impl !core::panic::unwind_safe::RefUnwindSafe for agentcat::ToolCallRequest
+impl !core::panic::unwind_safe::UnwindSafe for agentcat::ToolCallRequest
+pub struct agentcat::Tracked<H>
+impl<H> agentcat::Tracked<H>
+pub fn agentcat::Tracked<H>::inner(&self) -> &H
+pub fn agentcat::Tracked<H>::into_inner(self) -> H
+impl<H: core::clone::Clone> core::clone::Clone for agentcat::Tracked<H>
+pub fn agentcat::Tracked<H>::clone(&self) -> Self
+impl<H: rmcp::handler::server::ServerHandler> rmcp::handler::server::ServerHandler for agentcat::Tracked<H>
+pub fn agentcat::Tracked<H>::accepted_subscription_filter(&self, &rmcp::model::SubscriptionFilter) -> core::option::Option<rmcp::model::SubscriptionFilter>
+pub async fn agentcat::Tracked<H>::call_tool(&self, rmcp::model::CallToolRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::mrtr::CallToolResponse, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::cancel_task(&self, rmcp::model::CancelTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::complete(&self, rmcp::model::CompleteRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::CompleteResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::discover(&self, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::DiscoverResult, rmcp::model::ErrorData>
+pub fn agentcat::Tracked<H>::get_info(&self) -> rmcp::model::InitializeResult
+pub async fn agentcat::Tracked<H>::get_prompt(&self, rmcp::model::GetPromptRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::mrtr::GetPromptResponse, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::get_task(&self, rmcp::model::GetTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::task::GetTaskResult, rmcp::model::ErrorData>
+pub fn agentcat::Tracked<H>::get_tool(&self, &str) -> core::option::Option<rmcp::model::tool::Tool>
+pub async fn agentcat::Tracked<H>::initialize(&self, rmcp::model::InitializeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::InitializeResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::list_prompts(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::ListPromptsResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::list_resource_templates(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::ListResourceTemplatesResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::list_resources(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::ListResourcesResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::list_tools(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::ListToolsResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::listen(&self, rmcp::service::server::SubscriptionContext) -> core::result::Result<(), rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::on_cancelled(&self, rmcp::model::CancelledNotificationParam, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>)
+pub async fn agentcat::Tracked<H>::on_custom_notification(&self, rmcp::model::CustomNotification, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>)
+pub async fn agentcat::Tracked<H>::on_custom_request(&self, rmcp::model::CustomRequest, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::CustomResult, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::on_initialized(&self, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>)
+pub async fn agentcat::Tracked<H>::on_progress(&self, rmcp::model::ProgressNotificationParam, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>)
+pub async fn agentcat::Tracked<H>::on_roots_list_changed(&self, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>)
+pub async fn agentcat::Tracked<H>::ping(&self, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::read_resource(&self, rmcp::model::ReadResourceRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<rmcp::model::mrtr::ReadResourceResponse, rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::set_level(&self, rmcp::model::SetLevelRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::subscribe(&self, rmcp::model::SubscribeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+pub fn agentcat::Tracked<H>::supported_protocol_versions(&self) -> alloc::borrow::Cow<'static, [rmcp::model::ProtocolVersion]>
+pub async fn agentcat::Tracked<H>::unsubscribe(&self, rmcp::model::UnsubscribeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+pub async fn agentcat::Tracked<H>::update_task(&self, rmcp::model::UpdateTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> core::result::Result<(), rmcp::model::ErrorData>
+impl<H> core::fmt::Debug for agentcat::Tracked<H>
+pub fn agentcat::Tracked<H>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl<H> core::marker::Freeze for agentcat::Tracked<H> where H: core::marker::Freeze
+impl<H> core::marker::Send for agentcat::Tracked<H> where H: core::marker::Send
+impl<H> core::marker::Sync for agentcat::Tracked<H> where H: core::marker::Sync
+impl<H> core::marker::Unpin for agentcat::Tracked<H> where H: core::marker::Unpin
+impl<H> core::marker::UnsafeUnpin for agentcat::Tracked<H> where H: core::marker::UnsafeUnpin
+impl<H> !core::panic::unwind_safe::RefUnwindSafe for agentcat::Tracked<H>
+impl<H> !core::panic::unwind_safe::UnwindSafe for agentcat::Tracked<H>
+#[non_exhaustive] pub struct agentcat::UserIdentity
+pub agentcat::UserIdentity::user_data: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat::UserIdentity::user_id: alloc::string::String
+pub agentcat::UserIdentity::user_name: core::option::Option<alloc::string::String>
+impl agentcat::UserIdentity
+pub fn agentcat::UserIdentity::data(self, serde_json::value::Value) -> Self
+pub fn agentcat::UserIdentity::name(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat::UserIdentity::new(impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat::UserIdentity
+pub fn agentcat::UserIdentity::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat::UserIdentity
+pub fn agentcat::UserIdentity::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat::UserIdentity
+pub fn agentcat::UserIdentity::default() -> Self
+impl core::fmt::Debug for agentcat::UserIdentity
+pub fn agentcat::UserIdentity::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat::UserIdentity
+impl core::marker::Freeze for agentcat::UserIdentity
+impl core::marker::Send for agentcat::UserIdentity
+impl core::marker::Sync for agentcat::UserIdentity
+impl core::marker::Unpin for agentcat::UserIdentity
+impl core::marker::UnsafeUnpin for agentcat::UserIdentity
+impl core::panic::unwind_safe::RefUnwindSafe for agentcat::UserIdentity
+impl core::panic::unwind_safe::UnwindSafe for agentcat::UserIdentity
+pub fn agentcat::derive_session_id(&str, core::option::Option<&str>) -> alloc::string::String
+pub async fn agentcat::flush(core::time::Duration) -> bool
+pub fn agentcat::flush_blocking(core::time::Duration) -> bool
+pub fn agentcat::publish_custom_event(&str, &str, agentcat::CustomEvent) -> core::result::Result<(), agentcat::Error>
+pub async fn agentcat::shutdown(core::time::Duration) -> bool
+pub fn agentcat::shutdown_blocking(core::time::Duration) -> bool
+pub fn agentcat::track<H: rmcp::handler::server::ServerHandler>(H, impl core::convert::Into<alloc::string::String>) -> agentcat::Tracked<H>
