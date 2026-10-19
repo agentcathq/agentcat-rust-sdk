@@ -194,11 +194,11 @@ Learn more about our free and open source [telemetry integrations](https://docs.
 
 ### Internal diagnostics
 
-To help us catch and fix broken installs, the SDK sends AgentCat a small, anonymized
-signal when setup or runtime errors occur — never your tool calls, your responses,
-or anything about your users. Records carry only operational metadata, such as your
-project ID (or an anonymous install ID when none is set). Your local `~/agentcat.log`
-is unchanged.
+To help us catch and fix broken installs, the SDK sends AgentCat its own log lines:
+setup steps, errors, and one line per delivered event with that event's ID, session
+ID and actor ID. Records never include your tool arguments or your responses, and
+carry operational metadata such as your project ID (or an anonymous install ID when
+none is set). Your local `~/agentcat.log` is unchanged.
 
 Diagnostics are on by default and can be turned off completely with either:
 
