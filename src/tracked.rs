@@ -528,8 +528,12 @@ impl<H: ServerHandler> Tracked<H> {
         if options.server_version.is_some() {
             version = options.server_version.clone();
         }
-        if let Ok(mut guard) = self.shared.server_info.write() {
-            *guard = Some((name.clone(), version.clone()));
+        // Remembered for custom events; written only when it changes, so
+        // concurrent calls do not contend on the lock.
+        let identity = Some((name.clone(), version.clone()));
+        let changed = self.shared.server_info.read().map(|g| *g != identity).unwrap_or(false);
+        if changed && let Ok(mut guard) = self.shared.server_info.write() {
+            *guard = identity;
         }
         (name, version)
     }
