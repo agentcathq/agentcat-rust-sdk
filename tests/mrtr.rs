@@ -2,6 +2,9 @@
 //! tagged and left undecorated; the continuation round is tagged and carries
 //! the mint-back.
 
+// Roots are SEP-2577-deprecated but still model an MRTR input request.
+#![allow(deprecated)]
+
 mod common;
 
 use std::sync::Arc;
