@@ -1,5 +1,5 @@
 //! The README's code snippets, compiled. Keep them in sync with README.md.
-#![allow(dead_code, unused_variables, clippy::diverging_sub_expression)]
+#![allow(dead_code, unused_variables, clippy::redundant_closure)]
 
 mod common;
 
