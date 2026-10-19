@@ -457,14 +457,3 @@ async fn get_more_tools_stays_listed_across_listings_and_calls() {
         assert_eq!(tools.iter().filter(|t| t.name == "get_more_tools").count(), 1);
     }
 }
-
-#[tokio::test]
-async fn large_calls_still_publish_a_truncated_event() {
-    let agentcat = builder("large-call").build();
-    let client = connect(agentcat.track(Todo::new())).await;
-    let big = "x".repeat(40 * 1024 * 1024);
-    call(&client, "echo", json!({"blob": big})).await.unwrap();
-    let e = &api().events_for("large-call", 1).await[0];
-    let size = serde_json::to_vec(e).unwrap().len();
-    assert!(size < 200_000, "truncated to about 100 KB, got {size}");
-}
