@@ -1,0 +1,3 @@
+tests/fixtures/** text eol=lf
+tests/parity/** text eol=lf
+scripts/parity/** text eol=lf
