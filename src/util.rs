@@ -18,6 +18,12 @@ pub(crate) fn unix_nanos() -> u128 {
         .unwrap_or(0)
 }
 
+/// The current time, at millisecond precision like JavaScript's `Date`.
+pub(crate) fn now_millis() -> chrono::DateTime<chrono::Utc> {
+    let now = chrono::Utc::now();
+    chrono::DateTime::from_timestamp_millis(now.timestamp_millis()).unwrap_or(now)
+}
+
 /// Formats a time like JavaScript's `Date.prototype.toISOString`:
 /// `YYYY-MM-DDTHH:mm:ss.sssZ`.
 pub(crate) fn iso_millis(time: &chrono::DateTime<chrono::Utc>) -> String {

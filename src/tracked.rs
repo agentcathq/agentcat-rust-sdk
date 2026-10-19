@@ -62,6 +62,9 @@ struct Registry {
     tools: RwLock<HashMap<String, ToolInjection>>,
     /// A full listing (served or rebuilt) went through this instance.
     listed: AtomicBool,
+    /// The customer's own listing contains a `get_more_tools` tool. Only the
+    /// customer's pages set this, never the copy AgentCat appends.
+    customer_report_missing: AtomicBool,
 }
 
 impl Registry {
@@ -81,8 +84,11 @@ impl Registry {
         }
     }
 
-    fn contains(&self, name: &str) -> bool {
-        self.tools.read().is_ok_and(|t| t.contains_key(name))
+    /// Records that the customer's own handler knows a tool by this name.
+    fn note_customer_tool(&self, name: &str) {
+        if name == GET_MORE_TOOLS_NAME {
+            self.customer_report_missing.store(true, Ordering::Release);
+        }
     }
 }
 
@@ -180,6 +186,9 @@ impl<F: Future> Future for PanicScope<F> {
     }
 }
 
+/// The mint-back text block and structured `mcp_session` for one result.
+type Decoration = (Option<String>, Option<Map<String, Value>>);
+
 /// Everything the call path builds before the customer's handler runs.
 struct Prepared {
     event: Event,
@@ -259,7 +268,13 @@ fn project_request(request: &CallToolRequestParams, context: &RequestContext<Rol
     if let Some(state) = &request.request_state {
         params.insert("requestState".into(), json!(state));
     }
-    json!({"method": "tools/call", "params": params})
+    // The raw JSON-RPC message, as the TS SDK records it.
+    json!({
+        "method": "tools/call",
+        "params": params,
+        "jsonrpc": "2.0",
+        "id": serde_json::to_value(&context.id).unwrap_or(Value::Null),
+    })
 }
 
 /// Client name and version from one object, each kept only when a string.
@@ -352,7 +367,9 @@ fn start_hook<T: Send + 'static>(
                 "{label} hook error: {}",
                 crate::util::panic_message(&*p)
             ));
-            None
+            // Resolves to "no value", exactly like a hook that returned None:
+            // a resolve_session_id panic then mints a session.
+            Some(Box::pin(std::future::ready(None)))
         }
     }
 }
@@ -395,9 +412,13 @@ impl<H: ServerHandler> Tracked<H> {
         mut tools: Vec<Tool>,
         last_page: bool,
     ) -> (Vec<Tool>, Vec<(String, ToolInjection)>) {
+        if tools.iter().any(|t| t.name == GET_MORE_TOOLS_NAME) {
+            self.registry
+                .customer_report_missing
+                .store(true, Ordering::Release);
+        }
         if self.shared.inject.report_missing && last_page {
-            let customer_owned = tools.iter().any(|t| t.name == GET_MORE_TOOLS_NAME)
-                || self.registry.contains(GET_MORE_TOOLS_NAME);
+            let customer_owned = self.registry.customer_report_missing.load(Ordering::Acquire);
             if customer_owned {
                 self.shared.memory.record_customer_report_missing();
             } else if let Some(tool) = tool_from_json(report_missing_descriptor()) {
@@ -446,9 +467,9 @@ impl<H: ServerHandler> Tracked<H> {
             }
             Ok::<(), McpError>(())
         };
-        // Timed by the publisher thread: the server's runtime may run without
-        // timers.
-        let timeout = crate::publisher::sleep(REGISTRY_REBUILD_TIMEOUT);
+        // Timed by AgentCat's timer thread: the server's runtime may run
+        // without timers.
+        let timeout = crate::timer::sleep(REGISTRY_REBUILD_TIMEOUT);
         let outcome = match futures::future::select(Box::pin(rebuild), timeout).await {
             futures::future::Either::Left((result, _)) => Ok(result),
             futures::future::Either::Right(((), _)) => Err(()),
@@ -484,11 +505,12 @@ impl<H: ServerHandler> Tracked<H> {
             return Lookup::Found(found);
         }
         // `get_tool` is synchronous and cheap; `#[tool_handler]` servers have it.
-        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name))
-            && let Some((_, injection)) = self.inject_one(&tool)
-        {
-            self.registry.insert(name.to_owned(), injection);
-            return Lookup::Found(injection);
+        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name)) {
+            self.registry.note_customer_tool(name);
+            if let Some((_, injection)) = self.inject_one(&tool) {
+                self.registry.insert(name.to_owned(), injection);
+                return Lookup::Found(injection);
+            }
         }
         let mut registry_available = self.registry.listed.load(Ordering::Acquire);
         if !registry_available {
@@ -548,6 +570,7 @@ impl<H: ServerHandler> Tracked<H> {
         &self,
         request: &CallToolRequestParams,
         context: &RequestContext<RoleServer>,
+        received_at: chrono::DateTime<chrono::Utc>,
     ) -> Prepared {
         let shared = &self.shared;
         let options = &shared.options;
@@ -595,6 +618,8 @@ impl<H: ServerHandler> Tracked<H> {
         }
 
         let mut event = shared.base_event(MCP_TOOLS_CALL_EVENT_TYPE);
+        // The request's arrival, before any registry rebuild.
+        event.timestamp = received_at;
         let (server_name, server_version) = self.server_identity();
         event.server_name = server_name;
         event.server_version = server_version;
@@ -671,11 +696,18 @@ impl<H: ServerHandler> Tracked<H> {
         };
 
         let mut response = outcome;
+        // Everything that can fail runs first, on the unchanged result; the
+        // result is decorated only after that succeeded.
+        let mut decoration: Option<Decoration> = None;
         let decorated = catch(|| {
-            match &mut response {
+            match &response {
                 CallToolResponse::Complete(result) => {
-                    // The event records the customer's original result.
-                    let original = serde_json::to_value(&*result).unwrap_or(Value::Null);
+                    // The event records the customer's original result
+                    // (without rmcp's protocol-level `resultType`).
+                    let mut original = serde_json::to_value(result).unwrap_or(Value::Null);
+                    if let Value::Object(map) = &mut original {
+                        map.remove("resultType");
+                    }
                     if result.is_error == Some(true) {
                         event.is_error = Some(true);
                         event.error =
@@ -684,12 +716,11 @@ impl<H: ServerHandler> Tracked<H> {
                     event.output_tokens = crate::tokens::estimate_output_tokens(Some(&original));
                     event.response = Some(original);
                     // Mint-back is wire-only.
-                    if let Some(text) = build_mint_back_text(&resolution) {
-                        result.content.insert(0, ContentBlock::text(text));
-                    }
-                    if mirror_structured && let Some(mint) = build_structured_mint_back(&resolution) {
-                        mirror_structured_mint_back(&mut result.structured_content, mint);
-                    }
+                    let text = build_mint_back_text(&resolution);
+                    let mint = mirror_structured
+                        .then(|| build_structured_mint_back(&resolution))
+                        .flatten();
+                    decoration = Some((text, mint));
                 }
                 CallToolResponse::InputRequired(_) => {
                     // An intermediate round: tag it, decorate nothing. The
@@ -718,6 +749,14 @@ impl<H: ServerHandler> Tracked<H> {
                 event.resource_name.as_deref().unwrap_or_default()
             ));
             return Ok(response);
+        }
+        if let (CallToolResponse::Complete(result), Some((text, mint))) = (&mut response, decoration) {
+            if let Some(text) = text {
+                result.content.insert(0, ContentBlock::text(text));
+            }
+            if let Some(mint) = mint {
+                mirror_structured_mint_back(&mut result.structured_content, mint);
+            }
         }
         self.shared.publish(event, pending);
         Ok(response)
@@ -772,7 +811,8 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
             return self.call_untracked(request, context).await;
         }
 
-        let prepared = AssertUnwindSafe(self.prepare(&request, &context))
+        let received_at = crate::util::now_millis();
+        let prepared = AssertUnwindSafe(self.prepare(&request, &context, received_at))
             .catch_unwind()
             .await;
         let Ok(mut prepared) = prepared else {
@@ -858,7 +898,10 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
             return original;
         }
         let tool = match original {
-            Some(tool) => tool,
+            Some(tool) => {
+                self.registry.note_customer_tool(name);
+                tool
+            }
             None if self.intercepts_report_missing(name) => {
                 let (tool, injection) = self.report_missing_tool()?;
                 self.registry.insert(name.to_owned(), injection);

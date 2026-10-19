@@ -188,20 +188,24 @@ pub(crate) fn build_handle_tags(
         // SDK tags skip validation, so the tag copy is clamped: newlines
         // become spaces and it keeps 200 UTF-16 units. The handle itself
         // stays verbatim.
-        let flat: String = agent_id
-            .chars()
-            .map(|c| if c == '\r' || c == '\n' { ' ' } else { c })
-            .collect();
-        tags.insert(
-            AGENTCAT_TAG_AGENT_ID.to_owned(),
-            utf16_prefix(&flat, 200).to_owned(),
-        );
+        tags.insert(AGENTCAT_TAG_AGENT_ID.to_owned(), clamp_tag_value(agent_id));
         tags.insert(AGENTCAT_TAG_AGENT_SOURCE.to_owned(), "supplied".to_owned());
     }
     if let Some(version) = protocol_version.filter(|v| !v.is_empty()) {
-        tags.insert(AGENTCAT_TAG_PROTOCOL_VERSION.to_owned(), version.to_owned());
+        // Client-supplied too: clamped like the agent tag, or the API drops it.
+        tags.insert(AGENTCAT_TAG_PROTOCOL_VERSION.to_owned(), clamp_tag_value(version));
     }
     tags
+}
+
+/// A tag value the API accepts: newlines become spaces, at most 200 UTF-16
+/// units.
+fn clamp_tag_value(value: &str) -> String {
+    let flat: String = value
+        .chars()
+        .map(|c| if c == '\r' || c == '\n' { ' ' } else { c })
+        .collect();
+    utf16_prefix(&flat, 200).to_owned()
 }
 
 /// Finalizes a hook-mode session from the hook's value: a non-empty string

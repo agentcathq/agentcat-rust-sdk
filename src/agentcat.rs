@@ -131,7 +131,7 @@ impl Shared {
         let mut event = Event {
             project_id: self.project_id.clone(),
             event_type: event_type.to_owned(),
-            timestamp: chrono::Utc::now(),
+            timestamp: crate::util::now_millis(),
             sdk_language: Some(SDK_LANGUAGE.to_owned()),
             agentcat_version: Some(SDK_VERSION.to_owned()),
             identify_actor_data: Some(Value::Object(Map::new())),
@@ -223,6 +223,9 @@ impl AgentCat {
         };
         let mut event = self.shared.base_event(AGENTCAT_CUSTOM_EVENT_TYPE);
         fill_custom(&mut event, session_id, data);
+        // As in TS, a tracked custom event without a duration reports the
+        // time since it was built: zero.
+        event.duration.get_or_insert(0);
         log_custom(&event.session_id);
         self.shared.publish(event, Pending::default());
     }
@@ -502,6 +505,11 @@ impl AgentCatBuilder {
                 "Warning: project ID \"{p}\" does not start with \"proj_\"; the AgentCat API will drop its events."
             ));
         }
+        if !json_keeps_insertion_order() {
+            write_to_log(
+                "Warning: serde_json sorts object keys in this build (its preserve_order feature is off, for example through default-features = false). Injected parameters and the mcp_session field will not come first; enable the agentcat-sdk preserve-order feature.",
+            );
+        }
         if options.capture_panics && options.enable_tracing {
             crate::exceptions::install_panic_hook();
         }
@@ -533,6 +541,15 @@ impl AgentCatBuilder {
             }),
         }
     }
+}
+
+/// True when serde_json keeps insertion order (its `preserve_order` feature
+/// is on anywhere in the build).
+fn json_keeps_insertion_order() -> bool {
+    let mut probe = Map::new();
+    probe.insert("b".into(), Value::Null);
+    probe.insert("a".into(), Value::Null);
+    probe.keys().next().map(String::as_str) == Some("b")
 }
 
 /// Data for an `agentcat:custom` event.
@@ -684,7 +701,7 @@ pub fn publish_custom_event(session_id: &str, project_id: &str, data: CustomEven
     let mut event = Event {
         project_id: Some(project_id.to_owned()),
         event_type: AGENTCAT_CUSTOM_EVENT_TYPE.to_owned(),
-        timestamp: chrono::Utc::now(),
+        timestamp: crate::util::now_millis(),
         ..Event::default()
     };
     fill_custom(&mut event, session, data);

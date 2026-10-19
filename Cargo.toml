@@ -57,6 +57,7 @@ axum = "0.8"
 schemars = "1"
 anyhow = "1"
 tokio-util = "0.7"
+futures = { version = "0.3", features = ["executor"] }
 
 [package.metadata.docs.rs]
 all-features = false

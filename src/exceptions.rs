@@ -98,6 +98,9 @@ pub(crate) fn in_tracked_call<T>(f: impl FnOnce() -> T) -> T {
         }
     }
     let _reset = Reset(IN_TRACKED_CALL.with(|c| c.replace(true)));
+    // A capture left over from a panic the handler caught itself must not be
+    // attached to a later one.
+    LAST_PANIC.with(|slot| slot.borrow_mut().take());
     f()
 }
 

@@ -70,6 +70,7 @@ mod publisher;
 mod redaction;
 mod runtime;
 mod sanitization;
+mod timer;
 mod tokens;
 #[cfg(feature = "rmcp")]
 mod tool_call;

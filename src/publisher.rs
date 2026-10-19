@@ -34,7 +34,7 @@ const MAX_PROCESSING: usize = 256;
 /// Concurrent requests to the AgentCat API.
 const MAX_IN_FLIGHT_SENDS: usize = 5;
 /// Concurrent exporter requests.
-const MAX_IN_FLIGHT_EXPORTS: usize = 16;
+const MAX_IN_FLIGHT_EXPORTS: usize = 64;
 /// Retries after the first attempt, at 1 s, 2 s and 4 s.
 const MAX_RETRIES: u32 = 3;
 /// Budget for a customer hook to settle once its event is processed.
@@ -143,26 +143,6 @@ impl Drop for Outstanding {
     }
 }
 
-/// A future that completes after `duration`, timed by the publisher thread.
-/// It never completes when the publisher could not start.
-pub(crate) fn sleep(duration: Duration) -> BoxFuture<()> {
-    match global().runtime.as_ref() {
-        Some(handle) => {
-            let (tx, rx) = tokio::sync::oneshot::channel::<()>();
-            handle.spawn(async move {
-                tokio::time::sleep(duration).await;
-                let _ = tx.send(());
-            });
-            Box::pin(async move {
-                if rx.await.is_err() {
-                    futures::future::pending::<()>().await;
-                }
-            })
-        }
-        None => Box::pin(futures::future::pending()),
-    }
-}
-
 /// Approximate in-memory size of an event's payloads, for the queue budget.
 fn approx_bytes(event: &Event) -> usize {
     fn walk(v: &Value) -> usize {
@@ -197,36 +177,38 @@ impl Publisher {
         });
         let config = Arc::new(GlobalConfig::default());
         let queued_bytes = Arc::new(AtomicUsize::new(0));
-        let runtime = match tokio::runtime::Builder::new_current_thread()
-            .enable_all()
-            .thread_name("agentcat-publisher")
-            .build()
-        {
-            Ok(rt) => Some(rt),
+        let (handle_tx, handle_rx) = std::sync::mpsc::channel();
+        let worker_counters = counters.clone();
+        let worker_config = config.clone();
+        let worker_bytes = queued_bytes.clone();
+        let spawned = std::thread::Builder::new()
+            .name("agentcat-publisher".into())
+            .spawn(move || {
+                // Built on its own thread: a failure here never drops a
+                // runtime inside the customer's async context.
+                match tokio::runtime::Builder::new_current_thread().enable_all().build() {
+                    Ok(rt) => {
+                        let _ = handle_tx.send(Some(rt.handle().clone()));
+                        rt.block_on(run_worker(rx, worker_counters, worker_config, worker_bytes));
+                    }
+                    Err(e) => {
+                        write_to_log(&format!(
+                            "Warning: AgentCat could not start its publisher runtime; events will not be sent - {e}"
+                        ));
+                        let _ = handle_tx.send(None);
+                    }
+                }
+            });
+        let runtime = match spawned {
+            Ok(_) => handle_rx.recv().ok().flatten(),
             Err(e) => {
                 write_to_log(&format!(
-                    "Warning: AgentCat could not start its publisher runtime; events will not be sent - {e}"
+                    "Warning: AgentCat could not start its publisher thread; events will not be sent - {e}"
                 ));
                 None
             }
         };
-        let handle = runtime.as_ref().map(|rt| rt.handle().clone());
-        let mut sender = None;
-        if let Some(rt) = runtime {
-            let worker_counters = counters.clone();
-            let worker_config = config.clone();
-            let worker_bytes = queued_bytes.clone();
-            let spawned = std::thread::Builder::new()
-                .name("agentcat-publisher".into())
-                .spawn(move || rt.block_on(run_worker(rx, worker_counters, worker_config, worker_bytes)));
-            match spawned {
-                Ok(_) => sender = Some(tx),
-                Err(e) => write_to_log(&format!(
-                    "Warning: AgentCat could not start its publisher thread; events will not be sent - {e}"
-                )),
-            }
-        }
-        let runtime = if sender.is_some() { handle } else { None };
+        let sender = runtime.is_some().then_some(tx);
         Self {
             sender: Mutex::new(sender),
             counters,
@@ -260,8 +242,10 @@ impl Publisher {
         let Some(sender) = sender else {
             return;
         };
+        // Accept while the queue is under budget, so one large event still
+        // goes through (truncation reduces it to about 100 KB).
         let bytes = approx_bytes(&queued.event);
-        if self.queued_bytes.fetch_add(bytes, Ordering::SeqCst) + bytes > MAX_QUEUED_BYTES {
+        if self.queued_bytes.fetch_add(bytes, Ordering::SeqCst) >= MAX_QUEUED_BYTES {
             self.queued_bytes.fetch_sub(bytes, Ordering::SeqCst);
             self.record_drop("Event queue over its memory budget");
             return;
@@ -356,6 +340,10 @@ async fn wait_idle(counters: &Counters, timeout: Duration) -> bool {
 
 struct Worker {
     client: Option<reqwest::Client>,
+    /// The queue's memory budget; an event's bytes stay counted until it is
+    /// truncated.
+    queued_bytes: Arc<AtomicUsize>,
+    dropped_exports: AtomicUsize,
     api: OnceLock<Configuration>,
     config: Arc<GlobalConfig>,
     counters: Arc<Counters>,
@@ -390,6 +378,8 @@ async fn run_worker(
 ) {
     let worker = Arc::new(Worker {
         client: build_client(),
+        queued_bytes,
+        dropped_exports: AtomicUsize::new(0),
         api: OnceLock::new(),
         config,
         counters,
@@ -404,7 +394,6 @@ async fn run_worker(
         tokio::select! {
             queued = rx.recv() => {
                 let Some(queued) = queued else { break };
-                queued_bytes.fetch_sub(queued.approx_bytes, Ordering::SeqCst);
                 let guard = Outstanding(worker.counters.clone());
                 let Ok(permit) = processing.clone().acquire_owned().await else { break };
                 let worker = worker.clone();
@@ -493,7 +482,18 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
     }
 
     // SDK tags stay last-writer: on-path tags win name collisions.
-    if let Some(customer) = customer_tags {
+    if let Some(mut customer) = customer_tags {
+        // The API keeps the first 50 tags. The request map has no order, so
+        // leave room for the SDK tags here: customer tags lose, as in TS.
+        let sdk_count = event.tags.as_ref().map_or(0, |t| t.len());
+        let room = 50usize.saturating_sub(sdk_count);
+        if customer.len() > room {
+            write_to_log(&format!(
+                "Dropping {} tag(s) — exceeds maximum of 50 entries per event",
+                customer.len() - room
+            ));
+            customer.truncate(room);
+        }
         let mut merged: BTreeMap<String, String> = customer.into_iter().collect();
         if let Some(sdk) = event.tags.take() {
             merged.extend(sdk);
@@ -509,6 +509,15 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
                 write_to_log("Warning: eventProperties hook returned a non-object value; properties omitted")
             }
         }
+    }
+}
+
+/// Releases an event's bytes from the queue budget when dropped.
+struct BudgetRelease(Arc<AtomicUsize>, usize);
+
+impl Drop for BudgetRelease {
+    fn drop(&mut self) {
+        self.0.fetch_sub(self.1, Ordering::SeqCst);
     }
 }
 
@@ -546,8 +555,9 @@ impl Worker {
             pending,
             event_redactor,
             string_redactor,
-            ..
+            approx_bytes,
         } = queued;
+        let budget = BudgetRelease(self.queued_bytes.clone(), approx_bytes);
         let Some(client) = self.client.clone() else {
             return; // No HTTP client: the failure was logged at startup.
         };
@@ -579,6 +589,8 @@ impl Worker {
 
         crate::sanitization::sanitize_event(&mut event);
         let mut event = crate::truncation::truncate_event(event);
+        // The event is small now: release its share of the queue budget.
+        drop(budget);
         if event.id.is_empty() {
             event.id = crate::ksuid::new_event_id();
         }
@@ -602,18 +614,26 @@ impl Worker {
         }
         let event = Arc::new(event.clone());
         for (name, exporter) in exporters {
+            // Bounded: when every export slot is busy (a slow or unreachable
+            // vendor), drop this export rather than queue it without limit.
+            let Ok(permit) = self.exports.clone().try_acquire_owned() else {
+                let n = self.dropped_exports.fetch_add(1, Ordering::Relaxed) + 1;
+                if n == 1 || n.is_multiple_of(1000) {
+                    write_to_log(&format!(
+                        "Telemetry export busy, dropping export for {name} ({n} dropped so far)"
+                    ));
+                }
+                continue;
+            };
             let guard = Outstanding(self.counters.clone());
             self.counters.begin();
             let exporter = exporter.clone();
             let client = client.clone();
             let event = event.clone();
             let name = name.clone();
-            let exports = self.exports.clone();
             tokio::spawn(async move {
                 let _guard = guard;
-                let Ok(_permit) = exports.acquire().await else {
-                    return;
-                };
+                let _permit = permit;
                 let fut = std::panic::AssertUnwindSafe(exporter.export(client, event));
                 match futures::FutureExt::catch_unwind(fut).await {
                     Ok(Ok(())) => {}

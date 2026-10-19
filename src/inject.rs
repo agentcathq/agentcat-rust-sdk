@@ -111,6 +111,28 @@ fn is_composed(schema: &Map<String, Value>) -> bool {
     truthy(schema.get("oneOf")) || truthy(schema.get("allOf")) || truthy(schema.get("anyOf"))
 }
 
+/// True when any `properties` object anywhere in the schema (root, composed
+/// branches, `$defs`, nested objects) declares `param`.
+fn declared_anywhere(schema: &Map<String, Value>, param: &str) -> bool {
+    fn walk(value: &Value, param: &str) -> bool {
+        match value {
+            Value::Object(map) => {
+                map.get("properties")
+                    .and_then(Value::as_object)
+                    .is_some_and(|p| p.contains_key(param))
+                    || map.values().any(|v| walk(v, param))
+            }
+            Value::Array(items) => items.iter().any(|v| walk(v, param)),
+            _ => false,
+        }
+    }
+    schema
+        .get("properties")
+        .and_then(Value::as_object)
+        .is_some_and(|p| p.contains_key(param))
+        || schema.values().any(|v| walk(v, param))
+}
+
 fn declares(schema: &Map<String, Value>, param: &str) -> bool {
     truthy(schema.get("properties").and_then(|p| p.get(param)))
 }
@@ -191,9 +213,11 @@ pub(crate) fn inject_tool(
             ));
             // A composed tool never advertises the handles, but an agent may
             // still echo them from another tool's mint-back; strip them so a
-            // strict handler never sees them.
-            result.strip.session_id = cfg.inject_session_id && !result.declares_session_id;
-            result.strip.agent_id = cfg.inject_agent_id && !declares(input, AGENT_ID_PARAM);
+            // strict handler never sees them. Only when no branch (or
+            // definition) of the schema declares the name: then the
+            // argument belongs to the customer.
+            result.strip.session_id = cfg.inject_session_id && !declared_anywhere(input, SESSION_ID_PARAM);
+            result.strip.agent_id = cfg.inject_agent_id && !declared_anywhere(input, AGENT_ID_PARAM);
         } else {
             prepare_properties(input);
             if cfg.inject_session_id {
@@ -397,5 +421,41 @@ impl InjectConfig {
                 .to_owned(),
             report_missing,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cfg(agent: bool) -> InjectConfig {
+        InjectConfig::new(true, false, agent, true, None, true)
+    }
+
+    #[test]
+    fn composed_schemas_keep_handles_their_branches_declare() {
+        // schemars emits oneOf for enums: a `session_id` field in one variant
+        // is the customer's argument and must reach the handler.
+        let mut schema: Map<String, Value> = serde_json::from_value(json!({
+            "oneOf": [
+                {"type": "object", "properties": {"session_id": {"type": "string"}, "cmd": {"type": "string"}}},
+                {"type": "object", "properties": {"other": {"type": "string"}}}
+            ]
+        }))
+        .unwrap();
+        let r = inject_tool(&cfg(true), &InjectMemory::default(), "term", &mut schema, None);
+        assert!(!r.strip.session_id);
+        assert!(r.strip.agent_id);
+        assert!(!r.strip.context);
+    }
+
+    #[test]
+    fn composed_schemas_strip_undeclared_echoed_handles() {
+        let mut schema: Map<String, Value> =
+            serde_json::from_value(json!({"anyOf": [{"type": "object", "properties": {"a": {}}}], "$defs": {"X": {"properties": {"agent_id": {}}}}}))
+                .unwrap();
+        let r = inject_tool(&cfg(true), &InjectMemory::default(), "t", &mut schema, None);
+        assert!(r.strip.session_id);
+        assert!(!r.strip.agent_id, "declared in $defs");
     }
 }
