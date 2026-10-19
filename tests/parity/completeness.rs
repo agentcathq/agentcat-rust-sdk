@@ -12,6 +12,7 @@ const ENFORCED: &[&str] = &[
     "constants.test.ts",
     "ksuid.test.ts",
     "posthog-uuidv7.test.ts",
+    "tokenEstimate.test.ts",
     "validation.test.ts",
 ];
 

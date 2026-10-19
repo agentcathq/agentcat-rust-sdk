@@ -273,6 +273,7 @@ tags (R8).
 | 7 | Timestamps serialize `+00:00` | Generated client (R1) |
 | 8 | Explicit `shutdown()`, no signal handlers | Rust has no exit hook |
 | 9 | Unknown tools produce a JSON-RPC error without a text block | rmcp behavior (as TS v2 and C#) |
+| 10 | JSON walks (token estimates) stop at depth 1,000 and omit the value | Rust has no catchable stack overflow; TS stops at V8's stack limit |
 
 Everything else follows TS, D15 included. `docs/PORTING.md` is retired by plan 1.
 

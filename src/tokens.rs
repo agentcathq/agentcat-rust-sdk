@@ -11,6 +11,8 @@ use serde_json::Value;
 pub(crate) const TOKEN_ESTIMATE_BYTES_PER_TOKEN: f64 = 3.5;
 /// The API's token columns are `int32`.
 const MAX_TOKEN_COUNT: u32 = 2_147_483_647;
+/// Arrays and objects nested deeper than this get no estimate.
+const MAX_JSON_DEPTH: usize = 1_000;
 
 /// `ceil(bytes / 3.5)`, 0 for nothing, clamped to `i32::MAX`.
 #[allow(
@@ -32,28 +34,38 @@ pub(crate) fn estimate_tokens(bytes: f64) -> u32 {
 
 /// UTF-8 length of the compact JSON, the same bytes as JavaScript's
 /// `JSON.stringify` (which writes numbers its own way: `10`, not `10.0`;
-/// `100000000000000000000`, not `1e20`).
+/// `100000000000000000000`, not `1e20`). `None` when the value nests more
+/// than `MAX_JSON_DEPTH` arrays or objects.
 fn compact_json_bytes(value: &Value) -> Option<usize> {
-    fn len(value: &Value) -> Option<usize> {
+    fn len(value: &Value, depth: usize) -> Option<usize> {
         Some(match value {
             Value::Null | Value::Bool(true) => 4,
             Value::Bool(false) => 5,
             Value::Number(n) => js_number_len(n),
             Value::String(_) => serde_json::to_vec(value).ok()?.len(),
             Value::Array(items) => {
-                let inner: usize = items.iter().map(len).sum::<Option<usize>>()?;
+                if depth >= MAX_JSON_DEPTH {
+                    return None;
+                }
+                let inner: usize = items
+                    .iter()
+                    .map(|item| len(item, depth + 1))
+                    .sum::<Option<usize>>()?;
                 2 + inner + items.len().saturating_sub(1)
             }
             Value::Object(map) => {
+                if depth >= MAX_JSON_DEPTH {
+                    return None;
+                }
                 let mut total = 2 + map.len().saturating_sub(1);
                 for (k, v) in map {
-                    total += serde_json::to_vec(k).ok()?.len() + 1 + len(v)?;
+                    total += serde_json::to_vec(k).ok()?.len() + 1 + len(v, depth + 1)?;
                 }
                 total
             }
         })
     }
-    len(value)
+    len(value, 0)
 }
 
 /// Length of JavaScript's `Number.prototype.toString` for a JSON number.
