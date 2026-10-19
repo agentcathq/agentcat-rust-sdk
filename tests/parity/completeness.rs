@@ -8,7 +8,7 @@ const MANIFEST: &str = include_str!("manifest.tsv");
 const NOT_PORTED: &str = include_str!("NOT_PORTED.md");
 
 /// TS test files whose cases must all have Rust tests.
-const ENFORCED: &[&str] = &["constants.test.ts"];
+const ENFORCED: &[&str] = &["constants.test.ts", "ksuid.test.ts"];
 
 /// Cases of enforced files that a later plan ports: (TS file, TS test, plan).
 const DEFERRED: &[(&str, &str, u8)] = &[];

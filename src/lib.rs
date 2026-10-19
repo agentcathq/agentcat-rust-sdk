@@ -222,11 +222,15 @@ pub mod __private {
 
     /// KSUID helpers.
     pub fn ksuid_from_parts(time_ms: u64, payload: [u8; 16]) -> Option<String> {
-        crate::ksuid::Ksuid::from_parts(time_ms, payload).map(|k| k.encode())
+        crate::ksuid::Ksuid::from_parts(time_ms, &payload)
+            .ok()
+            .map(|k| k.encode())
     }
     /// KSUID helpers: `(timestamp, payload)`.
     pub fn ksuid_parse(s: &str) -> Option<(u32, Vec<u8>)> {
-        crate::ksuid::Ksuid::parse(s).map(|k| (k.timestamp(), k.payload().to_vec()))
+        crate::ksuid::Ksuid::parse(s)
+            .ok()
+            .map(|k| (k.timestamp(), k.payload().to_vec()))
     }
 
     /// Trace-context helpers: `(trace_id, span_id, dd_trace_id, dd_span_id)`.

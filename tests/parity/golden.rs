@@ -2,6 +2,7 @@
 
 use super::support::{fixture_json, fixture_text};
 use crate::constants::*;
+use crate::ksuid::derive_session_id;
 use crate::util::{hex, sha256, utf16_len};
 
 fn constant(name: &str) -> Option<&'static str> {
@@ -81,4 +82,22 @@ fn golden_txt_lengths_and_hashes_match() {
         checked += 1;
     }
     assert_eq!(checked, 16);
+}
+
+#[test]
+fn derive_vectors_match() {
+    let vectors = fixture_json("php-audit/handles/derive-vectors.json");
+    let rows = vectors.as_array().expect("an array");
+    assert_eq!(rows.len(), 10);
+    for row in rows {
+        let id = row["id"].as_str().expect("id is a string");
+        let project_id = row["projectId"].as_str();
+        assert!(project_id.is_some() || row["projectId"].is_null());
+        assert_eq!(
+            Some(derive_session_id(id, project_id).as_str()),
+            row["sessionId"].as_str(),
+            "{row}"
+        );
+    }
+    assert_eq!(derive_session_id("x", Some("")), derive_session_id("x", None));
 }

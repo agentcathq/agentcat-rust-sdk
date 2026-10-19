@@ -59,7 +59,7 @@ impl PostHogExporterConfig {
 pub(crate) fn to_uuid_v7(prefixed_id: &str) -> String {
     let hash = sha256(prefixed_id.as_bytes());
     let bare = strip_lowercase_prefix(prefixed_id);
-    let timestamp_ms = match Ksuid::parse(bare) {
+    let timestamp_ms = match Ksuid::parse(bare).ok() {
         Some(k) => k.time_ms(),
         None => hash[10..16]
             .iter()
