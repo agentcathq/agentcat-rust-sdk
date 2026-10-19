@@ -51,12 +51,18 @@ Every claim in the reports cites a file and line.
 
 ## API client status
 
-The generated `agentcat-api` crate lives in `agentcat-server`, branch
-`feat/rust-sdk` (worktree `/home/ubuntu/worktrees/agentcat-server-rust-sdk`).
-That branch already settles two items that reports 02 and 03 raise:
+The generated `agentcat-api` crate is built in `agentcat-server` `sdk-generator/`
+(`generate-rust-sdk.sh`, merged in PR #592) and published to crates.io with trusted
+publishing. Version 0.0.3 is the first with `EventType::AgentcatColonCustom`; the SDK depends
+on `agentcat-api = "0.0.3"`. The client uses OpenAPI Generator 7.26.0: reqwest 0.13 (as rmcp
+uses), `native-tls` and `rustls` features, and `chrono` timestamps.
 
-- The public schema now lists `agentcat:custom` in the `event_type` enum, so
-  the generated Rust enum has `EventType::AgentcatColonCustom`. The server must
-  deploy this before the first client release.
-- The Rust client uses OpenAPI Generator 7.26.0: reqwest 0.13 (the version
-  rmcp uses), `native-tls` and `rustls` features, and a `chrono` timestamp.
+## Follow-up research and the port
+
+- `../research/04-rust-mcp-usage.md`: which Rust MCP crates have real usage, and how 15 real
+  rmcp servers are built and served.
+- `../research/05-rust-sdk-best-practices.md`: how Sentry, OpenTelemetry, Datadog, PostHog and
+  others build lean Rust SDKs, and the checklist the port follows.
+- `../research/06a-ts-test-index.md`, `06b`, `06c`: every TS test case (1,024), classified as
+  port, adapt or N/A for Rust.
+- `../PORTING.md`: the port's deliberate differences from the TS SDK.
