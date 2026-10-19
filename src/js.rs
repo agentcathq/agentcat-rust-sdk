@@ -1,5 +1,6 @@
 //! JavaScript semantics the TypeScript SDK relies on: `String.prototype.trim`,
-//! truthiness, and `Number.prototype.toString`.
+//! truthiness, `typeof`, template-string conversion, and
+//! `Number.prototype.toString`.
 
 use serde_json::Value;
 
@@ -28,6 +29,43 @@ pub(crate) fn type_of(v: &Value) -> &'static str {
         Value::Number(_) => "number",
         Value::String(_) => "string",
     }
+}
+
+/// What JavaScript's `${v}` prints for a JSON value.
+pub(crate) fn template_string(v: &Value) -> String {
+    match v {
+        Value::Null => "null".into(),
+        Value::Bool(b) => b.to_string(),
+        Value::Number(n) => n.as_f64().map_or_else(|| n.to_string(), number_to_string),
+        Value::String(s) => s.clone(),
+        Value::Array(items) => join(items),
+        Value::Object(_) => "[object Object]".into(),
+    }
+}
+
+/// `Array.prototype.join(",")`: `null` elements print as nothing, nested
+/// arrays are joined the same way. Iterative, so nesting depth cannot
+/// overflow the stack.
+fn join(items: &[Value]) -> String {
+    let mut out = String::new();
+    // Per open array: its remaining elements, and whether one was written.
+    let mut stack = vec![(items.iter(), false)];
+    while let Some((rest, started)) = stack.last_mut() {
+        let Some(item) = rest.next() else {
+            stack.pop();
+            continue;
+        };
+        if *started {
+            out.push(',');
+        }
+        *started = true;
+        match item {
+            Value::Null => {}
+            Value::Array(inner) => stack.push((inner.iter(), false)),
+            other => out.push_str(&template_string(other)),
+        }
+    }
+    out
 }
 
 /// JavaScript's `Number.prototype.toString` (ECMA-262 `Number::toString`) for a
@@ -100,6 +138,24 @@ mod tests {
         assert!(!truthy(None));
         for v in [json!("0"), json!([]), json!({}), json!(1), json!(true)] {
             assert!(truthy(Some(&v)), "{v}");
+        }
+    }
+
+    #[test]
+    fn template_string_matches_js() {
+        for (v, js) in [
+            (json!(null), "null"),
+            (json!([1, [2, null], "a"]), "1,2,,a"),
+            (json!({"a": 1}), "[object Object]"),
+            (json!([{}]), "[object Object]"),
+            (json!(2.5), "2.5"),
+            (json!("x"), "x"),
+            (json!(true), "true"),
+            (json!([1, [], 2]), "1,,2"),
+            (json!([[]]), ""),
+            (json!([null]), ""),
+        ] {
+            assert_eq!(template_string(&v), js, "{v}");
         }
     }
 

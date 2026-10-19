@@ -145,34 +145,6 @@ pub mod __private {
         crate::ksuid::is_valid_session_id(value)
     }
 
-    /// Runs the TS-compatible injection on one tool's schemas.
-    pub fn inject_tool_for_test(
-        config: (bool, bool, bool, Option<&str>, bool, bool),
-        name: &str,
-        input: &mut serde_json::Map<String, serde_json::Value>,
-        output: Option<&mut serde_json::Map<String, serde_json::Value>>,
-    ) -> (bool, bool, bool, bool, bool) {
-        let (tracing, hook_mode, agent_tracking, context_description, tool_call_context, report_missing) =
-            config;
-        let cfg = crate::inject::InjectConfig::new(
-            tracing,
-            hook_mode,
-            agent_tracking,
-            tool_call_context,
-            context_description,
-            report_missing,
-        );
-        let memory = crate::inject::InjectMemory::default();
-        let r = crate::inject::inject_tool(&cfg, &memory, name, input, output);
-        (
-            r.strip.session_id,
-            r.strip.agent_id,
-            r.strip.context,
-            r.declares_session_id,
-            r.output_injected,
-        )
-    }
-
     /// The report-missing tool descriptor.
     pub fn report_missing_descriptor() -> serde_json::Value {
         crate::inject::report_missing_descriptor()

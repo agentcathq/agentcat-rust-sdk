@@ -1,13 +1,17 @@
-//! Tool-schema injection: the `session_id`, `agent_id` and `context`
-//! parameters, the `mcp_session` output property, and argument stripping.
+//! Tool-list injection: the `session_id`, `agent_id` and `context`
+//! parameters, the `mcp_session` output property, the report-missing tool,
+//! and argument stripping.
 //!
-//! The engine is pure and deterministic: the same configuration and tool
-//! always give the same advertised schema. A tool call on an instance that
-//! never served `tools/list` can therefore recompute exactly what a listing
-//! advertised, one tool at a time.
+//! `build_injected_list` is the TypeScript SDK's `buildInjectedList` on JSON
+//! values, failure paths included: a tool whose schema JavaScript cannot
+//! extend is listed unmodified, with the error JavaScript would raise. The
+//! advertised tools and registries depend only on the configuration and the
+//! tools, so a tool call on an instance that never served `tools/list` can
+//! recompute exactly what a listing advertised.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use serde_json::{Map, Value, json};
 
@@ -19,7 +23,7 @@ use crate::constants::{
     MCP_SESSION_SESSION_ID_DESCRIPTION, MCP_SESSION_STATUS_DESCRIPTION, SESSION_ID_PARAM,
     SESSION_ID_PARAM_DESCRIPTION, SESSION_ID_PARAM_PATTERN,
 };
-use crate::js::truthy;
+use crate::js::{self, template_string, truthy};
 use crate::logging::write_to_log;
 
 /// Which AgentCat parameters were injected into one tool's input schema.
@@ -32,16 +36,19 @@ pub(crate) struct Injected {
     pub(crate) context: bool,
 }
 
-/// What the engine decided for one tool.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) struct ToolInjection {
-    /// Parameters to strip from this tool's arguments.
-    pub(crate) strip: Injected,
-    /// The customer's own schema declares `session_id`: the value is theirs,
-    /// never an AgentCat handle.
-    pub(crate) declares_session_id: bool,
-    /// `mcp_session` was declared in this tool's output schema.
-    pub(crate) output_injected: bool,
+#[cfg(test)]
+impl Injected {
+    /// The parameter names, in injection order.
+    pub(crate) fn names(self) -> Vec<&'static str> {
+        [
+            (self.session_id, SESSION_ID_PARAM),
+            (self.agent_id, AGENT_ID_PARAM),
+            (self.context, CONTEXT_PARAM),
+        ]
+        .into_iter()
+        .filter_map(|(set, name)| set.then_some(name))
+        .collect()
+    }
 }
 
 /// The configuration the injection depends on.
@@ -54,7 +61,8 @@ pub(crate) struct InjectConfig {
     pub(crate) report_missing: bool,
 }
 
-/// Grow-only, per-configuration memory shared by every tracked instance.
+/// Grow-only memory of one `AgentCat`, shared by all of its tracked servers
+/// and listings.
 #[derive(Default)]
 pub(crate) struct InjectMemory {
     /// Tools already reported for a `session_id` collision (log once).
@@ -62,7 +70,7 @@ pub(crate) struct InjectMemory {
     /// Tools whose schema declares `session_id` itself.
     declared_session_params: Mutex<HashSet<String>>,
     /// The customer registers its own `get_more_tools` (warn once).
-    warned_customer_report_missing: std::sync::atomic::AtomicBool,
+    warned_customer_report_missing: AtomicBool,
 }
 
 impl InjectMemory {
@@ -86,212 +94,293 @@ impl InjectMemory {
     }
 
     pub(crate) fn record_customer_report_missing(&self) {
-        use std::sync::atomic::Ordering;
         if !self.warned_customer_report_missing.swap(true, Ordering::Relaxed) {
             write_to_log(&format!(
-                "WARN: This server registers its own \"{GET_MORE_TOOLS_NAME}\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enable_report_missing to false to keep yours reachable."
+                "WARN: This server registers its own \"{GET_MORE_TOOLS_NAME}\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
             ));
         }
     }
+
+    #[cfg(test)]
+    pub(crate) fn reported_conflicts(&self) -> Vec<String> {
+        sorted(&self.reported_conflicts)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn declared_session_params(&self) -> Vec<String> {
+        sorted(&self.declared_session_params)
+    }
 }
 
-fn is_composed(schema: &Map<String, Value>) -> bool {
-    truthy(schema.get("oneOf")) || truthy(schema.get("allOf")) || truthy(schema.get("anyOf"))
+#[cfg(test)]
+fn sorted(set: &Mutex<HashSet<String>>) -> Vec<String> {
+    let mut names: Vec<String> = set
+        .lock()
+        .map(|s| s.iter().cloned().collect())
+        .unwrap_or_default();
+    names.sort();
+    names
 }
 
-/// True when any `properties` object anywhere in the schema (root, composed
-/// branches, `$defs`, nested objects) declares `param`.
-fn declared_anywhere(schema: &Map<String, Value>, param: &str) -> bool {
-    fn walk(value: &Value, param: &str) -> bool {
-        match value {
-            Value::Object(map) => {
-                map.get("properties")
-                    .and_then(Value::as_object)
-                    .is_some_and(|p| p.contains_key(param))
-                    || map.values().any(|v| walk(v, param))
-            }
-            Value::Array(items) => items.iter().any(|v| walk(v, param)),
-            _ => false,
+/// What a listing advertises, and what it injected where.
+#[derive(Debug, Default)]
+pub(crate) struct InjectedList {
+    pub(crate) tools: Vec<Value>,
+    /// Per tool name: the parameters injected into its input schema.
+    pub(crate) registry: HashMap<String, Injected>,
+    /// Tools whose output schema declares the injected `mcp_session`.
+    pub(crate) output_registry: HashSet<String>,
+}
+
+/// `target[key]` in JavaScript: only an object has named members here (a
+/// named key on an array or a primitive reads `undefined`).
+fn get<'a>(target: Option<&'a Value>, key: &str) -> Option<&'a Value> {
+    target?.as_object()?.get(key)
+}
+
+/// `target[key] = value` in strict-mode JS, on JSON.
+fn js_set(target: &mut Value, key: &str, value: Value) -> Result<(), String> {
+    match target {
+        // An existing key keeps its position, as in JS.
+        Value::Object(map) => {
+            map.insert(key.to_owned(), value);
+            Ok(())
         }
-    }
-    schema
-        .get("properties")
-        .and_then(Value::as_object)
-        .is_some_and(|p| p.contains_key(param))
-        || schema.values().any(|v| walk(v, param))
-}
-
-fn declares(schema: &Map<String, Value>, param: &str) -> bool {
-    truthy(schema.get("properties").and_then(|p| p.get(param)))
-}
-
-/// Ensures `schema.properties` is an object and drops
-/// `additionalProperties: false`, which would reject injected parameters.
-fn prepare_properties(schema: &mut Map<String, Value>) {
-    if !truthy(schema.get("properties")) || !schema["properties"].is_object() {
-        schema.insert("properties".into(), Value::Object(Map::new()));
-    }
-    if schema.get("additionalProperties") == Some(&Value::Bool(false)) {
-        crate::util::shift_remove(schema, "additionalProperties");
-    }
-    // MCP requires object schemas; an empty `{}` schema that now carries
-    // properties gets the missing `type` (a TS gap, fixed here).
-    if !schema.contains_key("type") {
-        let mut out = Map::with_capacity(schema.len() + 1);
-        out.insert("type".into(), Value::String("object".into()));
-        out.extend(std::mem::take(schema));
-        *schema = out;
+        // JS stores a named property on the array object; JSON drops it.
+        Value::Array(_) => Ok(()),
+        Value::Null => Err(format!(
+            "TypeError: Cannot set properties of null (setting '{key}')"
+        )),
+        other => Err(format!(
+            "TypeError: Cannot create property '{key}' on {} '{}'",
+            js::type_of(other),
+            js::template_string(other)
+        )),
     }
 }
 
-/// Adds `param` to the schema's `required` array: created when absent,
-/// appended without duplicates, customer entries never reordered.
-fn add_to_required(schema: &mut Map<String, Value>, param: &str) {
-    match schema.get_mut("required") {
-        Some(Value::Array(required)) => {
-            if !required.iter().any(|v| v.as_str() == Some(param)) {
-                required.push(Value::String(param.into()));
-            }
+/// `tool.name || "unknown"`, as the logs print it and the registries key it.
+fn tool_name(tool: &Value) -> String {
+    match get(Some(tool), "name") {
+        Some(name) if truthy(Some(name)) => template_string(name),
+        _ => "unknown".to_owned(),
+    }
+}
+
+/// `tool.name === "get_more_tools"`.
+fn is_get_more_tools(tool: &Value) -> bool {
+    get(Some(tool), "name").and_then(Value::as_str) == Some(GET_MORE_TOOLS_NAME)
+}
+
+fn is_composed(schema: Option<&Value>) -> bool {
+    truthy(get(schema, "oneOf")) || truthy(get(schema, "allOf")) || truthy(get(schema, "anyOf"))
+}
+
+/// `schema.properties[param]` is truthy.
+fn declares(schema: Option<&Value>, param: &str) -> bool {
+    truthy(get(get(schema, "properties"), param))
+}
+
+/// The copy of the input schema both injectors extend: a missing schema
+/// becomes an empty object schema, a missing `properties` becomes `{}`, and
+/// `additionalProperties: false`, which would reject the injected
+/// parameters, is removed.
+fn prepare_input(schema: Option<&Value>) -> Result<Value, String> {
+    let mut input = match schema {
+        Some(schema) if truthy(Some(schema)) => schema.clone(),
+        _ => json!({"type": "object", "properties": {}, "required": []}),
+    };
+    if !truthy(get(Some(&input), "properties")) {
+        js_set(&mut input, "properties", Value::Object(Map::new()))?;
+    }
+    if let Value::Object(map) = &mut input
+        && map.get("additionalProperties") == Some(&Value::Bool(false))
+    {
+        crate::util::shift_remove(map, "additionalProperties");
+    }
+    Ok(input)
+}
+
+/// `schema.properties[key] = value` on a schema `prepare_input` returned. On
+/// an array schema, `properties` is the object JS stored as a named key of
+/// the array, which JSON drops, so the write is lost with it.
+fn set_property(schema: &mut Value, key: &str, value: Value) -> Result<(), String> {
+    match schema.as_object_mut().and_then(|map| map.get_mut("properties")) {
+        Some(properties) => js_set(properties, key, value),
+        None => Ok(()),
+    }
+}
+
+/// Appends `param` to `schema.required` unless listed; anything but an
+/// array is replaced by `[param]`.
+fn add_to_required(schema: &mut Value, param: &str) -> Result<(), String> {
+    if let Some(Value::Array(required)) = schema.as_object_mut().and_then(|map| map.get_mut("required")) {
+        if !required.iter().any(|v| v.as_str() == Some(param)) {
+            required.push(Value::String(param.to_owned()));
         }
-        _ => {
-            schema.insert("required".into(), json!([param]));
-        }
+        return Ok(());
     }
+    js_set(schema, "required", json!([param]))
 }
 
-/// Inserts a property, making `properties` an object first if needed.
-fn insert_property(schema: &mut Map<String, Value>, name: &str, definition: Value) {
-    let properties = schema
-        .entry("properties")
-        .or_insert_with(|| Value::Object(Map::new()));
-    if !properties.is_object() {
-        *properties = Value::Object(Map::new());
-    }
-    if let Value::Object(p) = properties {
-        p.insert(name.to_owned(), definition);
-    }
-}
-
-/// Injects the AgentCat parameters into one tool's schemas, in place.
+/// Builds the advertised tool list: the report-missing tool appended, then
+/// the handles, then `context`, so injected parameters follow the
+/// customer's own in the order `session_id`, `agent_id`, `context`.
 ///
-/// Order matches the TypeScript SDK: customer parameters, then `session_id`,
-/// `agent_id`, then `context`. Both handles are schema-required with soft
-/// enforcement: a call that omits them still works.
-pub(crate) fn inject_tool(
+/// `tools` is never changed. A tool whose injection fails is listed as it
+/// was before that step, and its registry records are rolled back.
+pub(crate) fn build_injected_list(
     cfg: &InjectConfig,
     memory: &InjectMemory,
-    name: &str,
-    input: &mut Map<String, Value>,
-    output: Option<&mut Map<String, Value>>,
-) -> ToolInjection {
-    let mut result = ToolInjection::default();
-    let log_name = if name.is_empty() { "unknown" } else { name };
+    tools: &[Value],
+) -> InjectedList {
+    let mut result = tools.to_vec();
+    if cfg.report_missing {
+        if result.iter().any(is_get_more_tools) {
+            memory.record_customer_report_missing();
+        } else {
+            result.push(report_missing_descriptor());
+        }
+    }
 
-    // ── Handles ──
+    let mut list = InjectedList::default();
     if cfg.inject_session_id || cfg.inject_agent_id {
-        if is_composed(input) {
-            // Injection is skipped, but ownership is still recorded: a root
-            // `session_id` in a composed schema belongs to the customer.
-            if cfg.inject_session_id && declares(input, SESSION_ID_PARAM) {
-                memory.record_declared(name);
-                result.declares_session_id = true;
-            }
-            write_to_log(&format!(
-                "WARN: Tool \"{log_name}\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
-            ));
-            // A composed tool never advertises the handles, but an agent may
-            // still echo them from another tool's mint-back; strip them so a
-            // strict handler never sees them. Only when no branch (or
-            // definition) of the schema declares the name: then the
-            // argument belongs to the customer.
-            result.strip.session_id = cfg.inject_session_id && !declared_anywhere(input, SESSION_ID_PARAM);
-            result.strip.agent_id = cfg.inject_agent_id && !declared_anywhere(input, AGENT_ID_PARAM);
-        } else {
-            prepare_properties(input);
-            if cfg.inject_session_id {
-                if declares(input, SESSION_ID_PARAM) {
-                    memory.record_declared(name);
-                    result.declares_session_id = true;
-                    if memory.first_conflict(name) {
-                        write_to_log(&format!(
-                            "ERROR: Tool \"{log_name}\" already declares a '{SESSION_ID_PARAM}' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolve_session_id hook to AgentCat — AgentCat will derive its session from your identifier and stop injecting {SESSION_ID_PARAM} entirely."
-                        ));
-                    }
-                } else {
-                    insert_property(
-                        input,
-                        SESSION_ID_PARAM,
-                        json!({
-                            "type": "string",
-                            "description": SESSION_ID_PARAM_DESCRIPTION,
-                            "pattern": SESSION_ID_PARAM_PATTERN,
-                        }),
-                    );
-                    result.strip.session_id = true;
-                    add_to_required(input, SESSION_ID_PARAM);
-                }
-            }
-            if cfg.inject_agent_id {
-                if declares(input, AGENT_ID_PARAM) {
+        for tool in &mut result {
+            let name = tool_name(tool);
+            let mut modified = tool.clone();
+            match add_handles(cfg, memory, &mut modified, &name, &mut list) {
+                Ok(()) => *tool = modified,
+                Err(e) => {
+                    list.registry.remove(&name);
+                    list.output_registry.remove(&name);
                     write_to_log(&format!(
-                        "WARN: Tool \"{log_name}\" already has '{AGENT_ID_PARAM}' parameter. Skipping agent_id injection."
+                        "WARN: Handle injection failed for tool \"{name}\"; listing it unmodified - {e}"
                     ));
-                } else {
-                    insert_property(
-                        input,
-                        AGENT_ID_PARAM,
-                        json!({"type": "string", "description": AGENT_ID_PARAM_DESCRIPTION}),
-                    );
-                    result.strip.agent_id = true;
-                    add_to_required(input, AGENT_ID_PARAM);
                 }
             }
-            if let Some(output) = output {
-                result.output_injected = inject_output_schema(cfg, log_name, output);
+        }
+    }
+    if cfg.inject_context {
+        // get_more_tools carries its own `context` parameter.
+        for tool in result.iter_mut().filter(|t| !is_get_more_tools(t)) {
+            let name = tool_name(tool);
+            let mut modified = tool.clone();
+            match add_context(cfg, &mut modified, &name, &mut list.registry) {
+                Ok(()) => *tool = modified,
+                Err(e) => {
+                    if let Some(entry) = list.registry.get_mut(&name) {
+                        entry.context = false;
+                    }
+                    write_to_log(&format!(
+                        "WARN: Context injection failed for tool \"{name}\"; listing it unmodified - {e}"
+                    ));
+                }
             }
         }
     }
-
-    // ── Context ── (get_more_tools carries its own `context` parameter)
-    if cfg.inject_context && name != GET_MORE_TOOLS_NAME {
-        if declares(input, CONTEXT_PARAM) {
-            write_to_log(&format!(
-                "WARN: Tool \"{log_name}\" already has 'context' parameter. Skipping context injection."
-            ));
-        } else if is_composed(input) {
-            write_to_log(&format!(
-                "WARN: Tool \"{log_name}\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
-            ));
-        } else {
-            prepare_properties(input);
-            insert_property(
-                input,
-                CONTEXT_PARAM,
-                json!({"type": "string", "description": cfg.context_description}),
-            );
-            result.strip.context = true;
-            add_to_required(input, CONTEXT_PARAM);
-        }
+    // A listed tool without injections still gets an (empty) entry: the
+    // strip fallback applies only to tools never seen in a listing.
+    let names = result
+        .iter()
+        .filter_map(|tool| get(Some(tool), "name"))
+        .filter(|name| truthy(Some(name)));
+    for name in names {
+        list.registry.entry(template_string(name)).or_default();
     }
-
-    result
+    list.tools = result;
+    list
 }
 
-/// Declares the optional `mcp_session` property in a plain-object output
-/// schema, so validating clients accept the mirrored field. Returns true when
-/// the property was added.
-fn inject_output_schema(cfg: &InjectConfig, log_name: &str, schema: &mut Map<String, Value>) -> bool {
+/// The handle step (TS `addHandleParametersToTool`) on a copy of one tool.
+fn add_handles(
+    cfg: &InjectConfig,
+    memory: &InjectMemory,
+    tool: &mut Value,
+    name: &str,
+    list: &mut InjectedList,
+) -> Result<(), String> {
+    let schema = get(Some(tool), "inputSchema");
     if is_composed(schema) {
+        // Injection is skipped, but ownership is still recorded: a root
+        // `session_id` in a composed schema belongs to the customer.
+        if cfg.inject_session_id && declares(schema, SESSION_ID_PARAM) {
+            memory.record_declared(name);
+        }
         write_to_log(&format!(
-            "WARN: Tool \"{log_name}\" has complex outputSchema (oneOf/allOf/anyOf). Skipping {MCP_SESSION_KEY} injection; mint-back stays content-only for this tool."
+            "WARN: Tool \"{name}\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
         ));
-        return false;
+        return Ok(());
     }
-    if declares(schema, MCP_SESSION_KEY) {
+    let mut input = prepare_input(schema)?;
+
+    if cfg.inject_session_id {
+        if declares(Some(&input), SESSION_ID_PARAM) {
+            memory.record_declared(name);
+            if memory.first_conflict(name) {
+                write_to_log(&format!(
+                    "ERROR: Tool \"{name}\" already declares a '{SESSION_ID_PARAM}' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting {SESSION_ID_PARAM} entirely."
+                ));
+            }
+        } else {
+            set_property(
+                &mut input,
+                SESSION_ID_PARAM,
+                json!({
+                    "type": "string",
+                    "description": SESSION_ID_PARAM_DESCRIPTION,
+                    "pattern": SESSION_ID_PARAM_PATTERN,
+                }),
+            )?;
+            list.registry.entry(name.to_owned()).or_default().session_id = true;
+            add_to_required(&mut input, SESSION_ID_PARAM)?;
+        }
+    }
+    if cfg.inject_agent_id {
+        if declares(Some(&input), AGENT_ID_PARAM) {
+            write_to_log(&format!(
+                "WARN: Tool \"{name}\" already has '{AGENT_ID_PARAM}' parameter. Skipping agent_id injection."
+            ));
+        } else {
+            set_property(
+                &mut input,
+                AGENT_ID_PARAM,
+                json!({"type": "string", "description": AGENT_ID_PARAM_DESCRIPTION}),
+            )?;
+            list.registry.entry(name.to_owned()).or_default().agent_id = true;
+            add_to_required(&mut input, AGENT_ID_PARAM)?;
+        }
+    }
+    js_set(tool, "inputSchema", input)?;
+    add_mcp_session(cfg, tool, name, &mut list.output_registry)
+}
+
+/// Declares the optional `mcp_session` property in a plain output schema
+/// (on a copy), so validating clients accept the mirrored field.
+fn add_mcp_session(
+    cfg: &InjectConfig,
+    tool: &mut Value,
+    name: &str,
+    output_registry: &mut HashSet<String>,
+) -> Result<(), String> {
+    let schema = get(Some(tool), "outputSchema");
+    let Some(schema) = schema.filter(|s| truthy(Some(s))) else {
+        return Ok(());
+    };
+    if is_composed(Some(schema)) {
         write_to_log(&format!(
-            "WARN: Tool \"{log_name}\" already declares '{MCP_SESSION_KEY}' in outputSchema. Skipping injection."
+            "WARN: Tool \"{name}\" has complex outputSchema (oneOf/allOf/anyOf). Skipping {MCP_SESSION_KEY} injection; mint-back stays content-only for this tool."
         ));
-        return false;
+        return Ok(());
+    }
+    let mut copy = schema.clone();
+    if !truthy(get(Some(&copy), "properties")) {
+        js_set(&mut copy, "properties", Value::Object(Map::new()))?;
+    }
+    if declares(Some(&copy), MCP_SESSION_KEY) {
+        write_to_log(&format!(
+            "WARN: Tool \"{name}\" already declares '{MCP_SESSION_KEY}' in outputSchema. Skipping injection."
+        ));
+        return Ok(());
     }
     let mut sub = Map::new();
     if cfg.inject_session_id {
@@ -321,12 +410,45 @@ fn inject_output_schema(cfg: &InjectConfig, log_name: &str, schema: &mut Map<Str
     } else {
         MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE
     };
-    insert_property(
-        schema,
+    set_property(
+        &mut copy,
         MCP_SESSION_KEY,
         json!({"type": "object", "description": description, "properties": sub}),
-    );
-    true
+    )?;
+    js_set(tool, "outputSchema", copy)?;
+    output_registry.insert(name.to_owned());
+    Ok(())
+}
+
+/// The context step (TS `addContextParameterToTool`) on a copy of one tool.
+fn add_context(
+    cfg: &InjectConfig,
+    tool: &mut Value,
+    name: &str,
+    registry: &mut HashMap<String, Injected>,
+) -> Result<(), String> {
+    let schema = get(Some(tool), "inputSchema");
+    if declares(schema, CONTEXT_PARAM) {
+        write_to_log(&format!(
+            "WARN: Tool \"{name}\" already has 'context' parameter. Skipping context injection."
+        ));
+        return Ok(());
+    }
+    if is_composed(schema) {
+        write_to_log(&format!(
+            "WARN: Tool \"{name}\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
+        ));
+        return Ok(());
+    }
+    let mut input = prepare_input(schema)?;
+    set_property(
+        &mut input,
+        CONTEXT_PARAM,
+        json!({"type": "string", "description": cfg.context_description}),
+    )?;
+    registry.entry(name.to_owned()).or_default().context = true;
+    add_to_required(&mut input, CONTEXT_PARAM)?;
+    js_set(tool, "inputSchema", input)
 }
 
 /// The argument names stripped for a tool never seen in any listing: all
@@ -380,10 +502,19 @@ pub(crate) fn report_missing_descriptor() -> Value {
     })
 }
 
-/// The canned answer to a `get_more_tools` call.
+/// The canned answer to a `get_more_tools` call. The log line prints what
+/// TS prints for `args?.context?.length ?? 0`.
 pub(crate) fn report_missing_response(context: Option<&Value>) -> Value {
-    let len = context.and_then(Value::as_str).map_or(0, crate::util::utf16_len);
-    write_to_log(&format!("Missing tool reported (context length: {len})"));
+    let length = match context {
+        Some(Value::String(s)) => crate::util::utf16_len(s).to_string(),
+        Some(Value::Array(items)) => items.len().to_string(),
+        Some(Value::Object(map)) => match map.get("length") {
+            None | Some(Value::Null) => "0".to_owned(),
+            Some(length) => template_string(length),
+        },
+        _ => "0".to_owned(),
+    };
+    write_to_log(&format!("Missing tool reported (context length: {length})"));
     json!({"content": [{"type": "text", "text": GET_MORE_TOOLS_RESPONSE}]})
 }
 
@@ -413,34 +544,32 @@ impl InjectConfig {
 mod tests {
     use super::*;
 
-    fn cfg(agent: bool) -> InjectConfig {
-        InjectConfig::new(true, false, agent, true, None, true)
+    #[test]
+    fn js_set_fails_like_strict_mode_javascript() {
+        let mut null = Value::Null;
+        assert_eq!(
+            js_set(&mut null, "x", json!(1)),
+            Err("TypeError: Cannot set properties of null (setting 'x')".to_owned())
+        );
+        let mut float = json!(2.5);
+        assert_eq!(
+            js_set(&mut float, "x", json!(1)),
+            Err("TypeError: Cannot create property 'x' on number '2.5'".to_owned())
+        );
+        let mut array = json!([1]);
+        assert_eq!(js_set(&mut array, "x", json!(1)), Ok(()));
+        assert_eq!(array, json!([1]));
+        let mut object = json!({"a": 1, "x": 0, "b": 2});
+        assert_eq!(js_set(&mut object, "x", json!(1)), Ok(()));
+        assert_eq!(serde_json::to_string(&object).unwrap(), r#"{"a":1,"x":1,"b":2}"#);
     }
 
     #[test]
-    fn composed_schemas_keep_handles_their_branches_declare() {
-        // schemars emits oneOf for enums: a `session_id` field in one variant
-        // is the customer's argument and must reach the handler.
-        let mut schema: Map<String, Value> = serde_json::from_value(json!({
-            "oneOf": [
-                {"type": "object", "properties": {"session_id": {"type": "string"}, "cmd": {"type": "string"}}},
-                {"type": "object", "properties": {"other": {"type": "string"}}}
-            ]
-        }))
-        .unwrap();
-        let r = inject_tool(&cfg(true), &InjectMemory::default(), "term", &mut schema, None);
-        assert!(!r.strip.session_id);
-        assert!(r.strip.agent_id);
-        assert!(!r.strip.context);
-    }
-
-    #[test]
-    fn composed_schemas_strip_undeclared_echoed_handles() {
-        let mut schema: Map<String, Value> =
-            serde_json::from_value(json!({"anyOf": [{"type": "object", "properties": {"a": {}}}], "$defs": {"X": {"properties": {"agent_id": {}}}}}))
-                .unwrap();
-        let r = inject_tool(&cfg(true), &InjectMemory::default(), "t", &mut schema, None);
-        assert!(r.strip.session_id);
-        assert!(!r.strip.agent_id, "declared in $defs");
+    fn tool_names_print_as_javascript_template_strings() {
+        assert_eq!(tool_name(&json!({"name": "t"})), "t");
+        assert_eq!(tool_name(&json!({"name": 5})), "5");
+        assert_eq!(tool_name(&json!({"name": ""})), "unknown");
+        assert_eq!(tool_name(&json!({"name": 0})), "unknown");
+        assert_eq!(tool_name(&json!({})), "unknown");
     }
 }

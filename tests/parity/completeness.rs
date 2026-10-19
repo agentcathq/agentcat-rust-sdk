@@ -10,6 +10,8 @@ const NOT_PORTED: &str = include_str!("NOT_PORTED.md");
 /// TS test files whose cases must all have Rust tests.
 const ENFORCED: &[&str] = &[
     "constants.test.ts",
+    "context-parameters-edge-cases.test.ts",
+    "handle-conflict-report.test.ts",
     "handles.test.ts",
     "ksuid.test.ts",
     "posthog-uuidv7.test.ts",

@@ -45,7 +45,7 @@ use crate::handles::{
 };
 use crate::hooks::BoxFuture;
 use crate::inject::{
-    Injected, ToolInjection, heuristic_strip, inject_tool, report_missing_descriptor,
+    InjectConfig, Injected, InjectedList, build_injected_list, heuristic_strip, report_missing_descriptor,
     report_missing_response, strip_arguments,
 };
 use crate::logging::write_to_log;
@@ -59,15 +59,24 @@ const REGISTRY_REBUILD_TIMEOUT: Duration = Duration::from_secs(5);
 /// Pages the rebuild reads at most.
 const REGISTRY_REBUILD_MAX_PAGES: usize = 20;
 
+/// What a listing decided for one tool.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+struct ToolInjection {
+    /// Parameters to strip from this tool's arguments.
+    strip: Injected,
+    /// The customer's own schema declares `session_id`: the value is theirs,
+    /// never an AgentCat handle.
+    declares_session_id: bool,
+    /// `mcp_session` was declared in this tool's output schema.
+    output_injected: bool,
+}
+
 /// What this instance knows about its tools: what each listing injected.
 #[derive(Default)]
 struct Registry {
     tools: RwLock<HashMap<String, ToolInjection>>,
     /// A full listing (served or rebuilt) went through this instance.
     listed: AtomicBool,
-    /// The customer's own listing contains a `get_more_tools` tool. Only the
-    /// customer's pages set this, never the copy AgentCat appends.
-    customer_report_missing: AtomicBool,
 }
 
 impl Registry {
@@ -84,13 +93,6 @@ impl Registry {
     fn merge(&self, entries: Vec<(String, ToolInjection)>) {
         if let Ok(mut tools) = self.tools.write() {
             tools.extend(entries);
-        }
-    }
-
-    /// Records that the customer's own handler knows a tool by this name.
-    fn note_customer_tool(&self, name: &str) {
-        if name == GET_MORE_TOOLS_NAME {
-            self.customer_report_missing.store(true, Ordering::Release);
         }
     }
 }
@@ -201,8 +203,8 @@ struct Prepared {
     mirror_structured: bool,
 }
 
-fn tool_from_json(value: Value) -> Option<Tool> {
-    serde_json::from_value(value).ok()
+fn tool_from_json(value: Value) -> Result<Tool, String> {
+    serde_json::from_value(value).map_err(|e| e.to_string())
 }
 
 fn result_from_json(value: Value) -> Option<CallToolResult> {
@@ -382,70 +384,67 @@ impl<H: ServerHandler> Tracked<H> {
         self.shared.options.enable_report_missing && name == GET_MORE_TOOLS_NAME
     }
 
-    /// Injects one tool on copies of its schemas; `None` leaves it unchanged.
-    fn inject_one(&self, tool: &Tool) -> Option<(Tool, ToolInjection)> {
-        catch(|| {
-            let mut input: JsonObject = (*tool.input_schema).clone();
-            let mut output: Option<JsonObject> = tool.output_schema.as_deref().cloned();
-            let injection = inject_tool(
-                &self.shared.inject,
-                &self.shared.memory,
-                &tool.name,
-                &mut input,
-                output.as_mut(),
-            );
-            let mut advertised = tool.clone();
-            advertised.input_schema = Arc::new(input);
-            if let Some(output) = output {
-                advertised.output_schema = Some(Arc::new(output));
-            }
-            (advertised, injection)
+    /// What `list` injected into `name`, when its registry has an entry.
+    fn injection(&self, list: &InjectedList, name: &str) -> Option<ToolInjection> {
+        let strip = *list.registry.get(name)?;
+        Some(ToolInjection {
+            strip,
+            declares_session_id: self.shared.memory.declares_session_id(name),
+            output_injected: list.output_registry.contains(name),
         })
     }
 
+    /// Every registry entry of `list`.
+    fn entries(&self, list: &InjectedList) -> Vec<(String, ToolInjection)> {
+        list.registry
+            .keys()
+            .filter_map(|name| Some((name.clone(), self.injection(list, name)?)))
+            .collect()
+    }
+
+    /// One tool through the listing pipeline, without the report-missing
+    /// tool: the advertised tool, and what was injected into it (`None` when
+    /// the listing records nothing under its name). `None` when the pipeline
+    /// failed.
+    fn inject_one(&self, tool: &Tool) -> Option<(Tool, Option<ToolInjection>)> {
+        let cfg = InjectConfig {
+            report_missing: false,
+            ..self.shared.inject.clone()
+        };
+        catch(|| {
+            let value = serde_json::to_value(tool).ok()?;
+            let mut list = build_injected_list(&cfg, &self.shared.memory, std::slice::from_ref(&value));
+            let advertised = list.tools.pop().and_then(|v| tool_from_json(v).ok())?;
+            let injection = self.injection(&list, &tool.name);
+            Some((advertised, injection))
+        })
+        .flatten()
+    }
+
     /// AgentCat's own `get_more_tools`, injected.
-    fn report_missing_tool(&self) -> Option<(Tool, ToolInjection)> {
-        let tool = tool_from_json(report_missing_descriptor())?;
+    fn report_missing_tool(&self) -> Option<(Tool, Option<ToolInjection>)> {
+        let tool = tool_from_json(report_missing_descriptor()).ok()?;
         self.inject_one(&tool)
     }
 
-    /// The injection pipeline over one page of tools.
-    fn inject_list(
-        &self,
-        mut tools: Vec<Tool>,
-        last_page: bool,
-    ) -> (Vec<Tool>, Vec<(String, ToolInjection)>) {
-        if tools.iter().any(|t| t.name == GET_MORE_TOOLS_NAME) {
-            self.registry
-                .customer_report_missing
-                .store(true, Ordering::Release);
-        }
-        if self.shared.inject.report_missing && last_page {
-            let customer_owned = self.registry.customer_report_missing.load(Ordering::Acquire);
-            if customer_owned {
-                self.shared.memory.record_customer_report_missing();
-            } else if let Some(tool) = tool_from_json(report_missing_descriptor()) {
-                tools.push(tool);
-            }
-        }
-        let mut entries = Vec::with_capacity(tools.len());
-        let advertised = tools
-            .into_iter()
-            .map(|tool| {
-                if let Some((advertised, injection)) = self.inject_one(&tool) {
-                    entries.push((tool.name.to_string(), injection));
-                    advertised
-                } else {
-                    write_to_log(&format!(
-                        "WARN: Handle injection failed for tool \"{}\"; listing it unmodified",
-                        tool.name
-                    ));
-                    entries.push((tool.name.to_string(), ToolInjection::default()));
-                    tool
-                }
-            })
-            .collect();
-        (advertised, entries)
+    /// The injection pipeline over one page of tools: the advertised tools,
+    /// and the list whose registries say what was injected (its `tools` are
+    /// moved into the first part).
+    fn inject_list(&self, tools: &[Tool]) -> Result<(Vec<Tool>, InjectedList), String> {
+        std::panic::catch_unwind(AssertUnwindSafe(|| {
+            let values = tools
+                .iter()
+                .map(serde_json::to_value)
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|e| e.to_string())?;
+            let mut list = build_injected_list(&self.shared.inject, &self.shared.memory, &values);
+            let advertised = std::mem::take(&mut list.tools)
+                .into_iter()
+                .map(tool_from_json)
+                .collect::<Result<Vec<_>, _>>()?;
+            Ok((advertised, list))
+        }))
+        .unwrap_or_else(|p| Err(crate::util::panic_message(&*p)))
     }
 
     /// Recomputes the registry by running the customer's `list_tools`, for a
@@ -458,16 +457,18 @@ impl<H: ServerHandler> Tracked<H> {
                 let request = cursor
                     .take()
                     .map(|c| PaginatedRequestParams::default().with_cursor(Some(c)));
-                let page = inner.list_tools(request, context.clone()).await?;
-                let last = page.next_cursor.is_none();
-                let (_, entries) = self.inject_list(page.tools, last);
-                self.registry.merge(entries);
+                let page = inner
+                    .list_tools(request, context.clone())
+                    .await
+                    .map_err(|e| e.message.to_string())?;
+                let (_, list) = self.inject_list(&page.tools)?;
+                self.registry.merge(self.entries(&list));
                 match page.next_cursor {
                     Some(next) => cursor = Some(next),
                     None => break,
                 }
             }
-            Ok::<(), McpError>(())
+            Ok::<(), String>(())
         };
         // Timed by AgentCat's timer thread: the server's runtime may run
         // without timers.
@@ -485,10 +486,7 @@ impl<H: ServerHandler> Tracked<H> {
                 true
             }
             Ok(Err(e)) => {
-                write_to_log(&format!(
-                    "Warning: registry rebuild-on-demand failed - {}",
-                    e.message
-                ));
+                write_to_log(&format!("Warning: registry rebuild-on-demand failed - {e}"));
                 false
             }
             Err(()) => {
@@ -507,12 +505,11 @@ impl<H: ServerHandler> Tracked<H> {
             return Lookup::Found(found);
         }
         // `get_tool` is synchronous and cheap; `#[tool_handler]` servers have it.
-        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name)) {
-            self.registry.note_customer_tool(name);
-            if let Some((_, injection)) = self.inject_one(&tool) {
-                self.registry.insert(name.to_owned(), injection);
-                return Lookup::Found(injection);
-            }
+        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name))
+            && let Some((_, Some(injection))) = self.inject_one(&tool)
+        {
+            self.registry.insert(name.to_owned(), injection);
+            return Lookup::Found(injection);
         }
         let mut registry_available = self.registry.listed.load(Ordering::Acquire);
         if !registry_available {
@@ -522,7 +519,7 @@ impl<H: ServerHandler> Tracked<H> {
             }
         }
         if self.intercepts_report_missing(name)
-            && let Some((_, injection)) = self.report_missing_tool()
+            && let Some((_, Some(injection))) = self.report_missing_tool()
         {
             self.registry.insert(name.to_owned(), injection);
             return Lookup::Found(injection);
@@ -873,18 +870,17 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
             );
             return Ok(result);
         }
-        let last_page = result.next_cursor.is_none();
-        match catch(|| self.inject_list(result.tools.clone(), last_page)) {
-            Some((tools, entries)) => {
-                self.registry.merge(entries);
-                if last_page {
+        match self.inject_list(&result.tools) {
+            Ok((tools, list)) => {
+                self.registry.merge(self.entries(&list));
+                if result.next_cursor.is_none() {
                     self.registry.listed.store(true, Ordering::Release);
                 }
                 result.tools = tools;
             }
-            None => write_to_log(
-                "Warning: AgentCat tool-list injection failed; serving the original tool list unmodified",
-            ),
+            Err(e) => write_to_log(&format!(
+                "Warning: AgentCat tool-list injection failed; serving the original tool list unmodified - {e}"
+            )),
         }
         Ok(result)
     }
@@ -894,25 +890,15 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         if self.passthrough {
             return original;
         }
-        let tool = match original {
-            Some(tool) => {
-                self.registry.note_customer_tool(name);
-                tool
-            }
-            None if self.intercepts_report_missing(name) => {
-                let (tool, injection) = self.report_missing_tool()?;
-                self.registry.insert(name.to_owned(), injection);
-                return Some(tool);
-            }
+        let (advertised, injection) = match original {
+            Some(tool) => self.inject_one(&tool).unwrap_or((tool, None)),
+            None if self.intercepts_report_missing(name) => self.report_missing_tool()?,
             None => return None,
         };
-        match self.inject_one(&tool) {
-            Some((advertised, injection)) => {
-                self.registry.insert(name.to_owned(), injection);
-                Some(advertised)
-            }
-            None => Some(tool),
+        if let Some(injection) = injection {
+            self.registry.insert(name.to_owned(), injection);
         }
+        Some(advertised)
     }
 
     // ── Everything else is forwarded unchanged. ──

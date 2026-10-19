@@ -1,10 +1,16 @@
 //! Golden-file checks against the shared PHP audit fixtures.
 
-use super::support::{fixture_json, fixture_text};
+use super::support::{capture_logs, fixture_json, fixture_text};
 use crate::constants::*;
 use crate::handles::{HandleResolution, SessionSource, build_mint_back_text, session_from_hook_value};
+use crate::inject::{
+    InjectConfig, InjectMemory, Injected, build_injected_list, report_missing_descriptor,
+    report_missing_response,
+};
 use crate::ksuid::derive_session_id;
 use crate::util::{hex, sha256, utf16_len};
+use serde_json::{Value, json};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 fn constant(name: &str) -> Option<&'static str> {
     Some(match name {
@@ -145,7 +151,7 @@ fn exporter_id_vectors_match() {
 fn mint_back_blocks_match() {
     let strings = fixture_json("php-audit/handles/strings.json");
     let golden = fixture_text("php-audit/handles/golden.txt");
-    let golden_json: serde_json::Value = serde_json::from_str(
+    let golden_json: Value = serde_json::from_str(
         golden
             .split_once("---JSON---\n")
             .and_then(|(_, rest)| rest.split_once("---DERIVE---"))
@@ -214,4 +220,121 @@ fn mint_back_blocks_match() {
     assert!(golden.contains(
         r#"sessionFromHookValue(' corr-1 ', 'proj_1'): {"sessionId":"ses_2afjLT0irA6g3tOA5CklOPgcSqQ","sessionSource":"hook"}"#
     ));
+}
+
+/// The registry of a listing, as a set of names per tool.
+fn registry_names(registry: &HashMap<String, Injected>) -> BTreeMap<String, BTreeSet<String>> {
+    registry
+        .iter()
+        .map(|(tool, entry)| {
+            let names = entry.names().into_iter().map(str::to_owned).collect();
+            (tool.clone(), names)
+        })
+        .collect()
+}
+
+/// A fixture registry: `{tool: [names]}`.
+fn fixture_registry(value: &Value) -> BTreeMap<String, BTreeSet<String>> {
+    value
+        .as_object()
+        .expect("a registry object")
+        .iter()
+        .map(|(tool, names)| {
+            let names = names
+                .as_array()
+                .expect("an array of names")
+                .iter()
+                .map(|n| n.as_str().expect("a name").to_owned())
+                .collect();
+            (tool.clone(), names)
+        })
+        .collect()
+}
+
+fn string_set(value: &Value) -> BTreeSet<String> {
+    value
+        .as_array()
+        .expect("an array")
+        .iter()
+        .map(|n| n.as_str().expect("a string").to_owned())
+        .collect()
+}
+
+#[test]
+fn listing_fixtures_match() {
+    let fixtures = fixture_json("php-audit/handles/listing-fixtures.json");
+    let input = fixtures["input_tools"].as_array().expect("input tools");
+    let configs = [
+        ("defaults", (true, false, false, true, None, true)),
+        ("agent_tracking", (true, false, true, true, None, true)),
+        ("hook_mode_agent_tracking", (true, true, true, true, None, true)),
+        ("hook_mode_no_agent", (true, true, false, true, None, true)),
+        ("tracing_off", (false, false, false, true, None, true)),
+        (
+            "context_off_report_missing_off",
+            (true, false, false, false, None, false),
+        ),
+        (
+            "custom_context_description",
+            (true, false, false, true, Some("Why?"), true),
+        ),
+    ];
+    for (key, (tracing, hook_mode, agent_tracking, context, description, report_missing)) in configs {
+        let cfg = InjectConfig::new(
+            tracing,
+            hook_mode,
+            agent_tracking,
+            context,
+            description,
+            report_missing,
+        );
+        let expected = &fixtures[key];
+        let list = build_injected_list(&cfg, &InjectMemory::default(), input);
+        assert_eq!(
+            serde_json::to_string(&list.tools).unwrap(),
+            serde_json::to_string(&expected["tools"]).unwrap(),
+            "{key}: tools"
+        );
+        assert_eq!(
+            registry_names(&list.registry),
+            fixture_registry(&expected["registry"]),
+            "{key}: registry"
+        );
+        assert_eq!(
+            list.output_registry.iter().cloned().collect::<BTreeSet<_>>(),
+            string_set(&expected["outputRegistry"]),
+            "{key}: output registry"
+        );
+    }
+}
+
+#[test]
+fn get_more_tools_descriptor_and_reply_match() {
+    let strings = fixture_json("php-audit/handles/strings.json");
+    assert_eq!(
+        serde_json::to_string(&report_missing_descriptor()).unwrap(),
+        serde_json::to_string(&strings["GET_MORE_TOOLS_DESCRIPTOR"]).unwrap()
+    );
+    let (reply, _) = capture_logs(|| report_missing_response(Some(&json!("abc"))));
+    assert_eq!(reply, strings["GET_MORE_TOOLS_RESULT"]);
+
+    // TS logs `args?.context?.length ?? 0`.
+    for (context, length) in [
+        (Some(json!("abc")), "3"),
+        (Some(json!("😀")), "2"),
+        (Some(json!([1, 2, 3])), "3"),
+        (Some(json!({"length": 5})), "5"),
+        (Some(json!({"length": "abc"})), "abc"),
+        (Some(json!({"length": null})), "0"),
+        (Some(json!(42)), "0"),
+        (Some(json!(null)), "0"),
+        (None, "0"),
+    ] {
+        let (_, logs) = capture_logs(|| report_missing_response(context.as_ref()));
+        assert_eq!(
+            logs,
+            [format!("Missing tool reported (context length: {length})")],
+            "{context:?}"
+        );
+    }
 }
