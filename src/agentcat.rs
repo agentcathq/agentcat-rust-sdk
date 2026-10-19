@@ -517,13 +517,15 @@ impl AgentCatBuilder {
             options.enable_report_missing,
             options.exporters.len()
         ));
+        let server_info = (options.server_name.is_some() || options.server_version.is_some())
+            .then(|| (options.server_name.clone(), options.server_version.clone()));
         AgentCat {
             shared: Arc::new(Shared {
                 project_id,
                 options,
                 inject,
                 memory: InjectMemory::default(),
-                server_info: RwLock::new(None),
+                server_info: RwLock::new(server_info),
             }),
         }
     }

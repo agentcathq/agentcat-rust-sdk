@@ -154,11 +154,10 @@ pub(crate) fn parse_backtrace(text: &str) -> Vec<StackFrame> {
         }
     }
 
-    // Skip the capture and panic machinery: start after the last frame of it.
-    let start = raw
-        .iter()
-        .rposition(|r| is_panic_machinery(&r.symbol))
-        .map_or(0, |i| i + 1);
+    // Skip the capture and panic machinery at the top of the stack. Only the
+    // leading block: callers further down (tokio's own `catch_unwind`, for
+    // example) are real frames.
+    let start = raw.iter().take_while(|r| is_panic_machinery(&r.symbol)).count();
 
     raw.into_iter()
         .skip(start)
@@ -175,6 +174,7 @@ pub(crate) fn parse_backtrace(text: &str) -> Vec<StackFrame> {
 
 fn is_panic_machinery(symbol: &str) -> bool {
     let s = strip_hash(symbol);
+    let s = s.strip_prefix('<').unwrap_or(s);
     s.starts_with("std::backtrace")
         || s.starts_with("std::panicking")
         || s.starts_with("core::panicking")
@@ -184,7 +184,7 @@ fn is_panic_machinery(symbol: &str) -> bool {
         || s.starts_with("__rust")
         || s.starts_with("std::sys::backtrace")
         || s.starts_with("agentcat::exceptions")
-        || (s.starts_with("<alloc::boxed::Box<F,A> as core::ops::function::Fn") && s.contains("call"))
+        || s.starts_with("alloc::boxed::Box<")
 }
 
 fn parse_location(rest: &str) -> (String, Option<u32>, Option<u32>) {
@@ -246,9 +246,11 @@ fn split_path(symbol: &str) -> Vec<&str> {
 /// `{{closure}}` markers, so grouping is stable across builds.
 fn split_symbol(symbol: &str) -> (Option<String>, String) {
     let clean = strip_hash(symbol);
+    // Legacy (`{{closure}}`) and v0 (`{closure#0}`, `{shim:vtable#0}`)
+    // markers are dropped.
     let parts: Vec<&str> = split_path(clean)
         .into_iter()
-        .filter(|p| !p.is_empty() && *p != "{{closure}}" && *p != "{{constant}}")
+        .filter(|p| !p.is_empty() && !(p.starts_with('{') && p.ends_with('}')))
         .collect();
     match parts.split_last() {
         Some((function, module)) if !module.is_empty() => {
@@ -381,6 +383,27 @@ mod tests {
         assert_eq!(frames[3].function, "main");
         assert_eq!(frames[3].filename, "<unknown>");
         assert!(!frames[3].in_app);
+    }
+
+    #[test]
+    fn skips_only_the_leading_panic_machinery() {
+        let text = "   0: std::backtrace::Backtrace::force_capture
+   1: <alloc::boxed::Box<dyn for<'a, 'b> core::ops::function::Fn<(&'a std::panic::PanicHookInfo<'b>,), Output = ()> + core::marker::Sync + core::marker::Send> as core::ops::function::Fn<(&std::panic::PanicHookInfo,)>>::call
+   2: std::panicking::panic_with_hook
+   3: std::panicking::begin_panic::<&str>::{closure#0}
+   4: std::sys::backtrace::__rust_end_short_backtrace::<std::panicking::begin_panic<&str>::{closure#0}, !>
+   5: std::panicking::begin_panic::<&str>
+   6: <my_server::Todo>::explode::{closure#0}
+             at ./tests/common/mod.rs:210:9
+   7: std::panicking::catch_unwind::<(), tokio::runtime::task::harness::poll_future::{closure#0}>
+   8: tokio::runtime::task::harness::poll_future
+";
+        let frames = parse_backtrace(text);
+        assert_eq!(frames[0].function, "explode");
+        assert_eq!(frames[0].module.as_deref(), Some("<my_server::Todo>"));
+        assert_eq!(frames[0].filename, "tests/common/mod.rs");
+        assert!(frames[0].in_app);
+        assert_eq!(frames.len(), 3);
     }
 
     #[test]
