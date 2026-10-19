@@ -47,14 +47,31 @@ async fn identify_stamps_the_actor_on_every_call() {
 }
 
 #[tokio::test]
-async fn a_failing_or_slow_hook_never_affects_the_tool_call() {
+async fn a_failing_hook_never_affects_the_tool_call() {
     let agentcat = builder("bad-hooks")
         .identify(|_req| async move { panic!("identify bug") })
+        .event_properties(|_req| async move { Some(json!("not an object")) })
+        .build();
+    let client = connect(agentcat.track(Todo::new())).await;
+    let result = call(&client, "add_todo", json!({"text": "a"})).await.unwrap();
+    assert_eq!(texts(&result)[1], "Added: a");
+
+    let events = api().events_for("bad-hooks", 1).await;
+    let e = &events[0];
+    assert!(e.get("identify_actor_given_id").is_none());
+    assert!(e.get("properties").is_none());
+}
+
+// Kept apart from the panicking hook: with RUST_BACKTRACE set, the panic
+// hook symbolizes a backtrace on the runtime thread, which can take longer
+// than the bound below on Windows.
+#[tokio::test]
+async fn a_slow_hook_never_delays_the_tool_call() {
+    let agentcat = builder("slow-hook")
         .event_tags(|_req| async move {
             tokio::time::sleep(Duration::from_millis(200)).await;
             Some(vec![("slow", "yes")])
         })
-        .event_properties(|_req| async move { Some(json!("not an object")) })
         .build();
     let client = connect(agentcat.track(Todo::new())).await;
     let started = std::time::Instant::now();
@@ -65,11 +82,8 @@ async fn a_failing_or_slow_hook_never_affects_the_tool_call() {
     );
     assert_eq!(texts(&result)[1], "Added: a");
 
-    let events = api().events_for("bad-hooks", 1).await;
-    let e = &events[0];
-    assert!(e.get("identify_actor_given_id").is_none());
-    assert_eq!(e["tags"]["slow"], "yes");
-    assert!(e.get("properties").is_none());
+    let events = api().events_for("slow-hook", 1).await;
+    assert_eq!(events[0]["tags"]["slow"], "yes");
 }
 
 #[tokio::test]
