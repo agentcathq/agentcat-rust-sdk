@@ -1,0 +1,14 @@
+# Version updates stay off (limit 0). Security updates still open pull
+# requests once Dependabot security updates are on in the repository settings.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0

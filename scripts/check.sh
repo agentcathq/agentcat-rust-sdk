@@ -49,4 +49,6 @@ if [ "$full" = 1 ]; then
   cargo +nightly minimal-versions check --direct --lib --all-features
   step features
   cargo hack check --lib --feature-powerset --depth 2 --exclude-features default,exporters --at-least-one-of rustls,native-tls
+  step coverage
+  cargo llvm-cov --all-targets --summary-only --fail-under-lines "$(cat scripts/coverage-floor)"
 fi
