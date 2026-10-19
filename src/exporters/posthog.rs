@@ -53,9 +53,10 @@ impl PostHogExporterConfig {
 }
 
 /// A deterministic UUIDv7 from a prefixed KSUID (`ses_…`): the KSUID's time
-/// for the timestamp bits and SHA-256 of the full ID for the rest. Inputs that
-/// are not KSUIDs take their timestamp from the hash too, so the same input
-/// always gives the same UUID.
+/// for the timestamp bits and SHA-256 of the full ID for the rest. The KSUID
+/// decoder does not check the alphabet, so any 27-unit string uses its decoded
+/// time. Only strings it rejects (another length, or a value over 20 bytes)
+/// take their timestamp from the hash. The same input always gives the same UUID.
 pub(crate) fn to_uuid_v7(prefixed_id: &str) -> String {
     let hash = sha256(prefixed_id.as_bytes());
     let bare = strip_lowercase_prefix(prefixed_id);

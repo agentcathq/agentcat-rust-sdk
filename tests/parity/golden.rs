@@ -101,3 +101,41 @@ fn derive_vectors_match() {
     }
     assert_eq!(derive_session_id("x", Some("")), derive_session_id("x", None));
 }
+
+#[test]
+fn exporter_id_vectors_match() {
+    use crate::exporters::posthog_uuid_v7;
+    use crate::exporters::trace_context::{datadog_span_id, datadog_trace_id, span_id, trace_id};
+    let ses = "ses_2yXlShd4ODDcHLYliGW9VgH3m1R";
+    let evt = "evt_2yXlTL6bElM5Whm0HjT0Iz8LL0M";
+    assert_eq!(trace_id(ses), "b17987c6b00767670c45519276a327c3");
+    assert_eq!(span_id(evt), "38fbea6b36e16f37");
+    assert_eq!(datadog_trace_id(ses), "884202591345649603");
+    assert_eq!(datadog_span_id(evt), "4106133231481483063");
+    for (input, expected) in [
+        (ses, "01977375-f600-7179-87c6-b00767670c45"),
+        (evt, "01977376-0988-78fb-aa6b-36e16f376637"),
+        ("my-customer-task-id", "634902a7-d0c7-7220-91c6-0fa56fad8828"),
+        ("", "f4c8996f-b924-73b0-8442-98fc1c149afb"),
+        (
+            "ses_session45600000000000000000",
+            "6c350afa-fa75-7081-b0c6-8ad3272daa6c",
+        ),
+        ("abc_def_ghi", "ae0466b7-1fe3-7984-a344-541280a247bb"),
+        // The fixture's "27 dashes" probe: `x_` plus 27 dashes.
+        (
+            &format!("x_{}", "-".repeat(27)),
+            "0145f680-b000-7d7a-8884-df06b0d17ac0",
+        ),
+    ] {
+        assert_eq!(posthog_uuid_v7(input), expected, "{input:?}");
+    }
+    let (a, b) = (trace_id(""), trace_id(""));
+    assert_eq!(a.len(), 32);
+    assert!(a.bytes().all(|c| c.is_ascii_hexdigit()));
+    assert_ne!(a, b);
+    let (a, b) = (span_id(""), span_id(""));
+    assert_eq!(a.len(), 16);
+    assert!(a.bytes().all(|c| c.is_ascii_hexdigit()));
+    assert_ne!(a, b);
+}
