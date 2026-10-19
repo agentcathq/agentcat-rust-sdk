@@ -423,3 +423,23 @@ async fn concurrent_calls_never_cross_attribute() {
         assert_eq!(e["session_id"], s.as_str());
     }
 }
+
+#[tokio::test]
+async fn tracking_twice_does_not_inject_or_publish_twice() {
+    let agentcat = builder("double-track").build();
+    let client = connect(agentcat.track(agentcat.track(Todo::new()))).await;
+    let tools = client.list_all_tools().await.unwrap();
+    assert_eq!(tools.iter().filter(|t| t.name == "get_more_tools").count(), 1);
+    let add = tools.iter().find(|t| t.name == "add_todo").unwrap();
+    assert!(add.input_schema["properties"]["session_id"]["pattern"].is_string());
+    let result = call(&client, "add_todo", json!({"text": "a"})).await.unwrap();
+    assert_eq!(
+        texts(&result)
+            .iter()
+            .filter(|t| t.starts_with("[session_id"))
+            .count(),
+        1
+    );
+    api().events_for("double-track", 1).await;
+    api().assert_count_settles("double-track", 1).await;
+}

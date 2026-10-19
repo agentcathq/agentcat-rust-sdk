@@ -485,7 +485,8 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
             .insert(AGENTCAT_TAG_SESSION_SOURCE.to_owned(), source.as_str().to_owned());
     }
 
-    if let Some(identity) = identity {
+    // An identity without a user ID names no actor.
+    if let Some(identity) = identity.filter(|i| !i.user_id.is_empty()) {
         event.identify_actor_given_id = Some(identity.user_id);
         event.identify_actor_name = identity.user_name;
         event.identify_actor_data = Some(Value::Object(identity.user_data.unwrap_or_default()));

@@ -102,6 +102,9 @@ pub struct Tracked<H> {
     inner: H,
     shared: Arc<Shared>,
     registry: Arc<Registry>,
+    /// The inner handler is already a `Tracked`: forward everything, so a
+    /// second `track()` never injects or publishes twice.
+    passthrough: bool,
 }
 
 impl<H: Clone> Clone for Tracked<H> {
@@ -111,6 +114,7 @@ impl<H: Clone> Clone for Tracked<H> {
             inner: self.inner.clone(),
             shared: self.shared.clone(),
             registry: self.registry.clone(),
+            passthrough: self.passthrough,
         }
     }
 }
@@ -143,10 +147,17 @@ impl AgentCat {
     /// - streamable HTTP: `StreamableHttpService::new(move || Ok(agentcat.track(MyServer::new())), …)`
     #[cfg_attr(docsrs, doc(cfg(feature = "rmcp")))]
     pub fn track<H: ServerHandler>(&self, handler: H) -> Tracked<H> {
+        let passthrough = std::any::type_name::<H>().starts_with(concat!(module_path!(), "::Tracked<"));
+        if passthrough {
+            write_to_log(
+                "Warning: track() called on an already tracked server; the second wrap does nothing",
+            );
+        }
         Tracked {
             inner: handler,
             shared: self.shared.clone(),
             registry: Arc::new(Registry::default()),
+            passthrough,
         }
     }
 }
@@ -745,6 +756,9 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, McpError> {
+        if self.passthrough {
+            return self.inner.call_tool(request, context).await;
+        }
         if !self.shared.options.enable_tracing {
             return self.call_untracked(request, context).await;
         }
@@ -804,6 +818,9 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         context: RequestContext<RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         let mut result = self.inner.list_tools(request, context).await?;
+        if self.passthrough {
+            return Ok(result);
+        }
         if result.tools.is_empty() {
             write_to_log(
                 "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().",
@@ -828,6 +845,9 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
 
     fn get_tool(&self, name: &str) -> Option<Tool> {
         let original = self.inner.get_tool(name);
+        if self.passthrough {
+            return original;
+        }
         let tool = match original {
             Some(tool) => tool,
             None if self.intercepts_report_missing(name) => {
