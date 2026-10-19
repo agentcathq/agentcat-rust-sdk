@@ -92,13 +92,22 @@ pub fn api() -> &'static MockApi {
 impl MockApi {
     /// Every request body received so far that matches `filter`.
     pub fn requests_where(&self, filter: impl Fn(&Value) -> bool) -> Vec<Value> {
-        self.requests.lock().unwrap().iter().filter(|v| filter(v)).cloned().collect()
+        self.requests
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|v| filter(v))
+            .cloned()
+            .collect()
     }
 
     /// Answers the next `n` requests for events named `resource_name` with
     /// `status`.
     pub fn fail_next(&self, resource_name: &str, n: usize, status: u16) {
-        self.failures.lock().unwrap().insert(resource_name.to_owned(), (n, status));
+        self.failures
+            .lock()
+            .unwrap()
+            .insert(resource_name.to_owned(), (n, status));
     }
 
     /// Waits until at least `n` requests match, or panics after 10 s.
@@ -181,9 +190,14 @@ impl Todo {
 
     /// Strict arguments: an unstripped AgentCat parameter would fail here.
     #[tool(description = "Add a todo item")]
-    async fn add_todo(&self, Parameters(AddArgs { text }): Parameters<AddArgs>) -> Result<CallToolResult, McpError> {
+    async fn add_todo(
+        &self,
+        Parameters(AddArgs { text }): Parameters<AddArgs>,
+    ) -> Result<CallToolResult, McpError> {
         self.items.lock().unwrap().push(text.clone());
-        Ok(CallToolResult::success(vec![ContentBlock::text(format!("Added: {text}"))]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(format!(
+            "Added: {text}"
+        ))]))
     }
 
     #[tool(description = "Count todo items")]
@@ -197,7 +211,9 @@ impl Todo {
 
     #[tool(description = "Echo the arguments it receives")]
     async fn echo(&self, Parameters(args): Parameters<JsonObject>) -> Result<CallToolResult, McpError> {
-        Ok(CallToolResult::success(vec![ContentBlock::text(Value::Object(args).to_string())]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(
+            Value::Object(args).to_string(),
+        )]))
     }
 
     #[tool(description = "Always fails with a tool error")]
@@ -224,7 +240,7 @@ impl ServerHandler for Todo {
     }
 }
 
-pub type Client = RunningService<RoleClient, ClientInfo>;
+pub type Client = RunningService<RoleClient, InitializeRequestParams>;
 
 /// Serves `server` over an in-memory duplex and connects a client named
 /// `test-client` 9.9.9.
@@ -235,10 +251,13 @@ pub async fn connect<S: ServerHandler>(server: S) -> Client {
             let _ = running.waiting().await;
         }
     });
-    ClientInfo::new(ClientCapabilities::default(), Implementation::new("test-client", "9.9.9"))
-        .serve(client_io)
-        .await
-        .expect("client connects")
+    InitializeRequestParams::new(
+        ClientCapabilities::default(),
+        Implementation::new("test-client", "9.9.9"),
+    )
+    .serve(client_io)
+    .await
+    .expect("client connects")
 }
 
 /// Calls a tool with JSON arguments.

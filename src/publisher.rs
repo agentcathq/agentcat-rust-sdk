@@ -12,9 +12,9 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
+use agentcat_api::apis::Error as ApiError;
 use agentcat_api::apis::configuration::Configuration;
 use agentcat_api::apis::events_api::{PublishEventParams, publish_event};
-use agentcat_api::apis::Error as ApiError;
 use agentcat_api::models::PublishEventRequest;
 use agentcat_api::models::publish_event_request::EventType;
 use serde_json::Value;
@@ -45,12 +45,15 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_QUEUED_BYTES: usize = 32 * 1024 * 1024;
 const DIAGNOSTICS_INTERVAL: Duration = Duration::from_secs(2);
 
+/// Validated customer tags, in order.
+pub(crate) type Tags = Vec<(String, String)>;
+
 /// Customer hook results, started at request time and awaited only here.
 #[derive(Default)]
 pub(crate) struct Pending {
     pub(crate) session_hook: Option<BoxFuture<Option<String>>>,
     pub(crate) identity: Option<BoxFuture<Option<UserIdentity>>>,
-    pub(crate) tags: Option<BoxFuture<Option<Vec<(String, String)>>>>,
+    pub(crate) tags: Option<BoxFuture<Option<Tags>>>,
     pub(crate) properties: Option<BoxFuture<Option<Value>>>,
 }
 
@@ -170,9 +173,17 @@ fn approx_bytes(event: &Event) -> usize {
             _ => 8,
         }
     }
-    let values = [&event.parameters, &event.response, &event.error, &event.identify_actor_data];
+    let values = [
+        &event.parameters,
+        &event.response,
+        &event.error,
+        &event.identify_actor_data,
+    ];
     512 + values.iter().filter_map(|v| v.as_ref()).map(walk).sum::<usize>()
-        + event.properties.as_ref().map_or(0, |p| p.iter().map(|(k, v)| k.len() + walk(v)).sum())
+        + event
+            .properties
+            .as_ref()
+            .map_or(0, |p| p.iter().map(|(k, v)| k.len() + walk(v)).sum())
         + event.user_intent.as_ref().map_or(0, String::len)
 }
 
@@ -230,7 +241,7 @@ impl Publisher {
     fn record_drop(&self, reason: &str) {
         let n = self.dropped.fetch_add(1, Ordering::Relaxed) + 1;
         // Log the first drop and then every 1000th, not every event.
-        if n == 1 || n % 1000 == 0 {
+        if n == 1 || n.is_multiple_of(1000) {
             write_to_log(&format!("{reason}, dropping event ({n} dropped so far)"));
         }
     }
@@ -308,15 +319,15 @@ impl Publisher {
 
     /// Stops accepting events. Already queued events still drain.
     pub(crate) fn close(&self) {
-        if !self.closed.swap(true, Ordering::SeqCst) {
-            if let Ok(mut guard) = self.sender.lock() {
-                // Dropping the sender lets the worker finish once drained. The
-                // worker's last diagnostics flush counts as outstanding work,
-                // so a flush after close also waits for it.
-                if let Some(sender) = guard.take() {
-                    self.counters.begin();
-                    drop(sender);
-                }
+        if !self.closed.swap(true, Ordering::SeqCst)
+            && let Ok(mut guard) = self.sender.lock()
+        {
+            // Dropping the sender lets the worker finish once drained. The
+            // worker's last diagnostics flush counts as outstanding work,
+            // so a flush after close also waits for it.
+            if let Some(sender) = guard.take() {
+                self.counters.begin();
+                drop(sender);
             }
         }
     }
@@ -429,7 +440,12 @@ async fn run_worker(
 
 async fn settle<T>(fut: Option<BoxFuture<Option<T>>>, label: &str) -> Option<T> {
     let fut = fut?;
-    match tokio::time::timeout(PENDING_HOOK_TIMEOUT, futures::FutureExt::catch_unwind(std::panic::AssertUnwindSafe(fut))).await {
+    match tokio::time::timeout(
+        PENDING_HOOK_TIMEOUT,
+        futures::FutureExt::catch_unwind(std::panic::AssertUnwindSafe(fut)),
+    )
+    .await
+    {
         Ok(Ok(value)) => value,
         Ok(Err(p)) => {
             write_to_log(&format!(
@@ -488,7 +504,9 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
         match properties {
             Value::Object(map) => event.properties = Some(map),
             Value::Null => {}
-            _ => write_to_log("Warning: eventProperties hook returned a non-object value; properties omitted"),
+            _ => {
+                write_to_log("Warning: eventProperties hook returned a non-object value; properties omitted")
+            }
         }
     }
 }
@@ -551,11 +569,11 @@ impl Worker {
             }
         }
 
-        if let Some(redactor) = string_redactor {
-            if let Err(e) = crate::redaction::redact_strings(&mut event, &redactor).await {
-                write_to_log(&format!("Failed to redact event: {e}"));
-                return;
-            }
+        if let Some(redactor) = string_redactor
+            && let Err(e) = crate::redaction::redact_strings(&mut event, &redactor).await
+        {
+            write_to_log(&format!("Failed to redact event: {e}"));
+            return;
         }
 
         crate::sanitization::sanitize_event(&mut event);
@@ -567,10 +585,10 @@ impl Worker {
         // Exporters get each event once, not once per delivery attempt.
         self.export(&client, &event);
 
-        if event.project_id.as_deref().is_some_and(|p| !p.is_empty()) {
-            if let Err(e) = self.send_with_retries(&client, &event).await {
-                write_to_log(&format!("Failed to deliver AgentCat event after retries: {e}"));
-            }
+        if event.project_id.as_deref().is_some_and(|p| !p.is_empty())
+            && let Err(e) = self.send_with_retries(&client, &event).await
+        {
+            write_to_log(&format!("Failed to deliver AgentCat event after retries: {e}"));
         }
     }
 
@@ -592,7 +610,9 @@ impl Worker {
             let exports = self.exports.clone();
             tokio::spawn(async move {
                 let _guard = guard;
-                let Ok(_permit) = exports.acquire().await else { return };
+                let Ok(_permit) = exports.acquire().await else {
+                    return;
+                };
                 let fut = std::panic::AssertUnwindSafe(exporter.export(client, event));
                 match futures::FutureExt::catch_unwind(fut).await {
                     Ok(Ok(())) => {}
@@ -619,7 +639,9 @@ impl Worker {
                         event.event_type,
                         event.session_id,
                         event.project_id.as_deref().unwrap_or_default(),
-                        event.duration.map_or_else(|| "undefined".to_owned(), |d| d.to_string()),
+                        event
+                            .duration
+                            .map_or_else(|| "undefined".to_owned(), |d| d.to_string()),
                         event.identify_actor_given_id.as_deref().unwrap_or("anonymous"),
                     ));
                     return Ok(());
@@ -640,7 +662,11 @@ impl Worker {
         }
     }
 
-    async fn send_once(&self, client: &reqwest::Client, request: PublishEventRequest) -> Result<(), SendError> {
+    async fn send_once(
+        &self,
+        client: &reqwest::Client,
+        request: PublishEventRequest,
+    ) -> Result<(), SendError> {
         let params = PublishEventParams {
             publish_event_request: Some(request),
         };

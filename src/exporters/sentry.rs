@@ -77,9 +77,9 @@ fn parse_dsn(dsn: &str) -> Option<ParsedDsn> {
     if public_key.is_empty() || !public_key.bytes().all(|b| matches!(b, b'0'..=b'9' | b'a'..=b'f')) {
         return None;
     }
-    let (authority, path_and_project) = match rest.find('/') {
-        Some(i) => (&rest[..i], &rest[i..]),
-        None => return None,
+    let (authority, path_and_project) = {
+        let i = rest.find('/')?;
+        (&rest[..i], &rest[i..])
     };
     let (host, port) = match authority.split_once(':') {
         Some((h, p)) if !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()) => (h, Some(p.to_owned())),
@@ -140,7 +140,11 @@ impl SentryExporter {
     }
 
     fn message(event: &Event) -> String {
-        let event_type = if event.event_type.is_empty() { "event" } else { &event.event_type };
+        let event_type = if event.event_type.is_empty() {
+            "event"
+        } else {
+            &event.event_type
+        };
         match event.resource_name.as_deref().filter(|r| !r.is_empty()) {
             Some(r) => format!("MCP {event_type}: {r}"),
             None => format!("MCP {event_type}"),
@@ -151,7 +155,11 @@ impl SentryExporter {
         match event.resource_name.as_deref().filter(|r| !r.is_empty()) {
             Some(r) => format!(
                 "{} - {r}",
-                if event.event_type.is_empty() { "mcp" } else { &event.event_type }
+                if event.event_type.is_empty() {
+                    "mcp"
+                } else {
+                    &event.event_type
+                }
             ),
             None if !event.event_type.is_empty() => event.event_type.clone(),
             None => "mcp.event".into(),
@@ -386,7 +394,12 @@ impl Exporter for SentryExporter {
         );
         let transaction = self.config.enable_tracing.then(|| self.transaction(&event));
         let transaction_envelope = transaction.as_ref().map(|t| {
-            envelope(t["event_id"].as_str().unwrap_or_default(), json!({"type": "transaction"}), t, false)
+            envelope(
+                t["event_id"].as_str().unwrap_or_default(),
+                json!({"type": "transaction"}),
+                t,
+                false,
+            )
         });
         let error_envelope = (event.is_error == Some(true)).then(|| {
             let e = self.error_event(&event, transaction.as_ref());
@@ -442,7 +455,10 @@ mod tests {
     #[test]
     fn parses_dsns() {
         let d = parse_dsn("https://abc123@o1.ingest.sentry.io/42").unwrap();
-        assert_eq!((d.host.as_str(), d.project_id.as_str(), d.path.as_str()), ("o1.ingest.sentry.io", "42", ""));
+        assert_eq!(
+            (d.host.as_str(), d.project_id.as_str(), d.path.as_str()),
+            ("o1.ingest.sentry.io", "42", "")
+        );
         let d = parse_dsn("http://abc@localhost:9000/sub/path/7").unwrap();
         assert_eq!(d.port.as_deref(), Some("9000"));
         assert_eq!(d.path, "/sub/path");
@@ -454,9 +470,11 @@ mod tests {
     #[test]
     fn transaction_starts_at_the_event_timestamp() {
         let exporter = SentryExporter::new(&SentryExporterConfig::new("https://abc@h/1")).unwrap();
-        let mut event = Event::default();
-        event.timestamp = chrono::DateTime::from_timestamp_millis(1_000_000).unwrap();
-        event.duration = Some(250);
+        let event = Event {
+            timestamp: chrono::DateTime::from_timestamp_millis(1_000_000).unwrap(),
+            duration: Some(250),
+            ..Event::default()
+        };
         let t = exporter.transaction(&event);
         assert_eq!(t["start_timestamp"], json!(1000.0));
         assert_eq!(t["timestamp"], json!(1000.25));

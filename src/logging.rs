@@ -33,13 +33,7 @@ fn log_file() -> &'static Mutex<Option<File>> {
     LOG_FILE.get_or_init(|| {
         // Containers with an arbitrary UID may have no home directory: drop
         // file logging silently rather than falling back to stdout.
-        let file = log_path().and_then(|path| {
-            OpenOptions::new()
-                .create(true)
-                .append(true)
-                .open(path)
-                .ok()
-        });
+        let file = log_path().and_then(|path| OpenOptions::new().create(true).append(true).open(path).ok());
         Mutex::new(file)
     })
 }
@@ -65,12 +59,11 @@ pub(crate) fn write_to_log(message: &str) {
         if !FILE_LOGGING.load(Ordering::Relaxed) {
             return;
         }
-        if let Ok(mut guard) = log_file().lock() {
-            if let Some(file) = guard.as_mut() {
-                if writeln!(file, "{entry}").is_err() {
-                    *guard = None;
-                }
-            }
+        if let Ok(mut guard) = log_file().lock()
+            && let Some(file) = guard.as_mut()
+            && writeln!(file, "{entry}").is_err()
+        {
+            *guard = None;
         }
     });
 }

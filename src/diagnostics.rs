@@ -32,12 +32,10 @@ enum EnvFlag {
 
 fn env_flag() -> EnvFlag {
     match std::env::var("DISABLE_DIAGNOSTICS") {
-        Ok(raw) if !raw.trim().is_empty() => {
-            match raw.trim().to_ascii_lowercase().as_str() {
-                "false" | "0" | "no" | "off" => EnvFlag::ForceEnabled,
-                _ => EnvFlag::Disabled,
-            }
-        }
+        Ok(raw) if !raw.trim().is_empty() => match raw.trim().to_ascii_lowercase().as_str() {
+            "false" | "0" | "no" | "off" => EnvFlag::ForceEnabled,
+            _ => EnvFlag::Disabled,
+        },
         _ => EnvFlag::Unset,
     }
 }
@@ -56,9 +54,8 @@ pub(crate) fn init(project_id: Option<&str>, disabled: bool) {
         return;
     }
     let flag = env_flag();
-    let enabled = !disabled
-        && flag != EnvFlag::Disabled
-        && (flag == EnvFlag::ForceEnabled || !is_test_environment());
+    let enabled =
+        !disabled && flag != EnvFlag::Disabled && (flag == EnvFlag::ForceEnabled || !is_test_environment());
     if enabled {
         let _ = STATIC_ATTRIBUTES.set(static_attributes(project_id));
         ENABLED.store(true, Ordering::SeqCst);
@@ -117,9 +114,7 @@ fn static_attributes(project_id: Option<&str>) -> Vec<Value> {
     push("host.arch", Some(std::env::consts::ARCH.into()));
     push(
         "host.cpu.count",
-        std::thread::available_parallelism()
-            .ok()
-            .map(|n| n.to_string()),
+        std::thread::available_parallelism().ok().map(|n| n.to_string()),
     );
     out
 }

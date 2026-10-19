@@ -12,11 +12,10 @@ use std::sync::Mutex;
 use serde_json::{Map, Value, json};
 
 use crate::constants::{
-    AGENT_ID_PARAM, AGENT_ID_PARAM_DESCRIPTION, CONTEXT_PARAM,
-    DEFAULT_CONTEXT_PARAMETER_DESCRIPTION, GET_MORE_TOOLS_CONTEXT_DESCRIPTION,
-    GET_MORE_TOOLS_DESCRIPTION, GET_MORE_TOOLS_NAME, GET_MORE_TOOLS_RESPONSE,
-    GET_MORE_TOOLS_TITLE, MCP_SESSION_AGENT_ID_DESCRIPTION, MCP_SESSION_FIELD_DESCRIPTION,
-    MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE, MCP_SESSION_KEY,
+    AGENT_ID_PARAM, AGENT_ID_PARAM_DESCRIPTION, CONTEXT_PARAM, DEFAULT_CONTEXT_PARAMETER_DESCRIPTION,
+    GET_MORE_TOOLS_CONTEXT_DESCRIPTION, GET_MORE_TOOLS_DESCRIPTION, GET_MORE_TOOLS_NAME,
+    GET_MORE_TOOLS_RESPONSE, GET_MORE_TOOLS_TITLE, MCP_SESSION_AGENT_ID_DESCRIPTION,
+    MCP_SESSION_FIELD_DESCRIPTION, MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE, MCP_SESSION_KEY,
     MCP_SESSION_SESSION_ID_DESCRIPTION, MCP_SESSION_STATUS_DESCRIPTION, SESSION_ID_PARAM,
     SESSION_ID_PARAM_DESCRIPTION, SESSION_ID_PARAM_PATTERN,
 };
@@ -207,7 +206,9 @@ pub(crate) fn inject_tool(
                         ));
                     }
                 } else {
-                    insert_property(input, SESSION_ID_PARAM,
+                    insert_property(
+                        input,
+                        SESSION_ID_PARAM,
                         json!({
                             "type": "string",
                             "description": SESSION_ID_PARAM_DESCRIPTION,
@@ -224,7 +225,9 @@ pub(crate) fn inject_tool(
                         "WARN: Tool \"{log_name}\" already has '{AGENT_ID_PARAM}' parameter. Skipping agent_id injection."
                     ));
                 } else {
-                    insert_property(input, AGENT_ID_PARAM,
+                    insert_property(
+                        input,
+                        AGENT_ID_PARAM,
                         json!({"type": "string", "description": AGENT_ID_PARAM_DESCRIPTION}),
                     );
                     result.strip.agent_id = true;
@@ -249,7 +252,9 @@ pub(crate) fn inject_tool(
             ));
         } else {
             prepare_properties(input);
-            insert_property(input, CONTEXT_PARAM,
+            insert_property(
+                input,
+                CONTEXT_PARAM,
                 json!({"type": "string", "description": cfg.context_description}),
             );
             result.strip.context = true;
@@ -304,7 +309,9 @@ fn inject_output_schema(cfg: &InjectConfig, log_name: &str, schema: &mut Map<Str
     } else {
         MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE
     };
-    insert_property(schema, MCP_SESSION_KEY,
+    insert_property(
+        schema,
+        MCP_SESSION_KEY,
         json!({"type": "object", "description": description, "properties": sub}),
     );
     true

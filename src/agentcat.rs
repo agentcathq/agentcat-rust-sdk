@@ -137,11 +137,11 @@ impl Shared {
             identify_actor_data: Some(Value::Object(Map::new())),
             ..Event::default()
         };
-        if let Ok(guard) = self.server_info.read() {
-            if let Some((name, version)) = guard.as_ref() {
-                event.server_name = name.clone();
-                event.server_version = version.clone();
-            }
+        if let Ok(guard) = self.server_info.read()
+            && let Some((name, version)) = guard.as_ref()
+        {
+            event.server_name = name.clone();
+            event.server_version = version.clone();
         }
         event
     }
@@ -456,15 +456,19 @@ impl AgentCatBuilder {
             .filter(|u| !u.is_empty())
             .or_else(|| std::env::var("AGENTCAT_API_URL").ok().filter(|u| !u.is_empty()))
             .or_else(|| std::env::var("MCPCAT_API_URL").ok().filter(|u| !u.is_empty()));
-        if let Some(url) = api_base_url {
-            if publisher.config.api_base_url.set(url.clone()).is_err()
-                && publisher.config.api_base_url.get() != Some(&url)
-            {
-                write_to_log(&format!(
-                    "Warning: AgentCat API URL is already set to {}; ignoring {url}",
-                    publisher.config.api_base_url.get().map(String::as_str).unwrap_or_default()
-                ));
-            }
+        if let Some(url) = api_base_url
+            && publisher.config.api_base_url.set(url.clone()).is_err()
+            && publisher.config.api_base_url.get() != Some(&url)
+        {
+            write_to_log(&format!(
+                "Warning: AgentCat API URL is already set to {}; ignoring {url}",
+                publisher
+                    .config
+                    .api_base_url
+                    .get()
+                    .map(String::as_str)
+                    .unwrap_or_default()
+            ));
         }
 
         if !options.exporters.is_empty() && publisher.config.exporters.get().is_none() {
@@ -491,12 +495,12 @@ impl AgentCatBuilder {
                 "Warning: No projectId provided and no exporters configured. Events will not be sent anywhere.",
             );
         }
-        if let Some(p) = project_id.as_deref() {
-            if !p.starts_with("proj_") {
-                write_to_log(&format!(
-                    "Warning: project ID \"{p}\" does not start with \"proj_\"; the AgentCat API will drop its events."
-                ));
-            }
+        if let Some(p) = project_id.as_deref()
+            && !p.starts_with("proj_")
+        {
+            write_to_log(&format!(
+                "Warning: project ID \"{p}\" does not start with \"proj_\"; the AgentCat API will drop its events."
+            ));
         }
         if options.capture_panics && options.enable_tracing {
             crate::exceptions::install_panic_hook();
@@ -608,7 +612,9 @@ impl CustomEvent {
 
     /// Adds a tag.
     pub fn tag(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.tags.get_or_insert_with(Vec::new).push((key.into(), value.into()));
+        self.tags
+            .get_or_insert_with(Vec::new)
+            .push((key.into(), value.into()));
         self
     }
 
@@ -658,7 +664,9 @@ fn log_custom(session_id: &str) {
     } else {
         format!("for session {session_id}")
     };
-    write_to_log(&format!("Published custom event {target} with type 'agentcat:custom'"));
+    write_to_log(&format!(
+        "Published custom event {target} with type 'agentcat:custom'"
+    ));
 }
 
 /// Publishes an `agentcat:custom` event to `project_id` under a session ID

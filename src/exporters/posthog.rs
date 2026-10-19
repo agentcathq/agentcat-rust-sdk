@@ -59,7 +59,9 @@ pub(crate) fn to_uuid_v7(prefixed_id: &str) -> String {
     let bare = strip_lowercase_prefix(prefixed_id);
     let timestamp_ms = match Ksuid::parse(bare) {
         Some(k) => k.time_ms(),
-        None => hash[10..16].iter().fold(0u64, |acc, &b| (acc << 8) | u64::from(b)),
+        None => hash[10..16]
+            .iter()
+            .fold(0u64, |acc, &b| (acc << 8) | u64::from(b)),
     };
     let mut buf = [0u8; 16];
     buf[..6].copy_from_slice(&timestamp_ms.to_be_bytes()[2..8]);
@@ -68,7 +70,14 @@ pub(crate) fn to_uuid_v7(prefixed_id: &str) -> String {
     buf[8] = 0x80 | (hash[2] & 0x3f);
     buf[9..16].copy_from_slice(&hash[3..10]);
     let h = hex(&buf);
-    format!("{}-{}-{}-{}-{}", &h[0..8], &h[8..12], &h[12..16], &h[16..20], &h[20..32])
+    format!(
+        "{}-{}-{}-{}-{}",
+        &h[0..8],
+        &h[8..12],
+        &h[12..16],
+        &h[16..20],
+        &h[20..32]
+    )
 }
 
 /// Removes a leading `^[a-z]+_` prefix.
@@ -230,7 +239,11 @@ pub(crate) fn exception_event(event: &Event) -> Value {
 }
 
 pub(crate) fn ai_span_event(event: &Event) -> Value {
-    let trace_source = if event.session_id.is_empty() { &event.id } else { &event.session_id };
+    let trace_source = if event.session_id.is_empty() {
+        &event.id
+    } else {
+        &event.session_id
+    };
     let mut p = Map::new();
     p.insert("$ai_trace_id".into(), json!(to_uuid_v7(trace_source)));
     p.insert("$ai_span_id".into(), json!(to_uuid_v7(&event.id)));
@@ -241,16 +254,19 @@ pub(crate) fn ai_span_event(event: &Event) -> Value {
     p.insert("$ai_is_error".into(), json!(event.is_error.unwrap_or(false)));
     p.insert("source".into(), json!(AGENTCAT_SOURCE));
     if !event.session_id.is_empty() {
-        p.insert("$ai_session_id".into(), json!(format!("agentcat_{}", event.session_id)));
+        p.insert(
+            "$ai_session_id".into(),
+            json!(format!("agentcat_{}", event.session_id)),
+        );
         p.insert("$session_id".into(), json!(to_uuid_v7(&event.session_id)));
     }
     if let Some(d) = event.duration {
         p.insert("$ai_latency".into(), json!(d as f64 / 1000.0));
     }
-    if event.is_error == Some(true) {
-        if let Some(e) = &event.error {
-            p.insert("$ai_error".into(), e.clone());
-        }
+    if event.is_error == Some(true)
+        && let Some(e) = &event.error
+    {
+        p.insert("$ai_error".into(), e.clone());
     }
     if let Some(v) = &event.parameters {
         p.insert("$ai_input_state".into(), v.clone());

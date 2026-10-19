@@ -73,7 +73,8 @@ pub const MCP_SESSION_KEY: &str = "mcp_session";
 pub const MCP_SESSION_FIELD_DESCRIPTION: &str = "Session continuity and agent attribution state for this task, returned on completed responses that carry structured output. This server cannot link your calls between requests on its own, so session continuity travels here instead.";
 
 /// Description of the `mcp_session` output-schema property in hook mode.
-pub const MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE: &str = "Agent attribution state for this task, returned on completed responses that carry structured output.";
+pub const MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE: &str =
+    "Agent attribution state for this task, returned on completed responses that carry structured output.";
 
 /// Description of `mcp_session.session_id`.
 pub const MCP_SESSION_SESSION_ID_DESCRIPTION: &str = "Opaque correlation ID for this task, issued by this server. Use this as the session_id argument of every later call, and hand it to any subagents working the same task. Absent when status is unrecognized; no replacement is issued in that response — recovery is described under status.";

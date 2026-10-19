@@ -10,7 +10,10 @@ use crate::hooks::{EventRedactor, StringRedactor};
 /// `None` or panicked). System fields are restored from the original: the
 /// hook cannot change `id`, `session_id`, `project_id`, `event_type` or
 /// `timestamp`.
-pub(crate) async fn apply_event_redaction(event: Event, hook: &EventRedactor) -> Result<Option<Event>, String> {
+pub(crate) async fn apply_event_redaction(
+    event: Event,
+    hook: &EventRedactor,
+) -> Result<Option<Event>, String> {
     let original = (
         event.id.clone(),
         event.session_id.clone(),
@@ -19,10 +22,8 @@ pub(crate) async fn apply_event_redaction(event: Event, hook: &EventRedactor) ->
         event.timestamp,
     );
     let result = match hook {
-        EventRedactor::Sync(f) => {
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(event)))
-                .map_err(|p| crate::util::panic_message(&*p))?
-        }
+        EventRedactor::Sync(f) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(event)))
+            .map_err(|p| crate::util::panic_message(&*p))?,
         EventRedactor::Async(f) => {
             let fut = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| f(event)))
                 .map_err(|p| crate::util::panic_message(&*p))?;
@@ -61,31 +62,30 @@ enum Step {
 /// sanitizer still recognizes the blocks.
 pub(crate) async fn redact_strings(event: &mut Event, redactor: &StringRedactor) -> Result<(), String> {
     match redactor {
-        StringRedactor::Sync(f) => {
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let f = |s: &str| f(s);
-                if let Some(v) = event.parameters.as_mut() {
-                    walk_sync(v, &f, false);
+        StringRedactor::Sync(f) => std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            let f = |s: &str| f(s);
+            if let Some(v) = event.parameters.as_mut() {
+                walk_sync(v, &f, false);
+            }
+            if let Some(v) = event.response.as_mut() {
+                walk_response_sync(v, &f);
+            }
+            {
+                let field = &mut event.user_intent;
+                if let Some(s) = field.as_mut() {
+                    *s = f(s);
                 }
-                if let Some(v) = event.response.as_mut() {
-                    walk_response_sync(v, &f);
+            }
+            if let Some(v) = event.error.as_mut() {
+                walk_sync(v, &f, false);
+            }
+            for field in [&mut event.event_id, &mut event.ip_address] {
+                if let Some(s) = field.as_mut() {
+                    *s = f(s);
                 }
-                for field in [&mut event.user_intent] {
-                    if let Some(s) = field.as_mut() {
-                        *s = f(s);
-                    }
-                }
-                if let Some(v) = event.error.as_mut() {
-                    walk_sync(v, &f, false);
-                }
-                for field in [&mut event.event_id, &mut event.ip_address] {
-                    if let Some(s) = field.as_mut() {
-                        *s = f(s);
-                    }
-                }
-            }))
-            .map_err(|p| crate::util::panic_message(&*p))
-        }
+            }
+        }))
+        .map_err(|p| crate::util::panic_message(&*p)),
         StringRedactor::Async(f) => {
             let call = |s: String| {
                 let f = f.clone();
@@ -143,19 +143,25 @@ fn walk_response_sync(response: &mut Value, f: &dyn Fn(&str) -> String) {
         return;
     };
     for (key, v) in map.iter_mut() {
-        if key == "content" {
-            if let Value::Array(blocks) = v {
-                for block in blocks.iter_mut() {
-                    walk_sync(block, f, true);
-                }
-                continue;
+        if key == "content"
+            && let Value::Array(blocks) = v
+        {
+            for block in blocks.iter_mut() {
+                walk_sync(block, f, true);
             }
+            continue;
         }
         walk_sync(v, f, false);
     }
 }
 
-fn collect(value: &Value, path: &mut Vec<Step>, out: &mut Vec<(Vec<Step>, String)>, skip_type_key: bool, is_response_root: bool) {
+fn collect(
+    value: &Value,
+    path: &mut Vec<Step>,
+    out: &mut Vec<(Vec<Step>, String)>,
+    skip_type_key: bool,
+    is_response_root: bool,
+) {
     match value {
         Value::String(s) => out.push((path.iter().map(Step::clone_step).collect(), s.clone())),
         Value::Array(items) => {

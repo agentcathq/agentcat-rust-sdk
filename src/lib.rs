@@ -40,13 +40,27 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
+// AgentCat must never take the customer's server down: no unwrap, expect or
+// panic outside tests.
+#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
+// Builds without the rmcp adapter or the exporters leave parts unused.
+#![cfg_attr(
+    not(all(
+        feature = "rmcp",
+        feature = "otlp",
+        feature = "datadog",
+        feature = "sentry",
+        feature = "posthog"
+    )),
+    allow(dead_code, unreachable_code, unused_imports, unused_variables)
+)]
 
 mod agentcat;
 pub mod constants;
 mod diagnostics;
 mod event;
-pub mod exporters;
 mod exceptions;
+pub mod exporters;
 mod handles;
 mod hooks;
 mod inject;
@@ -56,9 +70,9 @@ mod publisher;
 mod redaction;
 mod runtime;
 mod sanitization;
+mod tokens;
 #[cfg(feature = "rmcp")]
 mod tool_call;
-mod tokens;
 #[cfg(feature = "rmcp")]
 mod tracked;
 mod truncation;
@@ -97,7 +111,8 @@ pub mod __private {
         input: &mut serde_json::Map<String, serde_json::Value>,
         output: Option<&mut serde_json::Map<String, serde_json::Value>>,
     ) -> (bool, bool, bool, bool, bool) {
-        let (tracing, hook_mode, agent_tracking, context_description, tool_call_context, report_missing) = config;
+        let (tracing, hook_mode, agent_tracking, context_description, tool_call_context, report_missing) =
+            config;
         let cfg = crate::inject::InjectConfig::new(
             tracing,
             hook_mode,
@@ -108,7 +123,13 @@ pub mod __private {
         );
         let memory = crate::inject::InjectMemory::default();
         let r = crate::inject::inject_tool(&cfg, &memory, name, input, output);
-        (r.strip.session_id, r.strip.agent_id, r.strip.context, r.declares_session_id, r.output_injected)
+        (
+            r.strip.session_id,
+            r.strip.agent_id,
+            r.strip.context,
+            r.declares_session_id,
+            r.output_injected,
+        )
     }
 
     /// The report-missing tool descriptor.
@@ -130,8 +151,15 @@ pub mod __private {
     }
 
     /// Runs sanitization on an event's response and parameters.
-    pub fn sanitize(response: Option<serde_json::Value>, parameters: Option<serde_json::Value>) -> (Option<serde_json::Value>, Option<serde_json::Value>) {
-        let mut e = crate::Event { response, parameters, ..Default::default() };
+    pub fn sanitize(
+        response: Option<serde_json::Value>,
+        parameters: Option<serde_json::Value>,
+    ) -> (Option<serde_json::Value>, Option<serde_json::Value>) {
+        let mut e = crate::Event {
+            response,
+            parameters,
+            ..Default::default()
+        };
         crate::sanitization::sanitize_event(&mut e);
         (e.response, e.parameters)
     }
@@ -163,7 +191,12 @@ pub mod __private {
     /// Trace-context helpers: `(trace_id, span_id, dd_trace_id, dd_span_id)`.
     pub fn trace_context(id: &str) -> (String, String, String, String) {
         use crate::exporters::trace_context as t;
-        (t::trace_id(id), t::span_id(id), t::datadog_trace_id(id), t::datadog_span_id(id))
+        (
+            t::trace_id(id),
+            t::span_id(id),
+            t::datadog_trace_id(id),
+            t::datadog_span_id(id),
+        )
     }
 
     /// PostHog UUIDv7 derivation.
@@ -201,12 +234,18 @@ pub mod __private {
     }
 
     /// Mirrors a structured mint-back into `structured`.
-    pub fn mirror_for_test(structured: &mut Option<serde_json::Value>, mint: serde_json::Map<String, serde_json::Value>) -> bool {
+    pub fn mirror_for_test(
+        structured: &mut Option<serde_json::Value>,
+        mint: serde_json::Map<String, serde_json::Value>,
+    ) -> bool {
         crate::handles::mirror_structured_mint_back(structured, mint)
     }
 
     /// Reads a supplied handle off arguments.
-    pub fn extract_handle(args: Option<&serde_json::Map<String, serde_json::Value>>, name: &str) -> Option<String> {
+    pub fn extract_handle(
+        args: Option<&serde_json::Map<String, serde_json::Value>>,
+        name: &str,
+    ) -> Option<String> {
         crate::handles::extract_handle(args, name)
     }
 
@@ -217,7 +256,11 @@ pub mod __private {
         entry: Option<(bool, bool, bool)>,
     ) {
         let strip = match entry {
-            Some((session_id, agent_id, context)) => crate::inject::Injected { session_id, agent_id, context },
+            Some((session_id, agent_id, context)) => crate::inject::Injected {
+                session_id,
+                agent_id,
+                context,
+            },
             None => crate::inject::heuristic_strip(tool),
         };
         crate::inject::strip_arguments(args, strip);

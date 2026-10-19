@@ -260,6 +260,9 @@ mod tests {
     #[test]
     fn serializes_wire_keys() {
         let v = serde_json::to_value(ErrorData::new("m").with_type("T")).unwrap();
-        assert_eq!(v, serde_json::json!({"message": "m", "type": "T", "platform": "rust"}));
+        assert_eq!(
+            v,
+            serde_json::json!({"message": "m", "type": "T", "platform": "rust"})
+        );
     }
 }

@@ -13,7 +13,9 @@ async fn shutdown_drains_queued_events_then_drops_new_ones() {
     let agentcat = builder("shutdown").build();
     let client = connect(agentcat.track(Todo::new())).await;
     for i in 0..20 {
-        call(&client, "add_todo", json!({"text": format!("item {i}")})).await.unwrap();
+        call(&client, "add_todo", json!({"text": format!("item {i}")}))
+            .await
+            .unwrap();
     }
     assert!(agentcat::shutdown(Duration::from_secs(10)).await);
     assert_eq!(api().requests_where(|v| v["server_name"] == "shutdown").len(), 20);

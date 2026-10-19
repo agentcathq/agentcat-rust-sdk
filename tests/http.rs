@@ -5,12 +5,12 @@ mod common;
 
 use agentcat::AgentCat;
 use common::*;
-use rmcp::model::{ClientCapabilities, ClientInfo, Implementation};
+use rmcp::ServiceExt;
+use rmcp::model::{ClientCapabilities, Implementation, InitializeRequestParams};
 use rmcp::transport::StreamableHttpClientTransport;
 use rmcp::transport::streamable_http_server::{
     StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
 };
-use rmcp::ServiceExt;
 use serde_json::{Value, json};
 
 async fn spawn(agentcat: AgentCat, stateful: bool) -> String {
@@ -20,7 +20,11 @@ async fn spawn(agentcat: AgentCat, stateful: bool) -> String {
         .with_sse_keep_alive(None);
     // The factory runs per session, or per request when stateless.
     let service: StreamableHttpService<agentcat::Tracked<Todo>, LocalSessionManager> =
-        StreamableHttpService::new(move || Ok(agentcat.track(Todo::new())), Default::default(), config);
+        StreamableHttpService::new(
+            move || Ok(agentcat.track(Todo::new())),
+            Default::default(),
+            config,
+        );
     let router = axum::Router::new().nest_service("/mcp", service);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let addr = listener.local_addr().unwrap();
@@ -60,9 +64,22 @@ async fn stateless_2026_requests_carry_client_info_protocol_and_headers() {
         "io.modelcontextprotocol/clientInfo": {"name": "claude-code", "version": "2.0.0"},
         "io.modelcontextprotocol/clientCapabilities": {},
     });
-    let body = post_call(&url, "2026-07-28", "add_todo", json!({"text": "a", "context": "Testing HTTP."}), Some(meta)).await;
+    let body = post_call(
+        &url,
+        "2026-07-28",
+        "add_todo",
+        json!({"text": "a", "context": "Testing HTTP."}),
+        Some(meta),
+    )
+    .await;
     let content = &body["result"]["content"];
-    assert!(content[0]["text"].as_str().unwrap().starts_with("[session_id issued"), "{body}");
+    assert!(
+        content[0]["text"]
+            .as_str()
+            .unwrap()
+            .starts_with("[session_id issued"),
+        "{body}"
+    );
     assert_eq!(content[1]["text"], "Added: a");
 
     let e = &api().events_for("http-2026", 1).await[0];
@@ -87,12 +104,33 @@ async fn stateless_sessions_continue_across_requests() {
         "io.modelcontextprotocol/clientInfo": {"name": "c", "version": "1"},
         "io.modelcontextprotocol/clientCapabilities": {},
     });
-    let first = post_call(&url, "2026-07-28", "add_todo", json!({"text": "a"}), Some(meta.clone())).await;
+    let first = post_call(
+        &url,
+        "2026-07-28",
+        "add_todo",
+        json!({"text": "a"}),
+        Some(meta.clone()),
+    )
+    .await;
     let text = first["result"]["content"][0]["text"].as_str().unwrap();
-    let session = text.lines().find_map(|l| l.strip_prefix("session_id: ")).unwrap().to_owned();
-    let second = post_call(&url, "2026-07-28", "add_todo", json!({"text": "b", "session_id": session}), Some(meta)).await;
+    let session = text
+        .lines()
+        .find_map(|l| l.strip_prefix("session_id: "))
+        .unwrap()
+        .to_owned();
+    let second = post_call(
+        &url,
+        "2026-07-28",
+        "add_todo",
+        json!({"text": "b", "session_id": session}),
+        Some(meta),
+    )
+    .await;
     // A fresh handler per request still strips the echoed handle.
-    assert_eq!(second["result"]["content"], json!([{"type": "text", "text": "Added: b"}]));
+    assert_eq!(
+        second["result"]["content"],
+        json!([{"type": "text", "text": "Added: b"}])
+    );
     let events = api().events_for("http-continue", 2).await;
     assert!(events.iter().all(|e| e["session_id"] == session.as_str()));
 }
@@ -112,13 +150,18 @@ async fn legacy_stateless_requests_have_no_protocol_tag_or_placeholder_client() 
 async fn legacy_sessions_report_the_handshake_client() {
     let url = spawn(builder("http-session").build(), true).await;
     let transport = StreamableHttpClientTransport::from_uri(url);
-    let client = ClientInfo::new(ClientCapabilities::default(), Implementation::new("session-client", "3.1.4"))
-        .serve(transport)
-        .await
-        .unwrap();
+    let client = InitializeRequestParams::new(
+        ClientCapabilities::default(),
+        Implementation::new("session-client", "3.1.4"),
+    )
+    .serve(transport)
+    .await
+    .unwrap();
     let first = call(&client, "add_todo", json!({"text": "a"})).await.unwrap();
     let session = minted_session(&first);
-    call(&client, "add_todo", json!({"text": "b", "session_id": session})).await.unwrap();
+    call(&client, "add_todo", json!({"text": "b", "session_id": session}))
+        .await
+        .unwrap();
 
     let events = api().events_for("http-session", 2).await;
     for e in &events {

@@ -105,7 +105,10 @@ pub(crate) fn epoch_seconds(event: &Event) -> f64 {
 /// A response check shared by the exporters: non-2xx becomes an error with
 /// the status and body.
 #[allow(dead_code)]
-pub(crate) async fn check(response: Result<reqwest::Response, reqwest::Error>, what: &str) -> Result<(), String> {
+pub(crate) async fn check(
+    response: Result<reqwest::Response, reqwest::Error>,
+    what: &str,
+) -> Result<(), String> {
     match response {
         Ok(r) if r.status().is_success() => Ok(()),
         Ok(r) => {

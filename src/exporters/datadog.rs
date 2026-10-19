@@ -50,7 +50,10 @@ pub(crate) struct DatadogExporter {
 
 impl DatadogExporter {
     pub(crate) fn new(config: &DatadogExporterConfig) -> Self {
-        let site = config.site.trim_start_matches("https://").trim_start_matches("http://");
+        let site = config
+            .site
+            .trim_start_matches("https://")
+            .trim_start_matches("http://");
         let site = site.strip_suffix('/').unwrap_or(site);
         Self {
             config: config.clone(),
@@ -123,8 +126,16 @@ impl DatadogExporter {
         put("tags", event.tags.as_ref().map(|t| json!(t)));
         put("properties", event.properties.clone().map(Value::Object));
 
-        let event_type = if event.event_type.is_empty() { "unknown" } else { &event.event_type };
-        let resource = event.resource_name.as_deref().filter(|r| !r.is_empty()).unwrap_or("unknown");
+        let event_type = if event.event_type.is_empty() {
+            "unknown"
+        } else {
+            &event.event_type
+        };
+        let resource = event
+            .resource_name
+            .as_deref()
+            .filter(|r| !r.is_empty())
+            .unwrap_or("unknown");
         let mut log = json!({
             "message": format!("{event_type} - {resource}"),
             "service": self.config.service,
@@ -138,14 +149,14 @@ impl DatadogExporter {
             },
             "mcp": mcp,
         });
-        if event.is_error == Some(true) {
-            if let Some(error) = &event.error {
-                let message = match error {
-                    Value::String(s) => s.clone(),
-                    other => other.to_string(),
-                };
-                log["error"] = json!({"message": message});
-            }
+        if event.is_error == Some(true)
+            && let Some(error) = &event.error
+        {
+            let message = match error {
+                Value::String(s) => s.clone(),
+                other => other.to_string(),
+            };
+            log["error"] = json!({"message": message});
         }
         log
     }
@@ -154,12 +165,17 @@ impl DatadogExporter {
         let ts = event.timestamp.timestamp_millis().div_euclid(1000);
         let mut tags = vec![format!("service:{}", self.config.service)];
         tags.extend(self.common_tags(event));
-        let mut out = vec![json!({"metric": "mcp.events.count", "type": "count", "points": [[ts, 1]], "tags": tags})];
+        let mut out =
+            vec![json!({"metric": "mcp.events.count", "type": "count", "points": [[ts, 1]], "tags": tags})];
         if let Some(d) = event.duration.filter(|d| *d > 0) {
-            out.push(json!({"metric": "mcp.event.duration", "type": "gauge", "points": [[ts, d]], "tags": tags}));
+            out.push(
+                json!({"metric": "mcp.event.duration", "type": "gauge", "points": [[ts, d]], "tags": tags}),
+            );
         }
         if event.is_error == Some(true) {
-            out.push(json!({"metric": "mcp.errors.count", "type": "count", "points": [[ts, 1]], "tags": tags}));
+            out.push(
+                json!({"metric": "mcp.errors.count", "type": "count", "points": [[ts, 1]], "tags": tags}),
+            );
         }
         out
     }
@@ -173,7 +189,10 @@ impl Exporter for DatadogExporter {
         let metrics_url = self.metrics_url.clone();
         let api_key = self.config.api_key.clone();
         Box::pin(async move {
-            write_to_log(&format!("DatadogExporter: Sending {} metric series", metrics.len()));
+            write_to_log(&format!(
+                "DatadogExporter: Sending {} metric series",
+                metrics.len()
+            ));
             let logs = client
                 .post(&logs_url)
                 .header("DD-API-KEY", &api_key)
@@ -187,10 +206,14 @@ impl Exporter for DatadogExporter {
             let (logs, series) = tokio::join!(logs, series);
             for (what, result) in [("logs", logs), ("metrics", series)] {
                 match result {
-                    Ok(r) if r.status().is_success() => {
-                        write_to_log(&format!("Datadog {what} success - Status: {}", r.status().as_u16()))
-                    }
-                    Ok(r) => write_to_log(&format!("Datadog {what} failed - Status: {}", r.status().as_u16())),
+                    Ok(r) if r.status().is_success() => write_to_log(&format!(
+                        "Datadog {what} success - Status: {}",
+                        r.status().as_u16()
+                    )),
+                    Ok(r) => write_to_log(&format!(
+                        "Datadog {what} failed - Status: {}",
+                        r.status().as_u16()
+                    )),
                     Err(e) => write_to_log(&format!("Datadog {what} network error: {e}")),
                 }
             }

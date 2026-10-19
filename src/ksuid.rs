@@ -43,8 +43,7 @@ impl Ksuid {
         let mut payload = [0u8; 16];
         fill_random(&mut payload);
         let now = crate::util::unix_millis();
-        Self::from_parts(now.clamp(EPOCH_MS, MAX_TIME_MS), payload)
-            .unwrap_or(Self([0; BYTE_LENGTH]))
+        Self::from_parts(now.clamp(EPOCH_MS, MAX_TIME_MS), payload).unwrap_or(Self([0; BYTE_LENGTH]))
     }
 
     /// Seconds since the KSUID epoch.

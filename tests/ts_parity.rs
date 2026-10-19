@@ -32,14 +32,24 @@ fn derived_session_ids_match() {
 fn ksuid_encoding_matches() {
     let v = vectors();
     for case in v["ksuid_from_parts"].as_array().unwrap() {
-        let payload: Vec<u8> = case["payload"].as_array().unwrap().iter().map(|b| b.as_u64().unwrap() as u8).collect();
+        let payload: Vec<u8> = case["payload"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|b| b.as_u64().unwrap() as u8)
+            .collect();
         let encoded = p::ksuid_from_parts(case["time_ms"].as_u64().unwrap(), payload.try_into().unwrap());
         assert_eq!(encoded.as_deref(), case["encoded"].as_str(), "{case}");
     }
     for case in v["ksuid_parse"].as_array().unwrap() {
         let (ts, payload) = p::ksuid_parse(case["encoded"].as_str().unwrap()).unwrap();
         assert_eq!(u64::from(ts), case["timestamp"].as_u64().unwrap());
-        let expected: Vec<u8> = case["payload"].as_array().unwrap().iter().map(|b| b.as_u64().unwrap() as u8).collect();
+        let expected: Vec<u8> = case["payload"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|b| b.as_u64().unwrap() as u8)
+            .collect();
         assert_eq!(payload, expected);
     }
 }
@@ -48,7 +58,11 @@ fn ksuid_encoding_matches() {
 #[test]
 fn posthog_uuid_v7_matches() {
     for case in vectors()["uuidv7"].as_array().unwrap() {
-        assert_eq!(p::to_uuid_v7(case["id"].as_str().unwrap()), case["uuid"].as_str().unwrap(), "{case}");
+        assert_eq!(
+            p::to_uuid_v7(case["id"].as_str().unwrap()),
+            case["uuid"].as_str().unwrap(),
+            "{case}"
+        );
     }
 }
 
@@ -90,10 +104,20 @@ fn resolution_mint_back_and_tags_match() {
         let (hook_mode, agent_tracking, args, ours) = match label {
             "omitted" => (false, false, json!({"q": 1}), true),
             "start" => (false, false, json!({"session_id": " START "}), true),
-            "supplied" => (false, false, json!({"session_id": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"}), true),
+            "supplied" => (
+                false,
+                false,
+                json!({"session_id": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"}),
+                true,
+            ),
             "invalid" => (false, false, json!({"session_id": "ses_invented"}), true),
             "foreign" => (false, false, json!({"session_id": "customer-owned"}), false),
-            "hook" => (true, false, json!({"session_id": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"}), true),
+            "hook" => (
+                true,
+                false,
+                json!({"session_id": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"}),
+                true,
+            ),
             "agent" => (
                 false,
                 true,
@@ -101,7 +125,12 @@ fn resolution_mint_back_and_tags_match() {
                 true,
             ),
             "agent_off" => (false, false, json!({"agent_id": "opus"}), true),
-            "agent_foreign" => (false, true, json!({"session_id": "x", "agent_id": format!("line1\nline2\r{}", "z".repeat(300))}), false),
+            "agent_foreign" => (
+                false,
+                true,
+                json!({"session_id": "x", "agent_id": format!("line1\nline2\r{}", "z".repeat(300))}),
+                false,
+            ),
             other => panic!("unknown case {other}"),
         };
         let args = obj(&args);
@@ -115,7 +144,13 @@ fn resolution_mint_back_and_tags_match() {
             assert_eq!(session_id, case["session_id"].as_str().unwrap(), "{label}");
         }
         assert_eq!(agent_id.as_deref(), case["agent_id"].as_str(), "{label}");
-        let text = text.map(|t| if minted { t.replace(&session_id, "<minted>") } else { t });
+        let text = text.map(|t| {
+            if minted {
+                t.replace(&session_id, "<minted>")
+            } else {
+                t
+            }
+        });
         assert_eq!(text.as_deref(), case["mint_back_text"].as_str(), "{label}");
         let structured = structured.map(|mut m| {
             if minted {
@@ -136,7 +171,11 @@ fn structured_mirror_matches() {
         p::mirror_for_test(&mut sc, obj(&case["mint"]));
         let expected = case["out"].get("structuredContent").cloned();
         // Byte equality checks that mcp_session is the first key.
-        assert_eq!(serde_json::to_string(&sc).unwrap(), serde_json::to_string(&expected).unwrap(), "{case}");
+        assert_eq!(
+            serde_json::to_string(&sc).unwrap(),
+            serde_json::to_string(&expected).unwrap(),
+            "{case}"
+        );
     }
 }
 
@@ -168,9 +207,18 @@ fn schema_injection_matches() {
         let c = &config["config"];
         let tracing = c.get("enableTracing").and_then(Value::as_bool).unwrap_or(true);
         let hook_mode = c.get("resolveSessionId").is_some_and(|v| v == true);
-        let agent_tracking = c.get("enableAgentTracking").and_then(Value::as_bool).unwrap_or(false);
-        let context = c.get("enableToolCallContext").and_then(Value::as_bool).unwrap_or(true);
-        let report_missing = c.get("enableReportMissing").and_then(Value::as_bool).unwrap_or(true);
+        let agent_tracking = c
+            .get("enableAgentTracking")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
+        let context = c
+            .get("enableToolCallContext")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+        let report_missing = c
+            .get("enableReportMissing")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
         let description = c.get("customContextDescription").and_then(Value::as_str);
         let expected = ts_tools(config["tools_json"].as_str().unwrap());
         let registry = config["registry"].as_object().unwrap();
@@ -187,11 +235,20 @@ fn schema_injection_matches() {
             let name = input["name"].as_str().unwrap();
             // rmcp tools always have an input schema; TS's schema-less tool
             // has no Rust equivalent.
-            let Some(input_schema) = input.get("inputSchema") else { continue };
+            let Some(input_schema) = input.get("inputSchema") else {
+                continue;
+            };
             let mut schema = obj(input_schema);
             let mut output = input.get("outputSchema").map(obj);
             let (s_id, a_id, ctx, declares, output_injected) = p::inject_tool_for_test(
-                (tracing, hook_mode, agent_tracking, description, context, report_missing),
+                (
+                    tracing,
+                    hook_mode,
+                    agent_tracking,
+                    description,
+                    context,
+                    report_missing,
+                ),
                 name,
                 &mut schema,
                 output.as_mut(),
@@ -212,24 +269,47 @@ fn schema_injection_matches() {
                 "{label}/{name} input schema"
             );
             assert_eq!(
-                output.map(Value::Object).map(|o| serde_json::to_string(&o).unwrap()),
-                want.get("outputSchema").map(|o| serde_json::to_string(o).unwrap()),
+                output
+                    .map(Value::Object)
+                    .map(|o| serde_json::to_string(&o).unwrap()),
+                want.get("outputSchema")
+                    .map(|o| serde_json::to_string(o).unwrap()),
                 "{label}/{name} output schema"
             );
 
-            let recorded = registry.get(name).and_then(Value::as_array).cloned().unwrap_or_default();
+            let recorded = registry
+                .get(name)
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default();
             let has = |n: &str| recorded.iter().any(|v| v == n);
             let composed = ["composed", "composed_plain"].contains(&name);
             if composed {
                 // Fixed TS gap: a composed tool never advertises the handles,
                 // but echoed handles are stripped all the same.
                 assert!(!ctx, "{label}/{name}");
-                assert_eq!(s_id, tracing && !hook_mode && !(name == "composed"), "{label}/{name}");
+                assert_eq!(
+                    s_id,
+                    tracing && !hook_mode && !(name == "composed"),
+                    "{label}/{name}"
+                );
             } else {
-                assert_eq!((s_id, a_id, ctx), (has("session_id"), has("agent_id"), has("context")), "{label}/{name}");
+                assert_eq!(
+                    (s_id, a_id, ctx),
+                    (has("session_id"), has("agent_id"), has("context")),
+                    "{label}/{name}"
+                );
             }
-            assert_eq!(declares, (name == "own_session" || name == "composed") && tracing && !hook_mode, "{label}/{name}");
-            assert_eq!(output_injected, output_registry.iter().any(|n| n == name), "{label}/{name}");
+            assert_eq!(
+                declares,
+                (name == "own_session" || name == "composed") && tracing && !hook_mode,
+                "{label}/{name}"
+            );
+            assert_eq!(
+                output_injected,
+                output_registry.iter().any(|n| n == name),
+                "{label}/{name}"
+            );
         }
     }
 }
@@ -276,9 +356,18 @@ fn token_estimates_match() {
 fn sanitization_matches() {
     for case in vectors()["sanitize"].as_array().unwrap() {
         let input = &case["input"];
-        let (response, parameters) = p::sanitize(input.get("response").cloned(), input.get("parameters").cloned());
-        assert_eq!(response.as_ref(), case["output"].get("response"), "response of {input}");
-        assert_eq!(parameters.as_ref(), case["output"].get("parameters"), "parameters");
+        let (response, parameters) =
+            p::sanitize(input.get("response").cloned(), input.get("parameters").cloned());
+        assert_eq!(
+            response.as_ref(),
+            case["output"].get("response"),
+            "response of {input}"
+        );
+        assert_eq!(
+            parameters.as_ref(),
+            case["output"].get("parameters"),
+            "parameters"
+        );
     }
 }
 
@@ -286,7 +375,11 @@ fn sanitization_matches() {
 fn normalize_matches() {
     for case in vectors()["normalize"].as_array().unwrap() {
         let max_string = case.get("max_string").and_then(Value::as_u64).unwrap_or(32768) as usize;
-        let out = p::normalize(&case["input"], case["depth"].as_u64().unwrap() as usize, max_string);
+        let out = p::normalize(
+            &case["input"],
+            case["depth"].as_u64().unwrap() as usize,
+            max_string,
+        );
         assert_eq!(out, case["output"], "{case}");
     }
 }
@@ -335,10 +428,22 @@ fn truncation_matches() {
             }
             continue;
         }
-        assert_eq!(out.user_intent.as_deref(), want.get("userIntent").and_then(Value::as_str), "{label}");
-        assert_eq!(out.parameters.as_ref(), want.get("parameters"), "{label} parameters");
+        assert_eq!(
+            out.user_intent.as_deref(),
+            want.get("userIntent").and_then(Value::as_str),
+            "{label}"
+        );
+        assert_eq!(
+            out.parameters.as_ref(),
+            want.get("parameters"),
+            "{label} parameters"
+        );
         assert_eq!(out.response.as_ref(), want.get("response"), "{label} response");
-        assert_eq!(out.properties.map(Value::Object).as_ref(), want.get("properties"), "{label} properties");
+        assert_eq!(
+            out.properties.map(Value::Object).as_ref(),
+            want.get("properties"),
+            "{label} properties"
+        );
         if label == "fields" {
             // Fixed TS gap: names cap at the API's 255-character columns and
             // versions at 50 (TS sent 259 characters, which the API rejects).
@@ -370,7 +475,10 @@ fn constants_match_ts_source() {
     let ts: Value = serde_json::from_str(include_str!("fixtures/ts-constants.json")).unwrap();
     use agentcat::constants as c;
     let pairs: &[(&str, &str)] = &[
-        ("DEFAULT_CONTEXT_PARAMETER_DESCRIPTION", c::DEFAULT_CONTEXT_PARAMETER_DESCRIPTION),
+        (
+            "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION",
+            c::DEFAULT_CONTEXT_PARAMETER_DESCRIPTION,
+        ),
         ("AGENTCAT_CUSTOM_EVENT_TYPE", c::AGENTCAT_CUSTOM_EVENT_TYPE),
         ("AGENTCAT_SOURCE", c::AGENTCAT_SOURCE),
         ("SESSION_ID_PARAM_DESCRIPTION", c::SESSION_ID_PARAM_DESCRIPTION),
@@ -383,10 +491,22 @@ fn constants_match_ts_source() {
         ("MINT_BACK_UNRECOGNIZED_BODY", c::MINT_BACK_UNRECOGNIZED_BODY),
         ("MCP_SESSION_KEY", c::MCP_SESSION_KEY),
         ("MCP_SESSION_FIELD_DESCRIPTION", c::MCP_SESSION_FIELD_DESCRIPTION),
-        ("MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE", c::MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE),
-        ("MCP_SESSION_SESSION_ID_DESCRIPTION", c::MCP_SESSION_SESSION_ID_DESCRIPTION),
-        ("MCP_SESSION_AGENT_ID_DESCRIPTION", c::MCP_SESSION_AGENT_ID_DESCRIPTION),
-        ("MCP_SESSION_STATUS_DESCRIPTION", c::MCP_SESSION_STATUS_DESCRIPTION),
+        (
+            "MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE",
+            c::MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE,
+        ),
+        (
+            "MCP_SESSION_SESSION_ID_DESCRIPTION",
+            c::MCP_SESSION_SESSION_ID_DESCRIPTION,
+        ),
+        (
+            "MCP_SESSION_AGENT_ID_DESCRIPTION",
+            c::MCP_SESSION_AGENT_ID_DESCRIPTION,
+        ),
+        (
+            "MCP_SESSION_STATUS_DESCRIPTION",
+            c::MCP_SESSION_STATUS_DESCRIPTION,
+        ),
         ("META_CLIENT_INFO_KEY", c::META_CLIENT_INFO_KEY),
         ("META_PROTOCOL_VERSION_KEY", c::META_PROTOCOL_VERSION_KEY),
         ("AGENTCAT_TAG_AGENT_ID", c::AGENTCAT_TAG_AGENT_ID),
@@ -396,7 +516,10 @@ fn constants_match_ts_source() {
         ("AGENTCAT_TAG_MRTR", c::AGENTCAT_TAG_MRTR),
         ("GET_MORE_TOOLS_NAME", c::GET_MORE_TOOLS_NAME),
         ("GET_MORE_TOOLS_DESCRIPTION", c::GET_MORE_TOOLS_DESCRIPTION),
-        ("GET_MORE_TOOLS_CONTEXT_DESCRIPTION", c::GET_MORE_TOOLS_CONTEXT_DESCRIPTION),
+        (
+            "GET_MORE_TOOLS_CONTEXT_DESCRIPTION",
+            c::GET_MORE_TOOLS_CONTEXT_DESCRIPTION,
+        ),
         ("GET_MORE_TOOLS_TITLE", c::GET_MORE_TOOLS_TITLE),
         ("GET_MORE_TOOLS_RESPONSE", c::GET_MORE_TOOLS_RESPONSE),
     ];

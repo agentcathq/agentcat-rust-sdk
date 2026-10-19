@@ -11,10 +11,9 @@ use std::collections::BTreeMap;
 use serde_json::{Map, Value};
 
 use crate::constants::{
-    AGENT_ID_PARAM, AGENTCAT_TAG_AGENT_ID, AGENTCAT_TAG_AGENT_SOURCE,
-    AGENTCAT_TAG_PROTOCOL_VERSION, AGENTCAT_TAG_SESSION_SOURCE, MCP_SESSION_KEY,
-    MINT_BACK_HEADER_ISSUED, MINT_BACK_HEADER_UNRECOGNIZED, MINT_BACK_ISSUED_BODY,
-    MINT_BACK_UNRECOGNIZED_BODY, SESSION_ID_PARAM, SESSION_START_SENTINEL,
+    AGENT_ID_PARAM, AGENTCAT_TAG_AGENT_ID, AGENTCAT_TAG_AGENT_SOURCE, AGENTCAT_TAG_PROTOCOL_VERSION,
+    AGENTCAT_TAG_SESSION_SOURCE, MCP_SESSION_KEY, MINT_BACK_HEADER_ISSUED, MINT_BACK_HEADER_UNRECOGNIZED,
+    MINT_BACK_ISSUED_BODY, MINT_BACK_UNRECOGNIZED_BODY, SESSION_ID_PARAM, SESSION_START_SENTINEL,
     mint_back_session_line,
 };
 use crate::ksuid::{derive_session_id, is_valid_session_id, new_session_id};
@@ -160,10 +159,7 @@ pub(crate) fn build_structured_mint_back(res: &HandleResolution) -> Option<Map<S
 /// Mirrors the structured mint-back into `structured_content` as its first
 /// key. Requires a JSON object; an existing `mcp_session` key is customer
 /// data and wins. Returns true when the value changed.
-pub(crate) fn mirror_structured_mint_back(
-    structured: &mut Option<Value>,
-    mint: Map<String, Value>,
-) -> bool {
+pub(crate) fn mirror_structured_mint_back(structured: &mut Option<Value>, mint: Map<String, Value>) -> bool {
     let Some(Value::Object(existing)) = structured else {
         return false;
     };
@@ -231,7 +227,11 @@ mod tests {
 
     #[test]
     fn omitted_and_start_mint() {
-        for a in [json!({}), json!({"session_id": " START "}), json!({"session_id": ""})] {
+        for a in [
+            json!({}),
+            json!({"session_id": " START "}),
+            json!({"session_id": ""}),
+        ] {
             let res = resolve_handles(false, false, Some(&args(a)), true);
             assert_eq!(res.session_source, SessionSource::Minted);
             assert!(is_valid_session_id(&res.session_id));

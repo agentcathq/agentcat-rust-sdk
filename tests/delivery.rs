@@ -17,7 +17,10 @@ async fn retries_server_errors_with_the_same_event_id() {
         .wait_for(3, |v| v["resource_name"] == "retry-503-event")
         .await;
     let ids: Vec<&Value> = requests.iter().map(|r| &r["id"]).collect();
-    assert!(ids.windows(2).all(|w| w[0] == w[1]), "retries reuse the id: {ids:?}");
+    assert!(
+        ids.windows(2).all(|w| w[0] == w[1]),
+        "retries reuse the id: {ids:?}"
+    );
     assert!(agentcat::flush(Duration::from_secs(10)).await);
 }
 
@@ -26,7 +29,9 @@ async fn does_not_retry_client_errors() {
     let agentcat = builder("no-retry-400").build();
     api().fail_next("no-retry-400-event", 1, 400);
     agentcat.publish_custom_event(CustomEvent::new().resource_name("no-retry-400-event"));
-    api().wait_for(1, |v| v["resource_name"] == "no-retry-400-event").await;
+    api()
+        .wait_for(1, |v| v["resource_name"] == "no-retry-400-event")
+        .await;
     assert!(agentcat::flush(Duration::from_secs(5)).await);
     tokio::time::sleep(Duration::from_millis(1500)).await;
     let all = api().requests_where(|v| v["resource_name"] == "no-retry-400-event");
@@ -58,7 +63,10 @@ async fn custom_events_carry_their_data() {
     assert_eq!(e["user_intent"], "User gave feedback");
     assert_eq!(e["duration"], 12);
     assert_eq!(e["is_error"], true);
-    assert_eq!(e["error"], json!({"message": "quota exceeded", "type": "QuotaError", "platform": "rust"}));
+    assert_eq!(
+        e["error"],
+        json!({"message": "quota exceeded", "type": "QuotaError", "platform": "rust"})
+    );
     assert_eq!(e["tags"], json!({"source": "widget"}));
     assert_eq!(e["properties"], json!({"plan": "pro"}));
     assert_eq!(e["sdk_language"], "Rust");
@@ -69,7 +77,9 @@ async fn custom_events_carry_their_data() {
 async fn custom_events_without_a_session_send_null() {
     let agentcat = builder("custom-null").build();
     agentcat.publish_custom_event(CustomEvent::new().resource_name("custom-null-event"));
-    let e = &api().wait_for(1, |v| v["resource_name"] == "custom-null-event").await[0];
+    let e = &api()
+        .wait_for(1, |v| v["resource_name"] == "custom-null-event")
+        .await[0];
     assert!(e["session_id"].is_null());
 }
 
@@ -82,7 +92,9 @@ async fn session_string_custom_events_use_the_string_verbatim() {
         CustomEvent::new().resource_name("custom-free-event"),
     )
     .unwrap();
-    let e = &api().wait_for(1, |v| v["resource_name"] == "custom-free-event").await[0];
+    let e = &api()
+        .wait_for(1, |v| v["resource_name"] == "custom-free-event")
+        .await[0];
     assert_eq!(e["session_id"], "my-own-session");
     assert_eq!(e["project_id"], PROJECT_ID);
     // No tracked configuration: no SDK metadata.
@@ -102,7 +114,9 @@ async fn overlong_custom_session_ids_are_dropped_not_the_event() {
             .session_id("x".repeat(40))
             .resource_name("custom-long-event"),
     );
-    let e = &api().wait_for(1, |v| v["resource_name"] == "custom-long-event").await[0];
+    let e = &api()
+        .wait_for(1, |v| v["resource_name"] == "custom-long-event")
+        .await[0];
     assert!(e["session_id"].is_null());
 }
 
@@ -124,5 +138,10 @@ fn blocking_flush_works_without_a_runtime() {
     let agentcat = builder("blocking-flush").build();
     agentcat.publish_custom_event(CustomEvent::new().resource_name("blocking-flush-event"));
     assert!(agentcat::flush_blocking(Duration::from_secs(10)));
-    assert_eq!(api().requests_where(|v| v["resource_name"] == "blocking-flush-event").len(), 1);
+    assert_eq!(
+        api()
+            .requests_where(|v| v["resource_name"] == "blocking-flush-event")
+            .len(),
+        1
+    );
 }

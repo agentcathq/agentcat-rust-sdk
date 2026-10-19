@@ -18,14 +18,13 @@ use std::time::{Duration, Instant};
 use futures::FutureExt;
 #[allow(deprecated)]
 use rmcp::model::{
-    CallToolRequestParams, CallToolResponse, CallToolResult, CancelTaskParams,
-    CancelledNotificationParam, CompleteRequestParams, CompleteResult, ContentBlock, CustomNotification,
-    CustomRequest, CustomResult, DiscoverResult, GetPromptRequestParams, GetPromptResponse,
-    GetTaskParams, GetTaskResult, InitializeRequestParams, InitializeResult, JsonObject,
-    ListPromptsResult, ListResourceTemplatesResult, ListResourcesResult, ListToolsResult,
-    PaginatedRequestParams, ProgressNotificationParam, ProtocolVersion, ReadResourceRequestParams,
-    ReadResourceResponse, ServerResult, SetLevelRequestParams, SubscribeRequestParams,
-    SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
+    CallToolRequestParams, CallToolResponse, CallToolResult, CancelTaskParams, CancelledNotificationParam,
+    CompleteRequestParams, CompleteResult, ContentBlock, CustomNotification, CustomRequest, CustomResult,
+    DiscoverResult, GetPromptRequestParams, GetPromptResponse, GetTaskParams, GetTaskResult,
+    InitializeRequestParams, InitializeResult, JsonObject, ListPromptsResult, ListResourceTemplatesResult,
+    ListResourcesResult, ListToolsResult, PaginatedRequestParams, ProgressNotificationParam, ProtocolVersion,
+    ReadResourceRequestParams, ReadResourceResponse, ServerResult, SetLevelRequestParams,
+    SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
 };
 use rmcp::service::{NotificationContext, RequestContext, SubscriptionContext};
 use rmcp::{ErrorData as McpError, RoleServer, ServerHandler};
@@ -33,8 +32,8 @@ use serde_json::{Map, Value, json};
 
 use crate::agentcat::{AgentCat, Shared};
 use crate::constants::{
-    AGENTCAT_TAG_MRTR, CONTEXT_PARAM, GET_MORE_TOOLS_NAME, MCP_TOOLS_CALL_EVENT_TYPE,
-    META_CLIENT_INFO_KEY, META_PROTOCOL_VERSION_KEY, UNKNOWN_TOOL_NAME,
+    AGENTCAT_TAG_MRTR, CONTEXT_PARAM, GET_MORE_TOOLS_NAME, MCP_TOOLS_CALL_EVENT_TYPE, META_CLIENT_INFO_KEY,
+    META_PROTOCOL_VERSION_KEY, UNKNOWN_TOOL_NAME,
 };
 use crate::event::Event;
 use crate::handles::{
@@ -92,7 +91,9 @@ enum Lookup {
     Found(ToolInjection),
     /// The tool is not in any listing. `registry_available` is false when no
     /// listing could be read at all.
-    Unknown { registry_available: bool },
+    Unknown {
+        registry_available: bool,
+    },
 }
 
 /// An rmcp server handler tracked by AgentCat. Create it with
@@ -239,7 +240,10 @@ fn project_request(request: &CallToolRequestParams, context: &RequestContext<Rol
         params.insert("_meta".into(), serde_json::to_value(meta).unwrap_or(Value::Null));
     }
     if let Some(ir) = &request.input_responses {
-        params.insert("inputResponses".into(), serde_json::to_value(ir).unwrap_or(Value::Null));
+        params.insert(
+            "inputResponses".into(),
+            serde_json::to_value(ir).unwrap_or(Value::Null),
+        );
     }
     if let Some(state) = &request.request_state {
         params.insert("requestState".into(), json!(state));
@@ -259,7 +263,10 @@ fn narrow_client_info(value: Option<&Value>) -> Option<(Option<String>, Option<S
 /// (2026-07-28 clients), then the `initialize` handshake. rmcp's placeholder
 /// identity (`Implementation::default()`, which stateless HTTP synthesizes)
 /// counts as unknown.
-fn client_info(request: &CallToolRequestParams, context: &RequestContext<RoleServer>) -> (Option<String>, Option<String>) {
+fn client_info(
+    request: &CallToolRequestParams,
+    context: &RequestContext<RoleServer>,
+) -> (Option<String>, Option<String>) {
     if let Some(info) = narrow_client_info(context.meta.get(META_CLIENT_INFO_KEY)) {
         return info;
     }
@@ -277,9 +284,19 @@ fn client_info(request: &CallToolRequestParams, context: &RequestContext<RoleSer
 
 /// The protocol version the request itself carries (never the handshake's).
 fn protocol_version(request: &CallToolRequestParams, context: &RequestContext<RoleServer>) -> Option<String> {
-    let from = |m: Option<&Value>| m.and_then(Value::as_str).filter(|s| !s.is_empty()).map(str::to_owned);
-    from(context.meta.get(META_PROTOCOL_VERSION_KEY))
-        .or_else(|| from(request.meta.as_ref().and_then(|m| m.get(META_PROTOCOL_VERSION_KEY))))
+    let from = |m: Option<&Value>| {
+        m.and_then(Value::as_str)
+            .filter(|s| !s.is_empty())
+            .map(str::to_owned)
+    };
+    from(context.meta.get(META_PROTOCOL_VERSION_KEY)).or_else(|| {
+        from(
+            request
+                .meta
+                .as_ref()
+                .and_then(|m| m.get(META_PROTOCOL_VERSION_KEY)),
+        )
+    })
 }
 
 /// The agent's intent: the `context` argument as text.
@@ -362,7 +379,11 @@ impl<H: ServerHandler> Tracked<H> {
     }
 
     /// The injection pipeline over one page of tools.
-    fn inject_list(&self, mut tools: Vec<Tool>, last_page: bool) -> (Vec<Tool>, Vec<(String, ToolInjection)>) {
+    fn inject_list(
+        &self,
+        mut tools: Vec<Tool>,
+        last_page: bool,
+    ) -> (Vec<Tool>, Vec<(String, ToolInjection)>) {
         if self.shared.inject.report_missing && last_page {
             let customer_owned = tools.iter().any(|t| t.name == GET_MORE_TOOLS_NAME)
                 || self.registry.contains(GET_MORE_TOOLS_NAME);
@@ -400,7 +421,9 @@ impl<H: ServerHandler> Tracked<H> {
         let rebuild = async {
             let mut cursor = None;
             for _ in 0..REGISTRY_REBUILD_MAX_PAGES {
-                let request = cursor.take().map(|c| PaginatedRequestParams::default().with_cursor(Some(c)));
+                let request = cursor
+                    .take()
+                    .map(|c| PaginatedRequestParams::default().with_cursor(Some(c)));
                 let page = inner.list_tools(request, context.clone()).await?;
                 let last = page.next_cursor.is_none();
                 let (_, entries) = self.inject_list(page.tools, last);
@@ -422,11 +445,16 @@ impl<H: ServerHandler> Tracked<H> {
         match outcome {
             Ok(Ok(())) => {
                 self.registry.listed.store(true, Ordering::Release);
-                write_to_log("Rebuilt injection registries on demand (tools/call before tools/list on this instance)");
+                write_to_log(
+                    "Rebuilt injection registries on demand (tools/call before tools/list on this instance)",
+                );
                 true
             }
             Ok(Err(e)) => {
-                write_to_log(&format!("Warning: registry rebuild-on-demand failed - {}", e.message));
+                write_to_log(&format!(
+                    "Warning: registry rebuild-on-demand failed - {}",
+                    e.message
+                ));
                 false
             }
             Err(_) => {
@@ -445,11 +473,11 @@ impl<H: ServerHandler> Tracked<H> {
             return Lookup::Found(found);
         }
         // `get_tool` is synchronous and cheap; `#[tool_handler]` servers have it.
-        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name)) {
-            if let Some((_, injection)) = self.inject_one(&tool) {
-                self.registry.insert(name.to_owned(), injection);
-                return Lookup::Found(injection);
-            }
+        if let Some(Some(tool)) = catch(|| self.inner.get_tool(name))
+            && let Some((_, injection)) = self.inject_one(&tool)
+        {
+            self.registry.insert(name.to_owned(), injection);
+            return Lookup::Found(injection);
         }
         let mut registry_available = self.registry.listed.load(Ordering::Acquire);
         if !registry_available {
@@ -458,11 +486,11 @@ impl<H: ServerHandler> Tracked<H> {
                 return Lookup::Found(found);
             }
         }
-        if self.intercepts_report_missing(name) {
-            if let Some((_, injection)) = self.report_missing_tool() {
-                self.registry.insert(name.to_owned(), injection);
-                return Lookup::Found(injection);
-            }
+        if self.intercepts_report_missing(name)
+            && let Some((_, injection)) = self.report_missing_tool()
+        {
+            self.registry.insert(name.to_owned(), injection);
+            return Lookup::Found(injection);
         }
         Lookup::Unknown { registry_available }
     }
@@ -496,7 +524,11 @@ impl<H: ServerHandler> Tracked<H> {
     }
 
     /// Resolution, hooks and the event, before the handler runs.
-    async fn prepare(&self, request: &CallToolRequestParams, context: &RequestContext<RoleServer>) -> Prepared {
+    async fn prepare(
+        &self,
+        request: &CallToolRequestParams,
+        context: &RequestContext<RoleServer>,
+    ) -> Prepared {
         let shared = &self.shared;
         let options = &shared.options;
         let name: &str = &request.name;
@@ -550,7 +582,11 @@ impl<H: ServerHandler> Tracked<H> {
         event.client_name = client_name;
         event.client_version = client_version;
         event.session_id = resolution.session_id.clone();
-        event.resource_name = Some(if name.is_empty() { UNKNOWN_TOOL_NAME.to_owned() } else { name.to_owned() });
+        event.resource_name = Some(if name.is_empty() {
+            UNKNOWN_TOOL_NAME.to_owned()
+        } else {
+            name.to_owned()
+        });
         // The raw request: the event records what the agent sent, handles
         // included. Stripping applies only to the handler's copy.
         event.parameters = Some(json!({
@@ -566,10 +602,11 @@ impl<H: ServerHandler> Tracked<H> {
         }
         event.tags = Some(tags);
 
-        if options.enable_tool_call_context && name != GET_MORE_TOOLS_NAME {
-            if args.is_some_and(|a| a.contains_key(CONTEXT_PARAM)) {
-                event.user_intent = intent_of(args);
-            }
+        if options.enable_tool_call_context
+            && name != GET_MORE_TOOLS_NAME
+            && args.is_some_and(|a| a.contains_key(CONTEXT_PARAM))
+        {
+            event.user_intent = intent_of(args);
         }
 
         Prepared {
@@ -621,7 +658,8 @@ impl<H: ServerHandler> Tracked<H> {
                     let original = serde_json::to_value(&*result).unwrap_or(Value::Null);
                     if result.is_error == Some(true) {
                         event.is_error = Some(true);
-                        event.error = Some(crate::exceptions::capture_tool_result_error(&original).to_value());
+                        event.error =
+                            Some(crate::exceptions::capture_tool_result_error(&original).to_value());
                     }
                     event.output_tokens = crate::tokens::estimate_output_tokens(Some(&original));
                     event.response = Some(original);
@@ -629,10 +667,8 @@ impl<H: ServerHandler> Tracked<H> {
                     if let Some(text) = build_mint_back_text(&resolution) {
                         result.content.insert(0, ContentBlock::text(text));
                     }
-                    if mirror_structured {
-                        if let Some(mint) = build_structured_mint_back(&resolution) {
-                            mirror_structured_mint_back(&mut result.structured_content, mint);
-                        }
+                    if mirror_structured && let Some(mint) = build_structured_mint_back(&resolution) {
+                        mirror_structured_mint_back(&mut result.structured_content, mint);
                     }
                 }
                 CallToolResponse::InputRequired(_) => {
@@ -642,12 +678,14 @@ impl<H: ServerHandler> Tracked<H> {
                         .tags
                         .get_or_insert_with(Default::default)
                         .insert(AGENTCAT_TAG_MRTR.to_owned(), "input_required".to_owned());
-                    let value = serde_json::to_value(ServerResult::from(response.clone())).unwrap_or(Value::Null);
+                    let value =
+                        serde_json::to_value(ServerResult::from(response.clone())).unwrap_or(Value::Null);
                     event.output_tokens = crate::tokens::estimate_output_tokens(Some(&value));
                     event.response = Some(value);
                 }
                 other => {
-                    let value = serde_json::to_value(ServerResult::from(other.clone())).unwrap_or(Value::Null);
+                    let value =
+                        serde_json::to_value(ServerResult::from(other.clone())).unwrap_or(Value::Null);
                     event.output_tokens = crate::tokens::estimate_output_tokens(Some(&value));
                     event.response = Some(value);
                 }
@@ -672,10 +710,10 @@ impl<H: ServerHandler> Tracked<H> {
         mut request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, McpError> {
-        if self.intercepts_report_missing(&request.name) {
-            if let Some(result) = self.report_missing_result(&request) {
-                return Ok(result.into());
-            }
+        if self.intercepts_report_missing(&request.name)
+            && let Some(result) = self.report_missing_result(&request)
+        {
+            return Ok(result.into());
         }
         if let Some(strip) = AssertUnwindSafe(self.lookup_tool(&request.name, &context))
             .catch_unwind()
@@ -685,10 +723,9 @@ impl<H: ServerHandler> Tracked<H> {
                 Lookup::Found(t) => Some(t.strip),
                 Lookup::Unknown { .. } => None,
             })
+            && let Some(args) = request.arguments.as_mut()
         {
-            if let Some(args) = request.arguments.as_mut() {
-                strip_arguments(args, strip);
-            }
+            strip_arguments(args, strip);
         }
         self.inner.call_tool(request, context).await
     }
@@ -712,26 +749,28 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
             return self.call_untracked(request, context).await;
         }
 
-        let prepared = AssertUnwindSafe(self.prepare(&request, &context)).catch_unwind().await;
+        let prepared = AssertUnwindSafe(self.prepare(&request, &context))
+            .catch_unwind()
+            .await;
         let Ok(mut prepared) = prepared else {
             write_to_log(&format!(
                 "Warning: AgentCat tracing failed for tool {}, falling back to original handler",
                 request.name
             ));
-            if self.intercepts_report_missing(&request.name) {
-                if let Some(result) = self.report_missing_result(&request) {
-                    return Ok(result.into());
-                }
+            if self.intercepts_report_missing(&request.name)
+                && let Some(result) = self.report_missing_result(&request)
+            {
+                return Ok(result.into());
             }
             return self.inner.call_tool(request, context).await;
         };
         let started = Instant::now();
 
-        if self.intercepts_report_missing(&request.name) {
-            if let Some(result) = self.report_missing_result(&request) {
-                prepared.event.user_intent = intent_of(request.arguments.as_ref());
-                return self.finish(prepared, Ok(result.into()), started);
-            }
+        if self.intercepts_report_missing(&request.name)
+            && let Some(result) = self.report_missing_result(&request)
+        {
+            prepared.event.user_intent = intent_of(request.arguments.as_ref());
+            return self.finish(prepared, Ok(result.into()), started);
         }
 
         // Injected parameters never reach the customer's handler (a strict
@@ -838,7 +877,11 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
     }
 
     #[allow(deprecated)]
-    async fn set_level(&self, request: SetLevelRequestParams, context: RequestContext<RoleServer>) -> Result<(), McpError> {
+    async fn set_level(
+        &self,
+        request: SetLevelRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
         self.inner.set_level(request, context).await
     }
 
@@ -891,7 +934,11 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
     }
 
     #[allow(deprecated)]
-    async fn subscribe(&self, request: SubscribeRequestParams, context: RequestContext<RoleServer>) -> Result<(), McpError> {
+    async fn subscribe(
+        &self,
+        request: SubscribeRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
         self.inner.subscribe(request, context).await
     }
 
@@ -912,11 +959,19 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.on_custom_request(request, context).await
     }
 
-    async fn on_cancelled(&self, notification: CancelledNotificationParam, context: NotificationContext<RoleServer>) {
+    async fn on_cancelled(
+        &self,
+        notification: CancelledNotificationParam,
+        context: NotificationContext<RoleServer>,
+    ) {
         self.inner.on_cancelled(notification, context).await
     }
 
-    async fn on_progress(&self, notification: ProgressNotificationParam, context: NotificationContext<RoleServer>) {
+    async fn on_progress(
+        &self,
+        notification: ProgressNotificationParam,
+        context: NotificationContext<RoleServer>,
+    ) {
         self.inner.on_progress(notification, context).await
     }
 
@@ -928,7 +983,11 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.on_roots_list_changed(context).await
     }
 
-    async fn on_custom_notification(&self, notification: CustomNotification, context: NotificationContext<RoleServer>) {
+    async fn on_custom_notification(
+        &self,
+        notification: CustomNotification,
+        context: NotificationContext<RoleServer>,
+    ) {
         self.inner.on_custom_notification(notification, context).await
     }
 
@@ -936,15 +995,27 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.get_info()
     }
 
-    async fn get_task(&self, request: GetTaskParams, context: RequestContext<RoleServer>) -> Result<GetTaskResult, McpError> {
+    async fn get_task(
+        &self,
+        request: GetTaskParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<GetTaskResult, McpError> {
         self.inner.get_task(request, context).await
     }
 
-    async fn update_task(&self, request: UpdateTaskParams, context: RequestContext<RoleServer>) -> Result<(), McpError> {
+    async fn update_task(
+        &self,
+        request: UpdateTaskParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
         self.inner.update_task(request, context).await
     }
 
-    async fn cancel_task(&self, request: CancelTaskParams, context: RequestContext<RoleServer>) -> Result<(), McpError> {
+    async fn cancel_task(
+        &self,
+        request: CancelTaskParams,
+        context: RequestContext<RoleServer>,
+    ) -> Result<(), McpError> {
         self.inner.cancel_task(request, context).await
     }
 }

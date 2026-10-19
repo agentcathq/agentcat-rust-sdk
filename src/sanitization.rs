@@ -26,10 +26,10 @@ fn sanitize_response(response: &mut Value) {
             sanitize_content_block(block);
         }
     }
-    if let Some(sc) = obj.get_mut("structuredContent") {
-        if sc.is_object() || sc.is_array() {
-            sanitize_parameters(sc);
-        }
+    if let Some(sc) = obj.get_mut("structuredContent")
+        && (sc.is_object() || sc.is_array())
+    {
+        sanitize_parameters(sc);
     }
 }
 
@@ -63,9 +63,7 @@ fn sanitize_content_block(block: &mut Value) {
                 .and_then(Value::as_object)
                 .is_some_and(|r| r.contains_key("blob"))
             {
-                redacted_text(
-                    "[binary resource content redacted - not supported by AgentCat]".into(),
-                )
+                redacted_text("[binary resource content redacted - not supported by AgentCat]".into())
             } else {
                 return;
             }

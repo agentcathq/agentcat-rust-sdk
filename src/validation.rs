@@ -87,7 +87,10 @@ mod tests {
     #[test]
     fn keeps_valid_tags_in_order() {
         let out = validate_tags([t("env", "prod"), t("trace.id", "abc"), t("$a:b-c_d", "x")]).unwrap();
-        assert_eq!(out, vec![t("env", "prod"), t("trace.id", "abc"), t("$a:b-c_d", "x")]);
+        assert_eq!(
+            out,
+            vec![t("env", "prod"), t("trace.id", "abc"), t("$a:b-c_d", "x")]
+        );
     }
 
     #[test]

@@ -28,7 +28,10 @@ async fn tools_list_advertises_injected_parameters_and_get_more_tools() {
     assert_eq!(keys, ["text", "session_id", "context"]);
     assert_eq!(props["session_id"]["description"], SESSION_ID_PARAM_DESCRIPTION);
     assert_eq!(props["session_id"]["pattern"], SESSION_ID_PARAM_PATTERN);
-    assert_eq!(props["context"]["description"], DEFAULT_CONTEXT_PARAMETER_DESCRIPTION);
+    assert_eq!(
+        props["context"]["description"],
+        DEFAULT_CONTEXT_PARAMETER_DESCRIPTION
+    );
     assert_eq!(schema["required"], json!(["text", "session_id", "context"]));
     // agent_id is opt-in.
     assert!(props.get("agent_id").is_none());
@@ -53,9 +56,13 @@ async fn first_call_issues_a_session_and_publishes_one_event() {
     let agentcat = builder("first-call").build();
     let client = connect(agentcat.track(Todo::new())).await;
 
-    let result = call(&client, "add_todo", json!({"text": "milk", "context": "Adding milk to the shared grocery list."}))
-        .await
-        .unwrap();
+    let result = call(
+        &client,
+        "add_todo",
+        json!({"text": "milk", "context": "Adding milk to the shared grocery list."}),
+    )
+    .await
+    .unwrap();
     let texts = texts(&result);
     assert!(texts[0].starts_with(MINT_BACK_HEADER_ISSUED), "{texts:?}");
     assert_eq!(texts[1], "Added: milk");
@@ -88,11 +95,19 @@ async fn first_call_issues_a_session_and_publishes_one_event() {
         json!({"text": "milk", "context": "Adding milk to the shared grocery list."})
     );
     assert_eq!(e["parameters"]["extra"]["mcpReq"]["method"], "tools/call");
-    assert_eq!(e["response"]["content"], json!([{"type": "text", "text": "Added: milk"}]));
+    assert_eq!(
+        e["response"]["content"],
+        json!([{"type": "text", "text": "Added: milk"}])
+    );
     // Token estimates: raw args JSON and the content text.
-    let args_len = json!({"text": "milk", "context": "Adding milk to the shared grocery list."}).to_string().len();
+    let args_len = json!({"text": "milk", "context": "Adding milk to the shared grocery list."})
+        .to_string()
+        .len();
     assert_eq!(e["input_tokens"], ((args_len as f64) / 3.5).ceil() as u64);
-    assert_eq!(e["output_tokens"], ((("Added: milk".len()) as f64) / 3.5).ceil() as u64);
+    assert_eq!(
+        e["output_tokens"],
+        ((("Added: milk".len()) as f64) / 3.5).ceil() as u64
+    );
     // Only snake_case keys go on the wire.
     assert!(e.get("projectId").is_none() && e.get("sessionId").is_none());
 }
@@ -102,19 +117,28 @@ async fn supplied_session_is_echoed_and_stripped_from_the_handler() {
     let agentcat = builder("supplied").build();
     let client = connect(agentcat.track(Todo::new())).await;
 
-    let first = call(&client, "add_todo", json!({"text": "a", "session_id": "start"})).await.unwrap();
+    let first = call(&client, "add_todo", json!({"text": "a", "session_id": "start"}))
+        .await
+        .unwrap();
     let session = minted_session(&first);
 
     // A strict (deny_unknown_fields) handler accepts the call: AgentCat's
     // parameters never reach it.
-    let second = call(&client, "add_todo", json!({"text": "b", "session_id": session, "context": "Second item."}))
-        .await
-        .unwrap();
+    let second = call(
+        &client,
+        "add_todo",
+        json!({"text": "b", "session_id": session, "context": "Second item."}),
+    )
+    .await
+    .unwrap();
     assert_eq!(texts(&second), ["Added: b"]);
     assert_ne!(second.is_error, Some(true));
 
     let events = api().events_for("supplied", 2).await;
-    let second_event = events.iter().find(|e| e["parameters"]["request"]["params"]["arguments"]["text"] == "b").unwrap();
+    let second_event = events
+        .iter()
+        .find(|e| e["parameters"]["request"]["params"]["arguments"]["text"] == "b")
+        .unwrap();
     assert_eq!(second_event["session_id"], session.as_str());
     assert_eq!(second_event["tags"]["agentcat_session_id_source"], "supplied");
 }
@@ -143,12 +167,22 @@ async fn echo_handler_sees_stripped_arguments() {
 async fn unrecognized_session_is_reported_and_published_without_a_session() {
     let agentcat = builder("unrecognized").build();
     let client = connect(agentcat.track(Todo::new())).await;
-    let result = call(&client, "add_todo", json!({"text": "x", "session_id": "ses_made_up"})).await.unwrap();
+    let result = call(
+        &client,
+        "add_todo",
+        json!({"text": "x", "session_id": "ses_made_up"}),
+    )
+    .await
+    .unwrap();
     assert!(texts(&result)[0].starts_with(MINT_BACK_HEADER_UNRECOGNIZED));
 
     let events = api().events_for("unrecognized", 1).await;
     // An explicit null tells the API "no session" (stateless mode).
-    assert!(events[0].get("session_id").is_some_and(Value::is_null), "{}", events[0]);
+    assert!(
+        events[0].get("session_id").is_some_and(Value::is_null),
+        "{}",
+        events[0]
+    );
     assert_eq!(events[0]["tags"]["agentcat_session_id_source"], "invalid");
 }
 
@@ -157,24 +191,39 @@ async fn structured_results_mirror_mcp_session_as_the_first_key() {
     let agentcat = builder("structured").enable_agent_tracking(true).build();
     let client = connect(agentcat.track(Todo::new())).await;
     let _ = client.list_all_tools().await.unwrap();
-    let result = call(&client, "count_todos", json!({"agent_id": "a|b|c"})).await.unwrap();
+    let result = call(&client, "count_todos", json!({"agent_id": "a|b|c"}))
+        .await
+        .unwrap();
     let sc = result.structured_content.clone().unwrap();
     let text = serde_json::to_string(&sc).unwrap();
-    assert!(text.starts_with(r#"{"mcp_session":{"session_id":"ses_"#), "{text}");
+    assert!(
+        text.starts_with(r#"{"mcp_session":{"session_id":"ses_"#),
+        "{text}"
+    );
     assert_eq!(sc["mcp_session"]["status"], "issued");
     assert_eq!(sc["mcp_session"]["agent_id"], "a|b|c");
     assert_eq!(sc["count"], 0);
 
     // The event keeps the original structured content.
     let events = api().events_for("structured", 1).await;
-    assert!(events[0]["response"]["structuredContent"].get("mcp_session").is_none());
+    assert!(
+        events[0]["response"]["structuredContent"]
+            .get("mcp_session")
+            .is_none()
+    );
 }
 
 #[tokio::test]
 async fn get_more_tools_answers_and_records_intent() {
     let agentcat = builder("report-missing").build();
     let client = connect(agentcat.track(Todo::new())).await;
-    let result = call(&client, "get_more_tools", json!({"context": "Needs a calendar tool."})).await.unwrap();
+    let result = call(
+        &client,
+        "get_more_tools",
+        json!({"context": "Needs a calendar tool."}),
+    )
+    .await
+    .unwrap();
     let texts = texts(&result);
     assert!(texts[0].starts_with(MINT_BACK_HEADER_ISSUED));
     assert_eq!(texts[1], GET_MORE_TOOLS_RESPONSE);
@@ -195,7 +244,10 @@ async fn tool_error_results_are_captured() {
 
     let events = api().events_for("tool-error", 1).await;
     assert_eq!(events[0]["is_error"], true);
-    assert_eq!(events[0]["error"], json!({"message": "disk full", "platform": "rust"}));
+    assert_eq!(
+        events[0]["error"],
+        json!({"message": "disk full", "platform": "rust"})
+    );
 }
 
 #[tokio::test]
@@ -229,7 +281,11 @@ async fn panics_are_captured_and_still_propagate() {
     let agentcat = builder("panic").build();
     let client = connect(agentcat.track(Todo::new())).await;
     // rmcp drops the request when a handler panics; the client times out.
-    let outcome = tokio::time::timeout(std::time::Duration::from_secs(2), call(&client, "explode", json!({}))).await;
+    let outcome = tokio::time::timeout(
+        std::time::Duration::from_secs(2),
+        call(&client, "explode", json!({})),
+    )
+    .await;
     assert!(outcome.is_err() || outcome.unwrap().is_err());
 
     let events = api().events_for("panic", 1).await;
@@ -238,7 +294,12 @@ async fn panics_are_captured_and_still_propagate() {
     assert_eq!(e["error"]["type"], "panic");
     assert_eq!(e["error"]["message"], "kaboom");
     let frames = e["error"]["frames"].as_array().expect("frames");
-    assert!(frames.iter().any(|f| f["in_app"] == true && f["filename"].as_str().unwrap().contains("common")), "{frames:#?}");
+    assert!(
+        frames
+            .iter()
+            .any(|f| f["in_app"] == true && f["filename"].as_str().unwrap().contains("common")),
+        "{frames:#?}"
+    );
 }
 
 #[tokio::test]
@@ -251,9 +312,17 @@ async fn tracing_disabled_publishes_nothing_and_still_strips_context() {
     // With tracing off there are no handles, but intent capture still injects context.
     assert!(props.contains_key("context") && !props.contains_key("session_id"));
 
-    let result = call(&client, "add_todo", json!({"text": "y", "context": "Some intent."})).await.unwrap();
+    let result = call(
+        &client,
+        "add_todo",
+        json!({"text": "y", "context": "Some intent."}),
+    )
+    .await
+    .unwrap();
     assert_eq!(texts(&result), ["Added: y"]);
-    let gmt = call(&client, "get_more_tools", json!({"context": "x"})).await.unwrap();
+    let gmt = call(&client, "get_more_tools", json!({"context": "x"}))
+        .await
+        .unwrap();
     assert_eq!(texts(&gmt), [GET_MORE_TOOLS_RESPONSE]);
     api().assert_count_settles("tracing-off", 0).await;
 }
@@ -269,7 +338,11 @@ async fn options_turn_off_context_and_report_missing() {
     let tools = client.list_all_tools().await.unwrap();
     assert!(tools.iter().all(|t| t.name != "get_more_tools"));
     let add = tools.iter().find(|t| t.name == "add_todo").unwrap();
-    let keys: Vec<&String> = add.input_schema["properties"].as_object().unwrap().keys().collect();
+    let keys: Vec<&String> = add.input_schema["properties"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .collect();
     assert_eq!(keys, ["text", "session_id"]);
 }
 
@@ -287,11 +360,16 @@ async fn agent_tracking_injects_agent_id() {
 
 #[tokio::test]
 async fn custom_context_description_is_advertised() {
-    let agentcat = builder("custom-context").custom_context_description("Why are you calling this?").build();
+    let agentcat = builder("custom-context")
+        .custom_context_description("Why are you calling this?")
+        .build();
     let client = connect(agentcat.track(Todo::new())).await;
     let tools = client.list_all_tools().await.unwrap();
     let add = tools.iter().find(|t| t.name == "add_todo").unwrap();
-    assert_eq!(add.input_schema["properties"]["context"]["description"], "Why are you calling this?");
+    assert_eq!(
+        add.input_schema["properties"]["context"]["description"],
+        "Why are you calling this?"
+    );
 }
 
 #[tokio::test]
@@ -300,9 +378,13 @@ async fn a_call_before_any_listing_still_strips() {
     // recomputes the injection from get_tool.
     let agentcat = builder("no-listing").build();
     let client = connect(agentcat.track(Todo::new())).await;
-    let result = call(&client, "add_todo", json!({"text": "z", "session_id": "start", "context": "Pre-listing call."}))
-        .await
-        .unwrap();
+    let result = call(
+        &client,
+        "add_todo",
+        json!({"text": "z", "session_id": "start", "context": "Pre-listing call."}),
+    )
+    .await
+    .unwrap();
     assert_eq!(texts(&result)[1], "Added: z");
     let events = api().events_for("no-listing", 1).await;
     assert_eq!(events[0]["user_intent"], "Pre-listing call.");
@@ -314,12 +396,22 @@ async fn concurrent_calls_never_cross_attribute() {
     let client = connect(agentcat.track(Todo::new())).await;
     let mut sessions = Vec::new();
     for i in 0..5 {
-        let r = call(&client, "add_todo", json!({"text": format!("seed{i}")})).await.unwrap();
+        let r = call(&client, "add_todo", json!({"text": format!("seed{i}")}))
+            .await
+            .unwrap();
         sessions.push(minted_session(&r));
     }
     let calls = sessions.iter().enumerate().map(|(i, s)| {
         let client = &client;
-        async move { call(client, "add_todo", json!({"text": format!("task{i}"), "session_id": s})).await.unwrap() }
+        async move {
+            call(
+                client,
+                "add_todo",
+                json!({"text": format!("task{i}"), "session_id": s}),
+            )
+            .await
+            .unwrap()
+        }
     });
     futures::future::join_all(calls).await;
     let events = api().events_for("concurrent", 10).await;

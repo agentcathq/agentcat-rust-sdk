@@ -43,7 +43,11 @@ pub(crate) fn capture_tool_result_error(result: &Value) -> ErrorData {
         })
         .unwrap_or_default();
     let trimmed = crate::util::js_trim(&text);
-    ErrorData::new(if trimmed.is_empty() { "Unknown error" } else { trimmed })
+    ErrorData::new(if trimmed.is_empty() {
+        "Unknown error"
+    } else {
+        trimmed
+    })
 }
 
 // ── Panics ──────────────────────────────────────────────────────────────────
@@ -103,7 +107,10 @@ pub(crate) fn take_panic_capture() -> Option<PanicCapture> {
 }
 
 /// Error data for a panic payload, with the hook's capture when available.
-pub(crate) fn capture_panic(payload: &(dyn std::any::Any + Send), capture: Option<PanicCapture>) -> ErrorData {
+pub(crate) fn capture_panic(
+    payload: &(dyn std::any::Any + Send),
+    capture: Option<PanicCapture>,
+) -> ErrorData {
     let mut data = ErrorData::new(crate::util::panic_message(payload)).with_type("panic");
     if let Some(capture) = capture {
         let mut frames = capture
@@ -111,10 +118,10 @@ pub(crate) fn capture_panic(payload: &(dyn std::any::Any + Send), capture: Optio
             .as_deref()
             .map(parse_backtrace)
             .unwrap_or_default();
-        if frames.is_empty() {
-            if let Some((file, line, col)) = &capture.location {
-                frames.push(frame_for(None, Some(file), Some(*line), Some(*col)));
-            }
+        if frames.is_empty()
+            && let Some((file, line, col)) = &capture.location
+        {
+            frames.push(frame_for(None, Some(file), Some(*line), Some(*col)));
         }
         if !frames.is_empty() {
             data.frames = Some(frames);
@@ -137,20 +144,21 @@ pub(crate) fn parse_backtrace(text: &str) -> Vec<StackFrame> {
     for line in text.lines() {
         let trimmed = line.trim_start();
         if let Some(rest) = trimmed.strip_prefix("at ") {
-            if let Some(last) = raw.last_mut() {
-                if last.location.is_none() {
-                    last.location = Some(parse_location(rest));
-                }
+            if let Some(last) = raw.last_mut()
+                && last.location.is_none()
+            {
+                last.location = Some(parse_location(rest));
             }
             continue;
         }
-        if let Some((index, symbol)) = trimmed.split_once(": ") {
-            if !index.is_empty() && index.bytes().all(|b| b.is_ascii_digit()) {
-                raw.push(Raw {
-                    symbol: symbol.trim().to_owned(),
-                    location: None,
-                });
-            }
+        if let Some((index, symbol)) = trimmed.split_once(": ")
+            && !index.is_empty()
+            && index.bytes().all(|b| b.is_ascii_digit())
+        {
+            raw.push(Raw {
+                symbol: symbol.trim().to_owned(),
+                location: None,
+            });
         }
     }
 
@@ -192,7 +200,11 @@ fn parse_location(rest: &str) -> (String, Option<u32>, Option<u32>) {
     let col = parts.next();
     let line = parts.next();
     let file = parts.next();
-    match (file, line.and_then(|l| l.parse().ok()), col.and_then(|c| c.parse().ok())) {
+    match (
+        file,
+        line.and_then(|l| l.parse().ok()),
+        col.and_then(|c| c.parse().ok()),
+    ) {
         (Some(file), Some(line), Some(col)) => (file.to_owned(), Some(line), Some(col)),
         _ => {
             // `file:line` without a column, or a bare path.
@@ -253,18 +265,37 @@ fn split_symbol(symbol: &str) -> (Option<String>, String) {
         .filter(|p| !p.is_empty() && !(p.starts_with('{') && p.ends_with('}')))
         .collect();
     match parts.split_last() {
-        Some((function, module)) if !module.is_empty() => {
-            (Some(module.join("::")), (*function).to_owned())
-        }
+        Some((function, module)) if !module.is_empty() => (Some(module.join("::")), (*function).to_owned()),
         Some((function, _)) => (None, (*function).to_owned()),
         None => (None, clean.to_owned()),
     }
 }
 
 const LIBRARY_MODULE_PREFIXES: &[&str] = &[
-    "std", "core", "alloc", "tokio", "futures", "futures_util", "futures_core", "rmcp", "agentcat",
-    "tower", "hyper", "axum", "tracing", "<std", "<core", "<alloc", "<tokio", "<futures",
-    "<futures_util", "<rmcp", "<agentcat", "<tower", "<hyper", "<axum",
+    "std",
+    "core",
+    "alloc",
+    "tokio",
+    "futures",
+    "futures_util",
+    "futures_core",
+    "rmcp",
+    "agentcat",
+    "tower",
+    "hyper",
+    "axum",
+    "tracing",
+    "<std",
+    "<core",
+    "<alloc",
+    "<tokio",
+    "<futures",
+    "<futures_util",
+    "<rmcp",
+    "<agentcat",
+    "<tower",
+    "<hyper",
+    "<axum",
 ];
 
 fn module_is_library(module: Option<&str>) -> bool {
@@ -306,10 +337,10 @@ fn normalize_path(path: &str) -> (String, bool) {
     }
     // Hide the user's home directory.
     for prefix in ["/home/", "/Users/"] {
-        if let Some(rest) = unix.strip_prefix(prefix) {
-            if let Some((_, after)) = rest.split_once('/') {
-                return (format!("~/{after}"), true);
-            }
+        if let Some(rest) = unix.strip_prefix(prefix)
+            && let Some((_, after)) = rest.split_once('/')
+        {
+            return (format!("~/{after}"), true);
         }
     }
     (unix, true)
@@ -410,7 +441,10 @@ mod tests {
     fn strips_hashes() {
         assert_eq!(strip_hash("foo::bar::h0123456789abcdef"), "foo::bar");
         assert_eq!(strip_hash("foo::hello"), "foo::hello");
-        assert_eq!(split_symbol("a::b::c::h0123456789abcdef"), (Some("a::b".into()), "c".into()));
+        assert_eq!(
+            split_symbol("a::b::c::h0123456789abcdef"),
+            (Some("a::b".into()), "c".into())
+        );
     }
 
     #[test]

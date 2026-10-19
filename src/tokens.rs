@@ -14,7 +14,7 @@ const MAX_TOKEN_COUNT: u64 = 2_147_483_647;
 
 /// `ceil(bytes / 3.5)`, 0 for nothing, clamped to `i32::MAX`.
 pub(crate) fn estimate_tokens(bytes: f64) -> u32 {
-    if !(bytes > 0.0) {
+    if bytes.is_nan() || bytes <= 0.0 {
         return 0;
     }
     let tokens = (bytes / TOKEN_ESTIMATE_BYTES_PER_TOKEN).ceil();

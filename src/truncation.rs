@@ -70,18 +70,18 @@ fn normalize_default(v: &Value) -> Value {
 }
 
 fn cut_in_place(field: &mut Option<String>, max_units: usize) {
-    if let Some(s) = field.as_deref() {
-        if let Some(cut) = truncate_js(s, max_units) {
-            *field = Some(cut);
-        }
+    if let Some(s) = field.as_deref()
+        && let Some(cut) = truncate_js(s, max_units)
+    {
+        *field = Some(cut);
     }
 }
 
 fn cap_in_place(field: &mut Option<String>, max_chars: usize) {
-    if let Some(s) = field.as_deref() {
-        if let Some(cut) = cap_chars(s, max_chars) {
-            *field = Some(cut);
-        }
+    if let Some(s) = field.as_deref()
+        && let Some(cut) = cap_chars(s, max_chars)
+    {
+        *field = Some(cut);
     }
 }
 
@@ -89,18 +89,18 @@ fn truncate_error(error: &mut Value) {
     let Some(obj) = error.as_object_mut() else {
         return;
     };
-    if let Some(Value::String(message)) = obj.get_mut("message") {
-        if let Some(cut) = truncate_js(message, MAX_ERROR_MESSAGE_LENGTH) {
-            *message = cut;
-        }
+    if let Some(Value::String(message)) = obj.get_mut("message")
+        && let Some(cut) = truncate_js(message, MAX_ERROR_MESSAGE_LENGTH)
+    {
+        *message = cut;
     }
-    if let Some(Value::Array(frames)) = obj.get_mut("frames") {
-        if frames.len() > MAX_STACK_FRAMES {
-            let half = MAX_STACK_FRAMES / 2;
-            let tail = frames.split_off(frames.len() - half);
-            frames.truncate(half);
-            frames.extend(tail);
-        }
+    if let Some(Value::Array(frames)) = obj.get_mut("frames")
+        && frames.len() > MAX_STACK_FRAMES
+    {
+        let half = MAX_STACK_FRAMES / 2;
+        let tail = frames.split_off(frames.len() - half);
+        frames.truncate(half);
+        frames.extend(tail);
     }
 }
 
@@ -115,10 +115,10 @@ fn truncate_response_content(response: &mut Value) {
         if obj.get("type").and_then(Value::as_str) != Some("text") {
             continue;
         }
-        if let Some(Value::String(text)) = obj.get_mut("text") {
-            if let Some(cut) = truncate_js(text, MAX_CONTENT_TEXT_LENGTH) {
-                *text = cut;
-            }
+        if let Some(Value::String(text)) = obj.get_mut("text")
+            && let Some(cut) = truncate_js(text, MAX_CONTENT_TEXT_LENGTH)
+        {
+            *text = cut;
         }
     }
 }
@@ -130,7 +130,10 @@ fn json_byte_size<T: serde::Serialize>(value: &T) -> usize {
 /// Normalizes the four free-form fields at a depth.
 fn with_depth(event: &Event, depth: usize) -> Event {
     let mut reduced = event.clone();
-    let n = |v: &Option<Value>| v.as_ref().map(|v| normalize(v, depth, MAX_BREADTH, MAX_STRING_LENGTH));
+    let n = |v: &Option<Value>| {
+        v.as_ref()
+            .map(|v| normalize(v, depth, MAX_BREADTH, MAX_STRING_LENGTH))
+    };
     reduced.parameters = n(&event.parameters);
     reduced.response = n(&event.response);
     reduced.identify_actor_data = n(&event.identify_actor_data);
@@ -201,7 +204,7 @@ fn truncate_largest_fields(mut value: Value, max_bytes: usize) -> Value {
         let mut paths = Vec::new();
         collect_string_paths(&value, &mut Vec::new(), &mut paths);
         // Stable sort: equal lengths keep traversal order, as in JS.
-        paths.sort_by(|a, b| b.units.cmp(&a.units));
+        paths.sort_by_key(|p| std::cmp::Reverse(p.units));
         if paths.is_empty() {
             break;
         }
