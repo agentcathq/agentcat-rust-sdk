@@ -1,5 +1,5 @@
 //! Sanitization: replaces non-text content blocks in responses and large
-//! base64 strings in parameters, which AgentCat does not store.
+//! base64 strings in parameters, which `AgentCat` does not store.
 
 use serde_json::{Map, Value, json};
 
@@ -33,16 +33,15 @@ fn sanitize_response(response: &mut Value) {
     }
 }
 
-fn redacted_text(text: String) -> Value {
+fn redacted_text(text: &str) -> Value {
     json!({"type": "text", "text": text})
 }
 
 fn sanitize_content_block(block: &mut Value) {
     if block.is_array() {
         // A JS array is an object with no `type`.
-        *block = redacted_text(
-            "[unsupported content type \"undefined\" redacted - not supported by AgentCat]".into(),
-        );
+        *block =
+            redacted_text("[unsupported content type \"undefined\" redacted - not supported by AgentCat]");
         return;
     }
     let Some(obj) = block.as_object() else {
@@ -51,10 +50,10 @@ fn sanitize_content_block(block: &mut Value) {
     let replacement = match obj.get("type") {
         Some(Value::String(t)) if t == "text" || t == "resource_link" => return,
         Some(Value::String(t)) if t == "image" => {
-            redacted_text("[image content redacted - not supported by AgentCat]".into())
+            redacted_text("[image content redacted - not supported by AgentCat]")
         }
         Some(Value::String(t)) if t == "audio" => {
-            redacted_text("[audio content redacted - not supported by AgentCat]".into())
+            redacted_text("[audio content redacted - not supported by AgentCat]")
         }
         Some(Value::String(t)) if t == "resource" => {
             // A blob resource (even `blob: null`) is binary; text passes.
@@ -63,12 +62,12 @@ fn sanitize_content_block(block: &mut Value) {
                 .and_then(Value::as_object)
                 .is_some_and(|r| r.contains_key("blob"))
             {
-                redacted_text("[binary resource content redacted - not supported by AgentCat]".into())
+                redacted_text("[binary resource content redacted - not supported by AgentCat]")
             } else {
                 return;
             }
         }
-        other => redacted_text(format!(
+        other => redacted_text(&format!(
             "[unsupported content type \"{}\" redacted - not supported by AgentCat]",
             js_string(other)
         )),

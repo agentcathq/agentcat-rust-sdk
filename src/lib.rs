@@ -1,6 +1,6 @@
-//! # AgentCat for Rust MCP servers
+//! # `AgentCat` for Rust MCP servers
 //!
-//! AgentCat is analytics for MCP servers: which tools agents call, why they
+//! `AgentCat` is analytics for MCP servers: which tools agents call, why they
 //! call them (intent), which tasks and agents the calls belong to, who the
 //! actor is, and how the calls fail. This crate instruments servers built
 //! with [`rmcp`](https://crates.io/crates/rmcp) 3.x.
@@ -22,7 +22,7 @@
 //! }
 //! ```
 //!
-//! What [`AgentCat::track`] does, in the same way as AgentCat's TypeScript,
+//! What [`AgentCat::track`] does, in the same way as `AgentCat`'s TypeScript,
 //! Python and Go SDKs:
 //!
 //! - **`tools/list`:** adds a required `context` parameter (the agent's
@@ -36,14 +36,35 @@
 //!   event with the request, the result, timing, token estimates and errors.
 //!
 //! Events are published from a background thread; your tool calls never wait
-//! for AgentCat, and AgentCat failures never fail a tool call.
+//! for `AgentCat`, and `AgentCat` failures never fail a tool call.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![forbid(unsafe_code)]
-#![warn(missing_docs)]
-// AgentCat must never take the customer's server down: no unwrap, expect or
-// panic outside tests.
-#![cfg_attr(not(test), deny(clippy::unwrap_used, clippy::expect_used, clippy::panic))]
-// Builds without the rmcp adapter or the exporters leave parts unused.
+#![deny(missing_docs)]
+#![cfg_attr(not(test), warn(clippy::pedantic))]
+// AgentCat must never take the customer's server down.
+#![cfg_attr(
+    not(test),
+    deny(
+        clippy::unwrap_used,
+        clippy::expect_used,
+        clippy::panic,
+        clippy::indexing_slicing,
+        clippy::allow_attributes_without_reason
+    )
+)]
+// Pedantic lints that do not fit this crate: options mirror the TS flags
+// (many bools), public names repeat their module (`exporters::ExporterConfig`),
+// and `#[must_use]` goes on public values that matter, not on every function.
+#![cfg_attr(
+    not(test),
+    allow(
+        clippy::must_use_candidate,
+        clippy::module_name_repetitions,
+        clippy::struct_excessive_bools,
+        clippy::fn_params_excessive_bools,
+        reason = "pedantic lints that do not fit this crate"
+    )
+)]
 #![cfg_attr(
     not(all(
         feature = "rmcp",
@@ -52,7 +73,13 @@
         feature = "sentry",
         feature = "posthog"
     )),
-    allow(dead_code, unreachable_code, unused_imports, unused_variables)
+    allow(
+        dead_code,
+        unreachable_code,
+        unused_imports,
+        unused_variables,
+        reason = "builds without the rmcp adapter or the exporters leave parts unused"
+    )
 )]
 
 mod agentcat;
@@ -157,8 +184,8 @@ pub mod __private {
         parameters: Option<serde_json::Value>,
     ) -> (Option<serde_json::Value>, Option<serde_json::Value>) {
         let mut e = crate::Event {
-            response,
             parameters,
+            response,
             ..Default::default()
         };
         crate::sanitization::sanitize_event(&mut e);
@@ -200,7 +227,7 @@ pub mod __private {
         )
     }
 
-    /// PostHog UUIDv7 derivation.
+    /// `PostHog` `UUIDv7` derivation.
     #[cfg(feature = "posthog")]
     pub fn to_uuid_v7(id: &str) -> String {
         crate::exporters::posthog_uuid_v7(id)
@@ -208,7 +235,10 @@ pub mod __private {
 
     /// Handle resolution plus everything derived from it:
     /// `(source, session_id, agent_id, mint_back_text, structured, tags)`.
-    #[allow(clippy::type_complexity)]
+    #[allow(
+        clippy::type_complexity,
+        reason = "a test helper returns its parts as one tuple"
+    )]
     pub fn resolve_for_test(
         hook_mode: bool,
         agent_tracking: bool,

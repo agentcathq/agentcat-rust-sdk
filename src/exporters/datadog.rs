@@ -36,6 +36,7 @@ impl DatadogExporterConfig {
     }
 
     /// Sets the `env` tag.
+    #[must_use]
     pub fn env(mut self, env: impl Into<String>) -> Self {
         self.env = Some(env.into());
         self
@@ -156,7 +157,9 @@ impl DatadogExporter {
                 Value::String(s) => s.clone(),
                 other => other.to_string(),
             };
-            log["error"] = json!({"message": message});
+            if let Some(log) = log.as_object_mut() {
+                log.insert("error".into(), json!({"message": message}));
+            }
         }
         log
     }

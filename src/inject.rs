@@ -21,7 +21,7 @@ use crate::constants::{
 };
 use crate::logging::write_to_log;
 
-/// Which AgentCat parameters were injected into one tool's input schema.
+/// Which `AgentCat` parameters were injected into one tool's input schema.
 /// These are exactly the arguments stripped before the customer's handler
 /// runs.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
@@ -37,7 +37,7 @@ pub(crate) struct ToolInjection {
     /// Parameters to strip from this tool's arguments.
     pub(crate) strip: Injected,
     /// The customer's own schema declares `session_id`: the value is theirs,
-    /// never an AgentCat handle.
+    /// never an `AgentCat` handle.
     pub(crate) declares_session_id: bool,
     /// `mcp_session` was declared in this tool's output schema.
     pub(crate) output_injected: bool,
@@ -68,8 +68,7 @@ impl InjectMemory {
     pub(crate) fn declares_session_id(&self, tool: &str) -> bool {
         self.declared_session_params
             .lock()
-            .map(|s| s.contains(tool))
-            .unwrap_or(false)
+            .is_ok_and(|s| s.contains(tool))
     }
 
     fn record_declared(&self, tool: &str) {
@@ -82,8 +81,7 @@ impl InjectMemory {
     fn first_conflict(&self, tool: &str) -> bool {
         self.reported_conflicts
             .lock()
-            .map(|mut s| s.insert(tool.to_owned()))
-            .unwrap_or(false)
+            .is_ok_and(|mut s| s.insert(tool.to_owned()))
     }
 
     pub(crate) fn record_customer_report_missing(&self) {
@@ -144,7 +142,7 @@ fn prepare_properties(schema: &mut Map<String, Value>) {
         schema.insert("properties".into(), Value::Object(Map::new()));
     }
     if schema.get("additionalProperties") == Some(&Value::Bool(false)) {
-        schema.remove("additionalProperties");
+        crate::util::shift_remove(schema, "additionalProperties");
     }
     // MCP requires object schemas; an empty `{}` schema that now carries
     // properties gets the missing `type` (a TS gap, fixed here).
@@ -184,7 +182,7 @@ fn insert_property(schema: &mut Map<String, Value>, name: &str, definition: Valu
     }
 }
 
-/// Injects the AgentCat parameters into one tool's schemas, in place.
+/// Injects the `AgentCat` parameters into one tool's schemas, in place.
 ///
 /// Order matches the TypeScript SDK: customer parameters, then `session_id`,
 /// `agent_id`, then `context`. Both handles are schema-required with soft
@@ -355,13 +353,13 @@ pub(crate) fn heuristic_strip(name: &str) -> Injected {
 /// the raw arguments for the event.
 pub(crate) fn strip_arguments(args: &mut Map<String, Value>, strip: Injected) {
     if strip.session_id {
-        args.remove(SESSION_ID_PARAM);
+        crate::util::shift_remove(args, SESSION_ID_PARAM);
     }
     if strip.agent_id {
-        args.remove(AGENT_ID_PARAM);
+        crate::util::shift_remove(args, AGENT_ID_PARAM);
     }
     if strip.context {
-        args.remove(CONTEXT_PARAM);
+        crate::util::shift_remove(args, CONTEXT_PARAM);
     }
 }
 
@@ -394,10 +392,7 @@ pub(crate) fn report_missing_descriptor() -> Value {
 
 /// The canned answer to a `get_more_tools` call.
 pub(crate) fn report_missing_response(context: Option<&Value>) -> Value {
-    let len = context
-        .and_then(Value::as_str)
-        .map(crate::util::utf16_len)
-        .unwrap_or(0);
+    let len = context.and_then(Value::as_str).map_or(0, crate::util::utf16_len);
     write_to_log(&format!("Missing tool reported (context length: {len})"));
     json!({"content": [{"type": "text", "text": GET_MORE_TOOLS_RESPONSE}]})
 }

@@ -1,5 +1,5 @@
 //! Anonymous SDK diagnostics: every SDK log line is batched and sent as OTLP
-//! logs to AgentCat's collector, so setup failures across the fleet are
+//! logs to `AgentCat`'s collector, so setup failures across the fleet are
 //! visible. No event payloads or user data are sent.
 //!
 //! On by default. Off with `disable_diagnostics(true)` or the
@@ -148,7 +148,7 @@ fn severity(entry: &str) -> (u8, &'static str) {
 fn build_record(entry: &str) -> Value {
     let (number, text) = severity(entry);
     json!({
-        "timeUnixNano": (crate::util::unix_millis() as u128 * 1_000_000).to_string(),
+        "timeUnixNano": (u128::from(crate::util::unix_millis()) * 1_000_000).to_string(),
         "severityNumber": number,
         "severityText": text,
         "body": {"stringValue": entry},

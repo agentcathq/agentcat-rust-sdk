@@ -1,6 +1,6 @@
 //! Token estimates for tool-call events.
 //!
-//! One divisor, pinned across the AgentCat SDKs: `ceil(utf8_bytes / 3.5)`.
+//! One divisor, pinned across the `AgentCat` SDKs: `ceil(utf8_bytes / 3.5)`.
 //! The input side counts the raw arguments the model emitted (injected
 //! parameters included); the output side counts the content-block text the
 //! harness feeds back. Nothing else counts.
@@ -10,16 +10,21 @@ use serde_json::Value;
 /// Bytes per token.
 pub(crate) const TOKEN_ESTIMATE_BYTES_PER_TOKEN: f64 = 3.5;
 /// The API's token columns are `int32`.
-const MAX_TOKEN_COUNT: u64 = 2_147_483_647;
+const MAX_TOKEN_COUNT: u32 = 2_147_483_647;
 
 /// `ceil(bytes / 3.5)`, 0 for nothing, clamped to `i32::MAX`.
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the cast value is a whole number between 1 and i32::MAX"
+)]
 pub(crate) fn estimate_tokens(bytes: f64) -> u32 {
     if bytes.is_nan() || bytes <= 0.0 {
         return 0;
     }
     let tokens = (bytes / TOKEN_ESTIMATE_BYTES_PER_TOKEN).ceil();
-    if tokens >= MAX_TOKEN_COUNT as f64 {
-        MAX_TOKEN_COUNT as u32
+    if tokens >= f64::from(MAX_TOKEN_COUNT) {
+        MAX_TOKEN_COUNT
     } else {
         tokens as u32
     }
@@ -31,8 +36,7 @@ pub(crate) fn estimate_tokens(bytes: f64) -> u32 {
 fn compact_json_bytes(value: &Value) -> Option<usize> {
     fn len(value: &Value) -> Option<usize> {
         Some(match value {
-            Value::Null => 4,
-            Value::Bool(true) => 4,
+            Value::Null | Value::Bool(true) => 4,
             Value::Bool(false) => 5,
             Value::Number(n) => js_number_len(n),
             Value::String(_) => serde_json::to_vec(value).ok()?.len(),
@@ -63,7 +67,7 @@ fn js_number_len(n: &serde_json::Number) -> usize {
     js_number_string(f).len()
 }
 
-/// JavaScript's `Number.prototype.toString` (ECMA-262 Number::toString) for a
+/// JavaScript's `Number.prototype.toString` (ECMA-262 `Number::toString`) for a
 /// finite double.
 pub(crate) fn js_number_string(f: f64) -> String {
     if f == 0.0 {
@@ -77,14 +81,15 @@ pub(crate) fn js_number_string(f: f64) -> String {
     let (mantissa, exp) = sci.split_once('e').unwrap_or((&sci, "0"));
     let digits: String = mantissa.chars().filter(char::is_ascii_digit).collect();
     let exp: i32 = exp.parse().unwrap_or(0);
-    let k = digits.len() as i32;
+    let k = i32::try_from(digits.len()).unwrap_or(i32::MAX);
     let n = exp + 1;
     let body = if k <= n && n <= 21 {
-        format!("{digits}{}", "0".repeat((n - k) as usize))
+        format!("{digits}{}", "0".repeat(usize::try_from(n - k).unwrap_or(0)))
     } else if 0 < n && n <= 21 {
-        format!("{}.{}", &digits[..n as usize], &digits[n as usize..])
+        let n = usize::try_from(n).unwrap_or(0);
+        format!("{}.{}", &digits[..n], &digits[n..])
     } else if -6 < n && n <= 0 {
-        format!("0.{}{digits}", "0".repeat((-n) as usize))
+        format!("0.{}{digits}", "0".repeat(usize::try_from(-n).unwrap_or(0)))
     } else {
         let sign = if n > 0 { "+" } else { "-" };
         let e = (n - 1).abs();
@@ -99,6 +104,7 @@ pub(crate) fn js_number_string(f: f64) -> String {
 
 /// Tokens the model spent emitting the call: the raw arguments object.
 /// `None` when the call has no arguments.
+#[allow(clippy::cast_precision_loss, reason = "byte counts stay far below 2^53")]
 pub(crate) fn estimate_input_tokens(args: Option<&Value>) -> Option<u32> {
     match args {
         None | Some(Value::Null) => None,
@@ -109,6 +115,7 @@ pub(crate) fn estimate_input_tokens(args: Option<&Value>) -> Option<u32> {
 /// Tokens the model reads back: the text of the content blocks. Falls back
 /// to the whole response when it carries no content list; `None` when there
 /// is no response.
+#[allow(clippy::cast_precision_loss, reason = "byte counts stay far below 2^53")]
 pub(crate) fn estimate_output_tokens(response: Option<&Value>) -> Option<u32> {
     let response = match response {
         None | Some(Value::Null) => return None,

@@ -9,7 +9,7 @@ use serde_json::{Map, Value};
 /// One analytics event, as the `redact_event` hook sees it.
 ///
 /// Tool calls publish `mcp:tools/call` events; `publish_custom_event`
-/// publishes `agentcat:custom` events. Field names match the AgentCat API.
+/// publishes `agentcat:custom` events. Field names match the `AgentCat` API.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct Event {
@@ -17,7 +17,7 @@ pub struct Event {
     pub id: String,
     /// `ses_` session ID; empty when the event has no session.
     pub session_id: String,
-    /// AgentCat project ID; `None` in telemetry-only mode.
+    /// `AgentCat` project ID; `None` in telemetry-only mode.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub project_id: Option<String>,
     /// `mcp:tools/call` or `agentcat:custom`.
@@ -34,7 +34,7 @@ pub struct Event {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub output_tokens: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[allow(missing_docs)]
+    #[allow(missing_docs, reason = "self-describing API field")]
     pub ip_address: Option<String>,
     /// Always `"Rust"`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -95,7 +95,7 @@ pub struct Event {
     pub event_id: Option<String>,
 }
 
-/// Error details attached to an event, in the shape the AgentCat API groups.
+/// Error details attached to an event, in the shape the `AgentCat` API groups.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[non_exhaustive]
 pub struct ErrorData {
@@ -129,10 +129,10 @@ pub struct StackFrame {
     /// Module path, such as `my_crate::tools`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub module: Option<String>,
-    #[allow(missing_docs)]
+    #[allow(missing_docs, reason = "self-describing frame field")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lineno: Option<u32>,
-    #[allow(missing_docs)]
+    #[allow(missing_docs, reason = "self-describing frame field")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub colno: Option<u32>,
     /// True for the customer's own code.
@@ -164,6 +164,7 @@ impl ErrorData {
     }
 
     /// Sets the short type name.
+    #[must_use]
     pub fn with_type(mut self, error_type: impl Into<String>) -> Self {
         self.error_type = Some(error_type.into());
         self

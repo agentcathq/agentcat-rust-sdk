@@ -18,8 +18,8 @@ use crate::publisher::{self, Pending, QueuedEvent};
 #[cfg(feature = "rmcp")]
 use crate::tool_call::{IdentifyHook, PropertiesHook, SessionHook, TagsHook, ToolCallRequest};
 
-/// Errors from the AgentCat API surface. Tracking itself never fails: a
-/// problem in AgentCat degrades to an untracked call, never a failed one.
+/// Errors from the `AgentCat` API surface. Tracking itself never fails: a
+/// problem in `AgentCat` degrades to an untracked call, never a failed one.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
@@ -140,14 +140,14 @@ impl Shared {
         if let Ok(guard) = self.server_info.read()
             && let Some((name, version)) = guard.as_ref()
         {
-            event.server_name = name.clone();
-            event.server_version = version.clone();
+            event.server_name.clone_from(name);
+            event.server_version.clone_from(version);
         }
         event
     }
 }
 
-/// AgentCat analytics for MCP servers.
+/// `AgentCat` analytics for MCP servers.
 ///
 /// Build one with [`AgentCat::builder`] (or [`AgentCat::new`] for the
 /// defaults), then wrap your rmcp server handler with [`AgentCat::track`].
@@ -178,7 +178,7 @@ impl std::fmt::Debug for AgentCat {
 }
 
 impl AgentCat {
-    /// AgentCat with the default options, publishing to `project_id`.
+    /// `AgentCat` with the default options, publishing to `project_id`.
     pub fn new(project_id: impl Into<String>) -> Self {
         Self::builder(project_id).build()
     }
@@ -192,7 +192,7 @@ impl AgentCat {
         }
     }
 
-    /// A builder without an AgentCat project: events go to the configured
+    /// A builder without an `AgentCat` project: events go to the configured
     /// exporters only.
     pub fn telemetry_only() -> AgentCatBuilder {
         AgentCatBuilder {
@@ -201,7 +201,7 @@ impl AgentCat {
         }
     }
 
-    /// The AgentCat project ID, or `None` in telemetry-only mode.
+    /// The `AgentCat` project ID, or `None` in telemetry-only mode.
     pub fn project_id(&self) -> Option<&str> {
         self.shared.project_id.as_deref()
     }
@@ -212,14 +212,13 @@ impl AgentCat {
     /// [`CustomEvent::session_id`] to attribute the event to a task; without
     /// it the event has no session and the API assigns one.
     pub fn publish_custom_event(&self, data: CustomEvent) {
-        let session_id = match data.session_id.clone().filter(|s| !s.is_empty()) {
-            Some(s) => s,
-            None => {
-                write_to_log(
-                    "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
-                );
-                String::new()
-            }
+        let session_id = if let Some(s) = data.session_id.clone().filter(|s| !s.is_empty()) {
+            s
+        } else {
+            write_to_log(
+                "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+            );
+            String::new()
         };
         let mut event = self.shared.base_event(AGENTCAT_CUSTOM_EVENT_TYPE);
         fill_custom(&mut event, session_id, data);
@@ -284,7 +283,7 @@ impl AgentCatBuilder {
         self
     }
 
-    /// Hook mode: you supply the session identifier per request, and AgentCat
+    /// Hook mode: you supply the session identifier per request, and `AgentCat`
     /// injects no `session_id` parameter and adds no issuance text. The
     /// value is combined with the project ID into a deterministic `ses_` ID.
     /// Return `None` to mint silently.
@@ -393,7 +392,7 @@ impl AgentCatBuilder {
         self
     }
 
-    /// The AgentCat API URL. Falls back to `AGENTCAT_API_URL`, then
+    /// The `AgentCat` API URL. Falls back to `AGENTCAT_API_URL`, then
     /// `MCPCAT_API_URL`, then `https://api.agentcat.com`. Process-wide: the
     /// first configured value wins.
     pub fn api_base_url(mut self, url: impl Into<String>) -> Self {
@@ -543,7 +542,7 @@ impl AgentCatBuilder {
     }
 }
 
-/// True when serde_json keeps insertion order (its `preserve_order` feature
+/// True when `serde_json` keeps insertion order (its `preserve_order` feature
 /// is on anywhere in the build).
 fn json_keeps_insertion_order() -> bool {
     let mut probe = Map::new();
@@ -585,42 +584,49 @@ impl CustomEvent {
     }
 
     /// Sets the session.
+    #[must_use]
     pub fn session_id(mut self, session_id: impl Into<String>) -> Self {
         self.session_id = Some(session_id.into());
         self
     }
 
     /// Sets the resource name.
+    #[must_use]
     pub fn resource_name(mut self, name: impl Into<String>) -> Self {
         self.resource_name = Some(name.into());
         self
     }
 
     /// Sets the parameters.
+    #[must_use]
     pub fn parameters(mut self, parameters: Value) -> Self {
         self.parameters = Some(parameters);
         self
     }
 
     /// Sets the response.
+    #[must_use]
     pub fn response(mut self, response: Value) -> Self {
         self.response = Some(response);
         self
     }
 
     /// Sets the message.
+    #[must_use]
     pub fn message(mut self, message: impl Into<String>) -> Self {
         self.message = Some(message.into());
         self
     }
 
     /// Sets the duration in milliseconds.
+    #[must_use]
     pub fn duration(mut self, millis: u64) -> Self {
         self.duration = Some(millis);
         self
     }
 
     /// Marks the event as an error with the given details.
+    #[must_use]
     pub fn error(mut self, error: impl Into<Value>) -> Self {
         self.is_error = Some(true);
         self.error = Some(error.into());
@@ -628,6 +634,7 @@ impl CustomEvent {
     }
 
     /// Adds a tag.
+    #[must_use]
     pub fn tag(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.tags
             .get_or_insert_with(Vec::new)
@@ -636,6 +643,7 @@ impl CustomEvent {
     }
 
     /// Sets the properties. Values that are not JSON objects are ignored.
+    #[must_use]
     pub fn properties(mut self, properties: Value) -> Self {
         if let Value::Object(map) = properties {
             self.properties = Some(map);
@@ -689,6 +697,10 @@ fn log_custom(session_id: &str) {
 /// Publishes an `agentcat:custom` event to `project_id` under a session ID
 /// used verbatim, without a tracked server. No redaction hooks apply.
 /// [`CustomEvent::session_id`], when set, wins over `session_id`.
+///
+/// # Errors
+///
+/// [`Error::MissingProjectId`] when `project_id` is empty.
 pub fn publish_custom_event(session_id: &str, project_id: &str, data: CustomEvent) -> Result<(), Error> {
     if project_id.is_empty() {
         return Err(Error::MissingProjectId);

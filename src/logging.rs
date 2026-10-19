@@ -24,7 +24,7 @@ fn log_path() -> Option<PathBuf> {
     if let Some(path) = std::env::var_os("AGENTCAT_LOG_FILE").filter(|p| !p.is_empty()) {
         return Some(PathBuf::from(path));
     }
-    #[allow(deprecated)] // fixed and undeprecated in Rust 1.86; MSRV is 1.88
+    #[allow(deprecated, reason = "fixed and undeprecated in Rust 1.86; MSRV is 1.88")]
     let home = std::env::home_dir().filter(|h| !h.as_os_str().is_empty())?;
     Some(home.join("agentcat.log"))
 }

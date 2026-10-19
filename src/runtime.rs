@@ -1,6 +1,10 @@
 //! Facts about the running process that the SDK reports.
 
 /// The version of the MCP library the SDK instruments, when it is compiled in.
+#[allow(
+    clippy::unnecessary_wraps,
+    reason = "builds without the rmcp feature return None"
+)]
 pub(crate) fn mcp_library_version() -> Option<&'static str> {
     #[cfg(feature = "rmcp")]
     {

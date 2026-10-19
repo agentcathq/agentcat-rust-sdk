@@ -4,6 +4,8 @@
 //! ```sh
 //! AGENTCAT_PROJECT_ID=proj_... cargo run --example streamable_http
 //! ```
+//!
+//! The server listens on `http://127.0.0.1:8000/mcp`.
 
 use std::time::Duration;
 
@@ -74,7 +76,6 @@ async fn main() -> anyhow::Result<()> {
     );
     let app = axum::Router::new().nest_service("/mcp", service);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:8000").await?;
-    println!("listening on http://127.0.0.1:8000/mcp");
     axum::serve(listener, app)
         .with_graceful_shutdown(async move {
             let _ = tokio::signal::ctrl_c().await;

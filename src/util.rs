@@ -7,15 +7,13 @@ use sha2::{Digest, Sha256};
 pub(crate) fn unix_millis() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0)
+        .map_or(0, |d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX))
 }
 
 pub(crate) fn unix_nanos() -> u128 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_nanos())
-        .unwrap_or(0)
+        .map_or(0, |d| d.as_nanos())
 }
 
 /// The current time, at millisecond precision like JavaScript's `Date`.
@@ -38,8 +36,9 @@ pub(crate) fn hex(bytes: &[u8]) -> String {
     const DIGITS: &[u8; 16] = b"0123456789abcdef";
     let mut out = String::with_capacity(bytes.len() * 2);
     for &b in bytes {
-        out.push(DIGITS[(b >> 4) as usize] as char);
-        out.push(DIGITS[(b & 0xf) as usize] as char);
+        for nibble in [b >> 4, b & 0xf] {
+            out.push(DIGITS.get(usize::from(nibble)).map_or('0', |&d| char::from(d)));
+        }
     }
     out
 }
@@ -83,7 +82,7 @@ pub(crate) fn cap_chars(s: &str, max_chars: usize) -> Option<String> {
         return None;
     }
     let keep = max_chars.saturating_sub(3);
-    let end = s.char_indices().nth(keep).map(|(i, _)| i).unwrap_or(s.len());
+    let end = s.char_indices().nth(keep).map_or(s.len(), |(i, _)| i);
     Some(format!("{}...", &s[..end]))
 }
 
@@ -93,7 +92,18 @@ pub(crate) fn js_trim(s: &str) -> &str {
     s.trim_matches(|c: char| (c.is_whitespace() && c != '\u{85}') || c == '\u{feff}')
 }
 
-/// Runs `f`, turning a panic into `None`. AgentCat code on the request path
+/// Removes `key` and keeps the order of the other keys, as JavaScript's
+/// `delete` does.
+pub(crate) fn shift_remove(map: &mut serde_json::Map<String, serde_json::Value>, key: &str) {
+    #[cfg(feature = "preserve-order")]
+    map.shift_remove(key);
+    // `Map::shift_remove` exists only with `serde_json/preserve_order`, which
+    // another crate may still enable; `retain` keeps the order either way.
+    #[cfg(not(feature = "preserve-order"))]
+    map.retain(|k, _| k != key);
+}
+
+/// Runs `f`, turning a panic into `None`. `AgentCat` code on the request path
 /// uses this so that its own bugs never reach the customer's server.
 pub(crate) fn catch<T>(f: impl FnOnce() -> T) -> Option<T> {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).ok()

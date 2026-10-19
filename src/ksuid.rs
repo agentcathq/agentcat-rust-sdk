@@ -1,4 +1,4 @@
-//! KSUIDs (K-Sortable Unique IDentifiers), as the TypeScript SDK encodes them.
+//! KSUIDs (K-Sortable Unique Identifiers), as the TypeScript SDK encodes them.
 //!
 //! A KSUID is 20 bytes: a big-endian `u32` timestamp in seconds since the
 //! KSUID epoch (2014-05-13T16:53:20Z), then 16 payload bytes. Its string form
@@ -31,7 +31,7 @@ impl Ksuid {
         if !(EPOCH_MS..=MAX_TIME_MS).contains(&time_ms) {
             return None;
         }
-        let timestamp = ((time_ms - EPOCH_MS) / 1_000) as u32;
+        let timestamp = u32::try_from((time_ms - EPOCH_MS) / 1_000).unwrap_or(u32::MAX);
         let mut bytes = [0u8; BYTE_LENGTH];
         bytes[..4].copy_from_slice(&timestamp.to_be_bytes());
         bytes[4..].copy_from_slice(&payload);
@@ -77,11 +77,14 @@ impl Ksuid {
                 let q = acc / 62;
                 remainder = acc % 62;
                 if !quotients.is_empty() || q > 0 {
-                    quotients.push(q as u8);
+                    // `acc < 62 * 256`, so `q < 256`.
+                    quotients.push(u8::try_from(q).unwrap_or(u8::MAX));
                 }
             }
             offset -= 1;
-            out[offset] = ALPHABET[remainder as usize];
+            if let (Some(slot), Some(&c)) = (out.get_mut(offset), ALPHABET.get(remainder as usize)) {
+                *slot = c;
+            }
             digits = quotients;
         }
         // Every byte of `out` comes from ALPHABET or is b'0', so it is ASCII.
@@ -116,11 +119,14 @@ impl Ksuid {
                 let q = acc / 256;
                 remainder = acc % 256;
                 if !quotients.is_empty() || q > 0 {
-                    quotients.push(q as u8);
+                    // `acc < 256 * 62`, so `q < 62`.
+                    quotients.push(u8::try_from(q).unwrap_or(u8::MAX));
                 }
             }
             offset -= 1;
-            out[offset] = remainder as u8;
+            if let Some(slot) = out.get_mut(offset) {
+                *slot = u8::try_from(remainder).unwrap_or(u8::MAX);
+            }
             digits = quotients;
         }
         Some(Self(out))
@@ -144,13 +150,13 @@ pub(crate) fn new_event_id() -> String {
 
 /// Derives a session ID from a customer-supplied identifier. The same
 /// identifier and project always give the same `ses_` KSUID, across
-/// processes, restarts and AgentCat SDK languages.
+/// processes, restarts and `AgentCat` SDK languages.
 pub fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
     let input = match project_id {
         Some(p) if !p.is_empty() => format!("{id}:{p}"),
         _ => id.to_owned(),
     };
-    let hash = Sha256::digest(input.as_bytes());
+    let hash: [u8; 32] = Sha256::digest(input.as_bytes()).into();
     let offset = u64::from(u32::from_be_bytes([hash[0], hash[1], hash[2], hash[3]])) % ONE_YEAR_MS;
     let mut payload = [0u8; 16];
     payload.copy_from_slice(&hash[4..20]);
@@ -163,7 +169,10 @@ pub fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
 pub(crate) fn is_valid_session_id(value: &str) -> bool {
     value.len() == 31
         && value.starts_with("ses_")
-        && value.as_bytes()[4..].iter().all(u8::is_ascii_alphanumeric)
+        && value
+            .as_bytes()
+            .get(4..)
+            .is_some_and(|rest| rest.iter().all(u8::is_ascii_alphanumeric))
 }
 
 pub(crate) fn fill_random(buf: &mut [u8]) {
@@ -179,8 +188,8 @@ pub(crate) fn fill_random(buf: &mut [u8]) {
             std::process::id()
         );
         let hash = Sha256::digest(seed.as_bytes());
-        for (i, b) in buf.iter_mut().enumerate() {
-            *b = hash[i % hash.len()];
+        for (b, h) in buf.iter_mut().zip(hash.iter().cycle()) {
+            *b = *h;
         }
     }
 }

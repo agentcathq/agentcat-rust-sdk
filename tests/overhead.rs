@@ -1,5 +1,6 @@
 //! Per-call overhead of tracking. Ignored by default; run with
-//! `cargo test --release --test overhead -- --ignored --nocapture`.
+//! `cargo test --release --test overhead -- --ignored`, then read
+//! `target/tmp/overhead.txt`.
 
 mod common;
 
@@ -38,9 +39,14 @@ async fn tracking_overhead_per_call() {
     let _ = time_calls(&tracked, 200).await;
     let tracked_us = time_calls(&tracked, N).await;
 
-    println!(
-        "untracked: {plain_us:.1} µs/call, tracked: {tracked_us:.1} µs/call, overhead: {:.1} µs/call",
+    let report = format!(
+        "untracked: {plain_us:.1} µs/call, tracked: {tracked_us:.1} µs/call, overhead: {:.1} µs/call\n",
         tracked_us - plain_us
     );
+    std::fs::write(
+        std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("overhead.txt"),
+        report,
+    )
+    .unwrap();
     assert!(agentcat::flush(std::time::Duration::from_secs(30)).await);
 }

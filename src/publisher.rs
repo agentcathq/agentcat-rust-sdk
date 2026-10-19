@@ -31,7 +31,7 @@ use crate::logging::write_to_log;
 const QUEUE_CAPACITY: usize = 10_000;
 /// Events processed at once (hook waits included).
 const MAX_PROCESSING: usize = 256;
-/// Concurrent requests to the AgentCat API.
+/// Concurrent requests to the `AgentCat` API.
 const MAX_IN_FLIGHT_SENDS: usize = 5;
 /// Concurrent exporter requests.
 const MAX_IN_FLIGHT_EXPORTS: usize = 64;
@@ -419,7 +419,9 @@ async fn run_worker(
     }
     // The queue is closed: let in-flight work finish, then send the last
     // diagnostics.
-    let _ = processing.acquire_many(MAX_PROCESSING as u32).await;
+    let _ = processing
+        .acquire_many(u32::try_from(MAX_PROCESSING).unwrap_or(u32::MAX))
+        .await;
     if let Some(client) = &worker.client {
         crate::diagnostics::flush(client).await;
     }
@@ -485,7 +487,7 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
     if let Some(mut customer) = customer_tags {
         // The API keeps the first 50 tags. The request map has no order, so
         // leave room for the SDK tags here: customer tags lose, as in TS.
-        let sdk_count = event.tags.as_ref().map_or(0, |t| t.len());
+        let sdk_count = event.tags.as_ref().map_or(0, std::collections::BTreeMap::len);
         let room = 50usize.saturating_sub(sdk_count);
         if customer.len() > room {
             write_to_log(&format!(
@@ -506,7 +508,7 @@ async fn apply_pending(event: &mut Event, pending: Pending) {
             Value::Object(map) => event.properties = Some(map),
             Value::Null => {}
             _ => {
-                write_to_log("Warning: eventProperties hook returned a non-object value; properties omitted")
+                write_to_log("Warning: eventProperties hook returned a non-object value; properties omitted");
             }
         }
     }
@@ -529,12 +531,10 @@ enum SendError {
 impl Worker {
     fn api(&self, client: &reqwest::Client) -> &Configuration {
         self.api.get_or_init(|| {
-            let base = self
-                .config
-                .api_base_url
-                .get()
-                .map(|u| u.trim_end_matches('/').to_owned())
-                .unwrap_or_else(|| DEFAULT_API_BASE_URL.to_owned());
+            let base = self.config.api_base_url.get().map_or_else(
+                || DEFAULT_API_BASE_URL.to_owned(),
+                |u| u.trim_end_matches('/').to_owned(),
+            );
             // Built field by field: `Configuration::default()` would create
             // (and could panic creating) a second HTTP client.
             Configuration {
@@ -692,9 +692,8 @@ impl Worker {
             publish_event_request: Some(request),
         };
         match publish_event(self.api(client), params).await {
-            Ok(_) => Ok(()),
             // Only a 2xx response reaches body parsing: it was accepted.
-            Err(ApiError::Serde(_)) => Ok(()),
+            Ok(_) | Err(ApiError::Serde(_)) => Ok(()),
             Err(ApiError::ResponseError(rc)) => {
                 let status = rc.status.as_u16();
                 let message = format!("status {status}: {}", truncate_for_log(&rc.content));
@@ -712,6 +711,12 @@ impl Worker {
 
 /// 1 s, 2 s, 4 s, each with ±20 % jitter so retries from many servers
 /// spread out.
+#[allow(
+    clippy::cast_precision_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    reason = "the delay is a positive number of milliseconds below 2^21"
+)]
 fn backoff(attempt: u32) -> Duration {
     let base = 1000u64 << attempt.min(10);
     let mut byte = [0u8; 1];
@@ -735,30 +740,31 @@ pub(crate) fn to_publish_request(event: &Event) -> PublishEventRequest {
     req.session_id = Some((!event.session_id.is_empty()).then(|| event.session_id.clone()));
     req.event_type = serde_json::from_value::<EventType>(Value::String(event.event_type.clone())).ok();
     req.timestamp = Some(event.timestamp.fixed_offset());
-    req.duration = event.duration.map(|d| d.min(i32::MAX as u64) as i32);
-    req.input_tokens = event.input_tokens.map(|t| t.min(i32::MAX as u32) as i32);
-    req.output_tokens = event.output_tokens.map(|t| t.min(i32::MAX as u32) as i32);
-    req.resource_name = event.resource_name.clone();
-    req.parameters = event.parameters.clone();
-    req.response = event.response.clone();
-    req.user_intent = event.user_intent.clone();
+    req.duration = event.duration.map(|d| i32::try_from(d).unwrap_or(i32::MAX));
+    req.input_tokens = event.input_tokens.map(|t| i32::try_from(t).unwrap_or(i32::MAX));
+    req.output_tokens = event.output_tokens.map(|t| i32::try_from(t).unwrap_or(i32::MAX));
+    req.resource_name.clone_from(&event.resource_name);
+    req.parameters.clone_from(&event.parameters);
+    req.response.clone_from(&event.response);
+    req.user_intent.clone_from(&event.user_intent);
     req.is_error = event.is_error;
-    req.error = event.error.clone();
-    req.identify_actor_given_id = event.identify_actor_given_id.clone();
-    req.identify_actor_name = event.identify_actor_name.clone();
-    req.identify_data = event.identify_actor_data.clone();
-    req.ip_address = event.ip_address.clone();
-    req.sdk_language = event.sdk_language.clone();
-    req.agentcat_version = event.agentcat_version.clone();
-    req.server_name = event.server_name.clone();
-    req.server_version = event.server_version.clone();
-    req.client_name = event.client_name.clone();
-    req.client_version = event.client_version.clone();
+    req.error.clone_from(&event.error);
+    req.identify_actor_given_id
+        .clone_from(&event.identify_actor_given_id);
+    req.identify_actor_name.clone_from(&event.identify_actor_name);
+    req.identify_data.clone_from(&event.identify_actor_data);
+    req.ip_address.clone_from(&event.ip_address);
+    req.sdk_language.clone_from(&event.sdk_language);
+    req.agentcat_version.clone_from(&event.agentcat_version);
+    req.server_name.clone_from(&event.server_name);
+    req.server_version.clone_from(&event.server_version);
+    req.client_name.clone_from(&event.client_name);
+    req.client_version.clone_from(&event.client_version);
     req.actor_id = event
         .actor_id
         .clone()
         .or_else(|| event.identify_actor_given_id.clone());
-    req.event_id = event.event_id.clone();
+    req.event_id.clone_from(&event.event_id);
     req.tags = event.tags.as_ref().map(|t| t.clone().into_iter().collect());
     req.properties = event.properties.clone().map(Value::Object);
     req

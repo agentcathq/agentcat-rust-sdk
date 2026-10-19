@@ -1,7 +1,7 @@
 //! Error capture for tool calls: JSON-RPC errors, `is_error` results, and
 //! panics (with a parsed backtrace).
 //!
-//! Frames follow the rules the AgentCat API groups by for non-JavaScript
+//! Frames follow the rules the `AgentCat` API groups by for non-JavaScript
 //! platforms: every frame has a string `filename` and `function`, a `module`
 //! when the symbol has one, and `in_app: false` for the standard library,
 //! Cargo registry crates and the async runtime.
@@ -203,20 +203,19 @@ fn parse_location(rest: &str) -> (String, Option<u32>, Option<u32>) {
     let col = parts.next();
     let line = parts.next();
     let file = parts.next();
-    match (
+    if let (Some(file), Some(line), Some(col)) = (
         file,
         line.and_then(|l| l.parse().ok()),
         col.and_then(|c| c.parse().ok()),
     ) {
-        (Some(file), Some(line), Some(col)) => (file.to_owned(), Some(line), Some(col)),
-        _ => {
-            // `file:line` without a column, or a bare path.
-            let mut parts = rest.rsplitn(2, ':');
-            let line = parts.next().and_then(|l| l.parse().ok());
-            match (parts.next(), line) {
-                (Some(file), Some(line)) => (file.to_owned(), Some(line), None),
-                _ => (rest.to_owned(), None, None),
-            }
+        (file.to_owned(), Some(line), Some(col))
+    } else {
+        // `file:line` without a column, or a bare path.
+        let mut parts = rest.rsplitn(2, ':');
+        let line = parts.next().and_then(|l| l.parse().ok());
+        match (parts.next(), line) {
+            (Some(file), Some(line)) => (file.to_owned(), Some(line), None),
+            _ => (rest.to_owned(), None, None),
         }
     }
 }
@@ -239,11 +238,11 @@ fn split_path(symbol: &str) -> Vec<&str> {
     let mut start = 0;
     let bytes = symbol.as_bytes();
     let mut i = 0;
-    while i < bytes.len() {
-        match bytes[i] {
+    while let Some(&b) = bytes.get(i) {
+        match b {
             b'<' => depth += 1,
             b'>' => depth -= 1,
-            b':' if depth == 0 && i + 1 < bytes.len() && bytes[i + 1] == b':' => {
+            b':' if depth == 0 && bytes.get(i + 1) == Some(&b':') => {
                 parts.push(&symbol[start..i]);
                 i += 2;
                 start = i;
@@ -265,7 +264,7 @@ fn split_symbol(symbol: &str) -> (Option<String>, String) {
     // markers are dropped.
     let parts: Vec<&str> = split_path(clean)
         .into_iter()
-        .filter(|p| !p.is_empty() && !(p.starts_with('{') && p.ends_with('}')))
+        .filter(|p| !(p.is_empty() || (p.starts_with('{') && p.ends_with('}'))))
         .collect();
     match parts.split_last() {
         Some((function, module)) if !module.is_empty() => (Some(module.join("::")), (*function).to_owned()),
@@ -329,7 +328,7 @@ fn normalize_path(path: &str) -> (String, bool) {
     if let Some(rest) = unix.strip_prefix("./") {
         return (rest.to_owned(), true);
     }
-    if !unix.starts_with('/') && !unix.get(1..3).is_some_and(|s| s == ":/") {
+    if !unix.starts_with('/') && unix.get(1..3).is_none_or(|s| s != ":/") {
         return (unix, true);
     }
     if let Ok(cwd) = std::env::current_dir() {

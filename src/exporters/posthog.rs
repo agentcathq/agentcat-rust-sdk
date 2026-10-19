@@ -1,11 +1,11 @@
-//! PostHog exporter: a capture event per AgentCat event, an `$exception` for
+//! `PostHog` exporter: a capture event per `AgentCat` event, an `$exception` for
 //! failures, and an optional `$ai_span` for tool calls.
 
 use std::sync::Arc;
 
 use serde_json::{Map, Value, json};
 
-use super::Exporter;
+use super::{Exporter, millis_to_seconds};
 use crate::constants::{AGENTCAT_SOURCE, MCP_TOOLS_CALL_EVENT_TYPE};
 use crate::event::Event;
 use crate::hooks::BoxFuture;
@@ -13,15 +13,15 @@ use crate::ksuid::Ksuid;
 use crate::logging::write_to_log;
 use crate::util::{hex, iso_millis, sha256};
 
-/// Sends events to PostHog's batch API.
+/// Sends events to `PostHog`'s batch API.
 #[derive(Clone, Debug)]
 #[non_exhaustive]
 pub struct PostHogExporterConfig {
     /// Project API key (`phc_…`).
     pub api_key: String,
-    /// PostHog host. Default `https://us.i.posthog.com`.
+    /// `PostHog` host. Default `https://us.i.posthog.com`.
     pub host: Option<String>,
-    /// Also send `$ai_span` events for tool calls (PostHog AI observability).
+    /// Also send `$ai_span` events for tool calls (`PostHog` AI observability).
     /// Customer tags and properties are spread onto the span and can
     /// override any default. Default false.
     pub enable_ai_tracing: bool,
@@ -38,19 +38,21 @@ impl PostHogExporterConfig {
     }
 
     /// Sets the host (EU cloud or self-hosted).
+    #[must_use]
     pub fn host(mut self, host: impl Into<String>) -> Self {
         self.host = Some(host.into());
         self
     }
 
     /// Turns `$ai_span` events on or off.
+    #[must_use]
     pub fn enable_ai_tracing(mut self, enabled: bool) -> Self {
         self.enable_ai_tracing = enabled;
         self
     }
 }
 
-/// A deterministic UUIDv7 from a prefixed KSUID (`ses_…`): the KSUID's time
+/// A deterministic `UUIDv7` from a prefixed KSUID (`ses_…`): the KSUID's time
 /// for the timestamp bits and SHA-256 of the full ID for the rest. Inputs that
 /// are not KSUIDs take their timestamp from the hash too, so the same input
 /// always gives the same UUID.
@@ -128,8 +130,8 @@ fn spread_customer(properties: &mut Map<String, Value>, event: &Event) {
     }
 }
 
-fn nonempty(v: &Option<String>) -> Option<&str> {
-    v.as_deref().filter(|s| !s.is_empty())
+fn nonempty(v: Option<&str>) -> Option<&str> {
+    v.filter(|s| !s.is_empty())
 }
 
 pub(crate) fn capture_event(event: &Event) -> Value {
@@ -140,7 +142,7 @@ pub(crate) fn capture_event(event: &Event) -> Value {
     if !event.session_id.is_empty() {
         p.insert("$session_id".into(), json!(to_uuid_v7(&event.session_id)));
     }
-    if let Some(r) = nonempty(&event.resource_name) {
+    if let Some(r) = nonempty(event.resource_name.as_deref()) {
         p.insert("resource_name".into(), json!(r));
         if event.event_type == MCP_TOOLS_CALL_EVENT_TYPE {
             p.insert("tool_name".into(), json!(r));
@@ -157,7 +159,7 @@ pub(crate) fn capture_event(event: &Event) -> Value {
         ("project_id", &event.project_id),
         ("user_intent", &event.user_intent),
     ] {
-        if let Some(v) = nonempty(v) {
+        if let Some(v) = nonempty(v.as_deref()) {
             p.insert(k.into(), json!(v));
         }
     }
@@ -171,7 +173,7 @@ pub(crate) fn capture_event(event: &Event) -> Value {
         p.insert("response".into(), v.clone());
     }
     let mut set = Map::new();
-    if let Some(name) = nonempty(&event.identify_actor_name) {
+    if let Some(name) = nonempty(event.identify_actor_name.as_deref()) {
         set.insert("name".into(), json!(name));
     }
     if let Some(Value::Object(data)) = &event.identify_actor_data {
@@ -213,7 +215,7 @@ pub(crate) fn exception_event(event: &Event) -> Value {
             }
         }
     }
-    if let Some(r) = nonempty(&event.resource_name) {
+    if let Some(r) = nonempty(event.resource_name.as_deref()) {
         p.insert("resource_name".into(), json!(r));
         if event.event_type == MCP_TOOLS_CALL_EVENT_TYPE {
             p.insert("tool_name".into(), json!(r));
@@ -225,7 +227,7 @@ pub(crate) fn exception_event(event: &Event) -> Value {
         ("client_name", &event.client_name),
         ("client_version", &event.client_version),
     ] {
-        if let Some(v) = nonempty(v) {
+        if let Some(v) = nonempty(v.as_deref()) {
             p.insert(k.into(), json!(v));
         }
     }
@@ -249,7 +251,7 @@ pub(crate) fn ai_span_event(event: &Event) -> Value {
     p.insert("$ai_span_id".into(), json!(to_uuid_v7(&event.id)));
     p.insert(
         "$ai_span_name".into(),
-        json!(nonempty(&event.resource_name).unwrap_or("unknown_tool")),
+        json!(nonempty(event.resource_name.as_deref()).unwrap_or("unknown_tool")),
     );
     p.insert("$ai_is_error".into(), json!(event.is_error.unwrap_or(false)));
     p.insert("source".into(), json!(AGENTCAT_SOURCE));
@@ -261,7 +263,7 @@ pub(crate) fn ai_span_event(event: &Event) -> Value {
         p.insert("$session_id".into(), json!(to_uuid_v7(&event.session_id)));
     }
     if let Some(d) = event.duration {
-        p.insert("$ai_latency".into(), json!(d as f64 / 1000.0));
+        p.insert("$ai_latency".into(), json!(millis_to_seconds(d)));
     }
     if event.is_error == Some(true)
         && let Some(e) = &event.error
@@ -274,10 +276,10 @@ pub(crate) fn ai_span_event(event: &Event) -> Value {
     if let Some(v) = &event.response {
         p.insert("$ai_output_state".into(), v.clone());
     }
-    if let Some(v) = nonempty(&event.server_name) {
+    if let Some(v) = nonempty(event.server_name.as_deref()) {
         p.insert("server_name".into(), json!(v));
     }
-    if let Some(v) = nonempty(&event.client_name) {
+    if let Some(v) = nonempty(event.client_name.as_deref()) {
         p.insert("client_name".into(), json!(v));
     }
     spread_customer(&mut p, event);
@@ -337,7 +339,7 @@ impl Exporter for PostHogExporter {
                 .await;
             match response {
                 Ok(r) if r.status().is_success() => {
-                    write_to_log(&format!("PostHog export success - Event: {}", event.id))
+                    write_to_log(&format!("PostHog export success - Event: {}", event.id));
                 }
                 Ok(r) => {
                     let status = r.status().as_u16();

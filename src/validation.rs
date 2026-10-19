@@ -1,4 +1,4 @@
-//! Customer tag validation, with the AgentCat API's own rules.
+//! Customer tag validation, with the `AgentCat` API's own rules.
 //!
 //! The TypeScript SDK also accepts a space in keys and the `agentcat:` key
 //! prefix; the API drops both after answering 202, so this SDK drops them up

@@ -2,7 +2,7 @@
 //!
 //! Lengths count UTF-16 code units, like the TypeScript SDK, so the same
 //! input gives the same output in both SDKs (cuts never split a character).
-//! The varchar columns of the AgentCat API are the exception: names are
+//! The varchar columns of the `AgentCat` API are the exception: names are
 //! capped at 255 characters and versions at 50, which the API stores without
 //! failing the insert.
 
@@ -124,7 +124,7 @@ fn truncate_response_content(response: &mut Value) {
 }
 
 fn json_byte_size<T: serde::Serialize>(value: &T) -> usize {
-    serde_json::to_vec(value).map(|v| v.len()).unwrap_or(usize::MAX)
+    serde_json::to_vec(value).map_or(usize::MAX, |v| v.len())
 }
 
 /// Normalizes the four free-form fields at a depth.
@@ -208,17 +208,17 @@ fn truncate_largest_fields(mut value: Value, max_bytes: usize) -> Value {
         if paths.is_empty() {
             break;
         }
-        let mut remaining = excess as i64 + 200;
+        let mut remaining = i64::try_from(excess).unwrap_or(i64::MAX).saturating_add(200);
         let mut truncated = false;
         for StringPath { path, units } in paths {
             if remaining <= 0 {
                 break;
             }
-            let reduction = remaining.min((units / 2) as i64);
+            let reduction = remaining.min(i64::try_from(units / 2).unwrap_or(i64::MAX));
             if reduction < 10 {
                 continue;
             }
-            let new_len = units - reduction as usize;
+            let new_len = units - usize::try_from(reduction).unwrap_or(0);
             if let Some(Value::String(s)) = get_mut(&mut value, &path) {
                 *s = format!("{}...", utf16_prefix(s, new_len));
             }

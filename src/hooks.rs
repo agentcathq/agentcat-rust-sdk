@@ -44,12 +44,14 @@ impl UserIdentity {
     }
 
     /// Sets the display name.
+    #[must_use]
     pub fn name(mut self, user_name: impl Into<String>) -> Self {
         self.user_name = Some(user_name.into());
         self
     }
 
     /// Sets extra data. Values that are not JSON objects are ignored.
+    #[must_use]
     pub fn data(mut self, user_data: serde_json::Value) -> Self {
         if let serde_json::Value::Object(map) = user_data {
             self.user_data = Some(map);

@@ -1,0 +1,15 @@
+msrv = "1.88"
+disallowed-macros = [
+    { path = "std::println", reason = "stdout is the JSON-RPC channel of stdio servers" },
+    { path = "std::print", reason = "stdout is the JSON-RPC channel of stdio servers" },
+    { path = "std::eprintln", reason = "AgentCat never writes to stderr; use crate::logging::write_to_log" },
+    { path = "std::eprint", reason = "AgentCat never writes to stderr; use crate::logging::write_to_log" },
+    { path = "std::dbg", reason = "writes to stderr" },
+]
+disallowed-methods = [
+    { path = "std::io::stdout", reason = "stdout is the JSON-RPC channel of stdio servers" },
+    { path = "std::io::stderr", reason = "AgentCat never writes to stderr" },
+    { path = "std::process::exit", reason = "AgentCat never ends the host process" },
+    { path = "serde_json::map::Map::remove", reason = "with preserve_order this is swap_remove and reorders keys; JS delete keeps order: use shift_remove" },
+    { path = "serde_json::map::OccupiedEntry::remove", reason = "use shift_remove; JS delete keeps key order" },
+]

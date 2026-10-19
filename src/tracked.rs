@@ -2,8 +2,8 @@
 //!
 //! It overrides `list_tools` (schema injection), `get_tool` (the advertised
 //! definition) and `call_tool` (handles, intent, mint-back and the event),
-//! and forwards every other method unchanged. AgentCat failures never reach
-//! the client: every AgentCat step degrades to the customer's own behavior.
+//! and forwards every other method unchanged. `AgentCat` failures never reach
+//! the client: every `AgentCat` step degrades to the customer's own behavior.
 
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -16,7 +16,10 @@ use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 
 use futures::FutureExt;
-#[allow(deprecated)]
+#[allow(
+    deprecated,
+    reason = "the ServerHandler methods Tracked forwards still take these types"
+)]
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CallToolResult, CancelTaskParams, CancelledNotificationParam,
     CompleteRequestParams, CompleteResult, ContentBlock, CustomNotification, CustomRequest, CustomResult,
@@ -63,7 +66,7 @@ struct Registry {
     /// A full listing (served or rebuilt) went through this instance.
     listed: AtomicBool,
     /// The customer's own listing contains a `get_more_tools` tool. Only the
-    /// customer's pages set this, never the copy AgentCat appends.
+    /// customer's pages set this, never the copy `AgentCat` appends.
     customer_report_missing: AtomicBool,
 }
 
@@ -102,7 +105,7 @@ enum Lookup {
     },
 }
 
-/// An rmcp server handler tracked by AgentCat. Create it with
+/// An rmcp server handler tracked by `AgentCat`. Create it with
 /// [`AgentCat::track`]; serve it like the handler it wraps.
 pub struct Tracked<H> {
     inner: H,
@@ -359,9 +362,9 @@ fn spawn_hook<T: Send + 'static>(label: &'static str, fut: BoxFuture<Option<T>>)
 fn start_hook<T: Send + 'static>(
     label: &'static str,
     make: impl FnOnce() -> BoxFuture<Option<T>>,
-) -> Option<BoxFuture<Option<T>>> {
+) -> BoxFuture<Option<T>> {
     match std::panic::catch_unwind(AssertUnwindSafe(make)) {
-        Ok(fut) => Some(spawn_hook(label, fut)),
+        Ok(fut) => spawn_hook(label, fut),
         Err(p) => {
             write_to_log(&format!(
                 "{label} hook error: {}",
@@ -369,7 +372,7 @@ fn start_hook<T: Send + 'static>(
             ));
             // Resolves to "no value", exactly like a hook that returned None:
             // a resolve_session_id panic then mints a session.
-            Some(Box::pin(std::future::ready(None)))
+            Box::pin(std::future::ready(None))
         }
     }
 }
@@ -400,7 +403,7 @@ impl<H: ServerHandler> Tracked<H> {
         })
     }
 
-    /// AgentCat's own `get_more_tools`, injected.
+    /// `AgentCat`'s own `get_more_tools`, injected.
     fn report_missing_tool(&self) -> Option<(Tool, ToolInjection)> {
         let tool = tool_from_json(report_missing_descriptor())?;
         self.inject_one(&tool)
@@ -428,12 +431,11 @@ impl<H: ServerHandler> Tracked<H> {
         let mut entries = Vec::with_capacity(tools.len());
         let advertised = tools
             .into_iter()
-            .map(|tool| match self.inject_one(&tool) {
-                Some((advertised, injection)) => {
+            .map(|tool| {
+                if let Some((advertised, injection)) = self.inject_one(&tool) {
                     entries.push((tool.name.to_string(), injection));
                     advertised
-                }
-                None => {
+                } else {
                     write_to_log(&format!(
                         "WARN: Handle injection failed for tool \"{}\"; listing it unmodified",
                         tool.name
@@ -489,7 +491,7 @@ impl<H: ServerHandler> Tracked<H> {
                 ));
                 false
             }
-            Err(_) => {
+            Err(()) => {
                 write_to_log(&format!(
                     "Warning: registry rebuild-on-demand failed - Error: tools/list did not respond within {}ms",
                     REGISTRY_REBUILD_TIMEOUT.as_millis()
@@ -545,20 +547,15 @@ impl<H: ServerHandler> Tracked<H> {
             None => (None, None),
         };
         if options.server_name.is_some() {
-            name = options.server_name.clone();
+            name.clone_from(&options.server_name);
         }
         if options.server_version.is_some() {
-            version = options.server_version.clone();
+            version.clone_from(&options.server_version);
         }
         // Remembered for custom events; written only when it changes, so
         // concurrent calls do not contend on the lock.
         let identity = Some((name.clone(), version.clone()));
-        let changed = self
-            .shared
-            .server_info
-            .read()
-            .map(|g| *g != identity)
-            .unwrap_or(false);
+        let changed = self.shared.server_info.read().is_ok_and(|g| *g != identity);
         if changed && let Ok(mut guard) = self.shared.server_info.write() {
             *guard = identity;
         }
@@ -600,20 +597,20 @@ impl<H: ServerHandler> Tracked<H> {
         if hooks_configured {
             let view = ToolCallRequest::new(request.clone(), context.clone());
             if let Some(hook) = &options.resolve_session_id {
-                pending.session_hook = start_hook("resolveSessionId", || hook(view.clone()));
+                pending.session_hook = Some(start_hook("resolveSessionId", || hook(view.clone())));
             }
             if let Some(hook) = &options.identify {
-                pending.identity = start_hook("identify", || hook(view.clone()));
+                pending.identity = Some(start_hook("identify", || hook(view.clone())));
             }
             if let Some(hook) = &options.event_tags {
                 let fut = start_hook("eventTags", || {
                     let fut = hook(view.clone());
                     Box::pin(async move { fut.await.and_then(crate::validation::validate_tags) })
                 });
-                pending.tags = fut;
+                pending.tags = Some(fut);
             }
             if let Some(hook) = &options.event_properties {
-                pending.properties = start_hook("eventProperties", || hook(view.clone()));
+                pending.properties = Some(start_hook("eventProperties", || hook(view.clone())));
             }
         }
 
@@ -626,7 +623,7 @@ impl<H: ServerHandler> Tracked<H> {
         let (client_name, client_version) = client_info(request, context);
         event.client_name = client_name;
         event.client_version = client_version;
-        event.session_id = resolution.session_id.clone();
+        event.session_id.clone_from(&resolution.session_id);
         event.resource_name = Some(if name.is_empty() {
             UNKNOWN_TOOL_NAME.to_owned()
         } else {
@@ -679,7 +676,7 @@ impl<H: ServerHandler> Tracked<H> {
             mirror_structured,
             ..
         } = prepared;
-        let duration = started.elapsed().as_millis() as u64;
+        let duration = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         let outcome = match outcome {
             Err(error) => {
                 catch(|| {
@@ -706,7 +703,7 @@ impl<H: ServerHandler> Tracked<H> {
                     // (without rmcp's protocol-level `resultType`).
                     let mut original = serde_json::to_value(result).unwrap_or(Value::Null);
                     if let Value::Object(map) = &mut original {
-                        map.remove("resultType");
+                        crate::util::shift_remove(map, "resultType");
                     }
                     if result.is_error == Some(true) {
                         event.is_error = Some(true);
@@ -770,7 +767,7 @@ impl<H: ServerHandler> Tracked<H> {
         context: RequestContext<RoleServer>,
     ) -> Result<CallToolResponse, McpError> {
         if self.intercepts_report_missing(&request.name)
-            && let Some(result) = self.report_missing_result(&request)
+            && let Some(result) = Self::report_missing_result(&request)
         {
             return Ok(result.into());
         }
@@ -789,7 +786,7 @@ impl<H: ServerHandler> Tracked<H> {
         self.inner.call_tool(request, context).await
     }
 
-    fn report_missing_result(&self, request: &CallToolRequestParams) -> Option<CallToolResult> {
+    fn report_missing_result(request: &CallToolRequestParams) -> Option<CallToolResult> {
         catch(|| {
             let context = request.arguments.as_ref().and_then(|a| a.get(CONTEXT_PARAM));
             result_from_json(report_missing_response(context))
@@ -821,7 +818,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
                 request.name
             ));
             if self.intercepts_report_missing(&request.name)
-                && let Some(result) = self.report_missing_result(&request)
+                && let Some(result) = Self::report_missing_result(&request)
             {
                 return Ok(result.into());
             }
@@ -830,7 +827,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         let started = Instant::now();
 
         if self.intercepts_report_missing(&request.name)
-            && let Some(result) = self.report_missing_result(&request)
+            && let Some(result) = Self::report_missing_result(&request)
         {
             prepared.event.user_intent = intent_of(request.arguments.as_ref());
             return self.finish(prepared, Ok(result.into()), started);
@@ -852,7 +849,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
                     let mut event = prepared.event;
                     event.is_error = Some(true);
                     event.error = Some(crate::exceptions::capture_panic(&*payload, capture).to_value());
-                    event.duration = Some(started.elapsed().as_millis() as u64);
+                    event.duration = Some(u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX));
                     self.shared.publish(event, prepared.pending);
                 });
                 // Keep rmcp's own behavior for a panicking handler.
@@ -948,7 +945,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.complete(request, context).await
     }
 
-    #[allow(deprecated)]
+    #[allow(deprecated, reason = "Tracked forwards every ServerHandler method")]
     async fn set_level(
         &self,
         request: SetLevelRequestParams,
@@ -1005,7 +1002,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.listen(context).await
     }
 
-    #[allow(deprecated)]
+    #[allow(deprecated, reason = "Tracked forwards every ServerHandler method")]
     async fn subscribe(
         &self,
         request: SubscribeRequestParams,
@@ -1014,7 +1011,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.subscribe(request, context).await
     }
 
-    #[allow(deprecated)]
+    #[allow(deprecated, reason = "Tracked forwards every ServerHandler method")]
     async fn unsubscribe(
         &self,
         request: UnsubscribeRequestParams,
@@ -1036,7 +1033,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         notification: CancelledNotificationParam,
         context: NotificationContext<RoleServer>,
     ) {
-        self.inner.on_cancelled(notification, context).await
+        self.inner.on_cancelled(notification, context).await;
     }
 
     async fn on_progress(
@@ -1044,15 +1041,15 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         notification: ProgressNotificationParam,
         context: NotificationContext<RoleServer>,
     ) {
-        self.inner.on_progress(notification, context).await
+        self.inner.on_progress(notification, context).await;
     }
 
     async fn on_initialized(&self, context: NotificationContext<RoleServer>) {
-        self.inner.on_initialized(context).await
+        self.inner.on_initialized(context).await;
     }
 
     async fn on_roots_list_changed(&self, context: NotificationContext<RoleServer>) {
-        self.inner.on_roots_list_changed(context).await
+        self.inner.on_roots_list_changed(context).await;
     }
 
     async fn on_custom_notification(
@@ -1060,7 +1057,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         notification: CustomNotification,
         context: NotificationContext<RoleServer>,
     ) {
-        self.inner.on_custom_notification(notification, context).await
+        self.inner.on_custom_notification(notification, context).await;
     }
 
     fn get_info(&self) -> InitializeResult {

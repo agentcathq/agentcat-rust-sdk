@@ -16,7 +16,7 @@ pub(crate) type TagsHook =
 pub(crate) type PropertiesHook = Arc<dyn Fn(ToolCallRequest) -> BoxFuture<Option<Value>> + Send + Sync>;
 
 /// A tool call as the `identify`, `resolve_session_id`, `event_tags` and
-/// `event_properties` hooks see it: the raw request (AgentCat's injected
+/// `event_properties` hooks see it: the raw request (`AgentCat`'s injected
 /// parameters included) and the handler's request context.
 ///
 /// Cheap to clone.
@@ -51,7 +51,7 @@ impl ToolCallRequest {
         &self.inner.params.name
     }
 
-    /// The raw arguments, including AgentCat's injected `session_id`,
+    /// The raw arguments, including `AgentCat`'s injected `session_id`,
     /// `agent_id` and `context`.
     pub fn arguments(&self) -> Option<&JsonObject> {
         self.inner.params.arguments.as_ref()

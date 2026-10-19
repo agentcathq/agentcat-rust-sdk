@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use serde_json::{Map, Value, json};
 
-use super::{Exporter, epoch_seconds, trace_context};
+use super::{Exporter, epoch_seconds, millis_to_seconds, trace_context};
 use crate::constants::{AGENTCAT_SOURCE, SDK_VERSION};
 use crate::event::Event;
 use crate::hooks::BoxFuture;
@@ -40,18 +40,21 @@ impl SentryExporterConfig {
     }
 
     /// Sets the `environment` tag.
+    #[must_use]
     pub fn environment(mut self, environment: impl Into<String>) -> Self {
         self.environment = Some(environment.into());
         self
     }
 
     /// Sets the `release` tag.
+    #[must_use]
     pub fn release(mut self, release: impl Into<String>) -> Self {
         self.release = Some(release.into());
         self
     }
 
     /// Turns transactions on or off.
+    #[must_use]
     pub fn enable_tracing(mut self, enabled: bool) -> Self {
         self.enable_tracing = enabled;
         self
@@ -296,7 +299,7 @@ impl SentryExporter {
     /// request start) and ends one duration later.
     pub(crate) fn transaction(&self, event: &Event) -> Value {
         let start = epoch_seconds(event);
-        let end = start + event.duration.unwrap_or(0) as f64 / 1000.0;
+        let end = start + millis_to_seconds(event.duration.unwrap_or(0));
         let trace = json!({
             "trace_id": trace_context::trace_id(&event.session_id),
             "span_id": trace_context::span_id(&event.id),
@@ -318,7 +321,7 @@ impl SentryExporter {
     pub(crate) fn error_event(&self, event: &Event, transaction: Option<&Value>) -> Value {
         let (mut message, mut error_type) = ("Unknown error".to_owned(), "ToolCallError".to_owned());
         match &event.error {
-            Some(Value::String(s)) => message = s.clone(),
+            Some(Value::String(s)) => message.clone_from(s),
             Some(Value::Object(obj)) => {
                 message = match obj.get("message") {
                     Some(Value::String(s)) => s.clone(),
@@ -335,10 +338,14 @@ impl SentryExporter {
             _ => {}
         }
         let trace_id = transaction
-            .and_then(|t| t["contexts"]["trace"]["trace_id"].as_str().map(str::to_owned))
+            .and_then(|t| {
+                t.pointer("/contexts/trace/trace_id")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+            })
             .unwrap_or_else(|| trace_context::trace_id(&event.session_id));
         let timestamp = transaction
-            .and_then(|t| t["timestamp"].as_f64())
+            .and_then(|t| t.get("timestamp").and_then(Value::as_f64))
             .unwrap_or_else(|| epoch_seconds(event));
         // The error happened inside the call's own span: same span ID, no parent.
         let trace = json!({
@@ -374,7 +381,7 @@ impl SentryExporter {
     }
 }
 
-fn envelope(event_id: &str, item_header: Value, payload: &Value, trailing_newline: bool) -> String {
+fn envelope(event_id: &str, item_header: &Value, payload: &Value, trailing_newline: bool) -> String {
     let header = json!({"event_id": event_id, "sent_at": crate::util::iso_millis(&chrono::Utc::now())});
     let mut out = format!("{header}\n{item_header}\n{payload}");
     if trailing_newline {
@@ -387,16 +394,16 @@ impl Exporter for SentryExporter {
     fn export(&self, client: reqwest::Client, event: Arc<Event>) -> BoxFuture<Result<(), String>> {
         let log = Self::log(&event);
         let log_envelope = envelope(
-            log["event_id"].as_str().unwrap_or_default(),
-            json!({"type": "log", "item_count": 1, "content_type": "application/vnd.sentry.items.log+json"}),
+            log.get("event_id").and_then(Value::as_str).unwrap_or_default(),
+            &json!({"type": "log", "item_count": 1, "content_type": "application/vnd.sentry.items.log+json"}),
             &json!({"items": [log]}),
             true,
         );
         let transaction = self.config.enable_tracing.then(|| self.transaction(&event));
         let transaction_envelope = transaction.as_ref().map(|t| {
             envelope(
-                t["event_id"].as_str().unwrap_or_default(),
-                json!({"type": "transaction"}),
+                t.get("event_id").and_then(Value::as_str).unwrap_or_default(),
+                &json!({"type": "transaction"}),
                 t,
                 false,
             )
@@ -404,8 +411,8 @@ impl Exporter for SentryExporter {
         let error_envelope = (event.is_error == Some(true)).then(|| {
             let e = self.error_event(&event, transaction.as_ref());
             envelope(
-                e["event_id"].as_str().unwrap_or_default(),
-                json!({"type": "event", "content_type": "application/json"}),
+                e.get("event_id").and_then(Value::as_str).unwrap_or_default(),
+                &json!({"type": "event", "content_type": "application/json"}),
                 &e,
                 false,
             )
@@ -423,7 +430,7 @@ impl Exporter for SentryExporter {
                 async move {
                     match request.send().await {
                         Ok(r) if r.status().is_success() => {
-                            write_to_log(&format!("Sentry {what} export success - Event: {id}"))
+                            write_to_log(&format!("Sentry {what} export success - Event: {id}"));
                         }
                         Ok(r) => {
                             let status = r.status().as_u16();

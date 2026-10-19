@@ -31,6 +31,7 @@ impl OtlpExporterConfig {
     }
 
     /// Adds a request header.
+    #[must_use]
     pub fn header(mut self, name: impl Into<String>, value: impl Into<String>) -> Self {
         self.headers.insert(name.into(), value.into());
         self
@@ -62,9 +63,9 @@ fn attr(key: &str, value: &str) -> Value {
 }
 
 pub(crate) fn span(event: &Event) -> Value {
-    let start = event.timestamp.timestamp_millis() as i128 * 1_000_000;
+    let start = i128::from(event.timestamp.timestamp_millis()) * 1_000_000;
     let end = match event.duration {
-        Some(d) if d > 0 => start + d as i128 * 1_000_000,
+        Some(d) if d > 0 => start + i128::from(d) * 1_000_000,
         _ => start,
     };
     let opt = |v: &Option<String>| v.clone().unwrap_or_default();
@@ -90,7 +91,11 @@ pub(crate) fn span(event: &Event) -> Value {
         attributes.push(attr("agentcat.properties", &json));
     }
     // Empty attributes are dropped.
-    attributes.retain(|a| a["value"]["stringValue"].as_str().is_some_and(|s| !s.is_empty()));
+    attributes.retain(|a| {
+        a.pointer("/value/stringValue")
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.is_empty())
+    });
 
     json!({
         "traceId": trace_context::trace_id(&event.session_id),

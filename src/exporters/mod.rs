@@ -1,5 +1,5 @@
 //! Telemetry exporters: forward each event to OTLP, Datadog, Sentry or
-//! PostHog, alongside (or instead of) AgentCat.
+//! `PostHog`, alongside (or instead of) `AgentCat`.
 //!
 //! Exporters build their vendor's JSON by hand over the shared HTTP client,
 //! so they add no SDK dependencies and install no global state (no tracer
@@ -49,7 +49,7 @@ pub enum ExporterConfig {
     /// Sentry logs, errors and (optionally) transactions.
     #[cfg(feature = "sentry")]
     Sentry(SentryExporterConfig),
-    /// PostHog capture events.
+    /// `PostHog` capture events.
     #[cfg(feature = "posthog")]
     PostHog(PostHogExporterConfig),
 }
@@ -80,7 +80,11 @@ impl From<PostHogExporterConfig> for ExporterConfig {
 }
 
 /// Builds an exporter; `Err` carries the reason it could not be created.
-#[allow(unreachable_code, unused_variables)]
+#[allow(
+    unreachable_code,
+    unused_variables,
+    reason = "builds without some exporter features leave out their arms"
+)]
 pub(crate) fn create(config: &ExporterConfig) -> Result<Arc<dyn Exporter>, String> {
     match config {
         #[cfg(feature = "otlp")]
@@ -91,20 +95,33 @@ pub(crate) fn create(config: &ExporterConfig) -> Result<Arc<dyn Exporter>, Strin
         ExporterConfig::Sentry(c) => Ok(Arc::new(sentry::SentryExporter::new(c)?)),
         #[cfg(feature = "posthog")]
         ExporterConfig::PostHog(c) => Ok(Arc::new(posthog::PostHogExporter::new(c))),
-        #[allow(unreachable_patterns)]
+        #[allow(
+            unreachable_patterns,
+            reason = "unreachable when every exporter is compiled in"
+        )]
         _ => Err("exporter type not compiled in".to_owned()),
     }
 }
 
 /// Seconds since the Unix epoch, with milliseconds, as JavaScript computes
 /// `date.getTime() / 1000`.
+#[allow(clippy::cast_precision_loss, reason = "Unix milliseconds stay below 2^53")]
 pub(crate) fn epoch_seconds(event: &Event) -> f64 {
     event.timestamp.timestamp_millis() as f64 / 1000.0
 }
 
+/// A duration in milliseconds as seconds, as JavaScript computes `ms / 1000`.
+#[allow(
+    clippy::cast_precision_loss,
+    reason = "durations stay below 2^53 milliseconds"
+)]
+pub(crate) fn millis_to_seconds(millis: u64) -> f64 {
+    millis as f64 / 1000.0
+}
+
 /// A response check shared by the exporters: non-2xx becomes an error with
 /// the status and body.
-#[allow(dead_code)]
+#[allow(dead_code, reason = "unused when no exporter is compiled in")]
 pub(crate) async fn check(
     response: Result<reqwest::Response, reqwest::Error>,
     what: &str,
