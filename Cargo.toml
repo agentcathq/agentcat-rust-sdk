@@ -1,0 +1,63 @@
+[package]
+name = "agentcat-sdk"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "AgentCat analytics for Rust MCP servers built with rmcp: tool-call tracking, agent intent, sessions and actors."
+license = "MIT"
+authors = ["AgentCat, Inc. <hi@agentcat.com>"]
+homepage = "https://agentcat.com"
+repository = "https://github.com/agentcathq/agentcat-rust-sdk"
+documentation = "https://docs.rs/agentcat-sdk"
+readme = "README.md"
+keywords = ["mcp", "analytics", "rmcp", "agents", "observability"]
+categories = ["development-tools::debugging", "web-programming"]
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE", "CHANGELOG.md"]
+
+[lib]
+name = "agentcat"
+
+[features]
+default = ["rmcp", "rustls", "preserve-order", "exporters"]
+# Instrument rmcp 3.x servers with `Tracked<H>`.
+rmcp = ["dep:rmcp", "dep:http"]
+# TLS backend for the AgentCat API, exporters and diagnostics. rustls matches
+# reqwest 0.13's own default.
+rustls = ["agentcat-api/rustls", "reqwest/rustls"]
+native-tls = ["agentcat-api/native-tls", "reqwest/native-tls"]
+# Keep JSON object keys in insertion order, so injected tool parameters follow
+# the customer's own and `mcp_session` is the first key of structured results.
+# serde_json applies this feature to the whole build.
+preserve-order = ["serde_json/preserve_order"]
+# Telemetry exporters (hand-written JSON over the shared HTTP client).
+exporters = ["otlp", "datadog", "sentry", "posthog"]
+otlp = []
+datadog = []
+sentry = []
+posthog = []
+
+[dependencies]
+agentcat-api = { version = "0.0.3", default-features = false }
+chrono = { version = "0.4.38", default-features = false, features = ["std", "clock"] }
+futures = { version = "0.3.31", default-features = false, features = ["std"] }
+getrandom = "0.3"
+http = { version = "1", optional = true }
+reqwest = { version = "0.13", default-features = false, features = ["json"] }
+rmcp = { version = "3", default-features = false, features = ["server"], optional = true }
+serde = { version = "1.0.200", features = ["derive"] }
+serde_json = "1.0.120"
+sha2 = "0.10"
+tokio = { version = "1.38", features = ["rt", "sync", "time", "macros"] }
+tracing = "0.1.40"
+
+[dev-dependencies]
+rmcp = { version = "3", features = ["server", "client", "macros", "transport-async-rw", "transport-streamable-http-server", "transport-streamable-http-client-reqwest"] }
+tokio = { version = "1", features = ["full", "test-util"] }
+axum = "0.8"
+schemars = "1"
+anyhow = "1"
+
+[package.metadata.docs.rs]
+all-features = false
+features = ["rmcp", "rustls", "preserve-order", "exporters"]
+rustdoc-args = ["--cfg", "docsrs"]
