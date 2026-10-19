@@ -8,7 +8,7 @@ const MANIFEST: &str = include_str!("manifest.tsv");
 const NOT_PORTED: &str = include_str!("NOT_PORTED.md");
 
 /// TS test files whose cases must all have Rust tests.
-const ENFORCED: &[&str] = &[];
+const ENFORCED: &[&str] = &["constants.test.ts"];
 
 /// Cases of enforced files that a later plan ports: (TS file, TS test, plan).
 const DEFERRED: &[(&str, &str, u8)] = &[];
@@ -37,10 +37,11 @@ fn cases() -> Vec<Case> {
         .collect()
 }
 
-fn listed_tests() -> BTreeSet<String> {
+fn list_with(extra: &[&str]) -> BTreeSet<String> {
     let exe = std::env::current_exe().expect("path of the running test binary");
     let output = Command::new(exe)
         .args(["--list", "--format", "terse"])
+        .args(extra)
         .output()
         .expect("list the tests of this binary");
     assert!(
@@ -53,6 +54,12 @@ fn listed_tests() -> BTreeSet<String> {
         .filter_map(|l| l.strip_suffix(": test"))
         .map(str::to_owned)
         .collect()
+}
+
+/// Every test of this binary except the `#[ignore]` ones, which never run.
+fn listed_tests() -> BTreeSet<String> {
+    let ignored = list_with(&["--ignored"]);
+    list_with(&[]).difference(&ignored).cloned().collect()
 }
 
 fn deferred(case: &Case) -> bool {

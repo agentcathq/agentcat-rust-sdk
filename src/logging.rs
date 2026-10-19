@@ -75,12 +75,15 @@ pub(crate) fn capture_logs<T>(f: impl FnOnce() -> T) -> (T, Vec<String>) {
 /// True when `capture_logs` took the line.
 #[cfg(test)]
 fn captured(message: &str) -> bool {
-    CAPTURED.with_borrow_mut(|lines| {
-        lines
-            .as_mut()
-            .map(|lines| lines.push(message.to_owned()))
-            .is_some()
-    })
+    CAPTURED
+        .try_with(|lines| {
+            lines
+                .borrow_mut()
+                .as_mut()
+                .map(|lines| lines.push(message.to_owned()))
+                .is_some()
+        })
+        .unwrap_or(false)
 }
 
 /// Writes one line to the SDK log. Never fails and never panics.
