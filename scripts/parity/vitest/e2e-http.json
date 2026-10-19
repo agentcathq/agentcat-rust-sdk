@@ -1,0 +1,547 @@
+[
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'baseline-defaults'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off-x-report-missing-on'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-call'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'context-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'context-custom-description'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-mint'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-x-hook'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-deterministic'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-null'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'task-supplied-continuity'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'mint-back-structured-mirror'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'strict-schema-injection'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'strip-proof-loose'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'error-path'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'hooks-identity-tags-props'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'redaction'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'client-identity-ladder'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-legacy' > 'rebuild-on-demand'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'baseline-defaults'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off-x-report-missing-on'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-call'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'context-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'context-custom-description'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-mint'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-x-hook'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-deterministic'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-null'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'task-supplied-continuity'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'mint-back-structured-mirror'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'strict-schema-injection'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'strip-proof-loose'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'error-path'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'hooks-identity-tags-props'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'redaction'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'client-identity-ladder'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-handler-auto' > 'rebuild-on-demand'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'baseline-defaults'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'tracing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'tracing-off-x-report-missing-on'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'report-missing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'report-missing-call'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'context-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'context-custom-description'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-mint'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-x-hook'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'task-hook-deterministic'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'task-hook-null'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'task-supplied-continuity'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'mint-back-structured-mirror'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'strict-schema-injection'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'strip-proof-loose'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'error-path'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'hooks-identity-tags-props'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'redaction'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'client-identity-ladder'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 lane: 'v2-longlived' > 'session-continuity-stateful'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v2-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'baseline-defaults'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'tracing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'tracing-off-x-report-missing-on'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'report-missing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'report-missing-call'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'context-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'context-custom-description'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-mint'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-x-hook'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'task-hook-deterministic'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'task-hook-null'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'task-supplied-continuity'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'mint-back-structured-mirror'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'strict-schema-injection'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'strip-proof-loose'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'error-path'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'hooks-identity-tags-props'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'redaction'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'client-identity-ladder'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateful' > 'session-continuity-stateful'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'baseline-defaults'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'tracing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'tracing-off-x-report-missing-on'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'report-missing-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'report-missing-call'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'context-off'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'context-custom-description'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-mint'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-x-hook'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'task-hook-deterministic'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'task-hook-null'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'task-supplied-continuity'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'mint-back-structured-mirror'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'strict-schema-injection'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'strip-proof-loose'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'error-path'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'hooks-identity-tags-props'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'redaction'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'client-identity-ladder'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 lane: 'v1-stateless' > 'rebuild-on-demand'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/v1-matrix.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http: HTTP headers land in published event parameters > v2 (longlived lane): sentinel header at extra.http.req.headers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/header-capture.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http: HTTP headers land in published event parameters > v1 (stateful lane): sentinel header at extra.requestInfo.headers, url a string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/header-capture.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v2 SSE smoke: long-lived lane, streaming POST responses > baseline-defaults over a real text/event-stream response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/sse-smoke-v2.test.ts",
+    "projectName": "e2e-http"
+  },
+  {
+    "name": "e2e-http v1 SSE smoke (stateful, enableJsonResponse: false) > baseline-defaults over streamed POST responses",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-http/sse-smoke-v1.test.ts",
+    "projectName": "e2e-http"
+  }
+]

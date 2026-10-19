@@ -47,8 +47,48 @@ pub(crate) fn version_prefix() -> &'static str {
     })
 }
 
+#[cfg(test)]
+thread_local! {
+    static CAPTURED: std::cell::RefCell<Option<Vec<String>>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Runs `f` with this thread's SDK log lines captured: the message only,
+/// with no timestamp or version prefix. While capturing, the lines go
+/// nowhere else.
+#[cfg(test)]
+pub(crate) fn capture_logs<T>(f: impl FnOnce() -> T) -> (T, Vec<String>) {
+    struct Restore(Option<Vec<String>>);
+    impl Drop for Restore {
+        fn drop(&mut self) {
+            let previous = self.0.take();
+            CAPTURED.with_borrow_mut(|lines| *lines = previous);
+        }
+    }
+
+    let restore = Restore(CAPTURED.with_borrow_mut(|lines| lines.replace(Vec::new())));
+    let value = f();
+    let lines = CAPTURED.with_borrow_mut(Option::take).unwrap_or_default();
+    drop(restore);
+    (value, lines)
+}
+
+/// True when `capture_logs` took the line.
+#[cfg(test)]
+fn captured(message: &str) -> bool {
+    CAPTURED.with_borrow_mut(|lines| {
+        lines
+            .as_mut()
+            .map(|lines| lines.push(message.to_owned()))
+            .is_some()
+    })
+}
+
 /// Writes one line to the SDK log. Never fails and never panics.
 pub(crate) fn write_to_log(message: &str) {
+    #[cfg(test)]
+    if captured(message) {
+        return;
+    }
     let _ = std::panic::catch_unwind(|| {
         let timestamp = crate::util::iso_millis(&chrono::Utc::now());
         let entry = format!("[{timestamp}] {} {message}", version_prefix());
@@ -66,4 +106,20 @@ pub(crate) fn write_to_log(message: &str) {
             *guard = None;
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn capture_logs_collects_only_this_threads_lines() {
+        let ((), lines) = capture_logs(|| {
+            write_to_log("on this thread");
+            std::thread::spawn(|| write_to_log("on another thread"))
+                .join()
+                .expect("the spawned thread finishes");
+        });
+        assert_eq!(lines, ["on this thread"]);
+    }
 }

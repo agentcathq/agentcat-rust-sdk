@@ -107,6 +107,18 @@ mod truncation;
 mod util;
 mod validation;
 
+#[cfg(all(
+    test,
+    feature = "rmcp",
+    feature = "preserve-order",
+    feature = "otlp",
+    feature = "datadog",
+    feature = "sentry",
+    feature = "posthog"
+))]
+#[path = "../tests/parity/mod.rs"]
+mod parity;
+
 pub use agentcat::{
     AgentCat, AgentCatBuilder, CustomEvent, Error, flush, flush_blocking, publish_custom_event, shutdown,
     shutdown_blocking,

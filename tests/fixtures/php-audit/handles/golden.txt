@@ -1,0 +1,163 @@
+DEFAULT_CONTEXT_PARAMETER_DESCRIPTION	len_utf16=532	bytes=532	sha256=e7dc0082fe80a9da46414d690b6b9ba95e7afa768a4390cf67251acc22e588ec	emdash=0
+SESSION_ID_PARAM_DESCRIPTION	len_utf16=990	bytes=996	sha256=3142169f96247b2c3662d8eb800ede0f9e48e12effd4744033f605907d97a4bc	emdash=3
+SESSION_ID_PARAM_PATTERN	len_utf16=29	bytes=29	sha256=a00e8ea775570f2b7d9fcce277c64117f83efd38458f6accfbe45fd3372c3f5e	emdash=0
+AGENT_ID_PARAM_DESCRIPTION	len_utf16=843	bytes=845	sha256=4e39487f330b8f50601348738f2886ab7e9f7d3ec05c2d93850b63ed4a0758e2	emdash=1
+MINT_BACK_HEADER_ISSUED	len_utf16=70	bytes=72	sha256=970b64824cb4a5a62f1548804756cd584991ba4f5707a146fb4d77947f8c2298	emdash=1
+MINT_BACK_ISSUED_BODY	len_utf16=90	bytes=90	sha256=849bc1a2df49ea0fa6638abe4d322853824f2d53496bd7681864fa862e1fc22a	emdash=0
+MINT_BACK_HEADER_UNRECOGNIZED	len_utf16=76	bytes=78	sha256=1585e173e0e647fae125a3269054d3716e26763fd191872ff1a7739cd54e8f20	emdash=1
+MINT_BACK_UNRECOGNIZED_BODY	len_utf16=157	bytes=157	sha256=1a47f19f6e04b58fc83376a9eaaea0cd6cf9e1686752447e7d3b705b48279b20	emdash=0
+MCP_SESSION_FIELD_DESCRIPTION	len_utf16=231	bytes=231	sha256=6af85db3af588aca25446b579bb06f023531ddcf6b37a9d71c4726a386cea2d7	emdash=0
+MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE	len_utf16=100	bytes=100	sha256=ce0ff00a089aa4a2f7489377edfa9a00b95b821e229961a3c21e7155bf990362	emdash=0
+MCP_SESSION_SESSION_ID_DESCRIPTION	len_utf16=284	bytes=286	sha256=ae03955a71926a9d21854ddf76340d25da73df4263b81b9d9ca9c0548d3b4359	emdash=1
+MCP_SESSION_AGENT_ID_DESCRIPTION	len_utf16=197	bytes=199	sha256=83129a136b6c5f357abb5ec230d18724e8fbff62dbff0ba78dc4da0c06537c57	emdash=1
+MCP_SESSION_STATUS_DESCRIPTION	len_utf16=297	bytes=299	sha256=73303adaab23c8e1857f4f31d450b959e52ad959efe7f27a461be99c87252025	emdash=1
+GET_MORE_TOOLS_DESCRIPTION	len_utf16=140	bytes=140	sha256=60d29c7164574180517b580e70b4b046d66447859090748cd01e2b4c25ce05b3	emdash=0
+GET_MORE_TOOLS_CONTEXT_DESCRIPTION	len_utf16=74	bytes=74	sha256=a215b06f2407f95346d0496f4fd93c570f0c709ac1e9c626afb651d0fd47ffd5	emdash=0
+GET_MORE_TOOLS_RESPONSE_TEXT	len_utf16=134	bytes=134	sha256=64906a22af6d361ed3f18ea632a8a9a3a827a1921c61e59b22ca5e499293237b	emdash=0
+MINTED_BLOCK_EXAMPLE	len_utf16=205	bytes=207	sha256=cc03c3cbe579dd55b6a52639f038d68e092f298cec638b0a30ce20de4fbbb489	emdash=1
+UNRECOGNIZED_BLOCK	len_utf16=234	bytes=236	sha256=79b9409dd611943177d8fdc861398ba789b9c45d361e0dc2bbbca3c593867954	emdash=1
+---JSON---
+{
+ "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\"",
+ "SESSION_ID_PARAM_DESCRIPTION": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+ "SESSION_ID_PARAM_PATTERN": "^(start|ses_[0-9A-Za-z]{27})$",
+ "AGENT_ID_PARAM_DESCRIPTION": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you.",
+ "MINT_BACK_HEADER_ISSUED": "[session_id issued — see this tool's session_id parameter description]",
+ "MINT_BACK_ISSUED_BODY": "This is the first-call issuance described in this tool's session_id parameter description.",
+ "MINT_BACK_HEADER_UNRECOGNIZED": "[session_id unrecognized — see this tool's session_id parameter description]",
+ "MINT_BACK_UNRECOGNIZED_BODY": "The value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued.",
+ "MCP_SESSION_FIELD_DESCRIPTION": "Session continuity and agent attribution state for this task, returned on completed responses that carry structured output. This server cannot link your calls between requests on its own, so session continuity travels here instead.",
+ "MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE": "Agent attribution state for this task, returned on completed responses that carry structured output.",
+ "MCP_SESSION_SESSION_ID_DESCRIPTION": "Opaque correlation ID for this task, issued by this server. Use this as the session_id argument of every later call, and hand it to any subagents working the same task. Absent when status is unrecognized; no replacement is issued in that response — recovery is described under status.",
+ "MCP_SESSION_AGENT_ID_DESCRIPTION": "Present only when you sent agent_id on this call. Your agent_id, echoed as received. Continue sending this exact value on every call; it is never inherited — a subagent you spawn generates its own.",
+ "MCP_SESSION_STATUS_DESCRIPTION": "issued: first call of a task; the session_id above was just created. active: the session_id you sent was accepted; keep sending it. unrecognized: the value sent was not issued by this server — re-send the one issued earlier for this task; if none was issued yet, send start to be issued a new one.",
+ "GET_MORE_TOOLS_DESCRIPTION": "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.",
+ "GET_MORE_TOOLS_CONTEXT_DESCRIPTION": "A description of your goal and what kind of tool would help accomplish it.",
+ "GET_MORE_TOOLS_RESPONSE_TEXT": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future.",
+ "MINTED_BLOCK_EXAMPLE": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2cOHEO0LYGADMzRvWTXXVbbgxgm\nThis is the first-call issuance described in this tool's session_id parameter description.",
+ "UNRECOGNIZED_BLOCK": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+}
+---DERIVE---
+["customer-abc","proj_1"] => ses_2cOHEO0LYGADMzRvWTXXVbbgxgm
+["customer-abc",null] => ses_2cZY3tvyI25O2AmL2CGVo2B1IIj
+[" x ","p"] => ses_2c3yR5mYKQdLaXsJNgZH6erbfQK
+["x","p"] => ses_2bw285VY9apdgUgTPXKFnT6P4G0
+["corr-1","proj_1"] => ses_2afjLT0irA6g3tOA5CklOPgcSqQ
+["customer-42","proj_1"] => ses_2aTxnCSlMJJlr6zHNzWiKah0FLH
+["héllo-ünïcode","proj_abc123xyz"] => ses_2aaZsusQKGakcZjJVZ9ZZUG3Fqq
+["",""] => ses_2cLO5ynrWej2LbO4pGhuDkShNRM
+["a:b","c"] => ses_2btXwgICEW5eVF5eCBvN6V88rTt
+["a","b:c"] => ses_2btXwgICEW5eVF5eCBvN6V88rTt
+deriveSessionId('x','') === deriveSessionId('x'): true
+sessionFromHookValue(' corr-1 ', 'proj_1'): {"sessionId":"ses_2afjLT0irA6g3tOA5CklOPgcSqQ","sessionSource":"hook"}
+---LISTED (prompted, agent tracking on, context on)---
+[
+ {
+  "name": "get_more_tools",
+  "description": "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "context": {
+     "type": "string",
+     "description": "A description of your goal and what kind of tool would help accomplish it."
+    },
+    "session_id": {
+     "type": "string",
+     "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+     "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+    },
+    "agent_id": {
+     "type": "string",
+     "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
+    }
+   },
+   "required": [
+    "context",
+    "session_id",
+    "agent_id"
+   ]
+  },
+  "annotations": {
+   "title": "Get More Tools",
+   "readOnlyHint": true,
+   "destructiveHint": false,
+   "idempotentHint": true,
+   "openWorldHint": false
+  }
+ },
+ {
+  "name": "echo",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "text": {
+     "type": "string"
+    },
+    "session_id": {
+     "type": "string",
+     "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+     "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+    },
+    "agent_id": {
+     "type": "string",
+     "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
+    },
+    "context": {
+     "type": "string",
+     "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+    }
+   },
+   "required": [
+    "text",
+    "session_id",
+    "agent_id",
+    "context"
+   ]
+  },
+  "outputSchema": {
+   "type": "object",
+   "properties": {
+    "count": {
+     "type": "number"
+    },
+    "mcp_session": {
+     "type": "object",
+     "description": "Session continuity and agent attribution state for this task, returned on completed responses that carry structured output. This server cannot link your calls between requests on its own, so session continuity travels here instead.",
+     "properties": {
+      "session_id": {
+       "type": "string",
+       "description": "Opaque correlation ID for this task, issued by this server. Use this as the session_id argument of every later call, and hand it to any subagents working the same task. Absent when status is unrecognized; no replacement is issued in that response — recovery is described under status."
+      },
+      "agent_id": {
+       "type": "string",
+       "description": "Present only when you sent agent_id on this call. Your agent_id, echoed as received. Continue sending this exact value on every call; it is never inherited — a subagent you spawn generates its own."
+      },
+      "status": {
+       "type": "string",
+       "enum": [
+        "issued",
+        "active",
+        "unrecognized"
+       ],
+       "description": "issued: first call of a task; the session_id above was just created. active: the session_id you sent was accepted; keep sending it. unrecognized: the value sent was not issued by this server — re-send the one issued earlier for this task; if none was issued yet, send start to be issued a new one."
+      }
+     }
+    }
+   },
+   "required": [
+    "count"
+   ],
+   "additionalProperties": false
+  }
+ }
+]
+registry: [["get_more_tools",["session_id","agent_id"]],["echo",["session_id","agent_id","context"]]] output: ["echo"]
+---LISTED hook mode + agent---
+[{"name":"echo","inputSchema":{"type":"object","properties":{"agent_id":{"type":"string","description":"Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."}},"required":["agent_id"]},"outputSchema":{"type":"object","properties":{"mcp_session":{"type":"object","description":"Agent attribution state for this task, returned on completed responses that carry structured output.","properties":{"agent_id":{"type":"string","description":"Present only when you sent agent_id on this call. Your agent_id, echoed as received. Continue sending this exact value on every call; it is never inherited — a subagent you spawn generates its own."}}}}}}]
+---STRUCTURED---
+minted false {"session_id":"ses_A","status":"issued"} "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_A\nThis is the first-call issuance described in this tool's session_id parameter description."
+supplied false {"session_id":"ses_A","agent_id":"a|b|c","status":"active"} null
+invalid false {"agent_id":"a|b|c","status":"unrecognized"} "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+foreign false null null
+hook true {"agent_id":"a|b|c"} null

@@ -1,0 +1,527 @@
+[
+  {
+    "name": "v2: HTTP request context lands in published event parameters > captures headers, method, and url from the web Request",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/http-context-capture.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2: HTTP request context lands in published event parameters > leaves stdio-shaped extra (no http) unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/http-context-capture.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2: HTTP request context lands in published event parameters > does not throw on a malformed req and still publishes the event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/http-context-capture.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: redactSensitiveInformation on captured events > applies the string-redaction hook to a v2-captured event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: redactSensitiveInformation on captured events > sanitizes image content blocks in v2 tool responses",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > queues a custom event on a v2-tracked server with sessionId attribution",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > validates tags and normalizes empty properties on direct custom events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > publishes without a session when a tracked server gets no sessionId",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > uses a session ID string verbatim as the session, carrying full event data",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > lets eventData.sessionId take precedence over the session ID string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > throws for an untracked v2 server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 pipeline: publishCustomEvent > validates its required parameters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/pipeline.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > runs identify on the tool call and stamps the identity onto that event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > runs identify on every tool call and stamps every event, with no dedup",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > re-resolves identity per request so a changed identity lands on the next event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > publishes anonymously when identify returns null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > degrades to anonymous when identify throws; the tool call still succeeds",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > handles identify returning invalid data by leaving actor fields empty",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > returns the call while async identify is still in flight; identity lands in the background",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: identify > does not run identify or publish an event for tools/list",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventTags > attaches customer tags; SDK handle tags ride alongside",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventTags > SDK tag wins when a customer tag collides with an SDK tag name",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventTags > does not block tool calls when the callback throws; only SDK tags remain",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventTags > handles null return from the callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventTags > validates tags from the callback, dropping invalid keys",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventProperties > attaches properties to tool call events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventProperties > does not block tool calls when the callback throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventProperties > omits properties when the callback returns null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventProperties > attaches both tags and properties to the same event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: eventProperties > adds neither tags nor properties when no callbacks are configured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 hooks: (request, extra) arguments carry the v2 ServerContext > passes the raw request and the v2 ServerContext to every hook",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 real-wire client identity > stamps the connecting client's own identity onto captured events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/hooks.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 agent tracking: enableAgentTracking true > advertises both handles as required on every tool including get_more_tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/agent-tracking.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 agent tracking: enableAgentTracking true > tolerates omission: task-only mint-back, event without agent identity",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/agent-tracking.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 agent tracking: enableAgentTracking true > echoes a self-chosen agent_id verbatim with source tag supplied",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/agent-tracking.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 agent tracking: enableAgentTracking true > subagent flow: inherited task + own generated agent_id, no mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/agent-tracking.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 agent tracking: OFF by default > injects no agent_id param, tags nothing, and mints task-only",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/agent-tracking.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/concurrency.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > injects required handles into listed tool schemas in canonical order",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > publishes no tools/list or initialize events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > strips injected params before the customer handler; event keeps them",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > appends the mint-back on isError results; event.response and event.error stay clean",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > publishes the event and rethrows when the low-level handler throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > minting call: block on the wire, absent from event.response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > echoed handles: event.response is exactly the handler result",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > an invalid session_id publishes sessionless and tells the agent to re-send",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > stamps _meta clientInfo and protocol version when present",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 low-level server: explicit handles > prefers the v2 envelope for clientInfo and protocol version",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/lowlevel-handles.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: resolveSessionId hook > advertises no session_id param; agent_id stays available",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: resolveSessionId hook > derives a deterministic ses_ id: same hook value + project → same id across calls and instances",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: resolveSessionId hook > emits no mint-back in hook mode; a supplied agent_id is tagged as supplied",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: resolveSessionId hook > hook mode + tracking on + omitted agent_id: no mint-back at all, no agent tags",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: resolveSessionId hook > mints silently on hook null: fresh ses_ per call, minted source, no mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: supplied vs minted (no hook) > tags a supplied session_id as supplied and reuses it verbatim, no mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: supplied vs minted (no hook) > mints on omission, announces the id, and tags the source as minted",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 session modes: supplied vs minted (no hook) > start begins a new task exactly like omission, case-insensitively",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/session-modes.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "2026-07-28 era via createMcpHandler > tracks per-request instances and captures envelope identity",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/era-2026.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "2026-07-28 era via createMcpHandler > rebuild-on-demand serves calls on instances that never listed",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/era-2026.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 late registration: registerTool AFTER track() > advertises a tool registered after track() with injected params",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/late-registration.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 late registration: registerTool AFTER track() > strips injected args that a loose schema passes through (inner tap on the late executor)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/late-registration.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 late registration: registerTool AFTER track() > captures full error stacks from a late-registered tool via the executor tap",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/late-registration.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 late registration: registerTool AFTER track() > stamps resolved identity onto events from late-registered tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/late-registration.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 McpServer > injects params + get_more_tools into tools/list and mirrors outputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-highlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 McpServer > captures events, strips injected args (loose schema), prepends mint-back, mirrors structuredContent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-highlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 McpServer > echoes a supplied session_id and captures error stacks via the executor tap",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-highlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 McpServer > re-wraps the regenerated executor after update() on the next list",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-highlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 low-level Server > wraps handlers registered via method strings; preserves nextCursor",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-lowlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "track() on v2 low-level Server > rebuilds registries on demand when tools/call arrives before any tools/list",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/track-lowlevel.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 get_more_tools on a tracked high-level server > advertises the tool with required bespoke context, handles, and honest annotations",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/get-more-tools.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 get_more_tools on a tracked high-level server > answers with the canned text and publishes an event carrying userIntent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/get-more-tools.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 get_more_tools on a tracked high-level server > applies the mint-back to its result; the published event keeps only the answer",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/get-more-tools.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 get_more_tools on a tracked high-level server > keeps task continuity when a supplied session_id spans customer tools and get_more_tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/get-more-tools.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 get_more_tools on a tracked high-level server > stamps identity resolved for a get_more_tools call onto its event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/get-more-tools.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: enableTracing false > injects no handle params into the listing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: enableTracing false > passes tool calls through unwrapped-behavior: no event, no mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: enableTracing false > still answers get_more_tools directly, publishing nothing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: enableReportMissing false > omits get_more_tools; handle injection is unaffected",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: enableToolCallContext false > injects no context param; events carry no userIntent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: customContextDescription > lands the custom text in the advertised context param description",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: customContextDescription > captures userIntent from calls made with the custom description configured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: customContextDescription > uses the default description when customContextDescription is not provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: track() edge paths > second track() on the same server is a no-op: no double wrap, one event per call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 options: track() edge paths > returns an incompatible object untouched instead of throwing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/options.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: input injection > skips handle injection entirely on composed (oneOf) input schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: input injection > builds a default object schema for a tool listed without one",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: input injection > preserves a customer-declared session_id/agent_id instead of overwriting",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: input injection > drops additionalProperties:false so optional handles can ride along",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: outputSchema injection > declares mcp_session in a listed plain-object outputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: outputSchema injection > omits agent_id from mcp_session when agent tracking is off",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: outputSchema injection > leaves composed (anyOf) outputSchemas untouched",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 schema edges: outputSchema injection > never overwrites a customer-declared mcp_session output field",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/schema-edges.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "v2 harness smoke > round-trips a tool call through a real v2 server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/smoke.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > detects a v1 high-level McpServer",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > detects a v1 low-level Server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > detects a v2 high-level McpServer (no .tool method)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > detects a v2 low-level Server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > returns null for non-server shapes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "detectServer > describeSignals lists only true signals",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "fingerprintServerShape > reports the same signals detection computes for a v2 McpServer",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "fingerprintServerShape > returns the empty string for null and non-objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/detect.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "patchSetRequestHandler on v2 > fires the re-arm callback for string tools/call registrations",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/registration-patch.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "patchSetRequestHandler on v2 > forwards 3-arg custom registrations intact (regression: dropped handler)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/registration-patch.test.ts",
+    "projectName": "v2"
+  },
+  {
+    "name": "patchSetRequestHandler on v2 > does not fire for non-tool methods",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/v2/registration-patch.test.ts",
+    "projectName": "v2"
+  }
+]

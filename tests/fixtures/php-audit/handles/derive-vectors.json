@@ -1,0 +1,52 @@
+[
+  {
+    "id": "customer-abc",
+    "projectId": "proj_1",
+    "sessionId": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"
+  },
+  {
+    "id": "customer-abc",
+    "projectId": null,
+    "sessionId": "ses_2cZY3tvyI25O2AmL2CGVo2B1IIj"
+  },
+  {
+    "id": " x ",
+    "projectId": "p",
+    "sessionId": "ses_2c3yR5mYKQdLaXsJNgZH6erbfQK"
+  },
+  {
+    "id": "x",
+    "projectId": "p",
+    "sessionId": "ses_2bw285VY9apdgUgTPXKFnT6P4G0"
+  },
+  {
+    "id": "corr-1",
+    "projectId": "proj_1",
+    "sessionId": "ses_2afjLT0irA6g3tOA5CklOPgcSqQ"
+  },
+  {
+    "id": "customer-42",
+    "projectId": "proj_1",
+    "sessionId": "ses_2aTxnCSlMJJlr6zHNzWiKah0FLH"
+  },
+  {
+    "id": "héllo-ünïcode",
+    "projectId": "proj_abc123xyz",
+    "sessionId": "ses_2aaZsusQKGakcZjJVZ9ZZUG3Fqq"
+  },
+  {
+    "id": "",
+    "projectId": "",
+    "sessionId": "ses_2cLO5ynrWej2LbO4pGhuDkShNRM"
+  },
+  {
+    "id": "a:b",
+    "projectId": "c",
+    "sessionId": "ses_2btXwgICEW5eVF5eCBvN6V88rTt"
+  },
+  {
+    "id": "a",
+    "projectId": "b:c",
+    "sessionId": "ses_2btXwgICEW5eVF5eCBvN6V88rTt"
+  }
+]

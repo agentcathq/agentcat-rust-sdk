@@ -1,0 +1,4032 @@
+[
+  {
+    "name": "Error Capture Integration Tests > should capture stack traces when tool throws Error",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture Error.cause chains",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture TypeError with correct type",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture non-Error thrown values",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should still propagate errors to MCP client",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should NOT publish identify events when identify function throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should handle successful tool calls without errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture validation errors for invalid enum values",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture errors for unknown tool names",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should capture validation errors for missing required parameters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Capture Integration Tests > should publish exactly one event per tool call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/error-capture.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should publish event with server tracking data and session info",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should not publish event when server tracking data is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should not publish event when enableTracing is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should calculate duration when not provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should preserve existing duration",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > publishEvent > should leave the token fields undefined when the event has none",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > keeps the registered task pending until AgentCat ingestion completes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > settles fail-open when AgentCat ingestion exhausts retries",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > does not register telemetry-only events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > does not hold AgentCat delivery open for custom exporters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > settles an event when queue overflow drops it",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > background delivery lifecycle > continues delivery when runtime task registration throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > EventQueue singleton > should be accessible and have required methods",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > EventQueue singleton > should track queue stats correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > EventQueue singleton > should be able to add events directly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > EventQueue singleton > should handle destroy method without errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > EventQueue singleton > should prevent adding events after destroy",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > Integration tests > should process events end-to-end through publishEvent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > Integration tests > logs only event metadata on successful send, never the payload",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > Integration tests > should handle multiple events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook returns null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > event-level redaction hook (redactEvent) > should run the event hook before string redaction and compose both",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue > Process lifecycle handling > should handle SIGINT signal",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/eventQueue.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "ESM consumer smoke test > can import the SDK package from a real Node ESM process",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/esm-consumer.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventTags callback > should attach tags to tool call events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventTags callback > should not block tool calls when callback throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventTags callback > should handle null return from callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventTags callback > should validate tags from callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventProperties callback > should attach properties to tool call events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventProperties callback > should not block tool calls when callback throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > eventProperties callback > should handle null return from callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > both callbacks configured > should attach both tags and properties to the same event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > publishCustomEvent > should validate tags passed directly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > publishCustomEvent > should normalize empty properties to omission",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > no callbacks configured > should not add tags or properties when not configured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > initialize is no longer an event > publishes no initialize event even when tag/property callbacks are set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > tools/list is no longer an event > publishes no tools/list event even when tag/property callbacks are set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > redaction bypass > should not redact tags or properties when redactSensitiveInformation is configured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventTags callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventProperties callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/event-tags-properties.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should redact basic string fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > terminates on circular structures, preserving the cycle in the clone",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > redacts a shared (non-circular) reference once and reuses the clone",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should not redact protected fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should redact nested string fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle arrays of strings",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle mixed nested structures",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should preserve null and undefined values",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should preserve Date objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should skip functions in objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle complex identifyData object without redacting it",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle error objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle deeply nested protected fields correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle custom redaction function errors gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should not redact nested fields within any protected field",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should create a new object without modifying the original",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent > should handle events with all possible fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should apply a synchronous hook in place",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should apply an asynchronous hook in place",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should report a drop and leave the event untouched when the hook returns null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should report a drop when the hook returns undefined",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should honor field deletions instead of resurrecting them",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should restore system-managed fields if the hook changes or removes them",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should hide internal function fields from the hook but preserve the string-redaction fn",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should keep the same object identity so pipeline observers see the changes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "applyEventRedaction > should propagate hook errors to the caller",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent integration tests > should properly redact sensitive data in published events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent integration tests > should handle complex nested structures with redaction",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent integration tests > should not redact protected fields even if they contain sensitive patterns",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent hook integration tests > should let the hook inspect event metadata and replace event fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent hook integration tests > should drop only the events the hook rejects, while the others still publish",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent hook integration tests > should run the event hook on raw values before string redaction",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "redactEvent hook integration tests > should apply the hook to custom events published on a tracked server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/redaction.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Truncation - real MCP tool calls > should truncate tool responses with text exceeding 32KB",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Truncation - real MCP tool calls > should keep total event size under 100KB for oversized parameters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Truncation - real MCP tool calls > should preserve normal todo responses while truncating large ones",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Truncation - real MCP tool calls > should handle both sanitization and truncation in the same tool call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Sanitization - real MCP tool calls > should sanitize image content blocks in tool responses",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Sanitization - real MCP tool calls > should sanitize audio content blocks in tool responses",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Sanitization - real MCP tool calls > should sanitize large base64 strings in tool call parameters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "E2E Sanitization - real MCP tool calls > should preserve normal todo tool calls while sanitizing problematic ones",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/e2e-sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Basic Identification Test > should call identify on the tool call and stamp the identity onto that event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Basic Identification Test > should call identify on every tool call and stamp every event, with no dedup",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Basic Identification Test > should properly identify when calling tools added after track()",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > User Data Persistence Across Tool Calls > should maintain user identification across multiple tool calls",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Null/Undefined Identity Handling > should handle when identify function returns null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Null/Undefined Identity Handling > should work without identify function (anonymous sessions)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Identity Data on Published Events > should populate actorGivenId, actorName, and actorData on the event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Identity Data on Published Events > should re-resolve identity per request so a changed identity lands on the next event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Async Identity Resolution > should handle async operations in identify function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Async Identity Resolution > should handle errors in identify function gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > Async Identity Resolution > should handle identify function that returns invalid data",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Identify Feature > tools/list no longer identifies or publishes > should not run identify or publish an event for a tools/list request",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/identify.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 1. Tool Injection Tests > should add report_missing to tools list when enableReportMissing is true",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 1. Tool Injection Tests > should NOT add get_more_tools when enableReportMissing is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 1. Tool Injection Tests > should add report_missing WITHOUT context injection even when enableToolCallContext is true",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with only context",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with description and optional context",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 3. Event Tracking Tests > should track report_missing events with proper structure",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 4. Integration Tests > should maintain task continuity when calling report_missing between other tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 4. Integration Tests > should work correctly with user identification",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 6. Analytics Value Tests > should provide actionable insights for missing tool reports",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 6. Analytics Value Tests > should track get_more_tools across different sessions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Report Missing Tool > 6. Analytics Value Tests > should handle multiple missing tool reports in the same task",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/report-missing.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Tracing Initialization Tests > should not create duplicate events when track() is called multiple times",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tracing-initialization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Tracing Initialization Tests > should publish events for successful tool calls with handler-level architecture",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tracing-initialization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > addContextParameterToTools > should add context parameter to tools without inputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > addContextParameterToTools > should add context parameter to tools with existing inputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > addContextParameterToTools > should not duplicate context parameter if already exists",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > addContextParameterToTools > should handle tools with empty required array",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should capture context parameter when tools are called after tracking",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should work with tools that have context parameter",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should capture userIntent only when context is provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should inject context into tool schemas when listing tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should use default context description when no custom description is provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters > Integration with MCP server tracking > should remove context parameter before calling tool callback",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MRTR helpers > isInputRequiredShape matches only resultType === 'input_required'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MRTR helpers > mrtrContinuationTags fires only when inputResponses ride the request",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > strips registry-scoped args before the original handler, keeps raw on the event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > tags intermediate input_required rounds and skips mint-back on them",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > tags continuation rounds from mcpReq.inputResponses",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > answers get_more_tools directly and publishes its event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > publishes an error event with __agentcat_error stack when present",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > degrades to the original handler with the UNSTRIPPED request when tracing setup fails",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > answers get_more_tools directly on the degraded path, without publishing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installCallWrap (synthetic seam) > publishes an error event and rethrows when the original handler throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "extra projection on captured events > publishes v1-shaped extra with headers verbatim and url as a string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "extra projection on captured events > publishes v2-shaped extra with the web Request as plain { method, url, headers }",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "get_more_tools gating > does not intercept when enableReportMissing is false — the customer's own tool runs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "get_more_tools gating > does not intercept on the tracing-off path when enableReportMissing is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "get_more_tools gating > does not intercept on the degraded path when enableReportMissing is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > a hanging identify hook does not delay the tool call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > hanging resolveSessionId/eventTags/eventProperties do not delay the tool call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > the handler starts before a slow hook settles",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > a synchronously-throwing hook is contained and the event still publishes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > redactEvent sees resolved hook state, and pending never reaches it or the processed event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "deferred customer hooks > error-path events carry hook results resolved after the throw",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "registry rebuild bounding > bounds the rebuild: a hanging tools/list handler cannot hang tools/call",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "registry rebuild bounding > keeps serving calls when the list handler fails every time",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "finish() fault containment > returns the customer's isError result when a content entry is null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "finish() fault containment > returns the raw customer result when post-handler decoration throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-callwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should be able to call tools without tracking",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should be able to access server info from regular Server instance",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should be able to access server info with McpServer if available",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should verify that server info is used by isCompatibleServerType",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should properly trace tools added after track() is called",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should handle tools with shorthand Zod schema syntax (reproduces context injection issue)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should publish events only once (no duplicates)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Basic Server Test > should handle tools defined BEFORE track() with shorthand Zod schema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/basic-server.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should use custom description instead of default for JSON Schema tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should use custom description for Zod object schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should apply custom description to all tools when listing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should capture tool calls with custom description configured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should use default description when customContextDescription is not provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should work end-to-end with custom description and multiple tool calls",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should use custom description even with long descriptions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Custom Context Description > should use custom description with special characters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/custom-context-description.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/concurrency.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > injects required handles into listed tool schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > publishes no tools/list or initialize events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > echoed handles are reused verbatim with no mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > subagent flow: inherited task + omitted agent yields no mint-back, task tagged supplied",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > prepends the mint-back on isError results too",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > strips injected params before the customer handler; event keeps them",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > a customer's own session_id is never adopted and still reaches the handler",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > a customer's own session_id param: start is their value too, never a sentinel",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > composed-schema tool: injection is skipped, yet the call still mints a session and announces it",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > composed-schema tool: an echoed session_id AgentCat issued is honored, not called foreign",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > hook mode: no session_id param, hook-derived session id, no task mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > enableTracing:false — no handle params injected, no mint-back, no events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > enableAgentTracking:false — no agent param, tag, or mint-back line",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > enableReportMissing:false — handles still inject, no get_more_tools",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > stamps _meta clientInfo and protocol version when present",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "low-level server: explicit handles > declares mcp_session in a listed plain-object outputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > mints on first call, prepends exactly one mint-back block",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > callback receives stripped args; supplied handles reused silently",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > agent tracking is OFF by default: no param, no tag, task-only mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > get_more_tools carries handles and the mint-back",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > enableTracing:false — get_more_tools still answers, no mint-back, no event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "high-level server: explicit handles > identify runs per call and stamps the event; no identify event published",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "published events exclude SDK-authored mint-back text > low-level: minting call — block on the wire, absent from event.response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "published events exclude SDK-authored mint-back text > low-level: minting error call — event.response and event.error stay clean",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "published events exclude SDK-authored mint-back text > low-level: echoed handles — event.response is exactly the handler result",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "published events exclude SDK-authored mint-back text > high-level: minting call — block on the wire, absent from event.response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "published events exclude SDK-authored mint-back text > high-level: get_more_tools minting call — event.response keeps only the answer",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should validate a fully compatible server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning for null server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning for undefined server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning for non-object server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > unknown-shape error names the full support matrix, never 'upgrade to v1.11'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > logs a shape-fingerprint beacon when rejecting an unrecognized server shape",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > logs '(none)' as the fingerprint for signal-free non-object rejects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is not a function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is not a Map",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is a non-Map with a get method",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is not a function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is not an object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo.name is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with standard properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with custom properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle string errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle plain objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle undefined",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle numbers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle booleans",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle circular reference errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > getMCPCompatibleErrorMessage > should handle arrays",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer compatibility > should handle McpServer instances with server property",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer compatibility > should validate the underlying server when McpServer wrapper is provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer compatibility > should handle objects with server property that is not an object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer compatibility > should handle objects with null server property",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer compatibility > should validate all required properties on the underlying server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > logCompatibilityWarning > should log the correct compatibility message to the log file",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer integration tests > should work with real McpServer instances if available",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer integration tests > should validate real McpServer underlying server properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Compatibility Module > McpServer integration tests > should show compatibility message when McpServer is not available",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics sink never receives event payloads > resolved identity is stamped on the event but never reaches the sink",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-no-payload.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics sink never receives event payloads > emits start + complete setup beacons (metadata only) on track()",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-no-payload.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics sink never receives event payloads > report-missing log carries only the context length, not the text",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-no-payload.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > counts the raw arguments and the content text",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > counts the structured content when the content list is empty",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > counts an error result's content, including a throw the SDK turns into one",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > keeps the raw counts when redaction rewrites the payloads",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > keeps the raw counts when truncation shortens the response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "token estimates on tool-call events > never breaks the tool call when the estimator itself throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/token-estimates.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should capture basic exception info without filesystem access",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should parse stack traces without requiring fs module",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle chained errors (Error.cause)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle non-Error objects being thrown",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Process Object Availability > should handle missing process.cwd gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Process Object Availability > should handle process.cwd throwing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Event Queue Signal Handlers > should not throw when process.once is unavailable",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Event Queue Signal Handlers > should handle process being undefined",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Logging Module Behavior > should export writeToLog function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Logging Module Behavior > should not throw when called",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Logging Module Behavior > should handle rapid successive calls",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Full SDK API Availability > should export track function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Full SDK API Availability > should export publishCustomEvent function",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Full SDK API Availability > should export type definitions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Node.js environment correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Cloudflare Workers pattern",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect generic edge runtime pattern",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Edge Runtime Compatibility > Path Normalization Without cwd > should handle various path formats",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Integration: SDK in Limited Environment > should work when process has limited functionality",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Integration: SDK in Limited Environment > should handle environment transitions gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Handling Robustness > should not crash on malformed stack traces",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Handling Robustness > should handle circular reference in error.cause",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Error Handling Robustness > should handle deeply nested error chains",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/edge-runtime-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: high-level (V2) path > structuredContent-only consumer discovers minted handles",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: high-level (V2) path > tools/list declares mcp_session on get_stats; schema-less tools untouched",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: high-level (V2) path > steady state: supplied handles are re-echoed on every response; text block stays mint-only",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: high-level (V2) path > wire-only: published event.response never contains mcp_session",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: high-level (V2) path > content-only tools are unaffected: block leads content, no structuredContent conjured",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: low-level (V1) path > mints into structuredContent on the V1 path too",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: low-level (V1) path > composed outputSchema: schema untouched, no mirror, text block still delivers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: low-level (V1) path > hook mode: mirrored payload carries agent_id but never session_id or status",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "structured mint-back: low-level (V1) path > no tools/list ever (no registry): mirror applies — a list-less client cannot be validating",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/structured-mintback.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should send correct payload structure for regular events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should use custom host when provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should strip trailing slash from host",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should use identifyActorGivenId as distinct_id when available",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should fall back to sessionId when identifyActorGivenId is not set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should omit $session_id entirely for sessionless events (empty sessionId)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should send $exception event alongside regular event when isError is true",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should not send $exception event when isError is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should not throw when fetch fails",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should not throw when fetch returns non-ok response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should include $set person properties from identity data",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should not include $set when no identity data is present",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should pass through parameters and response as-is (objects stay objects)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should pass through string parameters and response as-is",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should only set tool_name for tools/call events",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should map event types to PostHog event names",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should spread customer-defined tags directly into properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should spread customer-defined properties directly into properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should not include customer tag or property keys when not set on event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should include userIntent in properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should emit $ai_span alongside regular event for tool calls when enableAITracing is true",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should generate deterministic UUIDs for $ai_span trace and span IDs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should NOT emit $ai_span when enableAITracing is false or unset",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should NOT emit $ai_span for non-tool-call events even with enableAITracing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should spread customer tags and properties directly on $ai_span (not namespaced)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should allow customer tags to override $ai_* defaults on $ai_span",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "PostHogExporter > should emit regular + $exception + $ai_span for error tool calls with enableAITracing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-exporter.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - string truncation > should leave short strings unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - string truncation > should truncate strings exceeding maxStringLength with '...'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - string truncation > should leave strings at exactly maxStringLength unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert functions to descriptive string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert anonymous functions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert symbols",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert undefined to string marker",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert BigInt to string marker",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert NaN to string marker",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert Infinity to string marker",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should convert Date to ISO string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should handle Invalid Date gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should pass through numbers unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should pass through booleans unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - non-serializable values > should pass through null as null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - depth limiting > should collapse objects beyond max depth to '[Object]'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - depth limiting > should collapse arrays beyond max depth to '[Array]'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - depth limiting > should handle depth=0 by collapsing top-level objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - depth limiting > should not collapse primitives regardless of depth",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - breadth limiting > should limit object properties to maxBreadth",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - breadth limiting > should limit array elements to maxBreadth",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - breadth limiting > should leave objects within breadth limit unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - circular reference detection > should detect circular object references",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - circular reference detection > should detect circular array references",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - circular reference detection > should allow same object in different branches (not a cycle)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - circular reference detection > should detect deeply nested circular references",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - undefined property handling > should omit undefined object properties (matching JSON.stringify behavior)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "normalize - undefined property handling > should still convert top-level undefined to marker",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - field-level string limits > should truncate userIntent exceeding 2048 chars",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - field-level string limits > should truncate resourceName exceeding 256 chars",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - field-level string limits > should truncate serverName, serverVersion, clientName, clientVersion exceeding 256 chars",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - field-level string limits > should leave short field values unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - field-level string limits > should handle undefined/null fields gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - error field limits > should truncate error.message exceeding 2048 chars",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - error field limits > should limit error.frames to 50 (first 25 + last 25)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - error field limits > should leave frames at exactly 50 unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - error field limits > should handle error without frames",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - response content text truncation > should truncate text content blocks exceeding 32KB",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - size targeting > should leave small events unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - size targeting > should reduce depth progressively for events exceeding 100KB",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - size targeting > should truncate largest string fields as last resort",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - size targeting > should guarantee 100KB max for pathological payloads",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - size targeting > should preserve timestamp as Date when last-resort truncation runs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - non-mutation > should not mutate the original event object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - edge cases > should handle empty event with minimal fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - edge cases > should pass through already-small events unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - edge cases > should handle event with null parameters and response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - edge cases > should preserve SDK-controlled fields exactly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "truncateEvent - integration with sanitization pipeline > should work correctly after sanitizeEvent in the pipeline",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/truncation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should capture Error with message and type",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should capture TypeError with correct type",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should capture ReferenceError with correct type",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should capture custom error class",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should always set platform to 'javascript'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > basic error capture > should set platform to 'javascript' for non-Error objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should parse stack frames with function names",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should detect in_app correctly for user code",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should detect library code in node_modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should parse line and column numbers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should handle anonymous functions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should handle async functions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should handle native code frames",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should limit stack frames to 50",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should capture context_line for in_app frames",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should NOT capture context_line for library code (in_app: false)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > stack trace parsing > should handle missing files gracefully when extracting context_line",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should unwrap single cause",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should unwrap multiple causes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should limit cause chain to 10",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should handle non-Error causes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should detect circular cause references",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > Error.cause chain > should capture stack traces for each cause",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle string errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle number errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle boolean errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle undefined",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle object errors",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > non-Error objects > should handle objects with circular references",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > edge cases > should handle errors without stack traces",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > edge cases > should handle errors with empty messages",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > edge cases > should handle errors with only whitespace in stack",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > edge cases > should handle malformed stack traces gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > user home directory stripping > should strip macOS user home directories",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > user home directory stripping > should strip Linux user home directories",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > user home directory stripping > should strip Windows user home directories",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > node_modules normalization > should normalize node_modules paths consistently",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > node_modules normalization > should handle scoped packages in node_modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > node_modules normalization > should handle nested node_modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > node_modules normalization > should handle Windows-style node_modules paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip /var/www/ paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip /app/ paths (Docker, Heroku)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip AWS Lambda paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip Docker container paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip /opt/ paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > deployment path stripping > should strip /srv/ paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > project boundary detection > should find /src/ boundary",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > project boundary detection > should find /lib/ boundary",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > project boundary detection > should find /dist/ boundary",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > project boundary detection > should use the last occurrence of project markers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > Node.js internal module normalization > should normalize node:internal/* to node:internal",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > Node.js internal module normalization > should normalize node:fs/promises to node:fs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > Node.js internal module normalization > should preserve simple node: modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > Windows path handling > should normalize Windows backslashes to forward slashes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > Windows path handling > should handle Windows paths with mixed separators",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > complex real-world scenarios > should handle mix of user code and library code",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > complex real-world scenarios > should handle Docker deployment with node_modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > complex real-world scenarios > should handle AWS Lambda with layers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > URL scheme normalization > should handle file:// URLs from ESM modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > URL scheme normalization > should handle file:// URLs with Windows paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > URL scheme normalization > should handle file:// URLs in node_modules",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > special cases and edge cases > should preserve already-relative paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > special cases and edge cases > should preserve special paths like native",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > special cases and edge cases > should handle paths without common markers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > special cases and edge cases > should handle very short paths",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > backwards compatibility > should maintain abs_path field with original path",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "captureException > path normalization > backwards compatibility > should maintain all other frame properties",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/exceptions.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > mints session ids with the ses_ prefix",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > derives deterministic session ids from id+project",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > different project yields a different derived id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > derives without a project id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > pins derived session ids to their golden values",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > does not trim its input",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > extractHandle returns trimmed non-empty strings only",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle primitives > extractHandle returns any non-empty string; validation happens in resolveHandles",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildMintBackText > task minted: task-only block, no agent mention even when agent supplied",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildMintBackText > task minted without agent tracking: same task-only block",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildMintBackText > task supplied -> null (nothing to announce, agent never mints)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildMintBackText > hook mode never emits task instructions, even when hook-null minted",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "appendMintBack > prepends a text block as the first content element",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "appendMintBack > prepends on isError results too",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "appendMintBack > leaves non-array content untouched",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "appendMintBack > does not mutate the original result",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildHandleTags > stamps sources, agent id, and protocol version",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildHandleTags > omits agent and protocol keys when absent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildHandleTags > clamps a >200-char agent_id to exactly 200 chars in the tag only",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildHandleTags > strips newlines from the agent_id tag",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildHandleTags > passes a normal agent_id through unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > mints the task but never the agent when nothing supplied (agent tracking on)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > subagent flow: supplied task + omitted agent leaves the agent unresolved",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > uses supplied handles verbatim",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > enableAgentTracking:false resolves no agent id at all",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > agent tracking is OFF by default — omitted option resolves no agent id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > rejects a malformed supplied session_id: sessionless, source invalid",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > never stores the raw rejected value",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > accepts a well-formed supplied session_id verbatim",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > foreign param: sessionless regardless of what the agent sent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > hook mode wins over foreign: arguments are never read",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > still mints when nothing is supplied on our own param",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel resolves exactly like omission: fresh mint, source minted",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"START\" mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"Start\" mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"sTaRt\" mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"  start  \" mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \" START\\t\" mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > near-sentinel values stay on the invalid path",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — prompted mode > foreign param: start is the customer's value, never a sentinel",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — hook mode > returns a provisional resolution: empty id, source 'hook', hookMode on",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — hook mode > ignores agent-supplied session_id — the hook wins",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invokeSessionHook > resolves the hook value and forwards request/extra verbatim",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invokeSessionHook > resolves null when the hook returns nullish",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invokeSessionHook > contains a synchronous throw",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invokeSessionHook > contains a rejection",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sessionFromHookValue > derives deterministically from the hook value + project",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sessionFromHookValue > trims the value before deriving",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sessionFromHookValue > mints a fresh id per null — silent mint, never 'supplied'",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sessionFromHookValue > treats a whitespace-only value as null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildStructuredMintBack > task minted + agent supplied: both ids, status issued",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildStructuredMintBack > steady state (both supplied): ids plus status active",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildStructuredMintBack > agent tracking off: task only, status active",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildStructuredMintBack > hook mode never exposes session_id or status; supplied agent is echoed",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildStructuredMintBack > hook mode with agent tracking off: nothing echoable -> null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "mirrorStructuredMintBack > never clobbers an existing key (customer data wins)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "mirrorStructuredMintBack > applies to isError results that carry structuredContent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > accepts an ID this SDK actually mints",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > accepts the test helper's IDs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects wrong prefix",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects no prefix",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects too short",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects too long",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects empty",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects prefix only",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects customer value",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects non-base62 body",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "isValidSessionId > rejects inner whitespace",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > invalid: corrects the agent without issuing a replacement",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > invalid: offers an escape to an agent that was never issued one",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > invalid: structured mirror carries status unrecognized but no session_id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > invalid + agent supplied: agent_id rides along with the unrecognized status",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > foreign: says nothing when agent_id is not in play either",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > foreign: never echoes session state, which is the customer's",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "invalid and foreign mint-back > foreign: still echoes agent_id, which AgentCat did inject",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handles.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Basic functionality > should create a KSUID from randomSync",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Basic functionality > should create a KSUID from random async",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Basic functionality > should create KSUIDs with different timestamps",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > fromParts > should create KSUID from timestamp and payload",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > fromParts > should throw error for invalid timestamp",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > fromParts > should throw error for invalid payload",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > String encoding/parsing > should encode and parse KSUID strings correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > String encoding/parsing > should handle MIN and MAX string values",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > String encoding/parsing > should throw error for invalid string length",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Comparison and equality > should compare KSUIDs correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Comparison and equality > should check equality correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Buffer validation > should validate buffers correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Buffer validation > should throw error for invalid buffer in constructor",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Serialization > should serialize to JSON correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Serialization > should have proper toString representation",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Properties > should have correct timestamp property",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Properties > should have correct date property",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Properties > should have 16-byte payload",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Edge cases > should handle KSUID epoch boundary",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Edge cases > should create unique KSUIDs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Prefix functionality > should create prefixed KSUIDs with randomSync",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Prefix functionality > should create prefixed KSUIDs with random async",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Prefix functionality > should create prefixed KSUIDs with fromParts",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Prefix functionality > should handle different prefixes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "KSUID > Prefix functionality > should create unique prefixed KSUIDs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/ksuid.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v2: web Request under http.req > projects a real Request into plain { method, url, headers }",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v2: web Request under http.req > lowercases header names (Headers semantics)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v2: web Request under http.req > is idempotent: a projected req has no headers.entries and passes through",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v2: web Request under http.req > returns the original extra when headers.entries throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v1: URL instance under requestInfo.url > replaces the URL instance with its href, headers untouched by reference",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > v1: URL instance under requestInfo.url > passes an already-string url through unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > pass-through > returns non-rewritable values by identity",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "projectExtraForEvent > snapshot semantics > later top-level mutations of the original do not appear in the projection",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/extra-projection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildInjectedList > appends get_more_tools and injects session_id + context",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildInjectedList > skips get_more_tools when enableReportMissing is false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildInjectedList > skips handle injection entirely when tracing is off, but still registers empty entries",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildInjectedList > does not mutate the input tool objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installListWrap (synthetic seam) > passes the original response through verbatim and warns when tracking data is missing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "installListWrap (synthetic seam) > passes through and warns on empty or missing tools; registries stay unset",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > lists a boolean-schema tool uninjected while the healthy tool keeps its handles",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > passes a null tools-array entry through and injects the rest",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > lists a circular-schema tool uninjected without failing the listing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > lists a BigInt-carrying schema uninjected without failing the listing",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "tools/list fault containment > returns the customer's original listing when the whole pipeline fails",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-listwrap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should produce a valid UUIDv7",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should be deterministic — same input always produces same output",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should produce different UUIDs for different session IDs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should embed the KSUID timestamp in the UUIDv7",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should set version bits to 7 (0111)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should set variant bits to 10xx",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should handle evt_ prefix",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should handle invalid KSUID gracefully with fallback timestamp",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should be deterministic for non-KSUID input (fallback path)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should produce different UUIDs for different non-KSUID inputs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should be deterministic for empty-string input",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "toUUIDv7 > should produce timestamps that are before or equal to current time",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/posthog-uuidv7.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should publish custom event with tracked server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should use eventData.sessionId as the session id, not any ambient server session",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should publish with an empty session id and warn when no sessionId is provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should handle error data correctly",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should throw error if server is not tracked",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with tracked server > should handle high-level server objects",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with session ID string > should use the session ID string verbatim as the session ID",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with session ID string > should let eventData.sessionId take precedence over the string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > with session ID string > should handle all event data fields",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > parameter validation > should throw error if projectId is not provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > parameter validation > should throw error if first parameter is invalid",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > event structure > should always use 'agentcat:custom' as event type",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > event structure > should include timestamp",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > event structure > should handle undefined event data gracefully",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "publishCustomEvent > event structure > should handle empty event data object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/publishCustomEvent.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > injects session_id and agent_id after customer params, both required",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > creates the required array when the schema has none",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > does not duplicate session_id in an existing required array",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > does not duplicate agent_id in an existing required array",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > leaves required untouched when the customer declares agent_id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > full order with context injector: customer, session_id, agent_id, context",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > hook mode: no session_id, agent_id uses the same single description",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > skips a param the tool already defines, and does not record it",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > skips complex schemas entirely",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > removes additionalProperties:false and handles missing schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > does NOT skip get_more_tools (handles are injected; context stays bespoke)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "addHandleParametersToTools > agent_id copy prescribes the self-chosen model|harness|nonce format",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "stripInjectedArguments > strips exactly what was injected",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "stripInjectedArguments > preserves the customer's own session_id param",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "stripInjectedArguments > falls back to stripping all three when no registry entry exists",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "stripInjectedArguments > fallback never strips get_more_tools' own context",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "stripInjectedArguments > handles non-object args",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "registry storage + request cloning > stores per server object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "registry storage + request cloning > clones the request with stripped arguments, leaving the original intact",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > injects mcp_session into a plain object outputSchema and registers the tool",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > sub-properties track modes: hook mode drops session_id and status, tracking off drops agent_id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > does not mutate the customer's outputSchema object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > skips complex outputSchema (oneOf/allOf/anyOf) and does not register",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > composed inputSchema: early-return skips output injection too, nothing registered",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > collision: a customer-declared mcp_session is never clobbered",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > no outputSchema: untouched, nothing registered",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > no injection at all (neither handle) leaves outputSchema alone",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "outputSchema injection > output registry accessors are keyed per server object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-injection.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > wraps v2 executor in place: strips injected args, preserves customer args",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > captures thrown errors onto extra.__agentcat_error and rethrows",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > supports the v1 no-args callback arity (extra only)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > preserves ctx position for v2 schema-less executors (args undefined)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > is idempotent — wrapping twice does not double-wrap",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "wrapToolEntry > rewrapAllTools sweeps every registry entry",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "inner-tap fault containment > rewrapAllTools swallows a _registeredTools whose enumeration throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "inner-tap fault containment > registry proxy set-trap: a tool whose executor getter throws still lands in the registry",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "inner-tap fault containment > installRegistryProxy swallows a highLevel whose _registeredTools assignment throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "patchSetRequestHandler on v1 > introspects Zod schema registrations for the method literal",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "patchSetRequestHandler on v1 > registration still succeeds when the re-arm callback throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/engine-innertap.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MCP SDK callback/handler compatibility > should have either callback or handler property (SDK version dependent)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handler-property.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MCP SDK callback/handler compatibility > should preserve the original property name after track() is called",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handler-property.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MCP SDK callback/handler compatibility > should preserve property name for tools registered after track()",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handler-property.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "detectServer (fake shapes) > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/detect-shapes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "detectServer (fake shapes) > detects fake high-level shells with .tool (v1) and registerTool (v2)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/detect-shapes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Debug Tool Schema Structure > should show the structure of tools registered with shorthand Zod syntax",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/debug-tool-schema.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Debug Tool Schema Structure > should show the structure of tools registered with description and schema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/debug-tool-schema.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "version-info prefix on every log line > prefixes sink entries with sdk, node, and mcp versions",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-version-prefix.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "version-info prefix on every log line > writes the prefixed entry to the log file",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-version-prefix.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "version-info prefix on every log line > caches the prefix so repeated logging stays consistent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-version-prefix.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "version-info prefix on every log line > skips MCP package resolution on Cloudflare Workers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-version-prefix.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > pins the divisor",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 0 -> 0 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 1 -> 1 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 7 -> 2 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 13 -> 4 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 4096 -> 1171 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateTokens > bytes 7516192765 -> 2147483647 tokens",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"\" -> 0 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"hello\" -> 5 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"café\" -> 5 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"你好\" -> 6 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"😀\" -> 4 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "utf8ByteLength > \"\\ud83d\" -> 3 bytes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {\"q\":\"hello\"} -> 4",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {} -> 1",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {\"name\":\"café\"} -> 5",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {\"html\":\"<a>&</a>\"} -> 6",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {\"t\":\"你好\"} -> 4",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > {\"ids\":[1,2,3],\"opts\":{\"deep\":true,\"n\":null}} -> 13",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > omits the field for absent arguments",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > omits the field when the arguments cannot be serialized",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateInputTokens (raw arguments) > never throws: a toJSON that throws yields an omitted field",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hello world\"}]} -> 4",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"abcd\"},{\"type\":\"text\",\"text\":\"e\"}]} -> 2",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"\"}]} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}]} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"text\":\"resource body\"}}]} -> 4",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"blob\":\"QUJD\"}}]} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"structuredContent\":{\"big\":\"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\"}} -> 1",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]} -> 1171",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"isError\":true} -> 1",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":{\"result\":\"ok\"}} -> 5",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[]} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":null} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}],\"structuredContent\":{\"result\":\"ok\"}} -> 0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > falls back to the whole response when there is no content list",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > omits the field for an absent response",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > ignores blocks whose text is not a string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "estimateOutputTokens (content blocks) > never throws: a content getter that throws yields an omitted field",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/tokenEstimate.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > existing context parameter collision > should skip injection for tools with existing context parameter",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > existing context parameter collision > should warn with tool name when context exists",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > complex schema handling > should skip injection for oneOf schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > complex schema handling > should skip injection for allOf schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > complex schema handling > should skip injection for anyOf schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > additionalProperties constraint > should inject context and remove additionalProperties:false constraint",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > additionalProperties constraint > should preserve additionalProperties:true when injecting",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > edge case schemas > should handle empty object schema {}",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > edge case schemas > should handle schema with no inputSchema",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > edge case schemas > should handle schema with only type specified",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > addContextParameterToTools batch handling > should skip get_more_tools entirely",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-parameters-edge-cases.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is enabled by default outside test environments",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled via the option",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled via the env var",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=true",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=TRUE",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=1",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=yes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=on",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=false",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=FALSE",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=0",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=no",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=off",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > treats a whitespace-only value as unset (default behavior applies)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled by default when VITEST=true (test environment)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled by default when JEST_WORKER_ID=1 (test environment)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics opt-out > is disabled by default when NODE_ENV=test (test environment)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-optout.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics static attributes > uses projectId verbatim when present",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-attributes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics static attributes > falls back to a stable install_id when projectId is absent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-attributes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics static attributes > includes sdk language, sdk version, and os/runtime metadata",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-attributes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics static attributes > reports the installed v1 SDK version despite the exports stub",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-attributes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics static attributes > reports the installed v2 SDK version despite sealed exports",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-attributes.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "session_id collision report > reports a session_id collision once per tool, as an error with remediation",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "session_id collision report > reports two different colliding tools each once",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "session_id collision report > logs the error even without a dedupe set — once per pass, no dedupe",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "session_id collision report > getReportedConflicts returns a stable set per key, and independent sets for different keys",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "session_id collision report > buildInjectedList dedupes per AgentCatData object: repeat tools/list on the same server logs once, a second server logs its own once",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "customer-declared session_id tracking > records only the tools whose own schema declares session_id",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "customer-declared session_id tracking > records a composed schema that also declares session_id at its root",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "customer-declared session_id tracking > keys per AgentCatData object, like reportedConflicts",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "customer-declared session_id tracking > records nothing in hook mode, where session_id is never injected",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/handle-conflict-report.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "AgentCatOptions apiBaseUrl > should accept apiBaseUrl as an optional string property",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "AgentCatOptions apiBaseUrl > should be undefined when not set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "EventQueue.configure() > should reconfigure the apiClient with the given base URL",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should call configure() when apiBaseUrl option is provided",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should call configure() with MCPCAT_API_URL env var when no option is set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should call configure() with AGENTCAT_API_URL env var when no option is set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should prioritize AGENTCAT_API_URL over legacy MCPCAT_API_URL",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should fall back to legacy MCPCAT_API_URL when AGENTCAT_API_URL is unset",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should prioritize apiBaseUrl option over MCPCAT_API_URL env var",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should prioritize apiBaseUrl option over AGENTCAT_API_URL env var",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "track() URL resolution > should not call configure() when neither option nor env var is set",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/api-base-url.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getClientInfoForRequest > prefers per-request _meta clientInfo (modern client)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getClientInfoForRequest > falls back to getClientVersion (legacy initialize capture)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getClientInfoForRequest > both missing -> undefined (client declined to identify)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getClientInfoForRequest > ignores malformed _meta clientInfo",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getClientInfoForRequest > drops non-string fields from partially malformed _meta clientInfo",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getProtocolVersion > reads _meta protocolVersion",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "getProtocolVersion > absent -> undefined",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildSessionInfo > stamps server, client, and identity without touching tracking data",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "buildSessionInfo > null identity yields anonymous info",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "envelope-first identity ladder (v2 ctx.mcpReq.envelope) > prefers ctx.mcpReq.envelope.clientInfo over _meta and handshake",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "envelope-first identity ladder (v2 ctx.mcpReq.envelope) > rejects non-string envelope fields (field-level narrowing)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "envelope-first identity ladder (v2 ctx.mcpReq.envelope) > getProtocolVersion prefers the envelope, then _meta",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveIdentity > returns the identify result",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveIdentity > no identify configured -> null",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveIdentity > identify throwing -> null, never throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveIdentity > runs on every call — no caching between calls",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/client-identity.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should replace image and audio blocks but keep text blocks",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should leave text-only content unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should redact EmbeddedResource with blob",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should pass through EmbeddedResource with text",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should redact unknown content types with type name in message",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should pass through resource_link unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should redact large base64 inside structuredContent",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should handle response without content array",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - response content blocks > should handle null and undefined response without error",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should leave small strings unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should redact large base64 strings (>10KB)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should leave large non-base64 strings unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should find and redact deeply nested large base64",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should only redact large base64 in mixed-type parameters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should redact large base64 inside an array",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should redact base64 string at exactly SIZE_GATE boundary (10240 chars)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - parameter scanning > should handle null and undefined parameters without error",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - integration > should sanitize both parameters and response in a full event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "sanitizeEvent - integration > should not mutate the original event",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/sanitization.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should pass through valid tags unchanged",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should return null for empty object",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop keys with invalid characters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop keys longer than 32 characters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop values longer than 200 characters",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop values containing newlines",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop non-string values at runtime",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should drop empty string keys",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should keep only first 50 entries when exceeding limit",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should return null when all entries are invalid",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/validation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics export > POSTs buffered entries as OTLP logs JSON to /v1/logs",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-export.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics export > resolves even when fetch rejects (fire-and-forget isolation)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-export.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics export > does nothing when disabled",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-export.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics auth header > sends the default bearer token by default",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-auth.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics auth header > honors a custom DIAGNOSTICS_TOKEN override",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-auth.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics auth header > omits the Authorization header when token is explicitly empty",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-auth.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics record building > carries the raw message as the body, verbatim",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-record.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics record building > infers severity from message content",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-record.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics record building > prioritizes fail/error over the Warning prefix",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-record.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics record building > sets a nanosecond timestamp string",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-record.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics record building > attaches sdk, node, and mcp versions as record attributes",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-record.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "logging diagnostics sink > forwards every log entry to a registered sink",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-sink.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "logging diagnostics sink > never throws when the sink throws",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-sink.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "logging diagnostics sink > stops forwarding after the sink is cleared",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-sink.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics integration with track() > captures and ships diagnostics when track() runs on an invalid server",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics integration with track() > ships nothing when disabled via option",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-integration.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameter Preservation > should preserve existing context parameter with custom description",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-preservation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "Context Parameter Preservation > should add context parameter when it doesn't exist",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/context-preservation.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "runSignalShutdown > re-raises the signal after the flush settles so default termination proceeds",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/signal-shutdown.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "runSignalShutdown > does not re-raise when the customer has their own listener for the signal",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/signal-shutdown.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "runSignalShutdown > re-raises even when the flush itself fails",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/signal-shutdown.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "runSignalShutdown > never throws even when re-raise fails",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/signal-shutdown.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics are disabled in test environments > track() without options does not enable diagnostics under vitest",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-test-env.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "diagnostics are disabled in test environments > DISABLE_DIAGNOSTICS=false force-enables diagnostics even under vitest",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/diagnostics-test-env.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "brand constants (wire literals) > emits the agentcat custom event type on the wire",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "brand constants (wire literals) > stamps exporter source as agentcat",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "brand constants (wire literals) > uses the agentcat diagnostics scope name",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "brand constants (wire literals) > mirrors under the mcp_session key",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle param descriptions name the delivery channel > session_id pre-announces both delivery channels and both text headers",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "handle param descriptions name the delivery channel > agent_id describes self-chosen generation, not server delivery",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "v4 copy pins (byte-exact) > pins SESSION_ID_PARAM_DESCRIPTION",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "v4 copy pins (byte-exact) > pins MCP_SESSION_STATUS_DESCRIPTION",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "v4 copy pins (byte-exact) > pins MINT_BACK_ISSUED_BODY",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "v4 copy pins (byte-exact) > pins MINT_BACK_UNRECOGNIZED_BODY",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "v4 copy pins (byte-exact) > pins the session_id value-contract constants",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/constants.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "MCP Version Compatibility > should be compatible with currently installed MCP version",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/mcp-version-compatibility.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveLogTarget > targets the home log file on a healthy Node runtime",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-target.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveLogTarget > targets console only when the runtime lacks fs/os modules (edge isolates)",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-target.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveLogTarget > goes silent — never console — when homedir resolves falsy on Node",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-target.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveLogTarget > goes silent — never console — when homedir throws on Node",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-target.test.ts",
+    "projectName": "v1"
+  },
+  {
+    "name": "resolveLogTarget > goes silent when os.homedir is not implemented at all",
+    "file": "/home/ubuntu/agentcat-typescript-sdk/src/tests/logging-target.test.ts",
+    "projectName": "v1"
+  }
+]

@@ -58,6 +58,7 @@ schemars = "1"
 anyhow = "1"
 tokio-util = "0.7"
 futures = { version = "0.3", features = ["executor"] }
+regex = "1"
 
 [package.metadata.docs.rs]
 all-features = false
