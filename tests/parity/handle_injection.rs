@@ -1,13 +1,18 @@
-//! Parity: `src/tests/handle-injection.test.ts` (schema injection and the
-//! output registry).
+//! Parity: `src/tests/handle-injection.test.ts` (schema injection, argument
+//! stripping and the output registry).
 
-use super::support::capture_logs;
+use std::collections::HashMap;
+
+use super::support::{capture_logs, obj};
 use crate::constants::{
     AGENT_ID_PARAM_DESCRIPTION, DEFAULT_CONTEXT_PARAMETER_DESCRIPTION, MCP_SESSION_FIELD_DESCRIPTION,
     MCP_SESSION_FIELD_DESCRIPTION_HOOK_MODE, MCP_SESSION_KEY, MCP_SESSION_STATUS_DESCRIPTION,
     SESSION_ID_PARAM_DESCRIPTION, SESSION_ID_PARAM_PATTERN,
 };
-use crate::inject::{InjectConfig, InjectMemory, InjectedList, build_injected_list};
+use crate::inject::{
+    InjectConfig, InjectMemory, Injected, InjectedList, build_injected_list, heuristic_strip, strip_arguments,
+};
+use rmcp::model::{CallToolRequestParams, JsonObject};
 use serde_json::{Value, json};
 
 /// TS `{injectSessionId, injectAgentId}`, with `context` on or off. The
@@ -63,6 +68,34 @@ fn keys(v: &Value) -> Vec<&str> {
 /// The registry entry of `tool`, as its parameter names.
 fn recorded(list: &InjectedList, tool: &str) -> Option<Vec<&'static str>> {
     list.registry.get(tool).map(|e| e.names())
+}
+
+/// A registry entry: TS `new Set([...])` of the injected names.
+fn entry(session_id: bool, agent_id: bool, context: bool) -> Injected {
+    Injected {
+        session_id,
+        agent_id,
+        context,
+    }
+}
+
+/// TS `stripInjectedArguments(args, toolName, registry)`: what the registry
+/// recorded for the tool, or the fallback for a tool it has no entry for.
+/// Arguments are rmcp's `Option<JsonObject>`; only an object is stripped.
+fn strip_injected_arguments(
+    args: Option<Value>,
+    tool: &str,
+    registry: Option<&HashMap<String, Injected>>,
+) -> Option<Value> {
+    let strip = registry
+        .and_then(|r| r.get(tool))
+        .copied()
+        .unwrap_or_else(|| heuristic_strip(tool));
+    let mut args: Option<JsonObject> = args.map(obj);
+    if let Some(args) = args.as_mut() {
+        strip_arguments(args, strip);
+    }
+    args.map(Value::Object)
 }
 
 mod addhandleparameterstotools {
@@ -277,6 +310,101 @@ mod addhandleparameterstotools {
     }
 }
 
+mod stripinjectedarguments {
+    use super::*;
+
+    /// `deploy` owns its `session_id`, so the listing never recorded it.
+    fn registry() -> HashMap<String, Injected> {
+        HashMap::from([
+            ("add_todo".to_owned(), entry(true, true, true)),
+            ("deploy".to_owned(), entry(false, true, true)),
+        ])
+    }
+
+    #[test]
+    fn strips_exactly_what_was_injected() {
+        assert_eq!(
+            strip_injected_arguments(
+                Some(json!({"text": "x", "session_id": "ses_1", "agent_id": "agt_1", "context": "why"})),
+                "add_todo",
+                Some(&registry()),
+            ),
+            Some(json!({"text": "x"}))
+        );
+    }
+
+    #[test]
+    fn preserves_the_customer_s_own_session_id_param() {
+        assert_eq!(
+            strip_injected_arguments(
+                Some(json!({"session_id": "prod-42", "agent_id": "agt_1", "context": "why"})),
+                "deploy",
+                Some(&registry()),
+            ),
+            Some(json!({"session_id": "prod-42"}))
+        );
+    }
+
+    #[test]
+    fn falls_back_to_stripping_all_three_when_no_registry_entry_exists() {
+        assert_eq!(
+            strip_injected_arguments(
+                Some(json!({"text": "x", "session_id": "a", "agent_id": "b", "context": "c"})),
+                "unlisted_tool",
+                Some(&registry()),
+            ),
+            Some(json!({"text": "x"}))
+        );
+        assert_eq!(
+            strip_injected_arguments(Some(json!({"text": "x", "session_id": "a"})), "any", None),
+            Some(json!({"text": "x"}))
+        );
+    }
+
+    #[test]
+    fn fallback_never_strips_get_more_tools_own_context() {
+        assert_eq!(
+            strip_injected_arguments(
+                Some(json!({"context": "need a tool", "session_id": "a", "agent_id": "b"})),
+                "get_more_tools",
+                None,
+            ),
+            Some(json!({"context": "need a tool"}))
+        );
+    }
+
+    #[test]
+    fn handles_non_object_args() {
+        assert_eq!(
+            strip_injected_arguments(None, "add_todo", Some(&registry())),
+            None
+        );
+    }
+}
+
+mod registry_storage_request_cloning {
+    use super::*;
+
+    #[test]
+    fn clones_the_request_with_stripped_arguments_leaving_the_original_intact() {
+        let registry = HashMap::from([("add_todo".to_owned(), entry(true, true, true))]);
+        let request = CallToolRequestParams::new("add_todo").with_arguments(obj(json!({
+            "text": "x",
+            "session_id": "ses_1",
+            "context": "why"
+        })));
+        let mut cloned = request.clone();
+        if let Some(args) = cloned.arguments.as_mut() {
+            strip_arguments(args, registry["add_todo"]);
+        }
+        assert_eq!(cloned.arguments, Some(obj(json!({"text": "x"}))));
+        // The event keeps the raw request.
+        let original = request.arguments.expect("the original keeps its arguments");
+        assert_eq!(original["session_id"], "ses_1");
+        assert_eq!(original["context"], "why");
+    }
+}
+
 mod outputschema_injection {
     use super::*;
 
@@ -408,6 +536,13 @@ mod outputschema_injection {
 mod rust_extras {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn stripping_keeps_argument_order() {
+        let mut args = obj(json!({"a": 1, "session_id": "x", "b": 2, "context": "y", "c": 3}));
+        strip_arguments(&mut args, entry(true, true, true));
+        assert_eq!(keys(&Value::Object(args)), ["a", "b", "c"]);
+    }
 
     #[test]
     fn malformed_schema_parts_take_the_ts_failure_path() {

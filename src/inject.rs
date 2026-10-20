@@ -461,8 +461,9 @@ pub(crate) fn heuristic_strip(name: &str) -> Injected {
     }
 }
 
-/// Removes the injected arguments. Returns the stripped map; the caller keeps
-/// the raw arguments for the event.
+/// Removes the injected arguments in place; the other keys keep their order,
+/// as after a JavaScript `delete`. The caller strips the handler's copy and
+/// keeps the raw arguments for the event.
 pub(crate) fn strip_arguments(args: &mut Map<String, Value>, strip: Injected) {
     if strip.session_id {
         crate::util::shift_remove(args, SESSION_ID_PARAM);

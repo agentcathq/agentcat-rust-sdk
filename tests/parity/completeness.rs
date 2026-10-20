@@ -12,6 +12,7 @@ const ENFORCED: &[&str] = &[
     "constants.test.ts",
     "context-parameters-edge-cases.test.ts",
     "handle-conflict-report.test.ts",
+    "handle-injection.test.ts",
     "handles.test.ts",
     "ksuid.test.ts",
     "posthog-uuidv7.test.ts",
@@ -21,6 +22,16 @@ const ENFORCED: &[&str] = &[
 
 /// Cases of enforced files that a later plan ports: (TS file, TS test, plan).
 const DEFERRED: &[(&str, &str, u8)] = &[
+    (
+        "handle-injection.test.ts",
+        "registry storage + request cloning > stores per server object",
+        4,
+    ),
+    (
+        "handle-injection.test.ts",
+        "outputSchema injection > output registry accessors are keyed per server object",
+        4,
+    ),
     (
         "handles.test.ts",
         "appendMintBack > prepends a text block as the first content element",
