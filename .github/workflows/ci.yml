@@ -46,6 +46,12 @@ jobs:
       - run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: -D warnings
+      # The parity manifest is generated (scripts/parity/README.md): fail when
+      # the committed files differ from a fresh run.
+      - run: |
+          python3 scripts/parity/build-manifest.py tests/parity docs/research \
+            scripts/parity/vitest/v1.json scripts/parity/vitest/v2.json scripts/parity/vitest/e2e-http.json
+          git diff --exit-code -- tests/parity/manifest.tsv tests/parity/NOT_PORTED.md
 
   test:
     name: test (${{ matrix.os }})

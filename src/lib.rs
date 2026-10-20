@@ -108,8 +108,8 @@ mod truncation;
 mod util;
 mod validation;
 
+#[cfg(test)]
 #[cfg(all(
-    test,
     feature = "rmcp",
     feature = "preserve-order",
     feature = "otlp",

@@ -278,4 +278,10 @@ mod rust_extras {
         assert!(estimate_input_tokens(Some(&nested_objects(1_000))).is_some());
         assert_eq!(estimate_input_tokens(Some(&nested_objects(1_001))), None);
     }
+
+    #[test]
+    fn array_nesting_counts_toward_the_depth_limit() {
+        assert!(estimate_input_tokens(Some(&nested(1_000))).is_some());
+        assert_eq!(estimate_input_tokens(Some(&nested(1_001))), None);
+    }
 }

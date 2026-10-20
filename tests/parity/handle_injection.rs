@@ -558,6 +558,17 @@ mod rust_extras {
                 "inputSchema": plain(),
                 "outputSchema": {"type": "object", "properties": "x"}
             }),
+            json!({
+                "name": "f",
+                "inputSchema": plain(),
+                "outputSchema": {"type": "object", "properties": 7}
+            }),
+            json!({
+                "name": "g",
+                "inputSchema": plain(),
+                "outputSchema": {"type": "object", "properties": []}
+            }),
+            json!({"name": "h", "inputSchema": plain(), "outputSchema": "str"}),
             json!({"name": "ok", "inputSchema": plain()}),
         ];
         let cfg = InjectConfig::new(true, false, true, true, None, false);
@@ -580,6 +591,8 @@ mod rust_extras {
                 handle("b", "Cannot create property 'session_id' on number '5'"),
                 handle("c", "Cannot create property 'session_id' on boolean 'true'"),
                 handle("e", "Cannot create property 'mcp_session' on string 'x'"),
+                handle("f", "Cannot create property 'mcp_session' on number '7'"),
+                handle("h", "Cannot create property 'properties' on string 'str'"),
                 context("a", "Cannot create property 'context' on string 'abc'"),
                 context("b", "Cannot create property 'context' on number '5'"),
                 context("c", "Cannot create property 'context' on boolean 'true'"),
@@ -612,14 +625,40 @@ mod rust_extras {
 
         // The handle step is rolled back; the context step runs on the
         // original tool.
-        let e = &list.tools[4];
-        assert_eq!(keys(&e["inputSchema"]["properties"]), ["q", "context"]);
-        assert_eq!(e["inputSchema"]["required"], json!(["context"]));
-        assert_eq!(e["outputSchema"], tools[4]["outputSchema"]);
-        assert_eq!(recorded(&list, "e"), Some(vec!["context"]));
-        assert!(!list.output_registry.contains("e"));
+        for (i, name) in [(4, "e"), (5, "f"), (7, "h")] {
+            let tool = &list.tools[i];
+            assert_eq!(
+                keys(&tool["inputSchema"]["properties"]),
+                ["q", "context"],
+                "{name}"
+            );
+            assert_eq!(tool["inputSchema"]["required"], json!(["context"]), "{name}");
+            assert_eq!(tool["outputSchema"], tools[i]["outputSchema"], "{name}");
+            assert_eq!(recorded(&list, name), Some(vec!["context"]), "{name}");
+            assert!(!list.output_registry.contains(name), "{name}");
+        }
 
-        let ok = &list.tools[5]["inputSchema"];
+        // JS stores `mcp_session` as a named key of the array, which JSON
+        // drops; the tool is still in the output registry.
+        let g = &list.tools[6];
+        assert_eq!(
+            keys(&g["inputSchema"]["properties"]),
+            ["q", "session_id", "agent_id", "context"]
+        );
+        assert_eq!(
+            g["inputSchema"]["required"],
+            json!(["session_id", "agent_id", "context"])
+        );
+        assert_eq!(
+            serde_json::to_string(&g["outputSchema"]).unwrap(),
+            r#"{"type":"object","properties":[]}"#
+        );
+        assert_eq!(
+            recorded(&list, "g"),
+            Some(vec!["session_id", "agent_id", "context"])
+        );
+
+        let ok = &list.tools[8]["inputSchema"];
         assert_eq!(
             keys(&ok["properties"]),
             ["q", "session_id", "agent_id", "context"]
@@ -629,9 +668,9 @@ mod rust_extras {
             recorded(&list, "ok"),
             Some(vec!["session_id", "agent_id", "context"])
         );
-        assert_eq!(list.tools.len(), 6);
-        assert_eq!(list.registry.len(), 6);
-        assert!(list.output_registry.is_empty());
+        assert_eq!(list.tools.len(), 9);
+        assert_eq!(list.registry.len(), 9);
+        assert_eq!(list.output_registry.iter().collect::<Vec<_>>(), ["g"]);
     }
 
     #[test]

@@ -342,6 +342,88 @@ fn get_more_tools_descriptor_and_reply_match() {
     }
 }
 
+/// The two `---LISTED` sections of the handles golden file: the listings the
+/// TS generator prints, and the registry line of the first.
+#[test]
+fn golden_listed_sections_match() {
+    let golden = fixture_text("php-audit/handles/golden.txt");
+    let section = |start: &str, end: &str| {
+        golden
+            .split_once(&format!("{start}\n"))
+            .and_then(|(_, rest)| rest.split_once(end))
+            .unwrap_or_else(|| panic!("golden.txt has a {start} section"))
+            .0
+            .to_owned()
+    };
+    // `JSON.stringify(value, null, 1)`.
+    let pretty = |value: &Value| {
+        let mut out = Vec::new();
+        let mut ser = serde_json::Serializer::with_formatter(
+            &mut out,
+            serde_json::ser::PrettyFormatter::with_indent(b" "),
+        );
+        serde::Serialize::serialize(value, &mut ser).unwrap();
+        String::from_utf8(out).unwrap()
+    };
+
+    let echo = json!({
+        "name": "echo",
+        "inputSchema": {"type": "object", "properties": {"text": {"type": "string"}}, "required": ["text"]},
+        "outputSchema": {
+            "type": "object",
+            "properties": {"count": {"type": "number"}},
+            "required": ["count"],
+            "additionalProperties": false
+        }
+    });
+    let cfg = InjectConfig::new(true, false, true, true, None, false);
+    let list = build_injected_list(
+        &cfg,
+        &InjectMemory::default(),
+        &[report_missing_descriptor(), echo],
+    );
+    let names: Vec<&str> = list
+        .tools
+        .iter()
+        .map(|t| t["name"].as_str().expect("a tool name"))
+        .collect();
+    // TS prints its registry Map and output Set in insertion order, which is
+    // the listing order here.
+    let registry: Vec<Value> = names
+        .iter()
+        .filter_map(|name| list.registry.get(*name).map(|e| json!([name, e.names()])))
+        .collect();
+    let output: Vec<&str> = names
+        .iter()
+        .copied()
+        .filter(|name| list.output_registry.contains(*name))
+        .collect();
+    assert_eq!(
+        format!(
+            "{}\nregistry: {} output: {}\n",
+            pretty(&Value::Array(list.tools.clone())),
+            Value::Array(registry),
+            json!(output)
+        ),
+        section(
+            "---LISTED (prompted, agent tracking on, context on)---",
+            "---LISTED hook mode + agent---"
+        )
+    );
+
+    let echo = json!({
+        "name": "echo",
+        "inputSchema": {"type": "object", "properties": {}},
+        "outputSchema": {"type": "object", "properties": {}}
+    });
+    let cfg = InjectConfig::new(true, true, true, false, None, false);
+    let list = build_injected_list(&cfg, &InjectMemory::default(), &[echo]);
+    assert_eq!(
+        format!("{}\n", Value::Array(list.tools)),
+        section("---LISTED hook mode + agent---", "---STRUCTURED---")
+    );
+}
+
 /// The `---STRUCTURED---` rows of the handles golden file: the structured
 /// mint-back and the text block for the resolutions the TS generator builds.
 #[test]
