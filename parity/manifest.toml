@@ -1,0 +1,4102 @@
+# Parity map: every TS test in ts-tests.json maps to Rust tests, harness scenarios, or n/a.
+# Generated once by `node oracle/src/parity/list-tests.mjs --init-manifest`, then maintained by hand.
+# Checked by `cargo run -p xtask -- parity`; `parity --final` also rejects "todo".
+#
+# [[test]]
+# key = "<project>|<file>|<title>"   # from ts-tests.json
+# status = "todo"                    # "todo" | "ported" | "n/a"
+# rust = ["<binary-id>::<test name>", "harness:<scenario>"]   # ported only
+# category = "ts-host-only"          # n/a only: ts-host-only | second-pass | ruled-divergence:RD-xx | covered-by-vector:<file>.json
+# reason = "..."                     # n/a only
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/header-capture.test.ts|e2e-http: HTTP headers land in published event parameters > v1 (stateful lane): sentinel header at extra.requestInfo.headers, url a string"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/header-capture.test.ts|e2e-http: HTTP headers land in published event parameters > v2 (longlived lane): sentinel header at extra.http.req.headers"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/sse-smoke-v1.test.ts|e2e-http v1 SSE smoke (stateful, enableJsonResponse: false) > baseline-defaults over streamed POST responses"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/sse-smoke-v2.test.ts|e2e-http v2 SSE smoke: long-lived lane, streaming POST responses > baseline-defaults over a real text/event-stream response"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-mint'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-supplied'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-x-hook'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'baseline-defaults'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'client-identity-ladder'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'context-custom-description'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'context-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'error-path'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'hooks-identity-tags-props'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'mint-back-structured-mirror'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'redaction'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'report-missing-call'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'report-missing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'session-continuity-stateful'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'strict-schema-injection'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'strip-proof-loose'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-hook-deterministic'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-hook-null'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-supplied-continuity'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off-x-report-missing-on'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-mint'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-supplied'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-x-hook'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'baseline-defaults'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'client-identity-ladder'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'context-custom-description'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'context-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'error-path'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'hooks-identity-tags-props'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'mint-back-structured-mirror'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'rebuild-on-demand'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'redaction'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'report-missing-call'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'report-missing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'strict-schema-injection'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'strip-proof-loose'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-hook-deterministic'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-hook-null'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-supplied-continuity'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off-x-report-missing-on'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-mint'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-supplied'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-x-hook'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'baseline-defaults'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'client-identity-ladder'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'context-custom-description'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'context-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'error-path'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'hooks-identity-tags-props'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'mint-back-structured-mirror'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'rebuild-on-demand'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'redaction'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-call'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'strict-schema-injection'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'strip-proof-loose'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-deterministic'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-null'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-supplied-continuity'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off-x-report-missing-on'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-mint'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-supplied'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-x-hook'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'baseline-defaults'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'client-identity-ladder'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'context-custom-description'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'context-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'error-path'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'hooks-identity-tags-props'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'mint-back-structured-mirror'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'rebuild-on-demand'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'redaction'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-call'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'strict-schema-injection'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'strip-proof-loose'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-deterministic'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-null'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-supplied-continuity'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off-x-report-missing-on'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-mint'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-supplied'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-x-hook'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'baseline-defaults'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'client-identity-ladder'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'context-custom-description'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'context-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'error-path'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'hooks-identity-tags-props'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'mint-back-structured-mirror'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'redaction'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'report-missing-call'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'report-missing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'session-continuity-stateful'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'strict-schema-injection'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'strip-proof-loose'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-hook-deterministic'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-hook-null'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-supplied-continuity'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off'"
+status = "todo"
+
+[[test]]
+key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off-x-report-missing-on'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should accept apiBaseUrl as an optional string property"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should be undefined when not set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|EventQueue.configure() > should reconfigure the apiClient with the given base URL"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() when apiBaseUrl option is provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() with AGENTCAT_API_URL env var when no option is set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() with MCPCAT_API_URL env var when no option is set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should fall back to legacy MCPCAT_API_URL when AGENTCAT_API_URL is unset"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should not call configure() when neither option nor env var is set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize AGENTCAT_API_URL over legacy MCPCAT_API_URL"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize apiBaseUrl option over AGENTCAT_API_URL env var"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize apiBaseUrl option over MCPCAT_API_URL env var"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to access server info from regular Server instance"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to access server info with McpServer if available"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to call tools without tracking"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should handle tools defined BEFORE track() with shorthand Zod schema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should handle tools with shorthand Zod schema syntax (reproduces context injection issue)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should properly trace tools added after track() is called"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should publish events only once (no duplicates)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should verify that server info is used by isCompatibleServerType"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|buildSessionInfo > null identity yields anonymous info"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|buildSessionInfo > stamps server, client, and identity without touching tracking data"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > getProtocolVersion prefers the envelope, then _meta"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > prefers ctx.mcpReq.envelope.clientInfo over _meta and handshake"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > rejects non-string envelope fields (field-level narrowing)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > both missing -> undefined (client declined to identify)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > drops non-string fields from partially malformed _meta clientInfo"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > falls back to getClientVersion (legacy initialize capture)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > ignores malformed _meta clientInfo"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > prefers per-request _meta clientInfo (modern client)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getProtocolVersion > absent -> undefined"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|getProtocolVersion > reads _meta protocolVersion"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|resolveIdentity > identify throwing -> null, never throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|resolveIdentity > no identify configured -> null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|resolveIdentity > returns the identify result"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/client-identity.test.ts|resolveIdentity > runs on every call — no caching between calls"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle McpServer instances with server property"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle objects with null server property"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle objects with server property that is not an object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should validate all required properties on the underlying server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should validate the underlying server when McpServer wrapper is provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should show compatibility message when McpServer is not available"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should validate real McpServer underlying server properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should work with real McpServer instances if available"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with custom properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with standard properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle arrays"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle booleans"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle circular reference errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle numbers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle plain objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle string errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle undefined"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > logs '(none)' as the fingerprint for signal-free non-object rejects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > logs a shape-fingerprint beacon when rejecting an unrecognized server shape"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for non-object server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for null server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for undefined server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is not an object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo.name is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is not a function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is a non-Map with a get method"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is not a Map"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is not a function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should validate a fully compatible server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > unknown-shape error names the full support matrix, never 'upgrade to v1.11'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/compatibility.test.ts|Compatibility Module > logCompatibilityWarning > should log the correct compatibility message to the log file"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/concurrency.test.ts|concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > emits the agentcat custom event type on the wire"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > mirrors under the mcp_session key"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > stamps exporter source as agentcat"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > uses the agentcat diagnostics scope name"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > agent_id describes self-chosen generation, not server delivery"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > session_id pre-announces both delivery channels and both text headers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MCP_SESSION_STATUS_DESCRIPTION"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MINT_BACK_ISSUED_BODY"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MINT_BACK_UNRECOGNIZED_BODY"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins SESSION_ID_PARAM_DESCRIPTION"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should skip get_more_tools entirely"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should inject context and remove additionalProperties:false constraint"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should preserve additionalProperties:true when injecting"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for allOf schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for anyOf schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for oneOf schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle empty object schema {}"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with no inputSchema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with only type specified"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should skip injection for tools with existing context parameter"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should warn with tool name when context exists"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should capture context parameter when tools are called after tracking"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should capture userIntent only when context is provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should inject context into tool schemas when listing tools"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should remove context parameter before calling tool callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should use default context description when no custom description is provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should work with tools that have context parameter"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools with existing inputSchema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools without inputSchema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should handle tools with empty required array"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should not duplicate context parameter if already exists"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-preservation.test.ts|Context Parameter Preservation > should add context parameter when it doesn't exist"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/context-preservation.test.ts|Context Parameter Preservation > should preserve existing context parameter with custom description"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should apply custom description to all tools when listing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should capture tool calls with custom description configured"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description even with long descriptions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description for Zod object schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description instead of default for JSON Schema tools"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description with special characters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use default description when customContextDescription is not provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should work end-to-end with custom description and multiple tool calls"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/debug-tool-schema.test.ts|Debug Tool Schema Structure > should show the structure of tools registered with description and schema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/debug-tool-schema.test.ts|Debug Tool Schema Structure > should show the structure of tools registered with shorthand Zod syntax"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/detect-shapes.test.ts|detectServer (fake shapes) > detects fake high-level shells with .tool (v1) and registerTool (v2)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/detect-shapes.test.ts|detectServer (fake shapes) > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > falls back to a stable install_id when projectId is absent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > includes sdk language, sdk version, and os/runtime metadata"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > reports the installed v1 SDK version despite the exports stub"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > reports the installed v2 SDK version despite sealed exports"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > uses projectId verbatim when present"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > honors a custom DIAGNOSTICS_TOKEN override"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > omits the Authorization header when token is explicitly empty"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > sends the default bearer token by default"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > POSTs buffered entries as OTLP logs JSON to /v1/logs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > does nothing when disabled"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > resolves even when fetch rejects (fire-and-forget isolation)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-integration.test.ts|diagnostics integration with track() > captures and ships diagnostics when track() runs on an invalid server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-integration.test.ts|diagnostics integration with track() > ships nothing when disabled via option"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > emits start + complete setup beacons (metadata only) on track()"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > report-missing log carries only the context length, not the text"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > resolved identity is stamped on the event but never reaches the sink"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when JEST_WORKER_ID=1 (test environment)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when NODE_ENV=test (test environment)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when VITEST=true (test environment)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled via the env var"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled via the option"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=1"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=TRUE"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=on"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=true"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=yes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is enabled by default outside test environments"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=FALSE"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=no"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=off"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > treats a whitespace-only value as unset (default behavior applies)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > attaches sdk, node, and mcp versions as record attributes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > carries the raw message as the body, verbatim"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > infers severity from message content"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > prioritizes fail/error over the Warning prefix"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > sets a nanosecond timestamp string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > forwards every log entry to a registered sink"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > never throws when the sink throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > stops forwarding after the sink is cleared"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-test-env.test.ts|diagnostics are disabled in test environments > DISABLE_DIAGNOSTICS=false force-enables diagnostics even under vitest"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/diagnostics-test-env.test.ts|diagnostics are disabled in test environments > track() without options does not enable diagnostics under vitest"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should preserve normal todo tool calls while sanitizing problematic ones"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize audio content blocks in tool responses"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize image content blocks in tool responses"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize large base64 strings in tool call parameters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should handle both sanitization and truncation in the same tool call"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should keep total event size under 100KB for oversized parameters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should preserve normal todo responses while truncating large ones"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should truncate tool responses with text exceeding 32KB"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Cloudflare Workers pattern"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Node.js environment correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect generic edge runtime pattern"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Event Queue Signal Handlers > should handle process being undefined"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Event Queue Signal Handlers > should not throw when process.once is unavailable"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should capture basic exception info without filesystem access"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle chained errors (Error.cause)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle non-Error objects being thrown"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should parse stack traces without requiring fs module"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export publishCustomEvent function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export track function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export type definitions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Logging Module Behavior > should export writeToLog function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Logging Module Behavior > should handle rapid successive calls"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Logging Module Behavior > should not throw when called"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Path Normalization Without cwd > should handle various path formats"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Process Object Availability > should handle missing process.cwd gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Process Object Availability > should handle process.cwd throwing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should handle circular reference in error.cause"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should handle deeply nested error chains"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should not crash on malformed stack traces"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Integration: SDK in Limited Environment > should handle environment transitions gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/edge-runtime-compatibility.test.ts|Integration: SDK in Limited Environment > should work when process has limited functionality"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|MRTR helpers > isInputRequiredShape matches only resultType === 'input_required'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|MRTR helpers > mrtrContinuationTags fires only when inputResponses ride the request"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a hanging identify hook does not delay the tool call"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a synchronously-throwing hook is contained and the event still publishes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > error-path events carry hook results resolved after the throw"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > hanging resolveSessionId/eventTags/eventProperties do not delay the tool call"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > redactEvent sees resolved hook state, and pending never reaches it or the processed event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > the handler starts before a slow hook settles"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|extra projection on captured events > publishes v1-shaped extra with headers verbatim and url as a string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|extra projection on captured events > publishes v2-shaped extra with the web Request as plain { method, url, headers }"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|finish() fault containment > returns the customer's isError result when a content entry is null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|finish() fault containment > returns the raw customer result when post-handler decoration throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept on the degraded path when enableReportMissing is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept on the tracing-off path when enableReportMissing is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept when enableReportMissing is false — the customer's own tool runs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > answers get_more_tools directly and publishes its event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > answers get_more_tools directly on the degraded path, without publishing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > degrades to the original handler with the UNSTRIPPED request when tracing setup fails"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > publishes an error event and rethrows when the original handler throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > publishes an error event with __agentcat_error stack when present"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > strips registry-scoped args before the original handler, keeps raw on the event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > tags continuation rounds from mcpReq.inputResponses"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > tags intermediate input_required rounds and skips mint-back on them"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|registry rebuild bounding > bounds the rebuild: a hanging tools/list handler cannot hang tools/call"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-callwrap.test.ts|registry rebuild bounding > keeps serving calls when the list handler fails every time"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > installRegistryProxy swallows a highLevel whose _registeredTools assignment throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > registry proxy set-trap: a tool whose executor getter throws still lands in the registry"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > rewrapAllTools swallows a _registeredTools whose enumeration throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|patchSetRequestHandler on v1 > introspects Zod schema registrations for the method literal"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|patchSetRequestHandler on v1 > registration still succeeds when the re-arm callback throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > captures thrown errors onto extra.__agentcat_error and rethrows"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > is idempotent — wrapping twice does not double-wrap"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > preserves ctx position for v2 schema-less executors (args undefined)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > rewrapAllTools sweeps every registry entry"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > supports the v1 no-args callback arity (extra only)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > wraps v2 executor in place: strips injected args, preserves customer args"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > appends get_more_tools and injects session_id + context"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > does not mutate the input tool objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips get_more_tools when enableReportMissing is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips handle injection entirely when tracing is off, but still registers empty entries"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|installListWrap (synthetic seam) > passes the original response through verbatim and warns when tracking data is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|installListWrap (synthetic seam) > passes through and warns on empty or missing tools; registries stay unset"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a BigInt-carrying schema uninjected without failing the listing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a boolean-schema tool uninjected while the healthy tool keeps its handles"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a circular-schema tool uninjected without failing the listing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > passes a null tools-array entry through and injects the rest"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > returns the customer's original listing when the whole pipeline fails"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should NOT publish identify events when identify function throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture Error.cause chains"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture TypeError with correct type"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture errors for unknown tool names"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture non-Error thrown values"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture stack traces when tool throws Error"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture validation errors for invalid enum values"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture validation errors for missing required parameters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should handle successful tool calls without errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should publish exactly one event per tool call"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should still propagate errors to MCP client"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/esm-consumer.test.ts|ESM consumer smoke test > can import the SDK package from a real Node ESM process"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > both callbacks configured > should attach both tags and properties to the same event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventProperties callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventTags callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should attach properties to tool call events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should handle null return from callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should not block tool calls when callback throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should attach tags to tool call events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should handle null return from callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should not block tool calls when callback throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should validate tags from callback"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > initialize is no longer an event > publishes no initialize event even when tag/property callbacks are set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > no callbacks configured > should not add tags or properties when not configured"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should normalize empty properties to omission"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should validate tags passed directly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > redaction bypass > should not redact tags or properties when redactSensitiveInformation is configured"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > tools/list is no longer an event > publishes no tools/list event even when tag/property callbacks are set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should be able to add events directly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should be accessible and have required methods"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should handle destroy method without errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should prevent adding events after destroy"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should track queue stats correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > logs only event metadata on successful send, never the payload"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > should handle multiple events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > should process events end-to-end through publishEvent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > Process lifecycle handling > should handle SIGINT signal"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > continues delivery when runtime task registration throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > does not hold AgentCat delivery open for custom exporters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > does not register telemetry-only events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > keeps the registered task pending until AgentCat ingestion completes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > settles an event when queue overflow drops it"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > settles fail-open when AgentCat ingestion exhausts retries"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook returns null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should run the event hook before string redaction and compose both"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should calculate duration when not provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should leave the token fields undefined when the event has none"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when enableTracing is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when server tracking data is missing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should preserve existing duration"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish event with server tracking data and session info"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should capture stack traces for each cause"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should detect circular cause references"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should handle non-Error causes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should limit cause chain to 10"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should unwrap multiple causes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should unwrap single cause"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should always set platform to 'javascript'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture Error with message and type"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture ReferenceError with correct type"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture TypeError with correct type"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture custom error class"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should set platform to 'javascript' for non-Error objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors with empty messages"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors with only whitespace in stack"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors without stack traces"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle malformed stack traces gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle boolean errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle number errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle object errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle objects with circular references"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle string errors"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle undefined"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:fs/promises to node:fs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:internal/* to node:internal"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should preserve simple node: modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs from ESM modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs in node_modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs with Windows paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should handle Windows paths with mixed separators"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should normalize Windows backslashes to forward slashes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain abs_path field with original path"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain all other frame properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle AWS Lambda with layers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle Docker deployment with node_modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle mix of user code and library code"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /app/ paths (Docker, Heroku)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /opt/ paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /srv/ paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /var/www/ paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip AWS Lambda paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip Docker container paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle Windows-style node_modules paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle nested node_modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle scoped packages in node_modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should normalize node_modules paths consistently"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /dist/ boundary"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /lib/ boundary"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /src/ boundary"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should use the last occurrence of project markers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle paths without common markers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle very short paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve already-relative paths"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve special paths like native"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Linux user home directories"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Windows user home directories"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip macOS user home directories"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should NOT capture context_line for library code (in_app: false)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should capture context_line for in_app frames"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect in_app correctly for user code"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect library code in node_modules"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle anonymous functions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle async functions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle missing files gracefully when extracting context_line"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle native code frames"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should limit stack frames to 50"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse line and column numbers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse stack frames with function names"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > pass-through > returns non-rewritable values by identity"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > snapshot semantics > later top-level mutations of the original do not appear in the projection"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v1: URL instance under requestInfo.url > passes an already-string url through unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v1: URL instance under requestInfo.url > replaces the URL instance with its href, headers untouched by reference"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > is idempotent: a projected req has no headers.entries and passes through"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > lowercases header names (Headers semantics)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > projects a real Request into plain { method, url, headers }"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > returns the original extra when headers.entries throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > keys per AgentCatData object, like reportedConflicts"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records a composed schema that also declares session_id at its root"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records nothing in hook mode, where session_id is never injected"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records only the tools whose own schema declares session_id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > buildInjectedList dedupes per AgentCatData object: repeat tools/list on the same server logs once, a second server logs its own once"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > getReportedConflicts returns a stable set per key, and independent sets for different keys"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > logs the error even without a dedupe set — once per pass, no dedupe"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports a session_id collision once per tool, as an error with remediation"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports two different colliding tools each once"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > agent_id copy prescribes the self-chosen model|harness|nonce format"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > creates the required array when the schema has none"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does NOT skip get_more_tools (handles are injected; context stays bespoke)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate agent_id in an existing required array"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate session_id in an existing required array"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > full order with context injector: customer, session_id, agent_id, context"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > hook mode: no session_id, agent_id uses the same single description"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > injects session_id and agent_id after customer params, both required"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > leaves required untouched when the customer declares agent_id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > removes additionalProperties:false and handles missing schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips a param the tool already defines, and does not record it"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips complex schemas entirely"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > collision: a customer-declared mcp_session is never clobbered"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > composed inputSchema: early-return skips output injection too, nothing registered"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > does not mutate the customer's outputSchema object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > injects mcp_session into a plain object outputSchema and registers the tool"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > no injection at all (neither handle) leaves outputSchema alone"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > no outputSchema: untouched, nothing registered"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > output registry accessors are keyed per server object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > skips complex outputSchema (oneOf/allOf/anyOf) and does not register"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > sub-properties track modes: hook mode drops session_id and status, tracking off drops agent_id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > clones the request with stripped arguments, leaving the original intact"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > stores per server object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > fallback never strips get_more_tools' own context"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > handles non-object args"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > preserves the customer's own session_id param"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > strips exactly what was injected"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should have either callback or handler property (SDK version dependent)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should preserve property name for tools registered after track()"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should preserve the original property name after track() is called"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > agent tracking is OFF by default: no param, no tag, task-only mint-back"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > callback receives stripped args; supplied handles reused silently"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > enableTracing:false — get_more_tools still answers, no mint-back, no event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > get_more_tools carries handles and the mint-back"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > identify runs per call and stamps the event; no identify event published"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > mints on first call, prepends exactly one mint-back block"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > a customer's own session_id is never adopted and still reaches the handler"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > a customer's own session_id param: start is their value too, never a sentinel"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > composed-schema tool: an echoed session_id AgentCat issued is honored, not called foreign"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > composed-schema tool: injection is skipped, yet the call still mints a session and announces it"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > declares mcp_session in a listed plain-object outputSchema"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > echoed handles are reused verbatim with no mint-back"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableAgentTracking:false — no agent param, tag, or mint-back line"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableReportMissing:false — handles still inject, no get_more_tools"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableTracing:false — no handle params injected, no mint-back, no events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > hook mode: no session_id param, hook-derived session id, no task mint-back"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > injects required handles into listed tool schemas"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > prepends the mint-back on isError results too"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > publishes no tools/list or initialize events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > stamps _meta clientInfo and protocol version when present"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > strips injected params before the customer handler; event keeps them"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > subagent flow: inherited task + omitted agent yields no mint-back, task tagged supplied"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > high-level: get_more_tools minting call — event.response keeps only the answer"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > high-level: minting call — block on the wire, absent from event.response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: echoed handles — event.response is exactly the handler result"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: minting call — block on the wire, absent from event.response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: minting error call — event.response and event.error stay clean"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|appendMintBack > does not mutate the original result"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|appendMintBack > leaves non-array content untouched"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|appendMintBack > prepends a text block as the first content element"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|appendMintBack > prepends on isError results too"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildHandleTags > clamps a >200-char agent_id to exactly 200 chars in the tag only"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildHandleTags > omits agent and protocol keys when absent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildHandleTags > passes a normal agent_id through unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildHandleTags > stamps sources, agent id, and protocol version"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildHandleTags > strips newlines from the agent_id tag"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildMintBackText > hook mode never emits task instructions, even when hook-null minted"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildMintBackText > task minted without agent tracking: same task-only block"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildMintBackText > task minted: task-only block, no agent mention even when agent supplied"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildMintBackText > task supplied -> null (nothing to announce, agent never mints)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > agent tracking off: task only, status active"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode never exposes session_id or status; supplied agent is echoed"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode with agent tracking off: nothing echoable -> null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > steady state (both supplied): ids plus status active"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > task minted + agent supplied: both ids, status issued"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > derives deterministic session ids from id+project"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > derives without a project id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > different project yields a different derived id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > does not trim its input"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns any non-empty string; validation happens in resolveHandles"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > mints session ids with the ses_ prefix"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|handle primitives > pins derived session ids to their golden values"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: never echoes session state, which is the customer's"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: says nothing when agent_id is not in play either"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: still echoes agent_id, which AgentCat did inject"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid + agent supplied: agent_id rides along with the unrecognized status"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: corrects the agent without issuing a replacement"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: offers an escape to an agent that was never issued one"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: structured mirror carries status unrecognized but no session_id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invokeSessionHook > contains a rejection"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invokeSessionHook > contains a synchronous throw"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invokeSessionHook > resolves null when the hook returns nullish"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|invokeSessionHook > resolves the hook value and forwards request/extra verbatim"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > accepts an ID this SDK actually mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > accepts the test helper's IDs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects customer value"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects empty"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects inner whitespace"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects no prefix"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects non-base62 body"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects prefix only"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects too long"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects too short"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects wrong prefix"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > applies to isError results that carry structuredContent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > never clobbers an existing key (customer data wins)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > ignores agent-supplied session_id — the hook wins"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > returns a provisional resolution: empty id, source 'hook', hookMode on"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > accepts a well-formed supplied session_id verbatim"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > agent tracking is OFF by default — omitted option resolves no agent id"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > enableAgentTracking:false resolves no agent id at all"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: sessionless regardless of what the agent sent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: start is the customer's value, never a sentinel"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > hook mode wins over foreign: arguments are never read"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > mints the task but never the agent when nothing supplied (agent tracking on)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > never stores the raw rejected value"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > rejects a malformed supplied session_id: sessionless, source invalid"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"  start  \" mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \" START\\t\" mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"START\" mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"Start\" mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"sTaRt\" mints"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel resolves exactly like omission: fresh mint, source minted"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > still mints when nothing is supplied on our own param"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > subagent flow: supplied task + omitted agent leaves the agent unresolved"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > uses supplied handles verbatim"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|sessionFromHookValue > derives deterministically from the hook value + project"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|sessionFromHookValue > mints a fresh id per null — silent mint, never 'supplied'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|sessionFromHookValue > treats a whitespace-only value as null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/handles.test.ts|sessionFromHookValue > trims the value before deriving"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle async operations in identify function"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle errors in identify function gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle identify function that returns invalid data"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on every tool call and stamp every event, with no dedup"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on the tool call and stamp the identity onto that event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should properly identify when calling tools added after track()"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Identity Data on Published Events > should populate actorGivenId, actorName, and actorData on the event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Identity Data on Published Events > should re-resolve identity per request so a changed identity lands on the next event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Null/Undefined Identity Handling > should handle when identify function returns null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > Null/Undefined Identity Handling > should work without identify function (anonymous sessions)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > User Data Persistence Across Tool Calls > should maintain user identification across multiple tool calls"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/identify.test.ts|Identify Feature > tools/list no longer identifies or publishes > should not run identify or publish an event for a tools/list request"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create KSUIDs with different timestamps"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create a KSUID from random async"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create a KSUID from randomSync"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Buffer validation > should throw error for invalid buffer in constructor"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Buffer validation > should validate buffers correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Comparison and equality > should check equality correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Comparison and equality > should compare KSUIDs correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Edge cases > should create unique KSUIDs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Edge cases > should handle KSUID epoch boundary"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with fromParts"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with random async"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with randomSync"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create unique prefixed KSUIDs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should handle different prefixes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have 16-byte payload"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have correct date property"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have correct timestamp property"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Serialization > should have proper toString representation"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > Serialization > should serialize to JSON correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should encode and parse KSUID strings correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should handle MIN and MAX string values"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should throw error for invalid string length"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should create KSUID from timestamp and payload"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid payload"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid timestamp"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent when os.homedir is not implemented at all"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent — never console — when homedir resolves falsy on Node"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent — never console — when homedir throws on Node"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > targets console only when the runtime lacks fs/os modules (edge isolates)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > targets the home log file on a healthy Node runtime"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > caches the prefix so repeated logging stays consistent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > prefixes sink entries with sdk, node, and mcp versions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > skips MCP package resolution on Cloudflare Workers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > writes the prefixed entry to the log file"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/mcp-version-compatibility.test.ts|MCP Version Compatibility > should be compatible with currently installed MCP version"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should NOT emit $ai_span for non-tool-call events even with enableAITracing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should NOT emit $ai_span when enableAITracing is false or unset"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should allow customer tags to override $ai_* defaults on $ai_span"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should emit $ai_span alongside regular event for tool calls when enableAITracing is true"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should emit regular + $exception + $ai_span for error tool calls with enableAITracing"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should fall back to sessionId when identifyActorGivenId is not set"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should generate deterministic UUIDs for $ai_span trace and span IDs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should include $set person properties from identity data"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should include userIntent in properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should map event types to PostHog event names"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not include $set when no identity data is present"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not include customer tag or property keys when not set on event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not send $exception event when isError is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not throw when fetch fails"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not throw when fetch returns non-ok response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should omit $session_id entirely for sessionless events (empty sessionId)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should only set tool_name for tools/call events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should pass through parameters and response as-is (objects stay objects)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should pass through string parameters and response as-is"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should send $exception event alongside regular event when isError is true"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should send correct payload structure for regular events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer tags and properties directly on $ai_span (not namespaced)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer-defined properties directly into properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer-defined tags directly into properties"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should strip trailing slash from host"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should use custom host when provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should use identifyActorGivenId as distinct_id when available"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic for empty-string input"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic for non-KSUID input (fallback path)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic — same input always produces same output"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should embed the KSUID timestamp in the UUIDv7"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should handle evt_ prefix"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should handle invalid KSUID gracefully with fallback timestamp"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce a valid UUIDv7"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce different UUIDs for different non-KSUID inputs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce different UUIDs for different session IDs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce timestamps that are before or equal to current time"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should set variant bits to 10xx"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should set version bits to 7 (0111)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should always use 'agentcat:custom' as event type"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle empty event data object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle undefined event data gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should include timestamp"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > parameter validation > should throw error if first parameter is invalid"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > parameter validation > should throw error if projectId is not provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should handle all event data fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should let eventData.sessionId take precedence over the string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should use the session ID string verbatim as the session ID"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle error data correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle high-level server objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish custom event with tracked server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish with an empty session id and warn when no sessionId is provided"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should throw error if server is not tracked"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should use eventData.sessionId as the session id, not any ambient server session"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply an asynchronous hook in place"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should hide internal function fields from the hook but preserve the string-redaction fn"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should honor field deletions instead of resurrecting them"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should keep the same object identity so pipeline observers see the changes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should propagate hook errors to the caller"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop when the hook returns undefined"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should restore system-managed fields if the hook changes or removes them"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > redacts a shared (non-circular) reference once and reuses the clone"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should create a new object without modifying the original"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle arrays of strings"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle complex identifyData object without redacting it"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle custom redaction function errors gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle deeply nested protected fields correctly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle error objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle events with all possible fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should handle mixed nested structures"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should not redact nested fields within any protected field"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should not redact protected fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve Date objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve null and undefined values"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should redact basic string fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should redact nested string fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > should skip functions in objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent > terminates on circular structures, preserving the cycle in the clone"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should apply the hook to custom events published on a tracked server"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should drop only the events the hook rejects, while the others still publish"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should let the hook inspect event metadata and replace event fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should run the event hook on raw values before string redaction"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should handle complex nested structures with redaction"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should not redact protected fields even if they contain sensitive patterns"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should properly redact sensitive data in published events"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should NOT add get_more_tools when enableReportMissing is false"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should add report_missing WITHOUT context injection even when enableToolCallContext is true"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should add report_missing to tools list when enableReportMissing is true"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with description and optional context"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with only context"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 3. Event Tracking Tests > should track report_missing events with proper structure"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 4. Integration Tests > should maintain task continuity when calling report_missing between other tools"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 4. Integration Tests > should work correctly with user identification"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 6. Analytics Value Tests > should handle multiple missing tool reports in the same task"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 6. Analytics Value Tests > should provide actionable insights for missing tool reports"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 6. Analytics Value Tests > should track get_more_tools across different sessions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - integration > should not mutate the original event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - integration > should sanitize both parameters and response in a full event"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should find and redact deeply nested large base64"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should handle null and undefined parameters without error"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave large non-base64 strings unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave small strings unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should only redact large base64 in mixed-type parameters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact base64 string at exactly SIZE_GATE boundary (10240 chars)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 inside an array"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 strings (>10KB)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle null and undefined response without error"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle response without content array"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should leave text-only content unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through EmbeddedResource with text"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through resource_link unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact EmbeddedResource with blob"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact large base64 inside structuredContent"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact unknown content types with type name in message"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should replace image and audio blocks but keep text blocks"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > does not re-raise when the customer has their own listener for the signal"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > never throws even when re-raise fails"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > re-raises even when the flush itself fails"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > re-raises the signal after the flush settles so default termination proceeds"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > content-only tools are unaffected: block leads content, no structuredContent conjured"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > steady state: supplied handles are re-echoed on every response; text block stays mint-only"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > structuredContent-only consumer discovers minted handles"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > tools/list declares mcp_session on get_stats; schema-less tools untouched"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > wire-only: published event.response never contains mcp_session"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > composed outputSchema: schema untouched, no mirror, text block still delivers"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > hook mode: mirrored payload carries agent_id but never session_id or status"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > mints into structuredContent on the V1 path too"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > no tools/list ever (no registry): mirror applies — a list-less client cannot be validating"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts an error result's content, including a throw the SDK turns into one"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts the raw arguments and the content text"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts the structured content when the content list is empty"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > keeps the raw counts when redaction rewrites the payloads"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > keeps the raw counts when truncation shortens the response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > never breaks the tool call when the estimator itself throws"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > never throws: a toJSON that throws yields an omitted field"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > omits the field for absent arguments"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > omits the field when the arguments cannot be serialized"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"html\":\"<a>&</a>\"} -> 6"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"ids\":[1,2,3],\"opts\":{\"deep\":true,\"n\":null}} -> 13"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"name\":\"café\"} -> 5"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"q\":\"hello\"} -> 4"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"t\":\"你好\"} -> 4"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {} -> 1"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > falls back to the whole response when there is no content list"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > ignores blocks whose text is not a string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > never throws: a content getter that throws yields an omitted field"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > omits the field for an absent response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":null} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":{\"result\":\"ok\"}} -> 5"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[]} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}],\"structuredContent\":{\"result\":\"ok\"}} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}]} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"blob\":\"QUJD\"}}]} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"text\":\"resource body\"}}]} -> 4"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"\"}]} -> 0"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"abcd\"},{\"type\":\"text\",\"text\":\"e\"}]} -> 2"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hello world\"}]} -> 4"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"isError\":true} -> 1"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"structuredContent\":{\"big\":\"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\"}} -> 1"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]} -> 1171"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 0 -> 0 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 1 -> 1 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 13 -> 4 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 4096 -> 1171 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 7 -> 2 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 7516192765 -> 2147483647 tokens"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > pins the divisor"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"\" -> 0 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"\\ud83d\" -> 3 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"café\" -> 5 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"hello\" -> 5 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"你好\" -> 6 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"😀\" -> 4 bytes"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tracing-initialization.test.ts|Tracing Initialization Tests > should not create duplicate events when track() is called multiple times"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/tracing-initialization.test.ts|Tracing Initialization Tests > should publish events for successful tool calls with handler-level architecture"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should leave objects within breadth limit unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should limit array elements to maxBreadth"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should limit object properties to maxBreadth"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should allow same object in different branches (not a cycle)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect circular array references"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect circular object references"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect deeply nested circular references"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should collapse arrays beyond max depth to '[Array]'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should collapse objects beyond max depth to '[Object]'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should handle depth=0 by collapsing top-level objects"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should not collapse primitives regardless of depth"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert BigInt to string marker"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert Date to ISO string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert Infinity to string marker"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert NaN to string marker"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert anonymous functions"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert functions to descriptive string"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert symbols"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert undefined to string marker"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should handle Invalid Date gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through booleans unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through null as null"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through numbers unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should leave short strings unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should leave strings at exactly maxStringLength unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should truncate strings exceeding maxStringLength with '...'"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - undefined property handling > should omit undefined object properties (matching JSON.stringify behavior)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|normalize - undefined property handling > should still convert top-level undefined to marker"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should handle empty event with minimal fields"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should handle event with null parameters and response"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should pass through already-small events unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should preserve SDK-controlled fields exactly"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should handle error without frames"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should leave frames at exactly 50 unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should limit error.frames to 50 (first 25 + last 25)"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should truncate error.message exceeding 2048 chars"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should handle undefined/null fields gracefully"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should leave short field values unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate resourceName exceeding 256 chars"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate serverName, serverVersion, clientName, clientVersion exceeding 256 chars"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate userIntent exceeding 2048 chars"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - integration with sanitization pipeline > should work correctly after sanitizeEvent in the pipeline"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - non-mutation > should not mutate the original event object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - response content text truncation > should truncate text content blocks exceeding 32KB"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should guarantee 100KB max for pathological payloads"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should leave small events unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should preserve timestamp as Date when last-resort truncation runs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should reduce depth progressively for events exceeding 100KB"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should truncate largest string fields as last resort"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop empty string keys"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop keys longer than 32 characters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop keys with invalid characters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop non-string values at runtime"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop values containing newlines"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should drop values longer than 200 characters"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should keep only first 50 entries when exceeding limit"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should pass through valid tags unchanged"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should return null for empty object"
+status = "todo"
+
+[[test]]
+key = "v1|src/tests/validation.test.ts|validateTags > should return null when all entries are invalid"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: OFF by default > injects no agent_id param, tags nothing, and mints task-only"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > advertises both handles as required on every tool including get_more_tools"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > echoes a self-chosen agent_id verbatim with source tag supplied"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > subagent flow: inherited task + own generated agent_id, no mint-back"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > tolerates omission: task-only mint-back, event without agent identity"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/concurrency.test.ts|v2 concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > describeSignals lists only true signals"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v1 high-level McpServer"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v1 low-level Server"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v2 high-level McpServer (no .tool method)"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v2 low-level Server"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|detectServer > returns null for non-server shapes"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|fingerprintServerShape > reports the same signals detection computes for a v2 McpServer"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/detect.test.ts|fingerprintServerShape > returns the empty string for null and non-objects"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/era-2026.test.ts|2026-07-28 era via createMcpHandler > rebuild-on-demand serves calls on instances that never listed"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/era-2026.test.ts|2026-07-28 era via createMcpHandler > tracks per-request instances and captures envelope identity"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > advertises the tool with required bespoke context, handles, and honest annotations"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > answers with the canned text and publishes an event carrying userIntent"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > applies the mint-back to its result; the published event keeps only the answer"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > keeps task continuity when a supplied session_id spans customer tools and get_more_tools"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > stamps identity resolved for a get_more_tools call onto its event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: (request, extra) arguments carry the v2 ServerContext > passes the raw request and the v2 ServerContext to every hook"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > adds neither tags nor properties when no callbacks are configured"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > attaches both tags and properties to the same event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > attaches properties to tool call events"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > does not block tool calls when the callback throws"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > omits properties when the callback returns null"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > SDK tag wins when a customer tag collides with an SDK tag name"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > attaches customer tags; SDK handle tags ride alongside"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > does not block tool calls when the callback throws; only SDK tags remain"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > handles null return from the callback"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > validates tags from the callback, dropping invalid keys"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > degrades to anonymous when identify throws; the tool call still succeeds"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > does not run identify or publish an event for tools/list"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > handles identify returning invalid data by leaving actor fields empty"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > publishes anonymously when identify returns null"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > re-resolves identity per request so a changed identity lands on the next event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > returns the call while async identify is still in flight; identity lands in the background"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on every tool call and stamps every event, with no dedup"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on the tool call and stamps the identity onto that event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/hooks.test.ts|v2 real-wire client identity > stamps the connecting client's own identity onto captured events"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > captures headers, method, and url from the web Request"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > does not throw on a malformed req and still publishes the event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > leaves stdio-shaped extra (no http) unchanged"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > advertises a tool registered after track() with injected params"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > captures full error stacks from a late-registered tool via the executor tap"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > stamps resolved identity onto events from late-registered tools"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > strips injected args that a loose schema passes through (inner tap on the late executor)"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > an invalid session_id publishes sessionless and tells the agent to re-send"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > appends the mint-back on isError results; event.response and event.error stay clean"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > echoed handles: event.response is exactly the handler result"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > injects required handles into listed tool schemas in canonical order"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > minting call: block on the wire, absent from event.response"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > prefers the v2 envelope for clientInfo and protocol version"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > publishes no tools/list or initialize events"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > publishes the event and rethrows when the low-level handler throws"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > stamps _meta clientInfo and protocol version when present"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > strips injected params before the customer handler; event keeps them"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > captures userIntent from calls made with the custom description configured"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > lands the custom text in the advertised context param description"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > uses the default description when customContextDescription is not provided"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: enableReportMissing false > omits get_more_tools; handle injection is unaffected"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: enableToolCallContext false > injects no context param; events carry no userIntent"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > injects no handle params into the listing"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > passes tool calls through unwrapped-behavior: no event, no mint-back"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > still answers get_more_tools directly, publishing nothing"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: track() edge paths > returns an incompatible object untouched instead of throwing"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/options.test.ts|v2 options: track() edge paths > second track() on the same server is a no-op: no double wrap, one event per call"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > lets eventData.sessionId take precedence over the session ID string"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > publishes without a session when a tracked server gets no sessionId"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > queues a custom event on a v2-tracked server with sessionId attribution"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > throws for an untracked v2 server"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > uses a session ID string verbatim as the session, carrying full event data"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > validates its required parameters"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > validates tags and normalizes empty properties on direct custom events"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: redactSensitiveInformation on captured events > applies the string-redaction hook to a v2-captured event"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: redactSensitiveInformation on captured events > sanitizes image content blocks in v2 tool responses"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > does not fire for non-tool methods"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > fires the re-arm callback for string tools/call registrations"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > forwards 3-arg custom registrations intact (regression: dropped handler)"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > builds a default object schema for a tool listed without one"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > drops additionalProperties:false so optional handles can ride along"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > preserves a customer-declared session_id/agent_id instead of overwriting"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > skips handle injection entirely on composed (oneOf) input schemas"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > declares mcp_session in a listed plain-object outputSchema"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > leaves composed (anyOf) outputSchemas untouched"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > never overwrites a customer-declared mcp_session output field"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > omits agent_id from mcp_session when agent tracking is off"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > advertises no session_id param; agent_id stays available"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > derives a deterministic ses_ id: same hook value + project → same id across calls and instances"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > emits no mint-back in hook mode; a supplied agent_id is tagged as supplied"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > hook mode + tracking on + omitted agent_id: no mint-back at all, no agent tags"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > mints silently on hook null: fresh ses_ per call, minted source, no mint-back"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > mints on omission, announces the id, and tags the source as minted"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > start begins a new task exactly like omission, case-insensitively"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > tags a supplied session_id as supplied and reuses it verbatim, no mint-back"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/smoke.test.ts|v2 harness smoke > round-trips a tool call through a real v2 server"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > captures events, strips injected args (loose schema), prepends mint-back, mirrors structuredContent"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > echoes a supplied session_id and captures error stacks via the executor tap"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > injects params + get_more_tools into tools/list and mirrors outputSchema"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > re-wraps the regenerated executor after update() on the next list"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-lowlevel.test.ts|track() on v2 low-level Server > rebuilds registries on demand when tools/call arrives before any tools/list"
+status = "todo"
+
+[[test]]
+key = "v2|src/tests/v2/track-lowlevel.test.ts|track() on v2 low-level Server > wraps handlers registered via method strings; preserves nextCursor"
+status = "todo"
+
+[[test]]
+key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > captures HTTP headers from a genuine workerd Request into event parameters"
+status = "todo"
+
+[[test]]
+key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > keeps AgentCat ingestion alive after a v2 handler returns"
+status = "todo"
+
+[[test]]
+key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > resolves deferred hooks inside waitUntil after the response has returned"
+status = "todo"

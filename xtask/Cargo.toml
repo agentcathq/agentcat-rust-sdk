@@ -1,0 +1,17 @@
+[package]
+name = "xtask"
+version = "0.0.0"
+description = "Repository tasks for the AgentCat Rust SDK workspace (parity checker)"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json = { workspace = true, features = ["preserve_order"] }
+toml = { workspace = true, features = ["std", "serde", "parse"] }
+
+[lints]
+workspace = true

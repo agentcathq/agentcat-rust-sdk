@@ -12,6 +12,7 @@ fi
 cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo nextest run --workspace --all-features
+cargo run -q -p xtask -- parity
 cargo test --workspace --doc
 RUSTDOCFLAGS="-D warnings" cargo doc --workspace --all-features --no-deps
 cargo deny check

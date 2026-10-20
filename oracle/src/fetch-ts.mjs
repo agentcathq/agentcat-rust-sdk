@@ -155,10 +155,12 @@ function excludeMarker(dir) {
 }
 
 /**
- * The clone sits inside this repository's pnpm workspace; without its own
+ * The corepack arguments that run the clone's own pnpm in `dir`:
+ * `run("corepack", [...pnpmArgs(dir), "exec", ...], dir)`. The clone sits
+ * inside this repository's pnpm workspace; without its own
  * pnpm-workspace.yaml, pnpm would take ours and install the wrong project.
  */
-function pnpmArgs(dir) {
+export function pnpmArgs(dir) {
   return existsSync(join(dir, "pnpm-workspace.yaml"))
     ? ["pnpm"]
     : ["pnpm", "--ignore-workspace"];
@@ -196,12 +198,16 @@ function git(dir, args) {
   return run("git", dir === null ? args : ["-C", dir, ...args], dir ?? process.cwd());
 }
 
-/** Runs a command; resolves with its stdout, rejects with its output on failure. */
-function run(cmd, args, cwd) {
+/**
+ * Runs a command with the scrubbed environment (plus `extraEnv`); resolves
+ * with its stdout, rejects with its output on failure.
+ */
+export function run(cmd, args, cwd, extraEnv = {}) {
   return new Promise((resolve, reject) => {
     // corepack is a .cmd shim on Windows, which only starts through a shell.
     const shell = process.platform === "win32" && cmd === "corepack";
-    const child = spawn(cmd, args, { cwd, env: childEnv(), shell, stdio: ["ignore", "pipe", "pipe"] });
+    const env = { ...childEnv(), ...extraEnv };
+    const child = spawn(cmd, args, { cwd, env, shell, stdio: ["ignore", "pipe", "pipe"] });
     let stdout = "";
     let output = "";
     const keep = (text) => {
