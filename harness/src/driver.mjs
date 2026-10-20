@@ -1,0 +1,259 @@
+// Language-neutral scenario driver. ONE client implementation (the official TS
+// MCP client) drives ANY reference server named by a command line, over stdio
+// or streamable HTTP, following a JSON scenario file. The server under test is
+// a black box: the TS and Rust reference servers run under the same driver.
+//
+// usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless>
+//          [--lane 2025-11-25] -- <server cmd...>
+//   label      output file tag, e.g. "ts" or "rust"
+//   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
+//   --lane     the client's protocol lane (default and only value today: 2025-11-25)
+// outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
+// Exit 0: the publish count equals expectPublishes after the settle window.
+// Exit 1: the count differs, or the run failed. Exit 2: bad arguments or scenario.
+import { spawn } from "node:child_process";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
+
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+
+import { normalizeRun } from "./normalize.mjs";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const OUT_DIR = join(HERE, "..", "out");
+const TRANSPORTS = ["stdio", "http", "http-stateless"];
+const LANES = ["2025-11-25"];
+const PUBLISH_PATH = "/v1/public/events/";
+const USAGE =
+  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25] -- <server cmd...>";
+
+function usage(message) {
+  process.stderr.write(`driver: ${message}\n${USAGE}\n`);
+  process.exit(2);
+}
+
+// ---------------------------------------------------------------------------
+// Arguments and scenario.
+// ---------------------------------------------------------------------------
+const argv = process.argv.slice(2);
+const sep = argv.indexOf("--");
+if (sep < 0) usage("missing -- before the server command");
+const serverCmd = argv.slice(sep + 1);
+if (serverCmd.length === 0) usage("missing server command after --");
+const head = argv.slice(0, sep);
+let lane = LANES[0];
+const laneAt = head.indexOf("--lane");
+if (laneAt >= 0) {
+  if (laneAt + 1 >= head.length) usage("--lane needs a value");
+  lane = head[laneAt + 1];
+  head.splice(laneAt, 2);
+}
+if (!LANES.includes(lane)) usage(`unsupported lane ${JSON.stringify(lane)} (supported: ${LANES.join(", ")})`);
+if (head.length !== 3) usage("expected <scenario.json> <label> <transport>");
+const [scenarioPath, label, transport] = head;
+if (!/^[A-Za-z0-9_-]+$/.test(label)) usage(`bad label ${JSON.stringify(label)} (letters, digits, _ and - only)`);
+if (!TRANSPORTS.includes(transport)) usage(`unknown transport ${JSON.stringify(transport)}`);
+
+let scenario;
+try {
+  scenario = JSON.parse(readFileSync(scenarioPath, "utf8"));
+} catch (err) {
+  usage(`${scenarioPath}: ${err.message}`);
+}
+const expected = checkScenario(scenario);
+
+/** Validates the scenario; returns the publish count expected on this transport. */
+function checkScenario(s) {
+  if (!s || typeof s !== "object") usage("scenario must be a JSON object");
+  if (typeof s.name !== "string" || !/^[A-Za-z0-9_-]+$/.test(s.name)) usage("scenario.name must be letters, digits, _ and -");
+  if (typeof s.projectId !== "string" || s.projectId === "") usage("scenario.projectId must be a non-empty string");
+  if (!Array.isArray(s.sessions) || s.sessions.length === 0) usage("scenario.sessions must be a non-empty array");
+  for (const [si, session] of s.sessions.entries()) {
+    if (!Array.isArray(session?.steps)) usage(`sessions[${si}].steps must be an array`);
+    for (const [i, step] of session.steps.entries()) {
+      if (step?.op === "listTools") continue;
+      if (step?.op === "callTool" && typeof step.name === "string") continue;
+      usage(`sessions[${si}].steps[${i}]: op must be listTools, or callTool with a name`);
+    }
+  }
+  const e = s.expectPublishes;
+  const n = typeof e === "number" ? e : e && typeof e === "object" ? e[transport] : undefined;
+  if (!Number.isInteger(n) || n < 0) usage(`expectPublishes has no count for ${transport}`);
+  return n;
+}
+
+// ---------------------------------------------------------------------------
+// Processes.
+// ---------------------------------------------------------------------------
+function readyLine(child, what) {
+  return new Promise((resolve, reject) => {
+    const rl = createInterface({ input: child.stdout });
+    const onExit = (code, signal) => reject(new Error(`${what} exited before its ready line (${signal ?? code})`));
+    child.once("exit", onExit);
+    child.once("error", reject);
+    rl.once("line", (line) => {
+      child.off("exit", onExit);
+      try {
+        resolve(JSON.parse(line));
+      } catch {
+        reject(new Error(`${what}: bad ready line: ${line}`));
+      }
+    });
+  });
+}
+
+const base = `${scenario.name}.${label}.${transport}`;
+mkdirSync(OUT_DIR, { recursive: true });
+// HOME for the server (the TS SDK writes ~/agentcat.log there); kept for debugging.
+const home = join(OUT_DIR, "home", base);
+rmSync(home, { recursive: true, force: true });
+mkdirSync(home, { recursive: true });
+
+const countPublishes = (requests) => requests.filter((r) => r.method === "POST" && r.path === PUBLISH_PATH).length;
+
+const children = [];
+function killAll() {
+  for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
+}
+
+const mock = spawn(process.execPath, [join(HERE, "mock-api.mjs"), "0"], { stdio: ["ignore", "pipe", "inherit"] });
+children.push(mock);
+
+async function main() {
+  const { port: mockPort } = await readyLine(mock, "mock API");
+  const mockUrl = `http://127.0.0.1:${mockPort}`;
+  const getRequests = async () => (await fetch(`${mockUrl}/__requests`)).json();
+
+  const serverEnv = {
+    ...process.env,
+    HOME: home,
+    USERPROFILE: home,
+    AGENTCAT_API_URL: mockUrl,
+    DISABLE_DIAGNOSTICS: "true",
+    HARNESS_PROJECT_ID: scenario.projectId,
+    HARNESS_OPTIONS: JSON.stringify(scenario.options ?? {}),
+  };
+
+  let httpUrl;
+  if (transport !== "stdio") {
+    const child = spawn(serverCmd[0], [...serverCmd.slice(1), transport, "0"], {
+      env: serverEnv,
+      stdio: ["ignore", "pipe", "inherit"],
+    });
+    children.push(child);
+    ({ url: httpUrl } = await readyLine(child, "server"));
+  }
+
+  async function connect(clientInfo, negotiated) {
+    const client = new Client(clientInfo, { capabilities: {} });
+    const t =
+      transport === "stdio"
+        ? new StdioClientTransport({
+            command: serverCmd[0],
+            args: [...serverCmd.slice(1), "stdio"],
+            env: serverEnv,
+            stderr: "inherit",
+          })
+        : new StreamableHTTPClientTransport(new URL(httpUrl), { requestInit: { headers: scenario.httpHeaders ?? {} } });
+    // The client hands the negotiated protocol version to transports that take it.
+    const setVersion = t.setProtocolVersion?.bind(t);
+    t.setProtocolVersion = (version) => {
+      negotiated.protocolVersion = version;
+      setVersion?.(version);
+    };
+    await client.connect(t);
+    return client;
+  }
+
+  const vars = {};
+  const subst = (v) =>
+    typeof v === "string"
+      ? v.replace(/\$\{(\w+)\}/g, (_, k) => vars[k] ?? `\${${k}}`)
+      : Array.isArray(v)
+        ? v.map(subst)
+        : v && typeof v === "object"
+          ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, subst(x)]))
+          : v;
+
+  function handleFrom(result) {
+    const sc = result?.structuredContent?.mcp_session?.session_id;
+    if (sc) return sc;
+    for (const block of result?.content ?? []) {
+      const m = typeof block.text === "string" && block.text.match(/session_id: (ses_[0-9A-Za-z]{27})/);
+      if (m) return m[1];
+    }
+    return undefined;
+  }
+
+  const transcript = [];
+  const clients = [];
+  for (const [si, session] of scenario.sessions.entries()) {
+    const negotiated = {};
+    const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated);
+    clients.push(client);
+    // The protocol version the server agreed to on this lane.
+    transcript.push({ session: si, op: "initialize", result: { protocolVersion: negotiated.protocolVersion ?? null } });
+    for (const step of session.steps) {
+      const entry = { session: si, op: step.op };
+      try {
+        if (step.op === "listTools") {
+          entry.result = await client.listTools(step.cursor ? { cursor: step.cursor } : undefined);
+        } else {
+          entry.request = { name: step.name, arguments: subst(step.args ?? {}) };
+          entry.result = await client.callTool(entry.request);
+          if (step.saveHandleAs) vars[step.saveHandleAs] = handleFrom(entry.result);
+        }
+      } catch (e) {
+        // Protocol errors (JSON-RPC errors) are part of the observable contract.
+        entry.error = { name: e?.constructor?.name, code: e?.code, message: String(e?.message ?? e) };
+      }
+      transcript.push(entry);
+    }
+  }
+
+  // Wait for the event stream to settle BEFORE closing clients: the expected
+  // publish count reached and no new request for quietMs, or settleTimeoutMs elapsed.
+  const deadline = Date.now() + (scenario.settleTimeoutMs ?? 10_000);
+  const quietMs = scenario.quietMs ?? 500;
+  let last = -1;
+  let stableSince = Date.now();
+  for (;;) {
+    const seen = await getRequests();
+    if (seen.length !== last) {
+      last = seen.length;
+      stableSince = Date.now();
+    }
+    if (countPublishes(seen) >= expected && Date.now() - stableSince >= quietMs) break;
+    if (Date.now() > deadline) break;
+    await new Promise((r) => setTimeout(r, 50));
+  }
+  const requests = await getRequests();
+
+  for (const c of clients) await c.close().catch(() => {});
+  killAll();
+
+  const outBase = join(OUT_DIR, base);
+  const write = (kind, value) => writeFileSync(`${outBase}.${kind}.json`, `${JSON.stringify(value, null, 2)}\n`);
+  write("raw", requests);
+  write("transcript", transcript);
+  const { normalized, report } = await normalizeRun({ requests, transcript, scenario });
+  write("normalized", normalized);
+  const publishes = countPublishes(requests);
+  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, report };
+  write("report", summary);
+  process.stdout.write(`${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected })}\n`);
+  return publishes === expected ? 0 : 1;
+}
+
+main().then(
+  (code) => process.exit(code),
+  (err) => {
+    killAll();
+    process.stderr.write(`driver: ${err?.stack ?? err}\n`);
+    process.exit(1);
+  },
+);

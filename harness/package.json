@@ -1,0 +1,13 @@
+{
+  "name": "harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\""
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.31.0",
+    "oracle": "workspace:*",
+    "zod": "3.25.76"
+  }
+}
