@@ -1,0 +1,126 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "gen-vectors.ts",
+  "token_estimate": [
+    {
+      "input_json": "{\"msg\":\"hi\"}",
+      "input_tokens": 4,
+      "output_tokens": 4
+    },
+    {
+      "input_json": "{}",
+      "input_tokens": 1,
+      "output_tokens": 1
+    },
+    {
+      "input_json": "null",
+      "input_tokens": null,
+      "output_tokens": null
+    },
+    {
+      "input_json": "{\"n\":1.0}",
+      "input_tokens": 2,
+      "output_tokens": 2
+    },
+    {
+      "input_json": "{\"n\":1e21}",
+      "input_tokens": 4,
+      "output_tokens": 4
+    },
+    {
+      "input_json": "{\"n\":-0}",
+      "input_tokens": 2,
+      "output_tokens": 2
+    },
+    {
+      "input_json": "{\"n\":0.1}",
+      "input_tokens": 3,
+      "output_tokens": 3
+    },
+    {
+      "input_json": "{\"n\":123456789012345678901234567890}",
+      "input_tokens": 8,
+      "output_tokens": 8
+    },
+    {
+      "input_json": "{\"s\":\"\\u00e9\\u4e2d\\ud83d\\ude00\"}",
+      "input_tokens": 5,
+      "output_tokens": 5
+    },
+    {
+      "input_json": "{\"s\":\"\\ud800 lone high surrogate\"}",
+      "input_tokens": 10,
+      "output_tokens": 10
+    },
+    {
+      "input_json": "{\"b\":true,\"z\":null,\"a\":[1,\"2\",{\"x\":[]}]}",
+      "input_tokens": 12,
+      "output_tokens": 12
+    },
+    {
+      "input_json": "{\"emoji\":\"😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀\"}",
+      "input_tokens": 61,
+      "output_tokens": 61
+    },
+    {
+      "input_json": "{\"k\\u0000\":\"nul\"}",
+      "input_tokens": 5,
+      "output_tokens": 5
+    }
+  ],
+  "derive_session_id": [
+    {
+      "id": "corr-7",
+      "project_id": "proj_DIFFSPIKE000000000000000000",
+      "session_id": "ses_2cQOeWidjYkYxUH6LdSDLJnIFqm"
+    },
+    {
+      "id": "corr-7",
+      "project_id": null,
+      "session_id": "ses_2brOBM2yqMV9Vwgu9HH9FXbXtl9"
+    },
+    {
+      "id": "",
+      "project_id": "proj_x",
+      "session_id": "ses_2b1Y5UBvNy75oz85ni1PLmFaScx"
+    },
+    {
+      "id": "a:b",
+      "project_id": "c",
+      "session_id": "ses_2btXwgICEW5eVF5eCBvN6V88rTt"
+    },
+    {
+      "id": "a",
+      "project_id": "b:c",
+      "session_id": "ses_2btXwgICEW5eVF5eCBvN6V88rTt"
+    },
+    {
+      "id": "é中😀",
+      "project_id": "proj_y",
+      "session_id": "ses_2c3CVRutRpni1MT4zRaR8JZXA0Q"
+    }
+  ],
+  "truncation_string": [
+    {
+      "input_utf16_len": 40000,
+      "input_head": "xxxxxxxx",
+      "output_utf16_len": 32771,
+      "output_utf8_len": 32771,
+      "output_tail": "xxxxxxxxxxxxxxxxxxxxx..."
+    },
+    {
+      "input_utf16_len": 40000,
+      "input_head": "😀😀😀😀",
+      "output_utf16_len": 32771,
+      "output_utf8_len": 65539,
+      "output_tail": "\ude00😀😀😀😀😀😀😀😀😀😀..."
+    },
+    {
+      "input_utf16_len": 33001,
+      "input_head": "aééééééé",
+      "output_utf16_len": 32771,
+      "output_utf8_len": 65538,
+      "output_tail": "ééééééééééééééééééééé..."
+    }
+  ]
+}

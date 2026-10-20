@@ -1,0 +1,90 @@
+{
+  "seq": 1,
+  "receivedAt": 1792528120360,
+  "method": "POST",
+  "path": "/v1/public/events/",
+  "query": "",
+  "headers": {
+    "content-type": "application/json",
+    "user-agent": "node",
+    "accept": "*/*"
+  },
+  "status": 202,
+  "body": {
+    "id": "evt_3KyS46Be9O2XCKOOKCoR0tvSGSv",
+    "projectId": "proj_DIFFSPIKE000000000000000000",
+    "sessionId": "ses_3KyS48ZCzrgAfld1mh2KAe5Sxt2",
+    "timestamp": "2026-10-20T20:28:40.333Z",
+    "duration": 1,
+    "inputTokens": 35,
+    "outputTokens": 7,
+    "eventType": "mcp:tools/call",
+    "resourceName": "echo",
+    "parameters": {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "echo",
+          "arguments": {
+            "msg": "again with [REDACTED]",
+            "session_id": "ses_3KyS48ZCzrgAfld1mh2KAe5Sxt2",
+            "context": "Second call in the same task"
+          }
+        }
+      },
+      "extra": {
+        "signal": {},
+        "requestId": 3
+      }
+    },
+    "response": {
+      "content": [
+        {
+          "type": "text",
+          "text": "again with [REDACTED]"
+        }
+      ]
+    },
+    "userIntent": "Second call in the same task",
+    "identifyActorGivenId": "user-1",
+    "identifyActorName": "User One",
+    "identifyData": {
+      "plan": "pro"
+    },
+    "sdkLanguage": "TypeScript",
+    "agentcatVersion": "2.1.1",
+    "serverName": "diff-ref-server",
+    "serverVersion": "1.0.0",
+    "clientName": "diff-client-a",
+    "clientVersion": "1.0.0",
+    "actorId": "user-1",
+    "tags": {
+      "team": "core",
+      "agentcat_session_id_source": "supplied"
+    },
+    "properties": {
+      "region": "eu"
+    },
+    "project_id": "proj_DIFFSPIKE000000000000000000",
+    "session_id": "ses_3KyS48ZCzrgAfld1mh2KAe5Sxt2",
+    "actor_id": "user-1",
+    "event_type": "mcp:tools/call",
+    "resource_name": "echo",
+    "input_tokens": 35,
+    "output_tokens": 7,
+    "user_intent": "Second call in the same task",
+    "identify_actor_given_id": "user-1",
+    "identify_actor_name": "User One",
+    "identify_data": {
+      "plan": "pro"
+    },
+    "sdk_language": "TypeScript",
+    "agentcat_version": "2.1.1",
+    "server_name": "diff-ref-server",
+    "server_version": "1.0.0",
+    "client_name": "diff-client-a",
+    "client_version": "1.0.0"
+  }
+}
