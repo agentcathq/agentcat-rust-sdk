@@ -280,6 +280,17 @@ pub fn texts(result: &CallToolResult) -> Vec<String> {
         .collect()
 }
 
+/// The TS test helper `sid(label)`: a well-formed `ses_` ID built from a label.
+pub fn sid(label: &str) -> String {
+    let body: String = label
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .chain(std::iter::repeat('0'))
+        .take(27)
+        .collect();
+    format!("ses_{body}")
+}
+
 /// The `ses_` ID in a mint-back block.
 pub fn minted_session(result: &CallToolResult) -> String {
     let first = texts(result).into_iter().next().unwrap();
