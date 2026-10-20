@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 
 import { build, version as esbuildVersion } from "esbuild";
 
-import { ensureTs } from "./fetch-ts.mjs";
+import { ensureTs, verifyTs } from "./fetch-ts.mjs";
 import { bundleDir, tsDir } from "./paths.mjs";
 
 // First line of every bundle. Bump BUNDLE_FORMAT when the build options change,
@@ -58,6 +58,9 @@ async function load(name) {
       write: false,
       logLevel: "silent",
     });
+    // Every later process reuses the bundle, so the clone must still be clean
+    // now, after the build, not only when ensureTs() ran.
+    await verifyTs();
     mkdirSync(bundleDir(), { recursive: true });
     // Write then rename, so a concurrent or interrupted run never leaves half a file.
     const tmp = `${out}.tmp-${process.pid}`;

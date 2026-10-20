@@ -7,8 +7,8 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import { loadModule } from "../src/bundle.mjs";
-import { ensureTs } from "../src/fetch-ts.mjs";
-import { lock, tsDir, tsDist } from "../src/paths.mjs";
+import { ensureTs, verifyTs } from "../src/fetch-ts.mjs";
+import { bundleDir, lock, tsDir, tsDist } from "../src/paths.mjs";
 
 function git(args) {
   return execFileSync("git", ["-C", tsDir(), ...args], { encoding: "utf8" }).trim();
@@ -52,4 +52,39 @@ test("modules load from the pinned source", async () => {
   const tokens = await loadModule("tokenEstimate");
   assert.equal(typeof tokens.estimateInputTokens, "function");
   assert.equal(tokens.estimateInputTokens({ n: 1.0 }), 2);
+});
+
+test("a cached clone at another commit is rejected", async () => {
+  await ensureTs();
+  git(["-c", "advice.detachedHead=false", "checkout", "--quiet", "--detach", "HEAD~1"]);
+  try {
+    await assert.rejects(ensureTs(), /is at [0-9a-f]{40}, expected/);
+  } finally {
+    git(["-c", "advice.detachedHead=false", "checkout", "--quiet", "--detach", lock().sha]);
+  }
+});
+
+test("a clone edited after an earlier check is never bundled", async () => {
+  await ensureTs(); // a long-running process checked the clone earlier
+  const name = "truncation";
+  const out = join(bundleDir(), `${name}.mjs`);
+  rmSync(out, { force: true });
+  const source = join("src", "modules", `${name}.ts`);
+  writeFileSync(join(tsDir(), source), "export const edited = true;\n", { flag: "a" });
+  try {
+    await assert.rejects(loadModule(name), /not clean/);
+    assert.equal(existsSync(out), false, "a bundle was written from the edited clone");
+  } finally {
+    git(["checkout", "--", source]);
+  }
+});
+
+test("verifyTs checks the clone without cloning or building", async () => {
+  await verifyTs();
+  writeFileSync(join(tsDir(), "src", "dirty.txt"), "x");
+  try {
+    await assert.rejects(verifyTs(), /not clean/);
+  } finally {
+    rmSync(join(tsDir(), "src", "dirty.txt"));
+  }
 });

@@ -1,7 +1,8 @@
 // Clones the TS SDK at the locked commit into oracle/.cache, checks that the
 // tree is clean, then installs and builds it with the pnpm version the TS repo
 // pins (through corepack). A marker file records a finished build, so later
-// calls only re-check the checkout.
+// calls only re-check the checkout (every call: the clone can change while a
+// long-running process uses it).
 //
 // CLI: node oracle/src/fetch-ts.mjs [--force]
 import { spawn } from "node:child_process";
@@ -26,7 +27,6 @@ import { lock, tsDir, tsDist } from "./paths.mjs";
 /** Holds the SHA once install and build have succeeded; git-excluded in the clone. */
 const MARKER = ".oracle-ok";
 
-let ready = null; // this process's successful check, shared by later non-forced calls
 let queue = Promise.resolve(); // runs in this process one at a time
 
 /**
@@ -36,16 +36,28 @@ let queue = Promise.resolve(); // runs in this process one at a time
  * rebuilds. Rejects with a "not clean" error when the clone has local changes.
  */
 export async function ensureTs({ force = false } = {}) {
-  if (!force && ready) return ready;
-  if (force) ready = null;
-  const attempt = queue.then(() => ensure(force));
+  return serial(() => ensure(force));
+}
+
+/**
+ * Checks, without cloning or building, that `tsDir()` is a built, clean
+ * checkout of the locked commit. Rejects otherwise ("not clean" for local
+ * changes). Run it right before persisting anything derived from the clone.
+ */
+export async function verifyTs() {
+  return serial(async () => {
+    const { sha } = lock();
+    const dir = tsDir();
+    if (!isBuilt(dir, sha)) {
+      throw new Error(`oracle: the TS SDK in ${dir} is not built; run ensureTs() first`);
+    }
+    await verifyCheckout(dir, sha);
+  });
+}
+
+function serial(task) {
+  const attempt = queue.then(task);
   queue = attempt.catch(() => {});
-  if (!force) {
-    ready = attempt;
-    attempt.catch(() => {
-      if (ready === attempt) ready = null;
-    });
-  }
   return attempt;
 }
 
