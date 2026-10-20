@@ -5,6 +5,7 @@
 //
 // CLI: node oracle/src/fetch-ts.mjs [--force]
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import {
   appendFileSync,
   existsSync,
@@ -14,18 +15,16 @@ import {
   realpathSync,
   renameSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 
+import { isAlive, withLock } from "./lock.mjs";
 import { lock, tsDir, tsDist } from "./paths.mjs";
 
 /** Holds the SHA once install and build have succeeded; git-excluded in the clone. */
 const MARKER = ".oracle-ok";
-const LOCK_WAIT_MS = 30 * 60_000;
 
 let ready = null; // this process's successful check, shared by later non-forced calls
 let queue = Promise.resolve(); // runs in this process one at a time
@@ -110,15 +109,17 @@ async function verifyCheckout(dir, sha) {
 async function cloneOrFetch(repo, sha, dir) {
   const cache = dirname(dir);
   mkdirSync(cache, { recursive: true });
-  // Leftovers of interrupted clones; safe to remove while holding the lock.
+  // Leftovers of interrupted clones, named <dir>.tmp-<pid>-<id>. Only a dead
+  // process's leftover goes: a live one may still be cloning.
+  const prefix = `${basename(dir)}.tmp-`;
   for (const entry of readdirSync(cache)) {
-    if (entry.startsWith(`${basename(dir)}.tmp-`)) {
-      rmSync(join(cache, entry), { recursive: true, force: true });
-    }
+    if (!entry.startsWith(prefix)) continue;
+    const pid = Number.parseInt(entry.slice(prefix.length), 10);
+    if (!(pid > 0 && isAlive(pid))) rmSync(join(cache, entry), { recursive: true, force: true });
   }
   if (!existsSync(join(dir, ".git"))) {
     rmSync(dir, { recursive: true, force: true });
-    const tmp = `${dir}.tmp-${process.pid}`;
+    const tmp = `${dir}.tmp-${process.pid}-${randomUUID().slice(0, 8)}`;
     progress(`cloning ${repo} into ${dir}`);
     await git(null, ["clone", "--quiet", "--no-checkout", repo, tmp]);
     renameSync(tmp, dir);
@@ -149,56 +150,6 @@ function pnpmArgs(dir) {
   return existsSync(join(dir, "pnpm-workspace.yaml"))
     ? ["pnpm"]
     : ["pnpm", "--ignore-workspace"];
-}
-
-/** Serializes builds of the same clone across processes (mkdir is atomic). */
-async function withLock(lockDir, fn) {
-  mkdirSync(dirname(lockDir), { recursive: true });
-  const deadline = Date.now() + LOCK_WAIT_MS;
-  for (;;) {
-    try {
-      mkdirSync(lockDir);
-      break;
-    } catch (err) {
-      if (err.code !== "EEXIST") throw err;
-      if (lockIsStale(lockDir)) {
-        rmSync(lockDir, { recursive: true, force: true });
-        continue;
-      }
-      if (Date.now() > deadline) {
-        throw new Error(`oracle: timed out waiting for ${lockDir}; delete it if no build is running`);
-      }
-      await sleep(250);
-    }
-  }
-  writeFileSync(join(lockDir, "pid"), String(process.pid));
-  try {
-    return await fn();
-  } finally {
-    rmSync(lockDir, { recursive: true, force: true });
-  }
-}
-
-function lockIsStale(lockDir) {
-  let pid;
-  try {
-    pid = Number(readFileSync(join(lockDir, "pid"), "utf8"));
-  } catch {
-    // The owner writes its pid right after mkdir; a pid-less lock older than a
-    // minute belongs to a process that died in between.
-    try {
-      return Date.now() - statSync(lockDir).mtimeMs > 60_000;
-    } catch {
-      return false;
-    }
-  }
-  if (!Number.isInteger(pid) || pid <= 0) return true;
-  try {
-    process.kill(pid, 0);
-    return false;
-  } catch (err) {
-    return err.code === "ESRCH";
-  }
 }
 
 // Variables that point git at another repository (set inside git hooks) and
