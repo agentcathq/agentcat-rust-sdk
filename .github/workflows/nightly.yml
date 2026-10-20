@@ -1,0 +1,112 @@
+name: Nightly
+
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  AGENTCAT_DISABLE_DIAGNOSTICS: "1"
+  DISABLE_DIAGNOSTICS: "1"
+  RUST_BACKTRACE: "1"
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  newest-rmcp:
+    name: newest rmcp 3.x
+    runs-on: ubuntu-latest
+    env:
+      # Without `allow`, Cargo keeps the newest rmcp whose rust-version fits the MSRV.
+      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: allow
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10-16
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - run: cargo update -p rmcp -p rmcp-macros
+      # Includes tests/trait_drift.rs, which fails when the resolved rmcp has a
+      # ServerHandler method that Tracked<H> does not forward.
+      - run: cargo test --all-targets
+
+  rmcp-main:
+    name: rmcp main
+    runs-on: ubuntu-latest
+    env:
+      CARGO_RESOLVER_INCOMPATIBLE_RUST_VERSIONS: allow
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10-16
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - name: Patch rmcp to its main branch
+        run: |
+          cat >> Cargo.toml <<'EOF'
+
+          [patch.crates-io]
+          rmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main" }
+          rmcp-macros = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main" }
+          EOF
+          cargo update -p rmcp -p rmcp-macros
+      - name: Test against rmcp main
+        run: |
+          # Cargo ignores the patch when main leaves the 3.x range.
+          resolved="$(cargo tree -i rmcp --depth 0)"
+          echo "$resolved"
+          if [[ "$resolved" == *github.com/modelcontextprotocol/rust-sdk* ]]; then
+            cargo test --all-targets
+          else
+            echo "::notice::rmcp main is outside the 3.x range"
+          fi
+
+  mutants-full:
+    name: mutants (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master 2026-10-16
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-mutants@27.1.0
+      - name: Mutate the whole crate
+        run: |
+          set +e
+          cargo mutants --shard ${{ matrix.shard }}/8 --output out
+          code=$?
+          set -e
+          # 0 all caught, 2 some missed, 3 some timed out: the score job decides.
+          case $code in 0|2|3) ;; *) exit $code ;; esac
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-full-${{ matrix.shard }}
+          path: out/
+
+  mutants-full-score:
+    name: mutants score (whole crate)
+    needs: mutants-full
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: mutants-full-*
+          path: shards
+      - run: |
+          source scripts/mutants-floor.env
+          python3 scripts/mutants-score.py --min-core "$CORE" --min-adapter "$ADAPTER" shards/*/mutants.out

@@ -1,0 +1,12 @@
+# Every run exports AGENTCAT_DISABLE_DIAGNOSTICS=1 itself: scripts/check.sh and
+# the CI jobs.
+timeout_multiplier = 3.0
+# Crate attributes and test helpers.
+exclude_globs = ["src/lib.rs"]
+# Equivalent mutants: no input can tell them apart from the code.
+exclude_re = [
+    # The exponent branch runs only for n > 21 or n <= -6, so n is never 0.
+    '^src/js\.rs:95:25: replace > with >= in number_to_string$',
+    # f == 0.0 has returned "0" before the sign is added.
+    '^src/js\.rs:103:10: replace < with <= in number_to_string$',
+]
