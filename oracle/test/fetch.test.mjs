@@ -2,7 +2,7 @@
 // that is dirty or at another SHA fails instead of producing vectors.
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
@@ -52,6 +52,15 @@ test("modules load from the pinned source", async () => {
   const tokens = await loadModule("tokenEstimate");
   assert.equal(typeof tokens.estimateInputTokens, "function");
   assert.equal(tokens.estimateInputTokens({ n: 1.0 }), 2);
+});
+
+test("import.meta.url in a bundled module is its source file's URL", async () => {
+  // runtime-versions resolves packages with createRequire(import.meta.url):
+  // from the bundle directory, that walk would miss the clone's node_modules.
+  const versions = await loadModule("runtime-versions");
+  const manifest = join(tsDir(), "node_modules", "@modelcontextprotocol", "sdk", "package.json");
+  const { version } = JSON.parse(readFileSync(manifest, "utf8"));
+  assert.equal(versions.readInstalledPackageVersion("@modelcontextprotocol/sdk"), version);
 });
 
 test("a cached clone at another commit is rejected", async () => {
