@@ -276,6 +276,15 @@ fn ts_decoder_semantics_for_non_base62_input() {
         &format!("{}a", "\u{1F600}".repeat(13)),
         "000000000000000024533fc4f1c940234e857024",
     );
+    // `:` follows `9` and `[` follows `Z`: each takes the next range's offset.
+    decodes_to(
+        &format!("{}:", "0".repeat(26)),
+        "0000000000000000000000000000000000000003",
+    );
+    decodes_to(
+        &format!("{}[", "0".repeat(26)),
+        "000000000000000000000000000000000000001e",
+    );
 
     let accents = Ksuid::parse(&"\u{e9}".repeat(27)).unwrap_err();
     assert_eq!(

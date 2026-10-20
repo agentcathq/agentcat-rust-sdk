@@ -377,6 +377,31 @@ async fn custom_context_description_is_advertised() {
 }
 
 #[tokio::test]
+async fn get_tool_returns_the_advertised_tool() {
+    use rmcp::ServerHandler;
+    let tracked = builder("get-tool").build().track(Todo::new());
+    let schema = |tool: &rmcp::model::Tool| Value::Object((*tool.input_schema).clone());
+
+    let add = tracked.get_tool("add_todo").expect("a tool of the inner server");
+    assert_eq!(add.name, "add_todo");
+    let add = schema(&add);
+    let keys: Vec<&str> = add["properties"]
+        .as_object()
+        .unwrap()
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert_eq!(keys, ["text", "session_id", "context"]);
+    assert_eq!(add["required"], json!(["text", "session_id", "context"]));
+
+    let gmt = tracked.get_tool("get_more_tools").expect("AgentCat's own tool");
+    assert_eq!(gmt.name, "get_more_tools");
+    assert_eq!(schema(&gmt)["required"], json!(["context", "session_id"]));
+
+    assert!(tracked.get_tool("missing").is_none());
+}
+
+#[tokio::test]
 async fn a_call_before_any_listing_still_strips() {
     // A fresh instance that never served tools/list (per-request factories)
     // recomputes the injection from get_tool.

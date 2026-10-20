@@ -154,6 +154,13 @@ mod rust_extras {
     }
 
     #[test]
+    fn a_key_of_exactly_32_units_is_kept() {
+        let key = "k".repeat(32);
+        assert_eq!(validate_tags([s(&key, "v")]), Some(vec![p(&key, "v")]));
+        assert_eq!(validate_tags([s(&"k".repeat(33), "v")]), None);
+    }
+
+    #[test]
     fn lengths_count_utf16_units() {
         assert!(validate_tags([s("k", &"😀".repeat(100))]).is_some());
         assert_eq!(validate_tags([s("k", &"😀".repeat(101))]), None);

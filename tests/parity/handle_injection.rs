@@ -635,6 +635,23 @@ mod rust_extras {
     }
 
     #[test]
+    fn falsy_input_schemas_take_the_default_schema() {
+        let tools: Vec<Value> = [json!(null), json!(false), json!(0), json!("")]
+            .into_iter()
+            .enumerate()
+            .map(|(i, schema)| json!({"name": format!("t{i}"), "inputSchema": schema}))
+            .collect();
+        let (list, logs) = capture_logs(|| build(&opts(true, false, true), &tools));
+        assert!(logs.is_empty(), "{logs:?}");
+        for (i, tool) in list.tools.iter().enumerate() {
+            let schema = &tool["inputSchema"];
+            assert_eq!(keys(schema), ["type", "properties", "required"], "t{i}");
+            assert_eq!(keys(&schema["properties"]), ["session_id", "context"], "t{i}");
+            assert_eq!(schema["required"], json!(["session_id", "context"]), "t{i}");
+        }
+    }
+
+    #[test]
     fn removing_additional_properties_keeps_key_order() {
         let tool = json!({
             "name": "strict",

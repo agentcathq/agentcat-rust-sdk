@@ -265,4 +265,17 @@ mod rust_extras {
             .join()
             .unwrap();
     }
+
+    #[test]
+    fn object_nesting_counts_toward_the_depth_limit() {
+        let nested_objects = |depth: usize| {
+            let mut v = Value::Null;
+            for _ in 0..depth {
+                v = json!({"a": v});
+            }
+            v
+        };
+        assert!(estimate_input_tokens(Some(&nested_objects(1_000))).is_some());
+        assert_eq!(estimate_input_tokens(Some(&nested_objects(1_001))), None);
+    }
 }
