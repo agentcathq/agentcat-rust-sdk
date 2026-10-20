@@ -1,0 +1,19 @@
+# Rust SDK plans
+
+The design ([`../specs/2026-10-20-rust-sdk-design.md`](../specs/2026-10-20-rust-sdk-design.md)) has six milestones
+that build on each other. Each milestone gets its own plan, written when the previous one is done, so a plan can use
+what the earlier milestones taught and the owner's rulings from the previous batch (R17).
+
+| Plan | Milestones (design §12) | Delivers | Status |
+|---|---|---|---|
+| 1 | 1 + 2 | Workspace, lints, local gate, CI skeleton; the TS oracle at the pinned SHA; the vector pipeline; the JS property-test oracle; the parity list and checker; the harness TS half (v1 and v2 reference servers, driver, mock API, normalizer, rulings); the L4 contract check; the nightly drift sweep. | [Written](2026-10-20-plan-1-foundation.md) |
+| 2 | 3 | Pure core against L1 and L2: constants, `js`, KSUID and handles, tokens, tag validation, normalize, truncation, sanitization, redaction. | Not written |
+| 3 | 4 | Interception: `Tracked<H>`, tool-list and tool-call pipelines, registries, `get_more_tools`, client info, `parameters`, panics, `capture_error`; the Rust reference server joins the harness (MCP-wire delta). | Not written |
+| 4 | 5 | Delivery and lifecycle: event pipeline, worker thread, queue, retries, flush, shutdown, last-drop drain, logging, environment, custom events, `Fake`; event comparison in the harness. | Not written |
+| 5 | 6 | Finish: README and rustdoc, examples, CHANGELOG, public API snapshot, coverage and mutation floors, rmcp matrix and canary, zero `todo` in the manifest, ingest replay, dashboard demo, the PR. | Not written |
+
+Every plan ends with the same two steps:
+
+1. Run the full local gate (`scripts/check.sh`) and confirm CI is green on `rewrite`.
+2. Bring the milestone's pending rulings (deviation register rows marked `pending`) to the owner as one batch of
+   multiple-choice questions (R17), and record the answers in `docs/DECISIONS.md` and the design's section 9.
