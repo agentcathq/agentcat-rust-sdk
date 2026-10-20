@@ -24,3 +24,4 @@ workspace = true
 [dev-dependencies]
 sha2 = { workspace = true }
 hex = { workspace = true }
+proptest = { workspace = true }
