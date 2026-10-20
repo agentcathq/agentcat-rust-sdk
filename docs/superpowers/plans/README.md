@@ -7,7 +7,7 @@ through `superpowers:subagent-driven-development`.
 
 | Plan | Milestones | Delivers | Status |
 |---|---|---|---|
-| [1 Foundation](2026-10-19-plan-1-foundation.md) | M1 gates and CI; M2 primitives; M3 injection and handles | Lint, dependency, MSRV, feature, public-API, coverage and mutation gates; parity manifest and tripwire; parity for constants, KSUID, UUIDv7, tags, tokens, handles, injection, stripping | done ([PR #1](https://github.com/agentcathq/agentcat-rust-sdk/pull/1), PR #N) |
+| [1 Foundation](2026-10-19-plan-1-foundation.md) | M1 gates and CI; M2 primitives; M3 injection and handles | Lint, dependency, MSRV, feature, public-API, coverage and mutation gates; parity manifest and tripwire; parity for constants, KSUID, UUIDv7, tags, tokens, handles, injection, stripping | done ([PR #1](https://github.com/agentcathq/agentcat-rust-sdk/pull/1), [PR #2](https://github.com/agentcathq/agentcat-rust-sdk/pull/2)) |
 | 2 Event hygiene | M4 | Event model, redaction (D08), sanitization, truncation (TS cuts), error capture (D10, D09) | next |
 | 3 Delivery | M5 | TS queue semantics, retries, exports per attempt, base URL last-wins, 10 s timeout, flush and shutdown | |
 | 4 Engine and public API | M6–M7 | `Tracked` parity, D34, D35, D36, D40, hooks; the 10 cases plan 1 defers | |
