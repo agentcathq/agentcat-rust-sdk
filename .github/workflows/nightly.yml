@@ -71,6 +71,10 @@ jobs:
     name: mutants (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    env:
+      # Each mutant relinks every test binary; line tables keep the file names
+      # that stack-frame tests check, and link much faster than full debug info.
+      CARGO_PROFILE_DEV_DEBUG: line-tables-only
     strategy:
       fail-fast: false
       matrix:

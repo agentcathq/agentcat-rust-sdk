@@ -643,6 +643,7 @@ mod rust_extras {
             .collect();
         let (list, logs) = capture_logs(|| build(&opts(true, false, true), &tools));
         assert!(logs.is_empty(), "{logs:?}");
+        assert_eq!(list.tools.len(), 4);
         for (i, tool) in list.tools.iter().enumerate() {
             let schema = &tool["inputSchema"];
             assert_eq!(keys(schema), ["type", "properties", "required"], "t{i}");

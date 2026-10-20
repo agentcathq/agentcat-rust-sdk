@@ -62,6 +62,8 @@ if [ "$mutants" = 1 ]; then
   mkdir -p target
   git diff "${MUTANTS_BASE:-origin/main}...HEAD" -- src > target/pr.diff
   if [ -s target/pr.diff ]; then
+    # A diff that matches no mutant writes no new results: never score old ones.
+    rm -rf target/mutants
     code=0
     cargo mutants --in-diff target/pr.diff --output target/mutants || code=$?
     # 0 all caught, 2 some missed, 3 some timed out: the score decides.

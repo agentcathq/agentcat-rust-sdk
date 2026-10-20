@@ -93,8 +93,8 @@ async fn structured_before_any_listing(server_name: &str, tool: &str) -> Map<Str
 
 #[tokio::test]
 async fn a_call_before_any_listing_rebuilds_the_registry_from_every_page() {
-    // `second` is on the second page, and its output schema declares
-    // `mcp_session`: the result mirrors the mint-back.
+    // `second` is on the second page, and has an object output schema, into
+    // which AgentCat injects `mcp_session`: the result mirrors the mint-back.
     let listed = structured_before_any_listing("pagination-rebuild", "second").await;
     assert_eq!(
         listed.keys().next().map(String::as_str),
