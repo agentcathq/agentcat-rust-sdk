@@ -32,6 +32,7 @@ acts differently from that baseline is listed in the deviation register of the d
 | R14 | Ingest replay | The replay of captured bodies through `agentcat-server`'s ingest code runs locally only. CI checks bodies against a pinned copy of the OpenAPI schema. |
 | R15 | Review | One PR at the end, from `rewrite` into `main`. |
 | R16 | Parity evidence | Side-by-side diff tests against the TS SDK, a real dashboard demo, and a TS test-by-test map. |
+| R18 | Private APIs of integrated libraries | The owner prefers reflection and patching of private members when it makes the code meaningfully cleaner, with rigorous monitoring of new releases. Rust form: see D21. |
 | R17 | Rulings during the build | For an unforced TS-vs-Rust difference, the builder records a provisional ruling and keeps building. At the end of each milestone, the builder brings that batch to the owner as multiple choice; changes land in the next milestone. |
 
 ## 2. Designer calls (C)
@@ -84,7 +85,7 @@ with nothing to port), **OVERRIDDEN** (an R- or C-decision replaces it).
 | D18 | Exporter identity strings | ADOPT, for the second pass. |
 | D19 | Backend tickets | ADOPT: no new ticket. Types prevent both bad inputs (identify data is an object; a sessionless event sends `session_id: null`). |
 | D20 | API client version constraint | OVERRIDDEN by R11. |
-| D21 | Private members of integrated libraries | ADAPT: Rust cannot reach private members. Use only rmcp's public API; treat any `#[doc(hidden)]` item as private and guard it with the rmcp CI matrix. |
+| D21 | Private members of integrated libraries | ADAPT (R18): the owner prefers private access when it makes the code meaningfully cleaner, guarded by monitoring. In Rust this means: use rmcp's `#[doc(hidden)]` and other semver-exempt public items freely when they give cleaner code, from one internals module, guarded by the rmcp version matrix and the nightly canary. Reading truly private fields needs `unsafe` layout assumptions, which is undefined behavior in Rust (no reflection, no stable layout), so it stays excluded (`forbid(unsafe_code)`). |
 | D22 | Static analysis | ADAPT: clippy pedantic with the restriction lints of the design, rustdoc with warnings denied, cargo-deny, public-API snapshot. |
 | D23 | Testing framework | ADAPT: `cargo test` / nextest, wiremock, insta, proptest, cargo-mutants. |
 | D24 | Code style | ADAPT: rustfmt defaults plus clippy. |
