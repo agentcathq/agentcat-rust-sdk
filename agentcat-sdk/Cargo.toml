@@ -1,0 +1,22 @@
+[package]
+name = "agentcat-sdk"
+version = "1.0.0"
+description = "AgentCat analytics SDK for MCP servers built on rmcp"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+readme = "README.md"
+keywords = ["mcp", "rmcp", "analytics", "telemetry", "agentcat"]
+categories = ["development-tools::debugging", "api-bindings"]
+include = ["src/**", "README.md", "CHANGELOG.md", "LICENSE"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+serde_json = { workspace = true, features = ["preserve_order"] }
+
+[lints]
+workspace = true
