@@ -1,0 +1,8 @@
+packages:
+  - oracle
+  - harness
+
+# esbuild's postinstall checks its platform binary; it is the only dependency
+# allowed to run install scripts.
+onlyBuiltDependencies:
+  - esbuild
