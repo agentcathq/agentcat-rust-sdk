@@ -1,9 +1,4 @@
 //! Shared helpers for the parity suite.
-#![allow(
-    dead_code,
-    unused_imports,
-    reason = "each helper serves some parity files, not all"
-)]
 
 use serde_json::{Map, Value};
 

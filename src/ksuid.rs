@@ -118,6 +118,7 @@ impl Ksuid {
         1_000 * u64::from(self.timestamp()) + EPOCH_MS
     }
 
+    #[cfg(test)]
     pub(crate) fn payload(&self) -> [u8; 16] {
         let mut p = [0u8; 16];
         p.copy_from_slice(&self.0[4..]);

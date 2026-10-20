@@ -161,9 +161,11 @@ async fn hook_mode_null_mints_silently() {
     let result = call(&client, "add_todo", json!({"text": "a"})).await.unwrap();
     assert_eq!(texts(&result), ["Added: a"]);
     let e = &api().events_for("hook-null", 1).await[0];
-    assert!(agentcat::__private::is_valid_session_id(
-        e["session_id"].as_str().unwrap()
-    ));
+    assert!(
+        regex::Regex::new("^ses_[0-9A-Za-z]{27}$")
+            .unwrap()
+            .is_match(e["session_id"].as_str().unwrap())
+    );
     assert_eq!(e["tags"]["agentcat_session_id_source"], "minted");
 }
 

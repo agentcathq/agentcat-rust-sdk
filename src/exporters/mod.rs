@@ -26,7 +26,7 @@ pub use datadog::DatadogExporterConfig;
 pub use otlp::OtlpExporterConfig;
 #[cfg(feature = "posthog")]
 pub use posthog::PostHogExporterConfig;
-#[cfg(feature = "posthog")]
+#[cfg(all(test, feature = "posthog"))]
 pub(crate) use posthog::to_uuid_v7 as posthog_uuid_v7;
 #[cfg(feature = "sentry")]
 pub use sentry::SentryExporterConfig;

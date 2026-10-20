@@ -67,7 +67,11 @@ async fn first_call_issues_a_session_and_publishes_one_event() {
     assert!(texts[0].starts_with(MINT_BACK_HEADER_ISSUED), "{texts:?}");
     assert_eq!(texts[1], "Added: milk");
     let session = minted_session(&result);
-    assert!(agentcat::__private::is_valid_session_id(&session));
+    assert!(
+        regex::Regex::new("^ses_[0-9A-Za-z]{27}$")
+            .unwrap()
+            .is_match(&session)
+    );
 
     let events = api().events_for("first-call", 1).await;
     let e = &events[0];

@@ -2,7 +2,10 @@
 
 use super::support::{capture_logs, fixture_json, fixture_text};
 use crate::constants::*;
-use crate::handles::{HandleResolution, SessionSource, build_mint_back_text, session_from_hook_value};
+use crate::handles::{
+    HandleResolution, SessionSource, build_mint_back_text, build_structured_mint_back,
+    session_from_hook_value,
+};
 use crate::inject::{
     InjectConfig, InjectMemory, Injected, build_injected_list, report_missing_descriptor,
     report_missing_response,
@@ -337,4 +340,46 @@ fn get_more_tools_descriptor_and_reply_match() {
             "{context:?}"
         );
     }
+}
+
+/// The `---STRUCTURED---` rows of the handles golden file: the structured
+/// mint-back and the text block for the resolutions the TS generator builds.
+#[test]
+fn golden_structured_mint_back_matches() {
+    let golden = fixture_text("php-audit/handles/golden.txt");
+    let section = golden
+        .split_once("---STRUCTURED---\n")
+        .expect("golden.txt has a STRUCTURED section")
+        .1;
+    let mut seen = Vec::new();
+    for line in section.lines().filter(|l| !l.is_empty()) {
+        let mut parts = line.splitn(4, ' ');
+        let source = parts.next().unwrap();
+        let hook_mode: bool = parts.next().unwrap().parse().unwrap();
+        let structured = parts.next().unwrap();
+        let text = parts.next().unwrap();
+        let (session_id, session_source, agent_id) = match source {
+            "minted" => ("ses_A", SessionSource::Minted, None),
+            "supplied" => ("ses_A", SessionSource::Supplied, Some("a|b|c")),
+            "invalid" => ("", SessionSource::Invalid, Some("a|b|c")),
+            "foreign" => ("", SessionSource::Foreign, None),
+            "hook" => ("", SessionSource::Hook, Some("a|b|c")),
+            other => panic!("unknown row {other}"),
+        };
+        let res = HandleResolution {
+            session_id: session_id.to_owned(),
+            session_source,
+            hook_mode,
+            agent_id: agent_id.map(str::to_owned),
+        };
+        // Compare as serialized text, so key order counts and null is None.
+        let got_structured = build_structured_mint_back(&res)
+            .map_or_else(|| "null".to_owned(), |m| serde_json::to_string(&m).unwrap());
+        assert_eq!(got_structured, structured, "{source}: structured");
+        let got_text = build_mint_back_text(&res)
+            .map_or_else(|| "null".to_owned(), |t| serde_json::to_string(&t).unwrap());
+        assert_eq!(got_text, text, "{source}: text");
+        seen.push(source);
+    }
+    assert_eq!(seen, ["minted", "supplied", "invalid", "foreign", "hook"]);
 }
