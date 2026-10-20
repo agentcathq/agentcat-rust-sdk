@@ -45,3 +45,26 @@ that reverts it. TS paths are in `agentcat-typescript-sdk` at `9b56e9e`.
 | The queue also drops the newest event when the untruncated events that it holds add up to 32 MiB. | No memory bound. At 10,000 waiting events, the oldest event is dropped (spec §8.1). | `src/publisher.rs:45`, `:248` | plan 3, with the TS queue semantics |
 | `validate_tags` reads the `event_tags` result in the order given. | `validateTags` reads `Object.entries`, which puts integer-like keys first, in ascending order (`src/modules/validation.ts:16`). The order sets the log order and the tags that the 50-entry cap drops. | `src/validation.rs:28` | plan 4, which decides the map type of the hook |
 | `mirror_structured_mint_back` changes its argument in place, so the "without mutating" check of `tests/parity/handles.rs:525` (row 57 of `docs/research/06b-ts-test-index.md`) always passes. | `mirrorStructuredMintBack` returns a copy and does not change its input (`src/modules/handles.ts:191-202`). | `src/handles.rs:163`, `src/tracked.rs:752` | plan 4: a test that `Tracked` mirrors into a copy, and that the event keeps the raw result of the customer |
+
+### Open questions for later plans
+
+The final review of plan 1 left these points to later plans. Each plan decides its points, then
+reverts to TS, records a difference in `docs/DECISIONS.md`, or adds the test.
+
+- `InjectMemory` (declared `session_id`, reported conflicts) is per `AgentCat` (spec §9.2); TS keys it
+  per `track()` (`AgentCatData`). One `AgentCat` that tracks two servers can share "declares
+  `session_id`" across tools with the same name. Owner: plan 4.
+- The engine merges each listing into the registry; TS replaces the registry on each listing. The
+  rebuild error logs `e.message`; TS logs `${error}`. With tracing off, a tool that no listing names
+  is not stripped. Owner: plan 4.
+- `AgentCat::publish_custom_event(&self, data)` differs from the signature in spec §7.3. Owner: plan 4.
+- rmcp serializes schema numbers as `1.0` where JS writes `1` (the host library's serializer). Owner:
+  plan 4.
+- JS puts integer-like keys first in `{...sc}` (`mirrorStructuredMintBack`) and `{...args}`
+  (stripping), as in the tags row above. Owner: plan 4.
+- The default panic hook prints to stderr when AgentCat code panics inside `catch_unwind`. Owner:
+  plans 4 and 5.
+- Recursive JSON walks other than token estimation (sanitization, truncation, serialization, drop)
+  on values 5,000 levels deep: spec §10 row 10 covers only token estimates. Owner: plan 2.
+- The exporter `BODY` sections of `tests/fixtures/php-audit/exporters/golden-output.txt` have no test
+  yet (spec §12 names golden exporter payloads in the plan 6 exit check). Owner: plan 6.
