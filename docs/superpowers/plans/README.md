@@ -7,7 +7,7 @@ through `superpowers:subagent-driven-development`.
 
 | Plan | Milestones | Delivers | Status |
 |---|---|---|---|
-| [1 Foundation](2026-10-19-plan-1-foundation.md) | M1 gates and CI; M2 primitives; M3 injection and handles | Lint, dependency, MSRV, feature, public-API, coverage and mutation gates; parity manifest and tripwire; parity for constants, KSUID, UUIDv7, tags, tokens, handles, injection, stripping | written |
+| [1 Foundation](2026-10-19-plan-1-foundation.md) | M1 gates and CI; M2 primitives; M3 injection and handles | Lint, dependency, MSRV, feature, public-API, coverage and mutation gates; parity manifest and tripwire; parity for constants, KSUID, UUIDv7, tags, tokens, handles, injection, stripping | done ([PR #1](https://github.com/agentcathq/agentcat-rust-sdk/pull/1), PR #N) |
 | 2 Event hygiene | M4 | Event model, redaction (D08), sanitization, truncation (TS cuts), error capture (D10, D09) | next |
 | 3 Delivery | M5 | TS queue semantics, retries, exports per attempt, base URL last-wins, 10 s timeout, flush and shutdown | |
 | 4 Engine and public API | M6–M7 | `Tracked` parity, D34, D35, D36, D40, hooks; the 10 cases plan 1 defers | |
@@ -17,7 +17,7 @@ through `superpowers:subagent-driven-development`.
 
 ## Gates that tighten over the plans
 
-- **Coverage:** `scripts/coverage-floor` starts at 81 % of lines (the measured baseline). Each plan
+- **Coverage:** `scripts/coverage-floor` starts at 81 % of lines and stands at 82 % after plan 1. Each plan
   raises it to its measured value; plan 7 must reach the spec's 95 %.
 - **Mutation testing:** changed code in every pull request must score 95 % from plan 1 on. The
   nightly whole-crate floors in `scripts/mutants-floor.env` start at 0 and rise with the measured

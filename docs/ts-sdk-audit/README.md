@@ -65,4 +65,4 @@ uses), `native-tls` and `rustls` features, and `chrono` timestamps.
   others build lean Rust SDKs, and the checklist the port follows.
 - `../research/06a-ts-test-index.md`, `06b`, `06c`: every TS test case (1,024), classified as
   port, adapt or N/A for Rust.
-- `../PORTING.md`: the port's deliberate differences from the TS SDK.
+- `../DECISIONS.md` and §10 of `../superpowers/specs/2026-10-19-rust-sdk-design.md`: the port's deliberate differences from the TS SDK.
