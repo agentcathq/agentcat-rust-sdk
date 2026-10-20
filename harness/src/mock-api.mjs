@@ -3,7 +3,8 @@
 //   GET  /__requests           -> JSON array of every recorded request (control plane)
 //   POST /__reset              -> clears the recording
 //   POST /__fail?n=K&status=S  -> the next K publish calls answer status S (retry tests)
-// Anything else is recorded and answered 404, so unexpected calls show up in the diff.
+// Anything else is recorded and answered 404: it shows up in the normalized
+// document (nonPublishRequests), so the diff sees it, and it fails the driver run.
 //
 // usage: node harness/src/mock-api.mjs [port]   (0 or none: an ephemeral port)
 // Prints one ready line on stdout: {"ready": true, "port": <port>}. Binds 127.0.0.1 only.

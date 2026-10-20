@@ -5,7 +5,8 @@
 //
 // usage: node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]
 // rulings: JSON array of {"path": "<regex>", "reason": "...", "deviation": "RD-xx"}; a
-// difference whose path matches a ruling is allowed.
+// difference whose whole path matches a ruling's regex is allowed (each regex is
+// anchored as ^(?:<regex>)$). The output gives each ruling's match count.
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
@@ -48,7 +49,8 @@ function loadRulings(path) {
     if (typeof r.deviation !== "string" || !/^RD-\d+$/.test(r.deviation)) usage(`${where}: "deviation" must look like RD-<n>`);
     let re;
     try {
-      re = new RegExp(r.path);
+      new RegExp(r.path); // the pattern must be valid on its own, not only once wrapped
+      re = new RegExp(`^(?:${r.path})$`);
     } catch (err) {
       usage(`${where}: bad regex: ${err.message}`);
     }
@@ -119,9 +121,10 @@ for (const d of diffs) {
     process.stdout.write(`DIFF  ${d.path}: ${clip(d.a)} != ${clip(d.b)}\n`);
   }
 }
-const unused = rulings.filter((r) => r.matched === 0);
-for (const r of unused) {
-  process.stdout.write(`UNUSED RULING ${r.deviation} ${JSON.stringify(r.path)}: matched nothing (${r.reason})\n`);
+for (const r of rulings) {
+  const what = r.matched === 0 ? "UNUSED RULING" : "RULING";
+  process.stdout.write(`${what} ${r.deviation} matched ${r.matched}: ${JSON.stringify(r.path)} (${r.reason})\n`);
 }
+const unused = rulings.filter((r) => r.matched === 0);
 process.stdout.write(`${JSON.stringify({ total: diffs.length, ruled, unexpected, unusedRulings: unused.length })}\n`);
 process.exit(unexpected > 0 || unused.length > 0 ? 1 : 0);

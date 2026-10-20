@@ -172,6 +172,9 @@ function buildServer() {
       inputSchema: { session: z.string(), resource: z.string(), message: z.string().optional() },
     },
     async ({ session, resource, message }) => {
+      // Untracked: track() never configured the SDK's API URL, so a publish
+      // would aim at the production default. Answer the same without one.
+      if (!tracked) return { content: [{ type: "text", text: "published" }] };
       await agentcat.publishCustomEvent(session, projectId, {
         resourceName: resource,
         message,

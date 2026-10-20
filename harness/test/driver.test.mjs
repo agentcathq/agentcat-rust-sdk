@@ -13,6 +13,7 @@ import {
   DUMP_CONTRACT,
   HARNESS,
   TS_SERVER,
+  TS_SERVER_PLUS,
   driver,
   outFile,
   readJson,
@@ -27,6 +28,17 @@ before(async () => {
 
 function basicWith(t, patch) {
   return writeJson(join(tempDir(t), "basic.json"), { ...readJson(BASIC), ...patch });
+}
+
+/** One session, one echo call: one publish from a tracked server. */
+function oneCall(t, expectPublishes) {
+  return writeJson(join(tempDir(t), "one.json"), {
+    name: "one",
+    projectId: readJson(BASIC).projectId,
+    options: {},
+    expectPublishes,
+    sessions: [{ steps: [{ op: "callTool", name: "echo", args: { msg: "hi" } }] }],
+  });
 }
 
 test("basic.json with expectPublishes 12 exits 1", { timeout: 120_000 }, async (t) => {
@@ -44,6 +56,38 @@ test("basic.json with expectPublishes 11 exits 0 and reports 11 publishes", { ti
   assert.equal(report.publishes, 11);
   assert.equal(report.lane, "2025-11-25");
   for (const kind of ["raw", "transcript", "normalized"]) readJson(outFile("basic", "driver11", "stdio", kind));
+});
+
+test("basic.json with expectPublishes 10 exits 1 (too many publishes)", { timeout: 120_000 }, async (t) => {
+  const res = await driver(basicWith(t, { expectPublishes: 10 }), "driver10", "stdio");
+  assert.equal(res.code, 1, res.stderr);
+  const report = readJson(outFile("basic", "driver10", "stdio", "report"));
+  assert.equal(report.publishes, 11);
+  assert.equal(report.expected, 10);
+});
+
+for (const transport of ["stdio", "http"]) {
+  test(`a publish sent after the client closes is counted (${transport})`, { timeout: 120_000 }, async (t) => {
+    const env = { FIXTURE_LATE_PUBLISH: "1" };
+    const res = await driver(oneCall(t, 2), "late", transport, [], { server: TS_SERVER_PLUS, env });
+    assert.equal(res.code, 0, res.stderr);
+    const report = readJson(outFile("one", "late", transport, "report"));
+    assert.equal(report.publishes, 2);
+    const raw = readJson(outFile("one", "late", transport, "raw"));
+    assert.ok(raw.some((r) => r.body?.event_type === "fixture:late"), "the late publish is in the snapshot");
+  });
+}
+
+test("a request other than a publish makes the driver exit 1 and is in the report", { timeout: 120_000 }, async (t) => {
+  const env = { FIXTURE_EXTRA_REQUEST: "1" };
+  const res = await driver(oneCall(t, 1), "extra", "stdio", [], { server: TS_SERVER_PLUS, env });
+  assert.equal(res.code, 1, res.stderr);
+  const report = readJson(outFile("one", "extra", "stdio", "report"));
+  assert.equal(report.publishes, 1);
+  assert.equal(report.nonPublishRequests, 1);
+  assert.deepEqual(report.report.nonPublishRequests, [{ method: "POST", path: "/v1/public/events", query: "", status: 404 }]);
+  const normalized = readJson(outFile("one", "extra", "stdio", "normalized"));
+  assert.deepEqual(normalized.nonPublishRequests, report.report.nonPublishRequests);
 });
 
 test("the driver exits 2 on a lane other than 2025-11-25", async () => {

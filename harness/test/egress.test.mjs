@@ -2,10 +2,13 @@
 // non-local API URL, and the preloaded guard blocks non-local fetches.
 import assert from "node:assert/strict";
 import http from "node:http";
+import { join } from "node:path";
 import { test } from "node:test";
 import { pathToFileURL } from "node:url";
 
-import { GUARD, TS_SERVER, run, tempDir } from "./support.mjs";
+import { ensureTs } from "oracle/fetch-ts";
+
+import { BASIC, GUARD, TS_SERVER, driver, outFile, readJson, run, tempDir, writeJson } from "./support.mjs";
 
 function serverEnv(t, apiUrl) {
   return {
@@ -70,4 +73,16 @@ test("(b) with the guard preloaded, a non-local fetch rejects and a local one wo
   assert.match(out.remote, /egress-guard: blocked/);
   assert.equal(out.local, "ok");
   assert.match(res.stderr, /\[egress-guard\] BLOCKED https:\/\/api\.agentcat\.com/);
+});
+
+test("an untracked run of basic.json makes no publish attempt and does not trip the guard", { timeout: 120_000 }, async (t) => {
+  await ensureTs();
+  const scenario = writeJson(join(tempDir(t), "basic.json"), { ...readJson(BASIC), expectPublishes: 0 });
+  const res = await driver(scenario, "untracked", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 0, res.stderr);
+  assert.doesNotMatch(res.stderr, /egress-guard/);
+  assert.deepEqual(readJson(outFile("basic", "untracked", "stdio", "raw")), []);
+  const transcript = readJson(outFile("basic", "untracked", "stdio", "transcript"));
+  const emit = transcript.find((e) => e.request?.name === "emit_custom");
+  assert.deepEqual(emit.result.content, [{ type: "text", text: "published" }]);
 });

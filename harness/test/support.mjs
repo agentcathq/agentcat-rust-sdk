@@ -17,6 +17,14 @@ export const BASIC = join(HARNESS, "scenarios", "basic.json");
 /** The TS v1 reference server command, egress guard preloaded. */
 export const TS_SERVER = [process.execPath, "--import", pathToFileURL(GUARD).href, TS_V1];
 
+/** ts-v1 plus an env-selected misbehavior (test/fixtures/ts-v1-plus.mjs), guard preloaded. */
+export const TS_SERVER_PLUS = [
+  process.execPath,
+  "--import",
+  pathToFileURL(GUARD).href,
+  join(HARNESS, "test", "fixtures", "ts-v1-plus.mjs"),
+];
+
 /** Runs a command to completion; resolves with its exit code and output. */
 export function run(cmd, args, { env = process.env, timeoutMs = 120_000 } = {}) {
   return new Promise((resolve, reject) => {
@@ -34,9 +42,11 @@ export function run(cmd, args, { env = process.env, timeoutMs = 120_000 } = {}) 
   });
 }
 
-/** Runs the driver against the TS v1 server. */
-export function driver(scenario, label, transport, extra = []) {
-  return run(process.execPath, [DRIVER, scenario, label, transport, ...extra, "--", ...TS_SERVER]);
+/** Runs the driver against the TS v1 server (or `server`), with extra env for the driver and server. */
+export function driver(scenario, label, transport, extra = [], { server = TS_SERVER, env = {} } = {}) {
+  return run(process.execPath, [DRIVER, scenario, label, transport, ...extra, "--", ...server], {
+    env: { ...process.env, ...env },
+  });
 }
 
 /** Runs diff.mjs on two normalized files. */

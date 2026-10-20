@@ -3,8 +3,9 @@
 // Rules are explicit and each one is listed in report.rules, so a rule can
 // never silently hide a real difference.
 //
-// The document: {transcript, events, violations}. `violations` holds failed
-// ordered checks ({rule, path, ...}); diff.mjs reports each one as a diff entry.
+// The document: {transcript, events, nonPublishRequests, violations}.
+// `violations` holds failed ordered checks ({rule, path, ...}); diff.mjs
+// reports each one as a diff entry.
 
 const ID_RE = /\b(evt|ses|agt)_[0-9A-Za-z]{27}\b/g;
 const ISO_MS_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
@@ -12,12 +13,13 @@ const PUBLISH_PATH = "/v1/public/events/";
 const snake = (k) => k.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`);
 
 export const RULES = [
+  "request-fields",
   "camelCase-alias-drop",
   "timestamp-class",
   "duration-class",
   "language-fields",
   "extra-headers-only",
-  "error-stack-elided",
+  "error-shape-class",
   "id-placeholders",
   "mcp-session-first",
   "property-order",
@@ -27,11 +29,34 @@ export const RULES = [
 /** The key under which property-order records the key order of `inputSchema.properties`. */
 export const PROPERTIES_ORDER_KEY = "<properties-order>";
 
+/** The sdk_language values the backend knows. */
+export const SDK_LANGUAGES = ["TypeScript", "Rust"];
+
 // Fields that legitimately differ per language; replaced by a class token.
 const LANGUAGE_FIELDS = {
-  sdk_language: (v) => `<sdk_language:${typeof v}>`,
+  sdk_language: (v) => (SDK_LANGUAGES.includes(v) ? "<sdk_language>" : `<bad-sdk_language:${v}>`),
   agentcat_version: (v) => (typeof v === "string" && /^\d+\.\d+\.\d+/.test(v) ? "<semver>" : `<bad-version:${v}>`),
 };
+
+const kind = (v) => (Array.isArray(v) ? "array" : v === null ? "null" : typeof v);
+
+/** frames -> `<frames:array:<sorted union of frame keys>>`, or `<frames:<type>>`. */
+function framesToken(frames) {
+  if (!Array.isArray(frames)) return `<frames:${kind(frames)}>`;
+  const keys = new Set();
+  for (const frame of frames) {
+    if (isObject(frame)) for (const k of Object.keys(frame)) keys.add(k);
+    else keys.add(`<${kind(frame)}>`);
+  }
+  return `<frames:array:${[...keys].sort().join(",")}>`;
+}
+
+/** error-shape-class: language-specific error fields -> tokens that keep their shape. */
+function classifyError(error) {
+  if ("stack" in error) error.stack = error.stack === "" ? "<stack:empty>" : `<stack:${kind(error.stack)}>`;
+  if ("frames" in error) error.frames = framesToken(error.frames);
+  if ("platform" in error) error.platform = `<platform:${kind(error.platform)}>`;
+}
 
 // Header names worth comparing (the backend reads user-agent and allowlisted
 // IDs out of parameters by nested search, so only name and value matter).
@@ -79,10 +104,15 @@ async function literalIds(scenario) {
 export async function normalizeRun({ requests, transcript, scenario }) {
   const report = { camelCaseAliasKeys: new Set(), nonPublishRequests: [], rules: RULES, literalIds: [], violations: [] };
   const publishes = [];
+  // request-fields: every non-publish request stays in the document as
+  // {method, path, query, status}, sorted (arrival order is noise).
+  const nonPublishRequests = [];
   for (const r of requests) {
     if (r.path === PUBLISH_PATH && r.method === "POST") publishes.push(r);
-    else report.nonPublishRequests.push({ method: r.method, path: r.path });
+    else nonPublishRequests.push({ method: r.method, path: r.path, query: r.query ?? "", status: r.status });
   }
+  nonPublishRequests.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
+  report.nonPublishRequests = nonPublishRequests;
 
   // Order: event timestamp, then resource name, then the body with its random
   // IDs masked (the queue publishes up to 5 events concurrently, so arrival
@@ -97,7 +127,10 @@ export async function normalizeRun({ requests, transcript, scenario }) {
 
   const events = publishes.map((r) => {
     const body = structuredClone(r.body);
-    if (!isObject(body)) return { mock_status: r.status, body };
+    // request-fields: a publish keeps its status, content-type and query;
+    // its other headers (user-agent, accept) are language-specific.
+    const entry = { mock_status: r.status, content_type: r.headers?.["content-type"] ?? null, query: r.query ?? "", body };
+    if (!isObject(body)) return entry;
     // camelCase-alias-drop: camelCase duplicates emitted by the TS generated
     // client (PublishEventRequestToJSON spreads the camelCase model first).
     for (const k of Object.keys(body)) {
@@ -119,14 +152,18 @@ export async function normalizeRun({ requests, transcript, scenario }) {
       collectHeaders(body.parameters.extra, headers);
       body.parameters.extra = { "<headers>": headers };
     }
-    // error-stack-elided: stack and frames are language-specific; keep presence.
+    // error-shape-class: stack, frames and platform differ per language;
+    // their tokens keep the type and, for frames, the frame keys.
     if (isObject(body.error)) {
-      for (const k of ["stack", "frames", "platform"]) if (k in body.error) body.error[k] = `<${k}>`;
+      classifyError(body.error);
+      if (Array.isArray(body.error.chained_errors)) {
+        for (const chained of body.error.chained_errors) if (isObject(chained)) classifyError(chained);
+      }
     }
-    return { mock_status: r.status, body };
+    return entry;
   });
 
-  const doc = { transcript: structuredClone(transcript), events, violations: [] };
+  const doc = { transcript: structuredClone(transcript), events, nonPublishRequests, violations: [] };
 
   walk({ transcript: doc.transcript, events: doc.events }, "$", (node, path) => {
     if (Array.isArray(node)) return;

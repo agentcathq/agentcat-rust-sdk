@@ -9,8 +9,11 @@
 //   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
 //   --lane     the client's protocol lane (default and only value today: 2025-11-25)
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
-// Exit 0: the publish count equals expectPublishes after the settle window.
-// Exit 1: the count differs, or the run failed. Exit 2: bad arguments or scenario.
+// After the steps, the driver closes the clients, waits for the servers to exit
+// and keeps the mock open for a final quiet window before it counts.
+// Exit 0: exactly expectPublishes publishes and no other request reached the mock.
+// Exit 1: the count differs, another request arrived, or the run failed.
+// Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -114,10 +117,16 @@ rmSync(home, { recursive: true, force: true });
 mkdirSync(home, { recursive: true });
 
 const countPublishes = (requests) => requests.filter((r) => r.method === "POST" && r.path === PUBLISH_PATH).length;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const isRunning = (child) => child.exitCode === null && child.signalCode === null;
+const exited = (child) => (isRunning(child) ? new Promise((resolve) => child.once("exit", resolve)) : Promise.resolve());
+/** Resolves true when `promise` settles before `deadline` (epoch ms), false otherwise. */
+const within = (promise, deadline) =>
+  Promise.race([promise.then(() => true), sleep(Math.max(0, deadline - Date.now())).then(() => false)]);
 
 const children = [];
 function killAll() {
-  for (const child of children) if (child.exitCode === null && child.signalCode === null) child.kill("SIGTERM");
+  for (const child of children) if (isRunning(child)) child.kill("SIGTERM");
 }
 
 const mock = spawn(process.execPath, [join(HERE, "mock-api.mjs"), "0"], { stdio: ["ignore", "pipe", "inherit"] });
@@ -139,13 +148,14 @@ async function main() {
   };
 
   let httpUrl;
+  let httpChild;
   if (transport !== "stdio") {
-    const child = spawn(serverCmd[0], [...serverCmd.slice(1), transport, "0"], {
+    httpChild = spawn(serverCmd[0], [...serverCmd.slice(1), transport, "0"], {
       env: serverEnv,
       stdio: ["ignore", "pipe", "inherit"],
     });
-    children.push(child);
-    ({ url: httpUrl } = await readyLine(child, "server"));
+    children.push(httpChild);
+    ({ url: httpUrl } = await readyLine(httpChild, "server"));
   }
 
   async function connect(clientInfo, negotiated) {
@@ -215,25 +225,42 @@ async function main() {
     }
   }
 
-  // Wait for the event stream to settle BEFORE closing clients: the expected
-  // publish count reached and no new request for quietMs, or settleTimeoutMs elapsed.
-  const deadline = Date.now() + (scenario.settleTimeoutMs ?? 10_000);
+  const settleTimeoutMs = scenario.settleTimeoutMs ?? 10_000;
   const quietMs = scenario.quietMs ?? 500;
-  let last = -1;
-  let stableSince = Date.now();
-  for (;;) {
-    const seen = await getRequests();
-    if (seen.length !== last) {
-      last = seen.length;
-      stableSince = Date.now();
+  /** Polls the mock until `done(requests)` holds and no request arrived for quietMs, or the deadline. */
+  async function settle(done, deadline) {
+    let last = -1;
+    let stableSince = Date.now();
+    for (;;) {
+      const seen = await getRequests();
+      if (seen.length !== last) {
+        last = seen.length;
+        stableSince = Date.now();
+      }
+      if (done(seen) && Date.now() - stableSince >= quietMs) return;
+      if (Date.now() > deadline) return;
+      await sleep(50);
     }
-    if (countPublishes(seen) >= expected && Date.now() - stableSince >= quietMs) break;
-    if (Date.now() > deadline) break;
-    await new Promise((r) => setTimeout(r, 50));
   }
-  const requests = await getRequests();
 
-  for (const c of clients) await c.close().catch(() => {});
+  // 1. Let the events of the steps arrive while the clients are connected.
+  await settle((seen) => countPublishes(seen) >= expected, Date.now() + settleTimeoutMs);
+  // 2. Close the clients and wait (bounded) for the servers to exit, so a
+  // publish sent on client close or during the shutdown drain is counted.
+  // A stdio server exits when its stdin closes (the SDK's stdio client
+  // transport waits 2 s, then sends SIGTERM); an HTTP server gets SIGTERM.
+  const exitDeadline = Date.now() + settleTimeoutMs;
+  await within(Promise.all(clients.map((c) => c.close().catch(() => {}))), exitDeadline);
+  if (httpChild && isRunning(httpChild)) {
+    httpChild.kill("SIGTERM");
+    if (!(await within(exited(httpChild), exitDeadline))) {
+      process.stderr.write(`driver: the server did not exit within ${settleTimeoutMs} ms of SIGTERM; killing it\n`);
+      httpChild.kill("SIGKILL");
+    }
+  }
+  // 3. Keep the mock open for a final quiet window, then take the snapshot.
+  await settle(() => true, Date.now() + settleTimeoutMs);
+  const requests = await getRequests();
   killAll();
 
   const outBase = join(OUT_DIR, base);
@@ -243,10 +270,16 @@ async function main() {
   const { normalized, report } = await normalizeRun({ requests, transcript, scenario });
   write("normalized", normalized);
   const publishes = countPublishes(requests);
-  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, report };
+  // Any request other than a publish is a finding (an unexpected API call).
+  const nonPublishRequests = report.nonPublishRequests.length;
+  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, report };
   write("report", summary);
-  process.stdout.write(`${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected })}\n`);
-  return publishes === expected ? 0 : 1;
+  process.stdout.write(`${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests })}\n`);
+  if (publishes !== expected) process.stderr.write(`driver: ${publishes} publishes, expected exactly ${expected}\n`);
+  if (nonPublishRequests > 0) {
+    process.stderr.write(`driver: ${nonPublishRequests} request(s) other than a publish: ${JSON.stringify(report.nonPublishRequests)}\n`);
+  }
+  return publishes === expected && nonPublishRequests === 0 ? 0 : 1;
 }
 
 main().then(
