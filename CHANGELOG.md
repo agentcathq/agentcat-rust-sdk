@@ -14,4 +14,6 @@ First release: a port of the AgentCat TypeScript SDK 2.1.1 for MCP servers built
 - Exporters: OTLP, Datadog, Sentry, PostHog.
 - A background publisher thread with retries, a bounded queue, `flush` and `shutdown`.
 - Behavior now follows the TS SDK in tag validation, tool-schema injection (composed schemas, empty schemas, failure paths, log texts), the protocol-version tag, KSUID decoding and argument key order.
-- Differences from the TypeScript SDK: see `docs/DECISIONS.md` and §10 of the design spec (`docs/superpowers/specs/2026-10-19-rust-sdk-design.md`).
+- Differences from the TypeScript SDK: see `docs/DECISIONS.md` and §10 of the design spec
+  (`docs/superpowers/specs/2026-10-19-rust-sdk-design.md`). Differences that are not reverted yet
+  are in "D15 reverts still owed" in `docs/superpowers/plans/README.md`.
