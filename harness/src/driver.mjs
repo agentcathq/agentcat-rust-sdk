@@ -4,10 +4,11 @@
 // a black box: the TS and Rust reference servers run under the same driver.
 //
 // usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless>
-//          [--lane 2025-11-25] -- <server cmd...>
+//          [--lane 2025-11-25|2026-07-28] -- <server cmd...>
 //   label      output file tag, e.g. "ts" or "rust"
 //   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
-//   --lane     the client's protocol lane (default and only value today: 2025-11-25)
+//   --lane     the client's protocol lane: 2025-11-25 (default; the v1 client, initialize
+//              handshake) or 2026-07-28 (the v2 client, versionNegotiation "auto")
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts.
@@ -20,6 +21,8 @@ import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 
+import { Client as V2Client, StreamableHTTPClientTransport as V2StreamableHTTPClientTransport } from "@modelcontextprotocol/client";
+import { StdioClientTransport as V2StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -29,10 +32,13 @@ import { normalizeRun } from "./normalize.mjs";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "out");
 const TRANSPORTS = ["stdio", "http", "http-stateless"];
-const LANES = ["2025-11-25"];
+// 2025-11-25: the official TS client 1.31 (@modelcontextprotocol/sdk).
+// 2026-07-28: the v2 client (@modelcontextprotocol/client) with versionNegotiation
+// "auto", as connectV2Client in the TS repo's src/tests/e2e-http/lanes.ts.
+const LANES = ["2025-11-25", "2026-07-28"];
 const PUBLISH_PATH = "/v1/public/events/";
 const USAGE =
-  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25] -- <server cmd...>";
+  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] -- <server cmd...>";
 
 function usage(message) {
   process.stderr.write(`driver: ${message}\n${USAGE}\n`);
@@ -69,7 +75,7 @@ try {
 }
 const expected = checkScenario(scenario);
 
-/** Validates the scenario; returns the publish count expected on this transport. */
+/** Validates the scenario; returns the publish count expected on this transport and lane. */
 function checkScenario(s) {
   if (!s || typeof s !== "object") usage("scenario must be a JSON object");
   if (typeof s.name !== "string" || !/^[A-Za-z0-9_-]+$/.test(s.name)) usage("scenario.name must be letters, digits, _ and -");
@@ -83,9 +89,10 @@ function checkScenario(s) {
       usage(`sessions[${si}].steps[${i}]: op must be listTools, or callTool with a name`);
     }
   }
+  // A number, or an object keyed by `<transport>@<lane>` or `<transport>` (first match wins).
   const e = s.expectPublishes;
-  const n = typeof e === "number" ? e : e && typeof e === "object" ? e[transport] : undefined;
-  if (!Number.isInteger(n) || n < 0) usage(`expectPublishes has no count for ${transport}`);
+  const n = typeof e === "number" ? e : e && typeof e === "object" ? (e[`${transport}@${lane}`] ?? e[transport]) : undefined;
+  if (!Number.isInteger(n) || n < 0) usage(`expectPublishes has no count for ${transport}@${lane} or ${transport}`);
   return n;
 }
 
@@ -159,6 +166,7 @@ async function main() {
   }
 
   async function connect(clientInfo, negotiated) {
+    if (lane === "2026-07-28") return connectV2(clientInfo, negotiated);
     const client = new Client(clientInfo, { capabilities: {} });
     const t =
       transport === "stdio"
@@ -176,6 +184,24 @@ async function main() {
       setVersion?.(version);
     };
     await client.connect(t);
+    return client;
+  }
+
+  async function connectV2(clientInfo, negotiated) {
+    const client = new V2Client(clientInfo, { capabilities: {}, versionNegotiation: { mode: "auto" } });
+    const t =
+      transport === "stdio"
+        ? new V2StdioClientTransport({
+            command: serverCmd[0],
+            args: [...serverCmd.slice(1), "stdio"],
+            env: serverEnv,
+            stderr: "inherit",
+          })
+        : new V2StreamableHTTPClientTransport(new URL(httpUrl), { requestInit: { headers: scenario.httpHeaders ?? {} } });
+    await client.connect(t);
+    // "auto" falls back to initialize when the server does not prove the
+    // 2026-07-28 era; the transcript keeps what was negotiated.
+    negotiated.protocolVersion = client.getNegotiatedProtocolVersion();
     return client;
   }
 

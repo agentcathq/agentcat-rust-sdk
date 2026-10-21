@@ -5,9 +5,12 @@ server, a local mock API records every event the server publishes, a normalizer 
 language-neutral document, and a diff compares two documents. Allowed differences are listed in
 `rulings.json`.
 
-This package holds the TS half: the TS v1 reference server, instrumented with the real TS SDK at the
-commit pinned in `oracle/oracle.lock`. The Rust reference server (plan 3) follows the same server
-protocol and loads the same tool contract.
+This package holds the TS half: two TS reference servers, instrumented with the real TS SDK at the
+commit pinned in `oracle/oracle.lock`. `ts-v1.mjs` runs on `@modelcontextprotocol/sdk` 1.31;
+`ts-v2.mjs` runs on `@modelcontextprotocol/server` 2.0.0 and also serves protocol 2026-07-28, which
+has no `initialize` handshake (design decision C18). Both serve the same tools and share
+`src/servers/common.mjs`. The Rust reference server (plan 3) follows the same server protocol and
+loads the same tool contract, and must match TS on both client lanes.
 
 Run the tests with `corepack pnpm --filter harness test`. The test files run one at a time, and must
 not run at the same time as `oracle/test/fetch.test.mjs`, which dirties the shared TS clone on purpose.
@@ -17,13 +20,13 @@ not run at the same time as `oracle/test/fetch.test.mjs`, which dirties the shar
 Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` or `[::1]`:
 
 - Every TS server run preloads `src/egress-guard.mjs` (`node --import`), which rejects any `fetch` to
-  another host with `egress-guard: blocked <origin>`. `ts-v1.mjs` also imports the guard as its first
-  module.
-- `ts-v1.mjs` refuses to start (exit 2, `refusing to start`) unless `AGENTCAT_API_URL` is an
-  `http://` URL on one of those hosts.
+  another host with `egress-guard: blocked <origin>`. `ts-v1.mjs` and `ts-v2.mjs` also import the
+  guard as their first module.
+- `ts-v1.mjs` and `ts-v2.mjs` refuse to start (exit 2, `refusing to start`) unless
+  `AGENTCAT_API_URL` is an `http://` URL on one of those hosts.
 - The driver gives every server `DISABLE_DIAGNOSTICS=true` and a temp `HOME` (the TS SDK writes
   `~/agentcat.log` there).
-- Untracked (`HARNESS_NO_TRACK=1`), `ts-v1.mjs` never publishes: `emit_custom` answers without
+- Untracked (`HARNESS_NO_TRACK=1`), the TS servers never publish: `emit_custom` answers without
   calling `publishCustomEvent`.
 
 ## Commands
@@ -32,6 +35,10 @@ Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` o
 # One run: writes harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 node harness/src/driver.mjs harness/scenarios/basic.json ts stdio \
   -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v1.mjs
+
+# The 2026-07-28 lane against the TS v2 server
+node harness/src/driver.mjs harness/scenarios/basic.json ts2 http --lane 2026-07-28 \
+  -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v2.mjs
 
 # Compare two runs
 node harness/src/diff.mjs harness/out/basic.ts.stdio.normalized.json \
@@ -44,13 +51,21 @@ node harness/src/dump-contract.mjs --check
 
 ### driver.mjs
 
-`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25] -- <server cmd...>`
+`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] -- <server cmd...>`
 
-- `label` tags the output files (letters, digits, `_`, `-`).
+- `label` tags the output files (letters, digits, `_`, `-`). The lane is not in the file name: give
+  runs on different lanes different labels.
 - The driver starts the mock API, then the server as `<server cmd...> stdio` (once per scenario
   session), `<server cmd...> http 0` or `<server cmd...> http-stateless 0`.
-- `--lane` names the client's protocol lane. `2025-11-25` (the official TS client 1.31) is the
-  default and the only value today; any other value exits 2.
+- `--lane` names the client's protocol lane; any other value exits 2:
+  - `2025-11-25` (default): the official TS client 1.31 (`@modelcontextprotocol/sdk`), with the
+    `initialize` handshake.
+  - `2026-07-28`: the v2 client (`@modelcontextprotocol/client` 2.3.1) with
+    `versionNegotiation: { mode: "auto" }`, as `connectV2Client` in the TS repository's
+    `src/tests/e2e-http/lanes.ts`. It probes with `server/discover` (over stdio, on a short-lived
+    sibling server process) and falls back to `initialize` when the server gives no proof of the
+    2026-07-28 era. The driver does not fail on a fallback: the transcript records the negotiated
+    version, so a diff against a 2026-07-28 run shows it.
 - The server gets the parent environment plus `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID`
   (the scenario's `projectId`), `HARNESS_OPTIONS` (the scenario's `options` as JSON),
   `DISABLE_DIAGNOSTICS=true`, and `HOME` and `USERPROFILE` set to
@@ -98,10 +113,10 @@ Every reference server (TS now, Rust in plan 3) follows it. A Rust twin must mat
 
 | Item | Meaning |
 |---|---|
-| argv `stdio` | MCP over stdio. stdout carries JSON-RPC only. The server exits when stdin closes. |
-| argv `http <port>` | Stateful streamable HTTP on `127.0.0.1:<port>` (0: any free port), path `/mcp`. A request without a known `mcp-session-id` gets a new transport and a new tracked server (`initialize` creates the session; anything else is rejected by the transport). One tracked server per MCP session. |
-| argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. |
-| HTTP responses | JSON response mode (`enableJsonResponse: true`): every POST is answered with one JSON body, not an SSE stream. |
+| argv `stdio` | MCP over stdio. stdout carries JSON-RPC only. The server exits when stdin closes. One tracked server per connection. A server that serves 2026-07-28 picks the era from the opening message (`ts-v2.mjs`: `serveStdio`). |
+| argv `http <port>` | Stateful streamable HTTP on `127.0.0.1:<port>` (0: any free port), path `/mcp`. A request without a known `mcp-session-id` gets a new transport and a new tracked server (`initialize` creates the session; anything else is rejected by the transport). One tracked server per MCP session. A 2026-07-28 request (it carries the per-request `_meta` envelope; the protocol has no sessions) gets a fresh tracked server per request (`ts-v2.mjs`: `createMcpHandler`). |
+| argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. A 2026-07-28 request is served as in `http` mode. |
+| HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
 | SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first). |
 | `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. |
@@ -121,8 +136,13 @@ stderr only.
 
 ### Tools
 
-The schemas are those of `contract/tool-contract.json` (generated from the TS server; the Rust
-server loads it). The behaviors:
+The schemas are those of `contract/tool-contract.json`: `ts-v1.mjs` declares them in zod and
+generates the file; `ts-v2.mjs` and the Rust server load it (names, descriptions, input and output
+schemas). Arguments are validated as zod objects validate them: a key the schema does not declare is
+dropped before the handler runs, not rejected, although the listed schema says
+`additionalProperties: false`. Each server instance gets its own handler functions: the TS SDK marks
+every function it wraps, so a function shared by two v1 servers is wrapped only on the first, and a
+later server's thrown error loses its stack. The behaviors (in `src/servers/common.mjs`):
 
 | Tool | Input | Result |
 |---|---|---|
@@ -132,6 +152,23 @@ server loads it). The behaviors:
 | `tool_error` | `{}` | Returns `isError: true`, `content: [{type: "text", text: "handled failure"}]` (no throw). |
 | `big` | `{size: integer}` | `content: [{type: "text", text: "x" repeated size times}]` |
 | `emit_custom` | `{session: string, resource: string, message?: string}` | Tracked: first awaits `publishCustomEvent(session, projectId, {resourceName: resource, message, parameters: {from: "emit_custom"}, tags: {kind: "custom"}})`. Untracked: no publish (the TS SDK's API URL is set only by `track`, so a publish would aim at production). Then returns `content: [{type: "text", text: "published"}]`. |
+
+### TS v1 and v2 differences
+
+On the 2025 lane, `ts-v1.mjs` and `ts-v2.mjs` publish the same events on each transport (observed
+with `basic.json`). Their transcripts differ where the host MCP SDK differs:
+
+- `tools/list`: v1 adds `execution: {"taskSupport": "forbidden"}` to each tool; v2 does not.
+- Untracked: a call to an unknown tool answers an `isError` result
+  (`MCP error -32602: Tool <name> not found`) on v1 and a JSON-RPC error `-32602` on v2.
+- Invalid arguments: both answer an `isError` result, with the validator's own text (v1: zod, with
+  an `MCP error -32602: ` prefix; v2: ajv).
+
+On the 2026-07-28 lane, the transcript and events also differ from the 2025 lane by protocol: no
+`initialize` request (JSON-RPC IDs start one lower), every result carries
+`_meta["io.modelcontextprotocol/serverInfo"]`, `tools/list` adds `ttlMs` and `cacheScope`, the
+`mcp-protocol-version` header is `2026-07-28`, and the TS SDK adds the event tag
+`agentcat_protocol_version: "2026-07-28"`.
 
 ## Options profile
 
@@ -199,8 +236,9 @@ Example (`scenarios/basic.json`):
 }
 ```
 
-- `expectPublishes` is a number, or an object keyed by transport (`stdio`, `http`,
-  `http-stateless`) when the counts differ.
+- `expectPublishes` is a number, or an object when the counts differ, keyed by
+  `<transport>@<lane>` (for example `http@2026-07-28`) or by transport (`stdio`, `http`,
+  `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`.
 - `httpHeaders` go on every HTTP request of the client.
 - Each session is a new client connection. `saveHandleAs` stores the `ses_` handle a result issued
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
@@ -215,7 +253,8 @@ as `harness:<name>`.
 `{"transcript": [...], "events": [...], "nonPublishRequests": [...], "violations": [...]}`
 
 - `transcript`: one entry per session start (`op: "initialize"`, with the negotiated
-  `protocolVersion`) and per step (`op`, `request`, then `result` or `error`).
+  `protocolVersion`, on both lanes: on 2026-07-28 no `initialize` request is sent) and per step
+  (`op`, `request`, then `result` or `error`).
 - `events`: one entry per publish request,
   `{"mock_status": <status>, "content_type": <header>, "query": <query string>, "body": <normalized body>}`.
 - `nonPublishRequests`: every other request the mock received, `{"method", "path", "query", "status"}`,
@@ -240,8 +279,11 @@ The normalizer rules, each listed in `report.rules` of the run report:
 
 `<type>` is `string`, `number`, `boolean`, `object`, `array` or `null`.
 
-Events are ordered by timestamp, then resource name, then the body with its IDs masked: the TS queue
-publishes events concurrently, so arrival order is noise.
+Events are ordered by timestamp; in the same millisecond, an event with a `duration` (a call, which
+can enclose events published during it) comes before one without; then by resource name, then by the
+body with its IDs masked. The TS queue publishes events concurrently, so arrival order is noise. The
+`duration` step keeps a custom event published during a tool call after the call event, also when
+both land in the same millisecond.
 
 The ordered checks read key order as JavaScript keeps it, so they do not apply to integer-like keys
 (JavaScript puts those first).

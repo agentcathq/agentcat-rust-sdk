@@ -11,11 +11,16 @@ export const DIFF = join(HARNESS, "src", "diff.mjs");
 export const DUMP_CONTRACT = join(HARNESS, "src", "dump-contract.mjs");
 export const GUARD = join(HARNESS, "src", "egress-guard.mjs");
 export const TS_V1 = join(HARNESS, "src", "servers", "ts-v1.mjs");
+export const TS_V2 = join(HARNESS, "src", "servers", "ts-v2.mjs");
+export const CONTRACT = join(HARNESS, "contract", "tool-contract.json");
 export const OUT = join(HARNESS, "out");
 export const BASIC = join(HARNESS, "scenarios", "basic.json");
 
 /** The TS v1 reference server command, egress guard preloaded. */
 export const TS_SERVER = [process.execPath, "--import", pathToFileURL(GUARD).href, TS_V1];
+
+/** The TS v2 reference server command (@modelcontextprotocol/server 2.x), egress guard preloaded. */
+export const TS_V2_SERVER = [process.execPath, "--import", pathToFileURL(GUARD).href, TS_V2];
 
 /** ts-v1 plus an env-selected misbehavior (test/fixtures/ts-v1-plus.mjs), guard preloaded. */
 export const TS_SERVER_PLUS = [
@@ -75,8 +80,8 @@ export function tempDir(t, prefix = "harness-test-") {
   return dir;
 }
 
-/** The publish count a scenario expects on a transport. */
-export function expectedFor(scenario, transport) {
+/** The publish count a scenario expects on a transport and lane: `<transport>@<lane>`, then `<transport>`, then the number. */
+export function expectedFor(scenario, transport, lane = "2025-11-25") {
   const e = scenario.expectPublishes;
-  return typeof e === "number" ? e : e[transport];
+  return typeof e === "number" ? e : (e[`${transport}@${lane}`] ?? e[transport]);
 }

@@ -231,6 +231,18 @@ test("(g) two tool schemas that differ only in property order produce a diff ent
   assert.match(res.stdout, /\$\.transcript\[0\]\.result\.tools\[0\]\.inputSchema\.<properties-order>/);
 });
 
+test("a custom event published during a tool call sorts after the call event, in the same millisecond or the next", async () => {
+  const publish = (body) => ({ method: "POST", path: "/v1/public/events/", query: "", status: 200, headers: {}, body });
+  const call = publish({ event_type: "mcp:tools/call", resource_name: "emit_custom", timestamp: "2026-01-01T00:00:00.100Z", duration: 3 });
+  const order = async (requests) => (await normalizeRun({ requests, transcript: [] })).normalized.events.map((e) => e.body.event_type);
+  for (const at of ["100", "101"]) {
+    const custom = publish({ event_type: "agentcat:custom", resource_name: "checkout", timestamp: `2026-01-01T00:00:00.${at}Z` });
+    // Arrival order is noise: both orders must normalize alike.
+    assert.deepEqual(await order([call, custom]), ["mcp:tools/call", "agentcat:custom"], `custom at .${at}`);
+    assert.deepEqual(await order([custom, call]), ["mcp:tools/call", "agentcat:custom"], `custom at .${at}, arrived first`);
+  }
+});
+
 test("(h) a resolveSessionId hook run keeps the derived ses_ ID literal", { timeout: 120_000 }, async (t) => {
   const scenario = {
     name: "hook",

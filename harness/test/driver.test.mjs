@@ -90,8 +90,8 @@ test("a request other than a publish makes the driver exit 1 and is in the repor
   assert.deepEqual(normalized.nonPublishRequests, report.report.nonPublishRequests);
 });
 
-test("the driver exits 2 on a lane other than 2025-11-25", async () => {
-  for (const lane of ["2026-07-28", "2024-11-05", ""]) {
+test("the driver exits 2 on a lane other than 2025-11-25 and 2026-07-28", async () => {
+  for (const lane of ["2026-07-29", "2024-11-05", ""]) {
     const res = await run(process.execPath, [DRIVER, BASIC, "lane", "stdio", "--lane", lane, "--", ...TS_SERVER]);
     assert.equal(res.code, 2, `lane ${JSON.stringify(lane)}: ${res.stderr}`);
   }

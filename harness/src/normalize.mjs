@@ -114,13 +114,20 @@ export async function normalizeRun({ requests, transcript, scenario }) {
   nonPublishRequests.sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   report.nonPublishRequests = nonPublishRequests;
 
-  // Order: event timestamp, then resource name, then the body with its random
-  // IDs masked (the queue publishes up to 5 events concurrently, so arrival
-  // order is noise; masking keeps the order the same from run to run).
+  // Order: event timestamp; in the same millisecond, an event with a duration
+  // (a call, which can enclose events published during it) before one
+  // without; then resource name, then the body with its random IDs masked
+  // (the queue publishes up to 5 events concurrently, so arrival order is
+  // noise; masking keeps the order the same from run to run). Without the
+  // duration step, a custom event published during a tool call sorts before
+  // or after the call event depending on whether both land in the same
+  // millisecond.
   const masked = (r) => JSON.stringify(r.body).replace(ID_RE, "<id>");
+  const untimed = (r) => (typeof r.body?.duration === "number" ? 0 : 1);
   publishes.sort(
     (a, b) =>
       String(a.body?.timestamp).localeCompare(String(b.body?.timestamp)) ||
+      untimed(a) - untimed(b) ||
       String(a.body?.resource_name).localeCompare(String(b.body?.resource_name)) ||
       masked(a).localeCompare(masked(b)),
   );

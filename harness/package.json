@@ -6,7 +6,10 @@
     "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\""
   },
   "dependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "@modelcontextprotocol/node": "2.0.0",
     "@modelcontextprotocol/sdk": "1.31.0",
+    "@modelcontextprotocol/server": "2.0.0",
     "oracle": "workspace:*",
     "zod": "3.25.76"
   }
