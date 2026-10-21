@@ -6,6 +6,7 @@ version = 4
 name = "agentcat-sdk"
 version = "1.0.0"
 dependencies = [
+ "getrandom",
  "hex",
  "proptest",
  "ryu-js",

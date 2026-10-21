@@ -23,6 +23,8 @@ export const functions = {
   "oracle.String": ({ value }) => String(value),
   "oracle.typeof": ({ value }) => typeof value,
   "oracle.reformat": (text) => JSON.stringify(JSON.parse(text)),
+  "ksuid.fromParts": (prefix, timeMs, payloadHex) =>
+    core.KSUID.withPrefix(prefix).fromParts(timeMs, Buffer.from(payloadHex, "hex")),
   "tokenEstimate.estimateInputTokens": (...args) => core.tokenEstimate.estimateInputTokens(...args),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
 };

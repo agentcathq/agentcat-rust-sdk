@@ -1,0 +1,470 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/ksuid.mjs",
+  "cases": [
+    {
+      "name": "from-parts:epoch-zeros",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1400000000000,
+        "payload_hex": "00000000000000000000000000000000"
+      },
+      "output": "ses_000000000000000000000000000",
+      "ts_test": [
+        "v1|src/tests/ksuid.test.ts|KSUID > Edge cases > should handle KSUID epoch boundary"
+      ]
+    },
+    {
+      "name": "from-parts:2024-bytes-00-0f",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 1704067200000,
+        "payload_hex": "000102030405060708090a0b0c0d0e0f"
+      },
+      "output": "evt_2aKVLJsghm4cqy9vajIu4ag0IqF"
+    },
+    {
+      "name": "from-parts:max-time-ff",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 5694967295000,
+        "payload_hex": "ffffffffffffffffffffffffffffffff"
+      },
+      "output": "ses_aWgEPTl1tmebfsQzFP4bxwgy80V"
+    },
+    {
+      "name": "from-parts:below-epoch",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1399999999999,
+        "payload_hex": "00000000000000000000000000000000"
+      },
+      "error": "Valid KSUID timestamps must be in milliseconds since 1970-01-01T00:00:00Z, no earlier than 2014-05-13T16:53:20Z and no later than 2150-06-19T23:21:35Z"
+    },
+    {
+      "name": "from-parts:above-max-time",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 5694967295001,
+        "payload_hex": "00000000000000000000000000000000"
+      },
+      "error": "Valid KSUID timestamps must be in milliseconds since 1970-01-01T00:00:00Z, no earlier than 2014-05-13T16:53:20Z and no later than 2150-06-19T23:21:35Z"
+    },
+    {
+      "name": "from-parts:ts-test:timestamp-and-payload",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1749990896789,
+        "payload_hex": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
+      },
+      "output": "ses_2yXpi76rVqq4CoN3L8d3lJTQxQI",
+      "ts_test": [
+        "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should create KSUID from timestamp and payload"
+      ]
+    },
+    {
+      "name": "from-parts:ts-test:task-prefix",
+      "input": {
+        "prefix": "task",
+        "time_ms": 1749990896789,
+        "payload_hex": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
+      },
+      "output": "task_2yXpi76rVqq4CoN3L8d3lJTQxQI",
+      "ts_test": [
+        "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with fromParts"
+      ]
+    },
+    {
+      "name": "from-parts:ts-test:time-100",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 100,
+        "payload_hex": "00000000000000000000000000000000"
+      },
+      "error": "Valid KSUID timestamps must be in milliseconds since 1970-01-01T00:00:00Z, no earlier than 2014-05-13T16:53:20Z and no later than 2150-06-19T23:21:35Z",
+      "ts_test": [
+        "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid timestamp"
+      ]
+    },
+    {
+      "name": "from-parts:ts-test:time-now-plus-1e15",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1001749990896789,
+        "payload_hex": "00000000000000000000000000000000"
+      },
+      "error": "Valid KSUID timestamps must be in milliseconds since 1970-01-01T00:00:00Z, no earlier than 2014-05-13T16:53:20Z and no later than 2150-06-19T23:21:35Z",
+      "ts_test": [
+        "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid timestamp"
+      ]
+    },
+    {
+      "name": "from-parts:seeded-0",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 4493350481280,
+        "payload_hex": "097413c37b7c29438d3115b67acbe152"
+      },
+      "output": "ses_QJ5D1YpEaKq4rRS3HC1yPcXBclW"
+    },
+    {
+      "name": "from-parts:seeded-1",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4366024504310,
+        "payload_hex": "49ac86d48a02e04fefc46bb6275eb900"
+      },
+      "output": "evt_PDwh293V5ZRRptjkMIHd1jbT1d2"
+    },
+    {
+      "name": "from-parts:seeded-2",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1435887971991,
+        "payload_hex": "7adc9aaec99594125f87d669767f92c6"
+      },
+      "output": "ses_0IvF2ONIdRxyjr4mxrazL4pDaXm"
+    },
+    {
+      "name": "from-parts:seeded-3",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 5074105906145,
+        "payload_hex": "aa5fb0b377fae1b6adf3c30e1089dd58"
+      },
+      "output": "evt_VFJ9UTsyzrP8nR3PlAKSHHHuecK"
+    },
+    {
+      "name": "from-parts:seeded-4",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 3720122245460,
+        "payload_hex": "4a768d9364c12cf3a4c0c50f6927b0c6"
+      },
+      "output": "ses_JjMyyj6M1TyLpaudKEkGOsqOfME"
+    },
+    {
+      "name": "from-parts:seeded-5",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4067995168379,
+        "payload_hex": "fcfdfa95e2f3d050a0f1649924a18c41"
+      },
+      "output": "evt_MgnZmxsHHzWkJkMbTnC7wmKhLKj"
+    },
+    {
+      "name": "from-parts:seeded-6",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 5184914160119,
+        "payload_hex": "0cd9166ce307ab1a49fe852d0128a6a1"
+      },
+      "output": "ses_WBjfqEqnvpxqDOLBtXS89kWLTHt"
+    },
+    {
+      "name": "from-parts:seeded-7",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4955037729173,
+        "payload_hex": "b0ce2031209bac93ba51f318f631627f"
+      },
+      "output": "evt_UEWbARnWzYkfQrKqpPXZUqaCKNz"
+    },
+    {
+      "name": "from-parts:seeded-8",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 3278491830563,
+        "payload_hex": "8d47ab0376c756735efd141a2f20dec5"
+      },
+      "output": "ses_FyVHrxNmiyUYTXhb0zdt4d929Uz"
+    },
+    {
+      "name": "from-parts:seeded-9",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 5004494538161,
+        "payload_hex": "621055422220693b048b7662f5e4e74a"
+      },
+      "output": "evt_UebQlweDeQtxkNxWtW94sIwsDes"
+    },
+    {
+      "name": "from-parts:seeded-10",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2790025455676,
+        "payload_hex": "4734c4023160fc4f902a98d006fb5015"
+      },
+      "output": "ses_BowRKax8HjVKnltxZhBhmzb2sbd"
+    },
+    {
+      "name": "from-parts:seeded-11",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 1461240423985,
+        "payload_hex": "7aaedd8a91dfa1dedc994393f584322a"
+      },
+      "output": "evt_0WI3iWUdzAIZMa2uPAfRbX1VTOk"
+    },
+    {
+      "name": "from-parts:seeded-12",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 3774676751447,
+        "payload_hex": "369edc2dceaa513beabb72e36bd27358"
+      },
+      "output": "ses_KC8T43iqx8fqvNoQUddXQ2QINHE"
+    },
+    {
+      "name": "from-parts:seeded-13",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4732143292224,
+        "payload_hex": "61ab39c372afeee1da66360f34aea4f3"
+      },
+      "output": "evt_SKzmEr417YyL2b3IYeEjzdNrRBr"
+    },
+    {
+      "name": "from-parts:seeded-14",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2524719994738,
+        "payload_hex": "b741dc3b77a2d7c812d83be5dbb6ba6a"
+      },
+      "output": "ses_9Z37qJws7IpskvbpQ4o2z4sQ6X4"
+    },
+    {
+      "name": "from-parts:seeded-15",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 1698109400930,
+        "payload_hex": "3b958b879e10e4b39bd7eff9fcd8086f"
+      },
+      "output": "evt_2XBjWitYVjbZJVnyD8Q6xHHyJHr"
+    },
+    {
+      "name": "from-parts:seeded-16",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 3725623967459,
+        "payload_hex": "199494d8be3f8f862a175bbe51649583"
+      },
+      "output": "ses_JmGqNEqbqNgzDYrFhB3upDRJ4DL"
+    },
+    {
+      "name": "from-parts:seeded-17",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 2075957221842,
+        "payload_hex": "136309531e555ec567ba75fef2a6cec9"
+      },
+      "output": "evt_5kQGDHZ1kSkj4OJnOWQTc6Y8NU9"
+    },
+    {
+      "name": "from-parts:seeded-18",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 4844086856198,
+        "payload_hex": "c570f7475e5e46c4cb678c65690c4470"
+      },
+      "output": "ses_TI1Pk4v2I0qzIpjSYCModzwqRvM"
+    },
+    {
+      "name": "from-parts:seeded-19",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4699457496232,
+        "payload_hex": "b8ed8314c6327f759b8a9d34d75356b7"
+      },
+      "output": "evt_S3lDfFAQ8Y3pRd6j7XyiAOCC3ux"
+    },
+    {
+      "name": "from-parts:seeded-20",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1807143631905,
+        "payload_hex": "47dc49da609002212571af0c44a6c65b"
+      },
+      "output": "ses_3SgG7t5x8YMQxNYD64KMzrWTLLv"
+    },
+    {
+      "name": "from-parts:seeded-21",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 2621937168715,
+        "payload_hex": "45100258f2480c2333a8882e87250b14"
+      },
+      "output": "evt_AOJKXnusBOlEU3fcw6CE08LM9cS"
+    },
+    {
+      "name": "from-parts:seeded-22",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1439936396990,
+        "payload_hex": "6bcf169f2bc62c13d75d53ddd9cd52b0"
+      },
+      "output": "ses_0L3al0wH71lmJJnP7ybMwKjDbFI"
+    },
+    {
+      "name": "from-parts:seeded-23",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4715683246228,
+        "payload_hex": "303ff8a1d7b267ab6f4e3ee1930f1e73"
+      },
+      "output": "evt_SCJfVKaEUGbbUpamgEWhdGTjinz"
+    },
+    {
+      "name": "from-parts:seeded-24",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 4392335900303,
+        "payload_hex": "b26cbb38c66b02ca2687e18c717efe66"
+      },
+      "output": "ses_PRorOEEUuwNi79jjkG9eyGGpnHS"
+    },
+    {
+      "name": "from-parts:seeded-25",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 1998396877860,
+        "payload_hex": "6c2f0a9513a31ba46ea87a6986b6ea0b"
+      },
+      "output": "evt_55WfmUavxxvPkrbSuJlgyiI2Kbr"
+    },
+    {
+      "name": "from-parts:seeded-26",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2137383631828,
+        "payload_hex": "bd70678a758dd81dd98e2de1f6c07b8d"
+      },
+      "output": "ses_6GoOuJUKtZ9DUyzsE5XLwsgDUlx"
+    },
+    {
+      "name": "from-parts:seeded-27",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 2419049056762,
+        "payload_hex": "59272693a0d7d918b877541c8cdc7079"
+      },
+      "output": "evt_8fKYH3gmgbESgbPav2iKvzNvSqf"
+    },
+    {
+      "name": "from-parts:seeded-28",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 1696974382930,
+        "payload_hex": "e8badb646e95ed2191902b43cb814dfd"
+      },
+      "output": "ses_2WacyABbLTSmUIiC45GAZN41Klp"
+    },
+    {
+      "name": "from-parts:seeded-29",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 2706524161696,
+        "payload_hex": "ed1fda1981330c2d51234db450586ad2"
+      },
+      "output": "evt_B6udEi9oBOOAf2K22v2jkybeFCU"
+    },
+    {
+      "name": "from-parts:seeded-30",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2204515226812,
+        "payload_hex": "f350c186bbeaaed447f0bca39dc90cb8"
+      },
+      "output": "ses_6qD3OT7kSRkvQcoT2a0tYSqUhc8"
+    },
+    {
+      "name": "from-parts:seeded-31",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 4071120402378,
+        "payload_hex": "ba006960b2a624ae7a6a6608fd495bc8"
+      },
+      "output": "evt_MiRkIdvpbhapAphSFty5S39znHU"
+    },
+    {
+      "name": "from-parts:seeded-32",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2159366368823,
+        "payload_hex": "6b258d4573c623b5fc50daf32966c8c5"
+      },
+      "output": "ses_6SP3XQTzo3cHGILAPI91q9Z3Grt"
+    },
+    {
+      "name": "from-parts:seeded-33",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 5428377869063,
+        "payload_hex": "66f6482c8cedb7a2af5582b4ac1198aa"
+      },
+      "output": "evt_YG6wSf9blI6dbI1Ns0U18rV97vu"
+    },
+    {
+      "name": "from-parts:seeded-34",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 3183119490585,
+        "payload_hex": "18346d45de031cf773d4e29731944093"
+      },
+      "output": "ses_FADORfBSGvZy5CT7YzYJUtNaDvX"
+    },
+    {
+      "name": "from-parts:seeded-35",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 3810475764439,
+        "payload_hex": "cce08923aed2b503d51c410e61c07482"
+      },
+      "output": "evt_KV0nnM1O0Vd7kjxurHktMPdoqva"
+    },
+    {
+      "name": "from-parts:seeded-36",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 4815482695205,
+        "payload_hex": "bd58af46a5878ac729b8715300bd14d8"
+      },
+      "output": "ses_T2wICScb48cZyulC6dWwfN4NwbI"
+    },
+    {
+      "name": "from-parts:seeded-37",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 2978815962632,
+        "payload_hex": "286f11e248fd5d32a949802923ee6252"
+      },
+      "output": "evt_DQULHPbiWY3pQozAbYMgaZngKqA"
+    },
+    {
+      "name": "from-parts:seeded-38",
+      "input": {
+        "prefix": "ses",
+        "time_ms": 2304881215789,
+        "payload_hex": "8430e5bb43be9d4ccea68a02c87b7150"
+      },
+      "output": "ses_7h8CP1dRSZ2Sc9gcCJZgqkXyEm8"
+    },
+    {
+      "name": "from-parts:seeded-39",
+      "input": {
+        "prefix": "evt",
+        "time_ms": 3914417787415,
+        "payload_hex": "9da4793610e0f9c0fe14d7be5c87879c"
+      },
+      "output": "evt_LNor2TH6khaGa7suobD8Y0yY11g"
+    },
+    {
+      "name": "min-max:min",
+      "output": "000000000000000000000000000"
+    },
+    {
+      "name": "min-max:max",
+      "output": "aWgEPTl1tmebfsQzFP4bxwgy80V"
+    }
+  ]
+}

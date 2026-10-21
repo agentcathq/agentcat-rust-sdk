@@ -2599,103 +2599,146 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create KSUIDs with different timestamps"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create a KSUID from random async"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create a KSUID from randomSync"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Buffer validation > should throw error for invalid buffer in constructor"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Buffer validation > should validate buffers correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Comparison and equality > should check equality correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Comparison and equality > should compare KSUIDs correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Edge cases > should create unique KSUIDs"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Edge cases > should handle KSUID epoch boundary"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:ksuid.json"
+reason = "ksuid.json case from-parts:epoch-zeros; the epoch encodes to the minimum ID; checked by agentcat-sdk::handles::ksuid::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with fromParts"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:ksuid.json"
+reason = "ksuid.json case from-parts:ts-test:task-prefix; checked by agentcat-sdk::handles::ksuid::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with random async"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create prefixed KSUIDs with randomSync"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should create unique prefixed KSUIDs"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Prefix functionality > should handle different prefixes"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::ksuid::tests::random_has_the_shape_and_differs"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have 16-byte payload"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have correct date property"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Properties > should have correct timestamp property"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Serialization > should have proper toString representation"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Serialization > should serialize to JSON correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should encode and parse KSUID strings correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should handle MIN and MAX string values"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > String encoding/parsing > should throw error for invalid string length"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the SDK only encodes KSUIDs; this is the TS KSUID library's own API"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should create KSUID from timestamp and payload"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:ksuid.json"
+reason = "ksuid.json case from-parts:ts-test:timestamp-and-payload; checked by agentcat-sdk::handles::ksuid::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid payload"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the payload is a `[u8; 16]`, so a payload of another length cannot be passed"
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > fromParts > should throw error for invalid timestamp"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:ksuid.json"
+reason = "ksuid.json case from-parts:ts-test:time-100 and from-parts:ts-test:time-now-plus-1e15; checked by agentcat-sdk::handles::ksuid::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent when os.homedir is not implemented at all"
