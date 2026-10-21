@@ -7,9 +7,13 @@ CAPTURE_FILE: absolute path of harness/out/<scenario>.<label>.<transport>.raw.js
 Every body's project_id (and its camelCase alias projectId) is replaced with
 the id of a project this test creates; nothing else in the body changes.
 
-An egress guard refuses every Python socket connection that is not a Unix
-socket (the Docker daemon) or a loopback address (the testcontainer). It is
-installed when pytest imports this file, before any fixture starts a container.
+An egress guard is installed when pytest imports this file, before any fixture
+starts a container. In Python code it refuses: a socket connect, connect_ex or
+sendto to an address that is not a Unix socket (the Docker daemon) or loopback
+(the testcontainer), and a getaddrinfo, gethostbyname or gethostbyname_ex
+lookup of a name other than localhost or a loopback address. It does not cover
+C extensions (libpq opens the Postgres connection itself), reverse lookups
+(gethostbyaddr, getnameinfo), sendmsg, or the Docker daemon.
 """
 import ipaddress
 import json
@@ -25,10 +29,12 @@ CAPTURE = os.environ["CAPTURE_FILE"]
 PUBLISH_PATH = "/v1/public/events/"
 
 
-def _is_local(sock, address):
-    if sock.family == getattr(socket, "AF_UNIX", None):
-        return True
-    host = address[0] if isinstance(address, tuple) else address
+def _is_local_host(host):
+    """True for localhost and loopback addresses (IPv4, IPv6, IPv4-mapped IPv6)."""
+    if host is None:
+        return True  # getaddrinfo(None, ...): the local wildcard, no lookup
+    if isinstance(host, bytes):
+        host = host.decode("ascii", "replace")
     if not isinstance(host, str):
         return False
     if host == "localhost":
@@ -41,17 +47,49 @@ def _is_local(sock, address):
     return ip.is_loopback or bool(mapped and mapped.is_loopback)
 
 
-def _guard(real):
+def _is_local(sock, address):
+    if sock.family == getattr(socket, "AF_UNIX", None):
+        return True
+    return _is_local_host(address[0] if isinstance(address, tuple) else address)
+
+
+def _blocked(what):
+    return ConnectionRefusedError(f"ingest replay egress guard: blocked {what}")
+
+
+def _guard_connect(real):
     def connect(self, address):
         if not _is_local(self, address):
-            raise ConnectionRefusedError(f"ingest replay egress guard: blocked {address!r}")
+            raise _blocked(repr(address))
         return real(self, address)
 
     return connect
 
 
-socket.socket.connect = _guard(socket.socket.connect)
-socket.socket.connect_ex = _guard(socket.socket.connect_ex)
+def _guard_sendto(real):
+    def sendto(self, *args):  # sendto(data, address) or sendto(data, flags, address)
+        if not _is_local(self, args[-1]):
+            raise _blocked(repr(args[-1]))
+        return real(self, *args)
+
+    return sendto
+
+
+def _guard_lookup(real):
+    def lookup(host, *args, **kwargs):
+        if not _is_local_host(host):
+            raise socket.gaierror(socket.EAI_NONAME, f"ingest replay egress guard: blocked lookup of {host!r}")
+        return real(host, *args, **kwargs)
+
+    return lookup
+
+
+socket.socket.connect = _guard_connect(socket.socket.connect)
+socket.socket.connect_ex = _guard_connect(socket.socket.connect_ex)
+socket.socket.sendto = _guard_sendto(socket.socket.sendto)
+socket.getaddrinfo = _guard_lookup(socket.getaddrinfo)
+socket.gethostbyname = _guard_lookup(socket.gethostbyname)
+socket.gethostbyname_ex = _guard_lookup(socket.gethostbyname_ex)
 
 
 class TestIngestCapture(TestCase):

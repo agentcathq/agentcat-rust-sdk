@@ -10,7 +10,7 @@ import { before, test } from "node:test";
 import { ensureTs } from "oracle/fetch-ts";
 
 import { convert } from "../src/contract/extract-schema.mjs";
-import { validateRequests } from "../src/contract/validate.mjs";
+import { contractResult, validateRequests } from "../src/contract/validate.mjs";
 import { BASIC, HARNESS, TS_SERVER_PLUS, driver, outFile, readJson, run, tempDir, writeJson } from "./support.mjs";
 
 const VALIDATE = join(HARNESS, "src", "contract", "validate.mjs");
@@ -40,14 +40,27 @@ function editedPublish(edit) {
 }
 
 /** validate.mjs on a temp raw file holding `requests`. */
-function validateCli(t, requests) {
-  return run(process.execPath, [VALIDATE, writeJson(join(tempDir(t), "raw.json"), requests)]);
+function validateCli(t, requests, flags = []) {
+  return run(process.execPath, [VALIDATE, ...flags, writeJson(join(tempDir(t), "raw.json"), requests)]);
+}
+
+/** A one-session scenario with one echo call (one publish when tracked). */
+function oneCall(t, expectPublishes) {
+  return writeJson(join(tempDir(t), "one.json"), {
+    name: "one",
+    projectId: readJson(BASIC).projectId,
+    options: {},
+    expectPublishes,
+    sessions: [{ steps: [{ op: "callTool", name: "echo", args: { msg: "hi" } }] }],
+  });
 }
 
 test("every publish body of a fresh basic.json TS run validates", async (t) => {
   assert.equal(publishes().length, 11);
   assert.deepEqual(validateRequests(raw), { checked: 11, invalid: [] });
-  assert.equal(readJson(outFile("basic", "contract", "stdio", "report")).contract, "ok");
+  const report = readJson(outFile("basic", "contract", "stdio", "report"));
+  assert.equal(report.contract, "ok");
+  assert.equal(report.contractChecked, 11);
   const res = await validateCli(t, raw);
   assert.equal(res.code, 0, res.stdout + res.stderr);
   assert.match(res.stdout, /11 publish bodies, all valid/);
@@ -94,6 +107,66 @@ test("the same body with session_id: null validates (OpenAPI nullable)", () => {
   assert.deepEqual(validateRequests([request]), { checked: 1, invalid: [] });
 });
 
+test("timestamp format, ip_address format and the event_type enum are enforced", () => {
+  const cases = [
+    ["timestamp without a timezone", (b) => (b.timestamp = "2026-10-20T12:00:00"), "/timestamp", "format"],
+    // ajv-formats "full" mode checks the calendar; "fast" mode would let this through.
+    ["timestamp on a day that does not exist", (b) => (b.timestamp = "2026-02-30T12:00:00Z"), "/timestamp", "format"],
+    ["ip_address in IPv6", (b) => (b.ip_address = "::1"), "/ip_address", "format"],
+    ["event_type the server stores but the API does not accept", (b) => (b.event_type = "mcpcat:custom"), "/event_type", "enum"],
+  ];
+  for (const [name, edit, instancePath, keyword] of cases) {
+    const { invalid } = validateRequests([editedPublish(edit)]);
+    assert.equal(invalid.length, 1, name);
+    assert.deepEqual(
+      invalid[0].errors.map((e) => [e.instancePath, e.keyword]),
+      [[instancePath, keyword]],
+      name,
+    );
+  }
+});
+
+test("a run with no publish bodies fails the contract unless empty is allowed", async (t) => {
+  assert.deepEqual(contractResult([]), { checked: 0, contract: "no publish bodies" });
+  assert.deepEqual(contractResult([], { allowEmpty: true }), { checked: 0, contract: "ok" });
+  // The only POST went to the path without the trailing slash: not a publish.
+  const wrongPath = [{ ...structuredClone(publishes()[0]), path: "/v1/public/events" }];
+  for (const requests of [[], wrongPath]) {
+    const res = await validateCli(t, requests);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stdout, /contract: 0 publish bodies; expected at least one/);
+  }
+  let res = await validateCli(t, [], ["--allow-empty"]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /contract: 0 publish bodies \(allowed by --allow-empty\)/);
+  // --allow-empty never excuses an invalid body.
+  const bad = editedPublish((body) => {
+    body.session_id = 5;
+  });
+  res = await validateCli(t, [bad], ["--allow-empty"]);
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  res = await run(process.execPath, [VALIDATE, "--allow-emptyy", join(tempDir(t), "raw.json")]);
+  assert.equal(res.code, 2, res.stderr);
+});
+
+test("an untracked run that expects no publishes passes the contract with 0 bodies checked", { timeout: 120_000 }, async (t) => {
+  const res = await driver(oneCall(t, 0), "untracked0", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 0, res.stderr);
+  const report = readJson(outFile("one", "untracked0", "stdio", "report"));
+  assert.equal(report.contract, "ok");
+  assert.equal(report.contractChecked, 0);
+});
+
+test("a run that expects publishes but sends none fails the contract", { timeout: 120_000 }, async (t) => {
+  const res = await driver(oneCall(t, 1), "untracked1", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 1, res.stderr);
+  assert.match(res.stderr, /driver: contract: no publish bodies to check/);
+  const report = readJson(outFile("one", "untracked1", "stdio", "report"));
+  assert.equal(report.publishes, 0);
+  assert.equal(report.contract, "no publish bodies");
+  assert.equal(report.contractChecked, 0);
+});
+
 test("validate.mjs exits 2 without a readable raw file", async (t) => {
   let res = await run(process.execPath, [VALIDATE]);
   assert.equal(res.code, 2, res.stderr);
@@ -102,20 +175,14 @@ test("validate.mjs exits 2 without a readable raw file", async (t) => {
 });
 
 test("the driver exits 1 and records the errors when a publish body is invalid", { timeout: 120_000 }, async (t) => {
-  const scenario = writeJson(join(tempDir(t), "one.json"), {
-    name: "one",
-    projectId: readJson(BASIC).projectId,
-    options: {},
-    expectPublishes: 2,
-    sessions: [{ steps: [{ op: "callTool", name: "echo", args: { msg: "hi" } }] }],
-  });
   const env = { FIXTURE_INVALID_PUBLISH: "1" };
-  const res = await driver(scenario, "badbody", "stdio", [], { server: TS_SERVER_PLUS, env });
+  const res = await driver(oneCall(t, 2), "badbody", "stdio", [], { server: TS_SERVER_PLUS, env });
   assert.equal(res.code, 1, res.stderr);
   assert.match(res.stderr, /driver: 1 publish body\/bodies fail the contract/);
   const report = readJson(outFile("one", "badbody", "stdio", "report"));
   assert.equal(report.publishes, 2);
   assert.equal(report.nonPublishRequests, 0);
+  assert.equal(report.contractChecked, 2);
   assert.equal(report.contract.length, 1);
   assert.equal(report.contract[0].id, "evt_fixture_invalid");
   assert.deepEqual(report.contract[0].errors.map((e) => [e.instancePath, e.keyword]).sort(), [

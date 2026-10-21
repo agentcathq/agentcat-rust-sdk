@@ -13,11 +13,13 @@
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts.
 // Every publish body is then validated against harness/contract/publish-event.schema.json
-// (src/contract/validate.mjs); report.json records the result as `contract`.
+// (src/contract/validate.mjs); report.json records the result as `contract` and the
+// number of bodies checked as `contractChecked`. No body to check is a contract failure
+// unless the scenario expects no publish (an untracked run).
 // Exit 0: exactly expectPublishes publishes, no other request reached the mock,
-//         and every publish body is valid.
-// Exit 1: the count differs, another request arrived, a publish body is invalid,
-//         or the run failed.
+//         and the contract holds (every publish body is valid).
+// Exit 1: the count differs, another request arrived, the contract fails, or the
+//         run failed.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -31,7 +33,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
-import { contractResult, formatInvalid } from "./contract/validate.mjs";
+import { NO_BODIES, contractResult, formatInvalid } from "./contract/validate.mjs";
 import { normalizeRun } from "./normalize.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -303,11 +305,23 @@ async function main() {
   const publishes = countPublishes(requests);
   // Any request other than a publish is a finding (an unexpected API call).
   const nonPublishRequests = report.nonPublishRequests.length;
-  // L4: every publish body must be one the backend accepts ("ok" or the invalid bodies).
-  const contract = contractResult(requests);
-  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, contract, report };
+  // L4: every publish body must be one the backend accepts: "ok", NO_BODIES or the
+  // invalid bodies. Zero bodies passes only when the scenario expects zero publishes.
+  const { checked: contractChecked, contract } = contractResult(requests, { allowEmpty: expected === 0 });
+  const summary = {
+    scenario: scenario.name,
+    label,
+    transport,
+    lane,
+    publishes,
+    expected,
+    nonPublishRequests,
+    contract,
+    contractChecked,
+    report,
+  };
   write("report", summary);
-  const contractLine = contract === "ok" ? "ok" : `${contract.length} invalid`;
+  const contractLine = typeof contract === "string" ? contract : `${contract.length} invalid`;
   process.stdout.write(
     `${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, contract: contractLine })}\n`,
   );
@@ -315,7 +329,9 @@ async function main() {
   if (nonPublishRequests > 0) {
     process.stderr.write(`driver: ${nonPublishRequests} request(s) other than a publish: ${JSON.stringify(report.nonPublishRequests)}\n`);
   }
-  if (contract !== "ok") {
+  if (contract === NO_BODIES) {
+    process.stderr.write(`driver: contract: no publish bodies to check (the scenario expects ${expected})\n`);
+  } else if (contract !== "ok") {
     process.stderr.write(`driver: ${contract.length} publish body/bodies fail the contract (harness/contract/publish-event.schema.json):\n`);
     for (const line of formatInvalid(contract)) process.stderr.write(`driver: ${line}\n`);
   }

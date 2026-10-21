@@ -48,7 +48,8 @@ node harness/src/diff.mjs harness/out/basic.ts.stdio.normalized.json \
 node harness/src/dump-contract.mjs
 node harness/src/dump-contract.mjs --check
 
-# Check the publish bodies of a run against the publish contract (the driver does this itself)
+# Check the publish bodies of a run against the publish contract (the driver does this itself);
+# add --allow-empty for a run that expects no publish
 node harness/src/contract/validate.mjs harness/out/basic.ts.stdio.raw.json
 
 # Regenerate the publish contract from agentcat-server, or check it (local only: needs the private checkout)
@@ -88,12 +89,14 @@ node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
      SIGKILL); an HTTP server gets SIGTERM, then SIGKILL at the limit;
   3. keeps the mock open until no request arrived for `quietMs` (at most `settleTimeoutMs`), then
      takes the snapshot. A publish sent on client close or during a shutdown drain is counted.
-- It then validates every publish body against the publish contract (`contract/`, below) and
-  records the result in `report.json` as `contract`: `"ok"`, or one entry per invalid body
-  (`{seq, id, event_type, resource_name, errors: [{instancePath, keyword, message, params}]}`).
+- It then validates every publish body against the publish contract (`contract/`, below). In
+  `report.json`, `contractChecked` is the number of bodies checked, and `contract` is `"ok"`,
+  `"no publish bodies"` (nothing to check although the scenario expects publishes), or one entry
+  per invalid body (`{seq, id, event_type, resource_name, errors: [{instancePath, keyword, message, params}]}`).
+  A run with no publish body passes the contract only when the scenario expects 0 publishes.
 - Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request,
-  and every publish body is valid. Exit 1 when the count differs, when any other request reached the
-  mock (listed in the report as `nonPublishRequests`), when a publish body is invalid (each error on
+  and the contract is `"ok"`. Exit 1 when the count differs, when any other request reached the
+  mock (listed in the report as `nonPublishRequests`), when the contract fails (each error on
   stderr), or when the run fails. Exit 2 on bad arguments or a bad scenario.
 
 ### diff.mjs
@@ -138,10 +141,13 @@ Every body a reference server publishes must be one the AgentCat backend accepts
   ...), a recursive or non-local `$ref`, or `nullable` with an `enum` that lacks `null` stops the
   extraction with an error. `schema.yml` is read as YAML 1.2 and as YAML 1.1 (PyYAML writes it), and
   the two readings must agree.
-- `src/contract/validate.mjs <raw.json>` validates every publish body of a run with ajv (strict mode,
-  formats such as `date-time` asserted). Exit 0 when all are valid; exit 1 with one
-  `INVALID publish seq=<n> id=<id> (<event_type> <resource_name>): <path> <message>` line per error;
-  exit 2 on bad arguments or an unreadable file. The driver runs the same check after every run.
+- `src/contract/validate.mjs [--allow-empty] <raw.json>` validates every publish body of a run with
+  ajv (strict mode; ajv-formats "full" mode, so `date-time` needs a timezone and a real calendar
+  day). Exit 0 when there is at least one publish body and all are valid. Exit 1 with one
+  `INVALID publish seq=<n> id=<id> (<event_type> <resource_name>): <path> <message>` line per error,
+  or when the file holds no publish body (a wrong path or a wrong file never passes);
+  `--allow-empty` accepts zero bodies, for an untracked run. Exit 2 on bad arguments or an
+  unreadable file. The driver runs the same check after every run.
 - `ingest/` replays the bodies of a run through the backend's real ingest function `process_event`,
   locally, before the final PR (R14). See `ingest/README.md`.
 
