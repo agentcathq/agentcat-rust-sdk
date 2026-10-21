@@ -14,6 +14,7 @@
 mod constants;
 mod handles;
 mod js;
+mod pipeline;
 #[cfg(test)]
 mod test_support;
 mod tokens;

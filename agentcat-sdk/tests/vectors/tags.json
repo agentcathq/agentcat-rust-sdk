@@ -1,0 +1,1993 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/tags.mjs",
+  "cases": [
+    {
+      "name": "test:pass-through",
+      "input": {
+        "env": "production",
+        "trace_id": "abc-123",
+        "region": "us-east-1"
+      },
+      "output": {
+        "env": "production",
+        "trace_id": "abc-123",
+        "region": "us-east-1"
+      },
+      "logs": [],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should pass through valid tags unchanged"
+      ]
+    },
+    {
+      "name": "test:empty",
+      "input": {},
+      "output": null,
+      "logs": [],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should return null for empty object"
+      ]
+    },
+    {
+      "name": "test:invalid-key-chars",
+      "input": {
+        "valid_key": "value",
+        "invalid!key": "value",
+        "good.key": "value"
+      },
+      "output": {
+        "valid_key": "value",
+        "good.key": "value"
+      },
+      "logs": [
+        "Dropping invalid tag: \"invalid!key\" — key contains invalid characters or is empty"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop keys with invalid characters"
+      ]
+    },
+    {
+      "name": "test:long-key",
+      "input": {
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "value",
+        "short": "value"
+      },
+      "output": {
+        "short": "value"
+      },
+      "logs": [
+        "Dropping invalid tag: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" — key exceeds max length of 32"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop keys longer than 32 characters"
+      ]
+    },
+    {
+      "name": "test:long-value",
+      "input": {
+        "key1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "key2": "short"
+      },
+      "output": {
+        "key2": "short"
+      },
+      "logs": [
+        "Dropping invalid tag: \"key1\" — value exceeds max length of 200"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop values longer than 200 characters"
+      ]
+    },
+    {
+      "name": "test:newline",
+      "input": {
+        "key1": "has\nnewline",
+        "key2": "clean"
+      },
+      "output": {
+        "key2": "clean"
+      },
+      "logs": [
+        "Dropping invalid tag: \"key1\" — value contains newline character"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop values containing newlines"
+      ]
+    },
+    {
+      "name": "test:non-string",
+      "input": {
+        "key1": 123,
+        "key2": "valid"
+      },
+      "output": {
+        "key2": "valid"
+      },
+      "logs": [
+        "Dropping invalid tag: \"key1\" — non-string value (got number)"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop non-string values at runtime"
+      ]
+    },
+    {
+      "name": "test:empty-key",
+      "input": {
+        "": "empty-key-value",
+        "valid": "value"
+      },
+      "output": {
+        "valid": "value"
+      },
+      "logs": [
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should drop empty string keys"
+      ]
+    },
+    {
+      "name": "test:sixty-entries",
+      "input": {
+        "key000": "value0",
+        "key001": "value1",
+        "key002": "value2",
+        "key003": "value3",
+        "key004": "value4",
+        "key005": "value5",
+        "key006": "value6",
+        "key007": "value7",
+        "key008": "value8",
+        "key009": "value9",
+        "key010": "value10",
+        "key011": "value11",
+        "key012": "value12",
+        "key013": "value13",
+        "key014": "value14",
+        "key015": "value15",
+        "key016": "value16",
+        "key017": "value17",
+        "key018": "value18",
+        "key019": "value19",
+        "key020": "value20",
+        "key021": "value21",
+        "key022": "value22",
+        "key023": "value23",
+        "key024": "value24",
+        "key025": "value25",
+        "key026": "value26",
+        "key027": "value27",
+        "key028": "value28",
+        "key029": "value29",
+        "key030": "value30",
+        "key031": "value31",
+        "key032": "value32",
+        "key033": "value33",
+        "key034": "value34",
+        "key035": "value35",
+        "key036": "value36",
+        "key037": "value37",
+        "key038": "value38",
+        "key039": "value39",
+        "key040": "value40",
+        "key041": "value41",
+        "key042": "value42",
+        "key043": "value43",
+        "key044": "value44",
+        "key045": "value45",
+        "key046": "value46",
+        "key047": "value47",
+        "key048": "value48",
+        "key049": "value49",
+        "key050": "value50",
+        "key051": "value51",
+        "key052": "value52",
+        "key053": "value53",
+        "key054": "value54",
+        "key055": "value55",
+        "key056": "value56",
+        "key057": "value57",
+        "key058": "value58",
+        "key059": "value59"
+      },
+      "output": {
+        "key000": "value0",
+        "key001": "value1",
+        "key002": "value2",
+        "key003": "value3",
+        "key004": "value4",
+        "key005": "value5",
+        "key006": "value6",
+        "key007": "value7",
+        "key008": "value8",
+        "key009": "value9",
+        "key010": "value10",
+        "key011": "value11",
+        "key012": "value12",
+        "key013": "value13",
+        "key014": "value14",
+        "key015": "value15",
+        "key016": "value16",
+        "key017": "value17",
+        "key018": "value18",
+        "key019": "value19",
+        "key020": "value20",
+        "key021": "value21",
+        "key022": "value22",
+        "key023": "value23",
+        "key024": "value24",
+        "key025": "value25",
+        "key026": "value26",
+        "key027": "value27",
+        "key028": "value28",
+        "key029": "value29",
+        "key030": "value30",
+        "key031": "value31",
+        "key032": "value32",
+        "key033": "value33",
+        "key034": "value34",
+        "key035": "value35",
+        "key036": "value36",
+        "key037": "value37",
+        "key038": "value38",
+        "key039": "value39",
+        "key040": "value40",
+        "key041": "value41",
+        "key042": "value42",
+        "key043": "value43",
+        "key044": "value44",
+        "key045": "value45",
+        "key046": "value46",
+        "key047": "value47",
+        "key048": "value48",
+        "key049": "value49"
+      },
+      "logs": [
+        "Dropping 10 tag(s) — exceeds maximum of 50 entries per event"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should keep only first 50 entries when exceeding limit"
+      ]
+    },
+    {
+      "name": "test:all-invalid",
+      "input": {
+        "!!!": "value",
+        "###": "value"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"!!!\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"###\" — key contains invalid characters or is empty"
+      ],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should return null when all entries are invalid"
+      ]
+    },
+    {
+      "name": "test:special-chars",
+      "input": {
+        "my.tag": "value",
+        "my:tag": "value",
+        "my-tag": "value",
+        "my tag": "value",
+        "$ai_trace_id": "trace-1",
+        "my$key": "value"
+      },
+      "output": {
+        "my.tag": "value",
+        "my:tag": "value",
+        "my-tag": "value",
+        "my tag": "value",
+        "$ai_trace_id": "trace-1",
+        "my$key": "value"
+      },
+      "logs": [],
+      "ts_test": [
+        "v1|src/tests/validation.test.ts|validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs"
+      ]
+    },
+    {
+      "name": "appendix-c",
+      "input_text": "{\"ok\":\"v\",\"\":\"e\",\"a/b\":\"x\",\"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\":\"v\",\"n\":5,\"nl\":\"a\\nb\",\"cr\":\"a\\rb\",\"123\":\"first?\"}",
+      "output": {
+        "123": "first?",
+        "ok": "v",
+        "cr": "a\rb"
+      },
+      "logs": [
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"a/b\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"n\" — non-string value (got number)",
+        "Dropping invalid tag: \"nl\" — value contains newline character"
+      ]
+    },
+    {
+      "name": "cap:fifty-valid-among-invalid",
+      "input": {
+        "ok0": "v0",
+        "bad!0": "x",
+        "num0": 0,
+        "ok1": "v1",
+        "bad!1": "x",
+        "num1": 1,
+        "ok2": "v2",
+        "bad!2": "x",
+        "num2": 2,
+        "ok3": "v3",
+        "bad!3": "x",
+        "num3": 3,
+        "ok4": "v4",
+        "bad!4": "x",
+        "num4": 4,
+        "ok5": "v5",
+        "bad!5": "x",
+        "num5": 5,
+        "ok6": "v6",
+        "bad!6": "x",
+        "num6": 6,
+        "ok7": "v7",
+        "bad!7": "x",
+        "num7": 7,
+        "ok8": "v8",
+        "bad!8": "x",
+        "num8": 8,
+        "ok9": "v9",
+        "bad!9": "x",
+        "num9": 9,
+        "ok10": "v10",
+        "bad!10": "x",
+        "num10": 10,
+        "ok11": "v11",
+        "bad!11": "x",
+        "num11": 11,
+        "ok12": "v12",
+        "bad!12": "x",
+        "num12": 12,
+        "ok13": "v13",
+        "bad!13": "x",
+        "num13": 13,
+        "ok14": "v14",
+        "bad!14": "x",
+        "num14": 14,
+        "ok15": "v15",
+        "bad!15": "x",
+        "num15": 15,
+        "ok16": "v16",
+        "bad!16": "x",
+        "num16": 16,
+        "ok17": "v17",
+        "bad!17": "x",
+        "num17": 17,
+        "ok18": "v18",
+        "bad!18": "x",
+        "num18": 18,
+        "ok19": "v19",
+        "bad!19": "x",
+        "num19": 19,
+        "ok20": "v20",
+        "bad!20": "x",
+        "num20": 20,
+        "ok21": "v21",
+        "bad!21": "x",
+        "num21": 21,
+        "ok22": "v22",
+        "bad!22": "x",
+        "num22": 22,
+        "ok23": "v23",
+        "bad!23": "x",
+        "num23": 23,
+        "ok24": "v24",
+        "bad!24": "x",
+        "num24": 24,
+        "ok25": "v25",
+        "bad!25": "x",
+        "num25": 25,
+        "ok26": "v26",
+        "bad!26": "x",
+        "num26": 26,
+        "ok27": "v27",
+        "bad!27": "x",
+        "num27": 27,
+        "ok28": "v28",
+        "bad!28": "x",
+        "num28": 28,
+        "ok29": "v29",
+        "bad!29": "x",
+        "num29": 29,
+        "ok30": "v30",
+        "bad!30": "x",
+        "num30": 30,
+        "ok31": "v31",
+        "bad!31": "x",
+        "num31": 31,
+        "ok32": "v32",
+        "bad!32": "x",
+        "num32": 32,
+        "ok33": "v33",
+        "bad!33": "x",
+        "num33": 33,
+        "ok34": "v34",
+        "bad!34": "x",
+        "num34": 34,
+        "ok35": "v35",
+        "bad!35": "x",
+        "num35": 35,
+        "ok36": "v36",
+        "bad!36": "x",
+        "num36": 36,
+        "ok37": "v37",
+        "bad!37": "x",
+        "num37": 37,
+        "ok38": "v38",
+        "bad!38": "x",
+        "num38": 38,
+        "ok39": "v39",
+        "bad!39": "x",
+        "num39": 39,
+        "ok40": "v40",
+        "bad!40": "x",
+        "num40": 40,
+        "ok41": "v41",
+        "bad!41": "x",
+        "num41": 41,
+        "ok42": "v42",
+        "bad!42": "x",
+        "num42": 42,
+        "ok43": "v43",
+        "bad!43": "x",
+        "num43": 43,
+        "ok44": "v44",
+        "bad!44": "x",
+        "num44": 44,
+        "ok45": "v45",
+        "bad!45": "x",
+        "num45": 45,
+        "ok46": "v46",
+        "bad!46": "x",
+        "num46": 46,
+        "ok47": "v47",
+        "bad!47": "x",
+        "num47": 47,
+        "ok48": "v48",
+        "bad!48": "x",
+        "num48": 48,
+        "ok49": "v49",
+        "bad!49": "x",
+        "num49": 49
+      },
+      "output": {
+        "ok0": "v0",
+        "ok1": "v1",
+        "ok2": "v2",
+        "ok3": "v3",
+        "ok4": "v4",
+        "ok5": "v5",
+        "ok6": "v6",
+        "ok7": "v7",
+        "ok8": "v8",
+        "ok9": "v9",
+        "ok10": "v10",
+        "ok11": "v11",
+        "ok12": "v12",
+        "ok13": "v13",
+        "ok14": "v14",
+        "ok15": "v15",
+        "ok16": "v16",
+        "ok17": "v17",
+        "ok18": "v18",
+        "ok19": "v19",
+        "ok20": "v20",
+        "ok21": "v21",
+        "ok22": "v22",
+        "ok23": "v23",
+        "ok24": "v24",
+        "ok25": "v25",
+        "ok26": "v26",
+        "ok27": "v27",
+        "ok28": "v28",
+        "ok29": "v29",
+        "ok30": "v30",
+        "ok31": "v31",
+        "ok32": "v32",
+        "ok33": "v33",
+        "ok34": "v34",
+        "ok35": "v35",
+        "ok36": "v36",
+        "ok37": "v37",
+        "ok38": "v38",
+        "ok39": "v39",
+        "ok40": "v40",
+        "ok41": "v41",
+        "ok42": "v42",
+        "ok43": "v43",
+        "ok44": "v44",
+        "ok45": "v45",
+        "ok46": "v46",
+        "ok47": "v47",
+        "ok48": "v48",
+        "ok49": "v49"
+      },
+      "logs": [
+        "Dropping invalid tag: \"bad!0\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num0\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!1\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num1\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!2\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num2\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!3\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num3\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!4\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num4\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!5\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num5\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!6\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num6\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!7\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num7\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!8\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num8\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!9\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num9\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!10\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num10\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!11\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num11\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!12\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num12\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!13\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num13\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!14\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num14\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!15\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num15\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!16\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num16\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!17\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num17\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!18\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num18\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!19\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num19\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!20\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num20\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!21\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num21\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!22\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num22\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!23\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num23\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!24\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num24\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!25\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num25\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!26\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num26\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!27\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num27\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!28\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num28\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!29\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num29\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!30\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num30\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!31\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num31\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!32\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num32\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!33\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num33\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!34\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num34\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!35\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num35\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!36\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num36\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!37\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num37\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!38\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num38\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!39\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num39\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!40\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num40\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!41\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num41\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!42\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num42\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!43\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num43\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!44\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num44\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!45\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num45\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!46\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num46\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!47\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num47\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!48\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num48\" — non-string value (got number)",
+        "Dropping invalid tag: \"bad!49\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"num49\" — non-string value (got number)"
+      ]
+    },
+    {
+      "name": "cap:fifty-one",
+      "input": {
+        "k0": "v",
+        "k1": "v",
+        "k2": "v",
+        "k3": "v",
+        "k4": "v",
+        "k5": "v",
+        "k6": "v",
+        "k7": "v",
+        "k8": "v",
+        "k9": "v",
+        "k10": "v",
+        "k11": "v",
+        "k12": "v",
+        "k13": "v",
+        "k14": "v",
+        "k15": "v",
+        "k16": "v",
+        "k17": "v",
+        "k18": "v",
+        "k19": "v",
+        "k20": "v",
+        "k21": "v",
+        "k22": "v",
+        "k23": "v",
+        "k24": "v",
+        "k25": "v",
+        "k26": "v",
+        "k27": "v",
+        "k28": "v",
+        "k29": "v",
+        "k30": "v",
+        "k31": "v",
+        "k32": "v",
+        "k33": "v",
+        "k34": "v",
+        "k35": "v",
+        "k36": "v",
+        "k37": "v",
+        "k38": "v",
+        "k39": "v",
+        "k40": "v",
+        "k41": "v",
+        "k42": "v",
+        "k43": "v",
+        "k44": "v",
+        "k45": "v",
+        "k46": "v",
+        "k47": "v",
+        "k48": "v",
+        "k49": "v",
+        "k50": "v"
+      },
+      "output": {
+        "k0": "v",
+        "k1": "v",
+        "k2": "v",
+        "k3": "v",
+        "k4": "v",
+        "k5": "v",
+        "k6": "v",
+        "k7": "v",
+        "k8": "v",
+        "k9": "v",
+        "k10": "v",
+        "k11": "v",
+        "k12": "v",
+        "k13": "v",
+        "k14": "v",
+        "k15": "v",
+        "k16": "v",
+        "k17": "v",
+        "k18": "v",
+        "k19": "v",
+        "k20": "v",
+        "k21": "v",
+        "k22": "v",
+        "k23": "v",
+        "k24": "v",
+        "k25": "v",
+        "k26": "v",
+        "k27": "v",
+        "k28": "v",
+        "k29": "v",
+        "k30": "v",
+        "k31": "v",
+        "k32": "v",
+        "k33": "v",
+        "k34": "v",
+        "k35": "v",
+        "k36": "v",
+        "k37": "v",
+        "k38": "v",
+        "k39": "v",
+        "k40": "v",
+        "k41": "v",
+        "k42": "v",
+        "k43": "v",
+        "k44": "v",
+        "k45": "v",
+        "k46": "v",
+        "k47": "v",
+        "k48": "v",
+        "k49": "v"
+      },
+      "logs": [
+        "Dropping 1 tag(s) — exceeds maximum of 50 entries per event"
+      ]
+    },
+    {
+      "name": "cap:fifty",
+      "input": {
+        "k0": "v",
+        "k1": "v",
+        "k2": "v",
+        "k3": "v",
+        "k4": "v",
+        "k5": "v",
+        "k6": "v",
+        "k7": "v",
+        "k8": "v",
+        "k9": "v",
+        "k10": "v",
+        "k11": "v",
+        "k12": "v",
+        "k13": "v",
+        "k14": "v",
+        "k15": "v",
+        "k16": "v",
+        "k17": "v",
+        "k18": "v",
+        "k19": "v",
+        "k20": "v",
+        "k21": "v",
+        "k22": "v",
+        "k23": "v",
+        "k24": "v",
+        "k25": "v",
+        "k26": "v",
+        "k27": "v",
+        "k28": "v",
+        "k29": "v",
+        "k30": "v",
+        "k31": "v",
+        "k32": "v",
+        "k33": "v",
+        "k34": "v",
+        "k35": "v",
+        "k36": "v",
+        "k37": "v",
+        "k38": "v",
+        "k39": "v",
+        "k40": "v",
+        "k41": "v",
+        "k42": "v",
+        "k43": "v",
+        "k44": "v",
+        "k45": "v",
+        "k46": "v",
+        "k47": "v",
+        "k48": "v",
+        "k49": "v"
+      },
+      "output": {
+        "k0": "v",
+        "k1": "v",
+        "k2": "v",
+        "k3": "v",
+        "k4": "v",
+        "k5": "v",
+        "k6": "v",
+        "k7": "v",
+        "k8": "v",
+        "k9": "v",
+        "k10": "v",
+        "k11": "v",
+        "k12": "v",
+        "k13": "v",
+        "k14": "v",
+        "k15": "v",
+        "k16": "v",
+        "k17": "v",
+        "k18": "v",
+        "k19": "v",
+        "k20": "v",
+        "k21": "v",
+        "k22": "v",
+        "k23": "v",
+        "k24": "v",
+        "k25": "v",
+        "k26": "v",
+        "k27": "v",
+        "k28": "v",
+        "k29": "v",
+        "k30": "v",
+        "k31": "v",
+        "k32": "v",
+        "k33": "v",
+        "k34": "v",
+        "k35": "v",
+        "k36": "v",
+        "k37": "v",
+        "k38": "v",
+        "k39": "v",
+        "k40": "v",
+        "k41": "v",
+        "k42": "v",
+        "k43": "v",
+        "k44": "v",
+        "k45": "v",
+        "k46": "v",
+        "k47": "v",
+        "k48": "v",
+        "k49": "v"
+      },
+      "logs": []
+    },
+    {
+      "name": "order:index-keys-after-string-keys",
+      "input_text": "{\"s0\":\"v0\",\"s1\":\"v1\",\"s2\":\"v2\",\"s3\":\"v3\",\"s4\":\"v4\",\"s5\":\"v5\",\"s6\":\"v6\",\"s7\":\"v7\",\"s8\":\"v8\",\"s9\":\"v9\",\"s10\":\"v10\",\"s11\":\"v11\",\"s12\":\"v12\",\"s13\":\"v13\",\"s14\":\"v14\",\"s15\":\"v15\",\"s16\":\"v16\",\"s17\":\"v17\",\"s18\":\"v18\",\"s19\":\"v19\",\"s20\":\"v20\",\"s21\":\"v21\",\"s22\":\"v22\",\"s23\":\"v23\",\"s24\":\"v24\",\"s25\":\"v25\",\"s26\":\"v26\",\"s27\":\"v27\",\"s28\":\"v28\",\"s29\":\"v29\",\"s30\":\"v30\",\"s31\":\"v31\",\"s32\":\"v32\",\"s33\":\"v33\",\"s34\":\"v34\",\"s35\":\"v35\",\"s36\":\"v36\",\"s37\":\"v37\",\"s38\":\"v38\",\"s39\":\"v39\",\"s40\":\"v40\",\"s41\":\"v41\",\"s42\":\"v42\",\"s43\":\"v43\",\"s44\":\"v44\",\"s45\":\"v45\",\"s46\":\"v46\",\"s47\":\"v47\",\"s48\":\"v48\",\"s49\":\"v49\",\"s50\":\"v50\",\"s51\":\"v51\",\"s52\":\"v52\",\"s53\":\"v53\",\"s54\":\"v54\",\"s55\":\"v55\",\"s56\":\"v56\",\"s57\":\"v57\",\"s58\":\"v58\",\"s59\":\"v59\",\"63\":\"i9\",\"56\":\"i8\",\"49\":\"i7\",\"42\":\"i6\",\"35\":\"i5\",\"28\":\"i4\",\"21\":\"i3\",\"14\":\"i2\",\"7\":\"i1\",\"0\":\"i0\"}",
+      "output": {
+        "0": "i0",
+        "7": "i1",
+        "14": "i2",
+        "21": "i3",
+        "28": "i4",
+        "35": "i5",
+        "42": "i6",
+        "49": "i7",
+        "56": "i8",
+        "63": "i9",
+        "s0": "v0",
+        "s1": "v1",
+        "s2": "v2",
+        "s3": "v3",
+        "s4": "v4",
+        "s5": "v5",
+        "s6": "v6",
+        "s7": "v7",
+        "s8": "v8",
+        "s9": "v9",
+        "s10": "v10",
+        "s11": "v11",
+        "s12": "v12",
+        "s13": "v13",
+        "s14": "v14",
+        "s15": "v15",
+        "s16": "v16",
+        "s17": "v17",
+        "s18": "v18",
+        "s19": "v19",
+        "s20": "v20",
+        "s21": "v21",
+        "s22": "v22",
+        "s23": "v23",
+        "s24": "v24",
+        "s25": "v25",
+        "s26": "v26",
+        "s27": "v27",
+        "s28": "v28",
+        "s29": "v29",
+        "s30": "v30",
+        "s31": "v31",
+        "s32": "v32",
+        "s33": "v33",
+        "s34": "v34",
+        "s35": "v35",
+        "s36": "v36",
+        "s37": "v37",
+        "s38": "v38",
+        "s39": "v39"
+      },
+      "logs": [
+        "Dropping 20 tag(s) — exceeds maximum of 50 entries per event"
+      ]
+    },
+    {
+      "name": "order:index-keys-not-canonical",
+      "input_text": "{\"b\":\"1\",\"01\":\"2\",\"4294967295\":\"3\",\"4294967294\":\"4\",\"2\":\"5\",\"a\":\"6\",\"10\":\"7\"}",
+      "output": {
+        "2": "5",
+        "10": "7",
+        "4294967294": "4",
+        "b": "1",
+        "01": "2",
+        "4294967295": "3",
+        "a": "6"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\"$\"",
+      "input": {
+        "a$b": "v",
+        "$": "w"
+      },
+      "output": {
+        "a$b": "v",
+        "$": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\"_\"",
+      "input": {
+        "a_b": "v",
+        "_": "w"
+      },
+      "output": {
+        "a_b": "v",
+        "_": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\".\"",
+      "input": {
+        "a.b": "v",
+        ".": "w"
+      },
+      "output": {
+        "a.b": "v",
+        ".": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\":\"",
+      "input": {
+        "a:b": "v",
+        ":": "w"
+      },
+      "output": {
+        "a:b": "v",
+        ":": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\"-\"",
+      "input": {
+        "a-b": "v",
+        "-": "w"
+      },
+      "output": {
+        "a-b": "v",
+        "-": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:allowed:\" \"",
+      "input": {
+        "a b": "v",
+        " ": "w"
+      },
+      "output": {
+        "a b": "v",
+        " ": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:digits-and-case",
+      "input": {
+        "0123456789": "v",
+        "ABCxyz": "w"
+      },
+      "output": {
+        "0123456789": "v",
+        "ABCxyz": "w"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:e-acute",
+      "input": {
+        "café": "v",
+        "ok": "w"
+      },
+      "output": {
+        "ok": "w"
+      },
+      "logs": [
+        "Dropping invalid tag: \"café\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:cjk",
+      "input": {
+        "世界": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"世界\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:emoji",
+      "input": {
+        "😀": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"😀\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:newline",
+      "input": {
+        "a\nb": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"a\nb\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:trailing-newline",
+      "input": {
+        "a\n": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"a\n\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:slash-and-bracket",
+      "input": {
+        "a/b": "v",
+        "a[0]": "w",
+        "a@b": "x",
+        "a,b": "y"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"a/b\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"a[0]\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"a@b\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"a,b\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "key:32-chars",
+      "input": {
+        "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": "v"
+      },
+      "output": {
+        "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": "v"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:33-chars",
+      "input": {
+        "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\" — key exceeds max length of 32"
+      ]
+    },
+    {
+      "name": "key:32-chars-spaces",
+      "input": {
+        "                                ": "v"
+      },
+      "output": {
+        "                                ": "v"
+      },
+      "logs": []
+    },
+    {
+      "name": "key:invalid-and-long",
+      "input": {
+        "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!": "v"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "value:200",
+      "input": {
+        "k": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "output": {
+        "k": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "logs": []
+    },
+    {
+      "name": "value:201",
+      "input": {
+        "k": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "value:empty",
+      "input": {
+        "k": ""
+      },
+      "output": {
+        "k": ""
+      },
+      "logs": []
+    },
+    {
+      "name": "value:100-emoji",
+      "input": {
+        "k": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+      },
+      "output": {
+        "k": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+      },
+      "logs": []
+    },
+    {
+      "name": "value:101-emoji",
+      "input": {
+        "k": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "value:199-plus-emoji",
+      "input": {
+        "k": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv😀"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "value:cr",
+      "input": {
+        "k": "a\rb"
+      },
+      "output": {
+        "k": "a\rb"
+      },
+      "logs": []
+    },
+    {
+      "name": "value:lf",
+      "input": {
+        "k": "a\nb"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value contains newline character"
+      ]
+    },
+    {
+      "name": "value:crlf",
+      "input": {
+        "k": "a\r\nb"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value contains newline character"
+      ]
+    },
+    {
+      "name": "value:line-separator",
+      "input": {
+        "k": "a b"
+      },
+      "output": {
+        "k": "a b"
+      },
+      "logs": []
+    },
+    {
+      "name": "value:paragraph-separator",
+      "input": {
+        "k": "a b"
+      },
+      "output": {
+        "k": "a b"
+      },
+      "logs": []
+    },
+    {
+      "name": "value:long-with-newline",
+      "input": {
+        "k": "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "value:number",
+      "input": {
+        "k": 1
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got number)"
+      ]
+    },
+    {
+      "name": "value:float",
+      "input": {
+        "k": 1.5
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got number)"
+      ]
+    },
+    {
+      "name": "value:null",
+      "input": {
+        "k": null
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "value:true",
+      "input": {
+        "k": true
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got boolean)"
+      ]
+    },
+    {
+      "name": "value:false",
+      "input": {
+        "k": false
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got boolean)"
+      ]
+    },
+    {
+      "name": "value:array",
+      "input": {
+        "k": [
+          "a"
+        ]
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "value:empty-array",
+      "input": {
+        "k": []
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "value:object",
+      "input": {
+        "k": {
+          "a": "b"
+        }
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "value:empty-object",
+      "input": {
+        "k": {}
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"k\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "value:mixed",
+      "input": {
+        "a": 1,
+        "b": null,
+        "c": true,
+        "d": [],
+        "e": {},
+        "f": "ok"
+      },
+      "output": {
+        "f": "ok"
+      },
+      "logs": [
+        "Dropping invalid tag: \"a\" — non-string value (got number)",
+        "Dropping invalid tag: \"b\" — non-string value (got object)",
+        "Dropping invalid tag: \"c\" — non-string value (got boolean)",
+        "Dropping invalid tag: \"d\" — non-string value (got object)",
+        "Dropping invalid tag: \"e\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-0",
+      "input": {
+        "X9ba- X Zaa0.$10c  Y : _   ": "bcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcé",
+        "::😀": "x\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀éx\ny😀é",
+        "$": "aéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaé",
+        "XZbZb-1b11a0": null,
+        "bc9_.-c90_cc:bb9Y_1-.cY1Z9cbc0c._a$a-": "x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世",
+        "-X_bZbc.91Y -99": null,
+        "9_:bX-bb_1 b-Z11": ""
+      },
+      "output": {
+        "X9ba- X Zaa0.$10c  Y : _   ": "bcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcébcé",
+        "$": "aéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaéaé",
+        "9_:bX-bb_1 b-Z11": ""
+      },
+      "logs": [
+        "Dropping invalid tag: \"::😀\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"XZbZb-1b11a0\" — non-string value (got object)",
+        "Dropping invalid tag: \"bc9_.-c90_cc:bb9Y_1-.cY1Z9cbc0c._a$a-\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"-X_bZbc.91Y -99\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-1",
+      "input": {
+        "9-1  .a10$0b-aa0.c$ ": "ééééééééééééééééééééééééé",
+        "01.Y-a9aZ-$-b09Z: $1bZ-..cZ-_XYX_9X-9Z.": " bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny bcx\ny",
+        "1bb.Y-0Z  $_aYX$ZY:9cab.": "bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀",
+        ":_-_ZZb90-XZ0Z Z  _cccb 9.b": "a世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\ry"
+      },
+      "output": {
+        "9-1  .a10$0b-aa0.c$ ": "ééééééééééééééééééééééééé",
+        ":_-_ZZb90-XZ0Z Z  _cccb 9.b": "a世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\rya世x\ry"
+      },
+      "logs": [
+        "Dropping invalid tag: \"01.Y-a9aZ-$-b09Z: $1bZ-..cZ-_XYX_9X-9Z.\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"1bb.Y-0Z  $_aYX$ZY:9cab.\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "seeded-2",
+      "input": {
+        ":b91ab$.X  Y .--$$aZa-1:-_caY-$10Z.0:YX0": "éx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ryéx\nyx\ry",
+        "Z1ac ::.:$c a:  XcXX:_9b-$b ZX0XbYbXc0": "éééééé",
+        "aY9-1_.a b-a aY--_$91 -19.-YcabY_": "ok",
+        " 世09世0": 1,
+        "b-Z9ba.Ybb9baYa._-b0YX a 1c.1 ": "世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry世😀x\ry"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \":b91ab$.X  Y .--$$aZa-1:-_caY-$10Z.0:YX0\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"Z1ac ::.:$c a:  XcXX:_9b-$b ZX0XbYbXc0\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"aY9-1_.a b-a aY--_$91 -19.-YcabY_\" — key exceeds max length of 32",
+        "Dropping invalid tag: \" 世09世0\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"b-Z9ba.Ybb9baYa._-b0YX a 1c.1 \" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "seeded-3",
+      "input": {
+        ".a": "世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀世x\ry😀",
+        "c:Y. c_c9 90Xc.Y X._0_bc_ c$_00.": "x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 ",
+        ".-.9X.$-": null,
+        "$X..ZY9_$0X-c:-X-Yb.-0X0c_.Z": "世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世"
+      },
+      "output": {
+        "c:Y. c_c9 90Xc.Y X._0_bc_ c$_00.": "x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 x\ry😀 ",
+        "$X..ZY9_$0X-c:-X-Yb.-0X0c_.Z": "世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世"
+      },
+      "logs": [
+        "Dropping invalid tag: \".a\" — value exceeds max length of 200",
+        "Dropping invalid tag: \".-.9X.$-\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-4",
+      "input": {
+        "9 _9$$_1  Ya_a9b99": "a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 ",
+        "Z\t": true,
+        "bZ.-_9bc1: c99:-a0:919b Z": "x\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ryx\nyx\ry",
+        " ": true,
+        "9$Z1Y": true,
+        "Z9-b:9c1-Xba_Z0_X.$0bY .-.$Z YZ": "",
+        "c_::1$Z9_--b$0_": "x\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybcax\rybca",
+        "/:-b!X": {}
+      },
+      "output": {
+        "9 _9$$_1  Ya_a9b99": "a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 a😀 ",
+        "Z9-b:9c1-Xba_Z0_X.$0bY .-.$Z YZ": ""
+      },
+      "logs": [
+        "Dropping invalid tag: \"Z\t\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"bZ.-_9bc1: c99:-a0:919b Z\" — value exceeds max length of 200",
+        "Dropping invalid tag: \" \" — non-string value (got boolean)",
+        "Dropping invalid tag: \"9$Z1Y\" — non-string value (got boolean)",
+        "Dropping invalid tag: \"c_::1$Z9_--b$0_\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"/:-b!X\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-5",
+      "input": {
+        "babY:b0c0:aa": "bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世bcbc世",
+        ":é/:": "éééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        " abX9Z9:.1:": "x\ryx\ryx\ry",
+        "c0Z:. Yc 1_Y$.9$": null,
+        "1b._cc  -X_b ZXZ01Z.Za:bc1-9b9-Y-1Y0 b ": "ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世ax\ry世",
+        ":.cZZ Z$X9.Z0a a": "",
+        "_:a9$X_Y-$Z9Y-Y.": "x\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\nyx\ry世x\ny",
+        "_a9 9aY_Y0$a.b$ZY": "                                                                            ",
+        "b. -Z ZYX_0$b-9.Z _ ": true
+      },
+      "output": {
+        " abX9Z9:.1:": "x\ryx\ryx\ry",
+        ":.cZZ Z$X9.Z0a a": "",
+        "_a9 9aY_Y0$a.b$ZY": "                                                                            "
+      },
+      "logs": [
+        "Dropping invalid tag: \"babY:b0c0:aa\" — value exceeds max length of 200",
+        "Dropping invalid tag: \":é/:\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"c0Z:. Yc 1_Y$.9$\" — non-string value (got object)",
+        "Dropping invalid tag: \"1b._cc  -X_b ZXZ01Z.Za:bc1-9b9-Y-1Y0 b \" — key exceeds max length of 32",
+        "Dropping invalid tag: \"_:a9$X_Y-$Z9Y-Y.\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"b. -Z ZYX_0$b-9.Z _ \" — non-string value (got boolean)"
+      ]
+    },
+    {
+      "name": "seeded-6",
+      "input": {
+        "bb::_aa0": "",
+        ":.X ": "ok",
+        "YbZ.1XYaaZ.bbb_aXXb10": "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc",
+        ".ZX ": "",
+        "X0YYZc_Z 10Za-9cc.": "ok",
+        ":00a 99- YY9_1": "é",
+        "-..$_Z": "",
+        "Z::1Y0:ZbbYYY-_$_Z--91cY$$X": "",
+        "-1aX1 ": {},
+        "$$-:b/b": [],
+        "$90b😀\nc/": null
+      },
+      "output": {
+        "bb::_aa0": "",
+        ":.X ": "ok",
+        "YbZ.1XYaaZ.bbb_aXXb10": "abcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabc",
+        ".ZX ": "",
+        "X0YYZc_Z 10Za-9cc.": "ok",
+        ":00a 99- YY9_1": "é",
+        "-..$_Z": "",
+        "Z::1Y0:ZbbYYY-_$_Z--91cY$$X": ""
+      },
+      "logs": [
+        "Dropping invalid tag: \"-1aX1 \" — non-string value (got object)",
+        "Dropping invalid tag: \"$$-:b/b\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"$90b😀\nc/\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-7",
+      "input": {
+        ":X9$_ 9:.b$_c :1aXY19aba.XX__.Y_ Y_9": {}
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \":X9$_ 9:.b$_c :1aXY19aba.XX__.Y_ Y_9\" — key exceeds max length of 32"
+      ]
+    },
+    {
+      "name": "seeded-8",
+      "input": {
+        ":c::b_0:ZZ ZX.XbYbc.1. X101Z9:": "bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc ",
+        "-cX:0_XaXYZcZY.0X-XcZ cX :-a00c": null,
+        "a.0.$:1_aa-:YY.Y:bYaa9c$Y-": "             ",
+        "$$:a9X9:X.0Y1$aY0b9_99 $b-b1$cc10_-a.1X0": "aaaa",
+        "__1a0$ a:": true,
+        "011Z cca9cX19Za$__a$:Y": "ok"
+      },
+      "output": {
+        ":c::b_0:ZZ ZX.XbYbc.1. X101Z9:": "bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc bc ",
+        "a.0.$:1_aa-:YY.Y:bYaa9c$Y-": "             ",
+        "011Z cca9cX19Za$__a$:Y": "ok"
+      },
+      "logs": [
+        "Dropping invalid tag: \"-cX:0_XaXYZcZY.0X-XcZ cX :-a00c\" — non-string value (got object)",
+        "Dropping invalid tag: \"$$:a9X9:X.0Y1$aY0b9_99 $b-b1$cc10_-a.1X0\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"__1a0$ a:\" — non-string value (got boolean)"
+      ]
+    },
+    {
+      "name": "seeded-9",
+      "input": {
+        "9ZX.Z9cY:Z:bbYb:": "abcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbc",
+        "c-0Z9b 1b..0$1$Zcc1c-0Z1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "output": {
+        "9ZX.Z9cY:Z:bbYb:": "abcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbcabcbc",
+        "c-0Z9b 1b..0$1$Zcc1c-0Z1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "logs": []
+    },
+    {
+      "name": "seeded-10",
+      "input": {
+        "b$$0X_c$a-b": 1,
+        "$$9_": "é世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ryé世x\ry",
+        "Y.c-XbX9_XX.Z0a1XY-:Y0-b1-_a$_YZbaXY_ Z": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "0-1b1c1::-YX_c91:1": 1
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"b$$0X_c$a-b\" — non-string value (got number)",
+        "Dropping invalid tag: \"$$9_\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"Y.c-XbX9_XX.Z0a1XY-:Y0-b1-_a$_YZbaXY_ Z\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"0-1b1c1::-YX_c91:1\" — non-string value (got number)"
+      ]
+    },
+    {
+      "name": "seeded-11",
+      "input": {
+        "é": "",
+        "9Z09_cZ c9_ bZ$Z_.aa": {},
+        "-aZc0aa1a_ .ba.Z$Xc.-910ZXc ": "éééééééééééééééééééééééééééééééééééééééééééééé",
+        "Z:9_0$ab9--": 1,
+        "/X\n .:bb": {},
+        ": Y_:9Y-b.cXa-9:aZX.0X$:Y 11c$_": 1,
+        "\n:-Y\t:c": "x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀x\ry 😀",
+        "X$X$-._01$01911ac:-": [],
+        ".a --0bcZc10-c:-$caZ:.:baa:Z1ZX::aY": "bc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\nybc😀x\ny"
+      },
+      "output": {
+        "-aZc0aa1a_ .ba.Z$Xc.-910ZXc ": "éééééééééééééééééééééééééééééééééééééééééééééé"
+      },
+      "logs": [
+        "Dropping invalid tag: \"é\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"9Z09_cZ c9_ bZ$Z_.aa\" — non-string value (got object)",
+        "Dropping invalid tag: \"Z:9_0$ab9--\" — non-string value (got number)",
+        "Dropping invalid tag: \"/X\n .:bb\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \": Y_:9Y-b.cXa-9:aZX.0X$:Y 11c$_\" — non-string value (got number)",
+        "Dropping invalid tag: \"\n:-Y\t:c\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"X$X$-._01$01911ac:-\" — non-string value (got object)",
+        "Dropping invalid tag: \".a --0bcZc10-c:-$caZ:.:baa:Z1ZX::aY\" — key exceeds max length of 32"
+      ]
+    },
+    {
+      "name": "seeded-12",
+      "input": {
+        "Y:XZc_:99Y1:0:$ _acYYZ$0Zb_Z_ ": "éébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébc",
+        "XX Z.Z-b1": "a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a ",
+        "cb:X100:cXXX.ab:cbb191.1Xa1.0$._ _.ZY": "",
+        "": "x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世",
+        "9b_bX_9b:$0b91$0cY .b": "bc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀é"
+      },
+      "output": {
+        "Y:XZc_:99Y1:0:$ _acYYZ$0Zb_Z_ ": "éébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébcéébc",
+        "XX Z.Z-b1": "a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a ",
+        "9b_bX_9b:$0b91$0cY .b": "bc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀ébc😀é"
+      },
+      "logs": [
+        "Dropping invalid tag: \"cb:X100:cXXX.ab:cbb191.1Xa1.0$._ _.ZY\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-13",
+      "input": {
+        "0.9_.b9:1__bYZ0c.Z__": [],
+        "Y11_Xa 9$": "",
+        "0 10YbbY:-9ca$100": null,
+        ".aZZ0-bY$.0_ X:Z_$YcY_Zca_1": [],
+        "  b0:aZc_caZ1_YZa$-": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        "ca1a9ZXc1.Xc-Y c:.b$:$X0:-ZX cb99YXX ": 1,
+        "!.\n世": "é世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\nyé世x\ny",
+        "0_0.ca_0$1$ cZc9Yc9_...:-": {},
+        "$cc:19 b Z: ": {},
+        "Y1Z$0_-.10aZ a-$$aX.XY1": true,
+        "00X9Y$\tX": 1,
+        " XbZ9 a.1- $ __9_a1_9X.": "                             "
+      },
+      "output": {
+        "Y11_Xa 9$": "",
+        "  b0:aZc_caZ1_YZa$-": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+        " XbZ9 a.1- $ __9_a1_9X.": "                             "
+      },
+      "logs": [
+        "Dropping invalid tag: \"0.9_.b9:1__bYZ0c.Z__\" — non-string value (got object)",
+        "Dropping invalid tag: \"0 10YbbY:-9ca$100\" — non-string value (got object)",
+        "Dropping invalid tag: \".aZZ0-bY$.0_ X:Z_$YcY_Zca_1\" — non-string value (got object)",
+        "Dropping invalid tag: \"ca1a9ZXc1.Xc-Y c:.b$:$X0:-ZX cb99YXX \" — key exceeds max length of 32",
+        "Dropping invalid tag: \"!.\n世\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"0_0.ca_0$1$ cZc9Yc9_...:-\" — non-string value (got object)",
+        "Dropping invalid tag: \"$cc:19 b Z: \" — non-string value (got object)",
+        "Dropping invalid tag: \"Y1Z$0_-.10aZ a-$$aX.XY1\" — non-string value (got boolean)",
+        "Dropping invalid tag: \"00X9Y$\tX\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-14",
+      "input": {
+        ".Z.bZ": "",
+        "a1!-.": "x\ny",
+        "9Yaa _1": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "-Yb ": "x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc ",
+        "ccYZ-$.bbY9:0ZY - b1c0911-": "x\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryé",
+        ":世:c\n\tc": true,
+        "_1.YZXZXbcYXZabZ0a$bZ": "éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa ",
+        "Yc:!": "éx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\rya",
+        "": "😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa😀éa",
+        "X.cY\t": " 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry 世x\ry"
+      },
+      "output": {
+        ".Z.bZ": "",
+        "9Yaa _1": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "-Yb ": "x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc x\rybc ",
+        "ccYZ-$.bbY9:0ZY - b1c0911-": "x\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryéx\ryé",
+        "_1.YZXZXbcYXZabZ0a$bZ": "éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa éa "
+      },
+      "logs": [
+        "Dropping invalid tag: \"a1!-.\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \":世:c\n\tc\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"Yc:!\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"X.cY\t\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-15",
+      "input": {
+        "99:-Y$_:X9$1Z.aYc": "世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世",
+        "1:_c09.0X_Y9_910YabY-c": "",
+        "c9c-._9.Y._Y-": "",
+        "-00$Za::Z_0ca1b1a_aca-a:c0cX--:-c:a__": {},
+        "Z 09 .Y c9_ 0 _.9": "a😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀a",
+        "Yb_X$--X": "ok",
+        "0!c:-": "                                     ",
+        "ba1b1cc-.0$$.Z19Z0c. cb_-Z9_": {},
+        "-a1 1._": "bcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
+        "c": "aaaaaaaaaa",
+        "é$!$": "世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca世bca",
+        "09$.-_:Y1$b.:ZX9 9-.aY$09": "😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry"
+      },
+      "output": {
+        "99:-Y$_:X9$1Z.aYc": "世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世",
+        "1:_c09.0X_Y9_910YabY-c": "",
+        "c9c-._9.Y._Y-": "",
+        "Z 09 .Y c9_ 0 _.9": "a😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀aa😀a",
+        "Yb_X$--X": "ok",
+        "-a1 1._": "bcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
+        "c": "aaaaaaaaaa"
+      },
+      "logs": [
+        "Dropping invalid tag: \"-00$Za::Z_0ca1b1a_aca-a:c0cX--:-c:a__\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"0!c:-\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"ba1b1cc-.0$$.Z19Z0c. cb_-Z9_\" — non-string value (got object)",
+        "Dropping invalid tag: \"é$!$\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"09$.-_:Y1$b.:ZX9 9-.aY$09\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "seeded-16",
+      "input": {
+        "😀_-Z": "bc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bcbc bc",
+        ":.": "a😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bc",
+        "Y$ 0:9_-$X.._1$": "😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry",
+        "0 ": 1,
+        "世": "",
+        "01.0 1c:": null
+      },
+      "output": {
+        ":.": "a😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bca😀bc",
+        "Y$ 0:9_-$X.._1$": "😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry"
+      },
+      "logs": [
+        "Dropping invalid tag: \"😀_-Z\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"0 \" — non-string value (got number)",
+        "Dropping invalid tag: \"世\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"01.0 1c:\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-17",
+      "input": {
+        " cZ_0 ::Y91a.c": "                                                                ",
+        "X10 X11X:00Y$caZY.a_ :Y0 ": "x\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ryx\ry x\ry",
+        ".b.baY0 1-": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "Z世0Z😀9:1": true,
+        "Y\t 😀:": 1,
+        "1Zb 9a0Y9Z-Z9cZY_9-1Ya": " bc bc bc bc bc bc",
+        "_0YZ$:$$cZ1bX:bZ--Y-YZ_c": "bcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybcbcx\rybc",
+        " :YbZZ \n": [],
+        "b:X1Yb-bb1Y9a": "😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc",
+        "-": "a世bca世bca世bca世bca世bc",
+        ":0-世9c😀": "",
+        "_-YY 9ccX.09_b-b.-Xca_9cabX: Z": " bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry bcx\ry"
+      },
+      "output": {
+        " cZ_0 ::Y91a.c": "                                                                ",
+        ".b.baY0 1-": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀",
+        "1Zb 9a0Y9Z-Z9cZY_9-1Ya": " bc bc bc bc bc bc",
+        "b:X1Yb-bb1Y9a": "😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc😀x\rybc",
+        "-": "a世bca世bca世bca世bca世bc"
+      },
+      "logs": [
+        "Dropping invalid tag: \"X10 X11X:00Y$caZY.a_ :Y0 \" — value exceeds max length of 200",
+        "Dropping invalid tag: \"Z世0Z😀9:1\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"Y\t 😀:\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"_0YZ$:$$cZ1bX:bZ--Y-YZ_c\" — value exceeds max length of 200",
+        "Dropping invalid tag: \" :YbZZ \n\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \":0-世9c😀\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"_-YY 9ccX.09_b-b.-Xca_9cabX: Z\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "seeded-18",
+      "input": {
+        "_a:_cY:0  Xbb_ $::": " x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀 x\ny😀",
+        " -Y1b": "😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya😀x\nya"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"_a:_cY:0  Xbb_ $::\" — value exceeds max length of 200",
+        "Dropping invalid tag: \" -Y1b\" — value exceeds max length of 200"
+      ]
+    },
+    {
+      "name": "seeded-19",
+      "input": {
+        "0.X0: .bb_bZbZ_9-:9$b c.$ 9.:9.-0--Z ": null,
+        "": 1,
+        "9:X$": "                        "
+      },
+      "output": {
+        "9:X$": "                        "
+      },
+      "logs": [
+        "Dropping invalid tag: \"0.X0: .bb_bZbZ_9-:9$b c.$ 9.:9.-0--Z \" — key exceeds max length of 32",
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-20",
+      "input": {
+        "c-00$$b:a$1a-0b:a9X 9:0XZ 9X_Xa:Y": [],
+        "_": "",
+        "_a.Z9cc.$ba0-b0:9:9 b 1": true,
+        "b-cXcbb:Y-X0_Zb..$$_a.-10:X$$1": 1,
+        "-_1 YZZcabbb.cX:aXXc:0..9:c$Z-:Z": "x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry ",
+        "\nYé.": "bcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\nybcx\ny",
+        "_-Z": {},
+        "ZZ_a$ bc11:-a1a$9Y0 :9-$.1-Ycba1.9Z": "aéaéaéaéaéaéaéaéaéaéaéaéaé",
+        "caa1ZX.cZ:Z1  cc-c10$0 0X9000": []
+      },
+      "output": {
+        "_": ""
+      },
+      "logs": [
+        "Dropping invalid tag: \"c-00$$b:a$1a-0b:a9X 9:0XZ 9X_Xa:Y\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"_a.Z9cc.$ba0-b0:9:9 b 1\" — non-string value (got boolean)",
+        "Dropping invalid tag: \"b-cXcbb:Y-X0_Zb..$$_a.-10:X$$1\" — non-string value (got number)",
+        "Dropping invalid tag: \"-_1 YZZcabbb.cX:aXXc:0..9:c$Z-:Z\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"\nYé.\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"_-Z\" — non-string value (got object)",
+        "Dropping invalid tag: \"ZZ_a$ bc11:-a1a$9Y0 :9-$.1-Ycba1.9Z\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"caa1ZX.cZ:Z1  cc-c10$0 0X9000\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-21",
+      "input": {
+        "9\t😀\t:.1Z": "😀😀é😀😀é😀😀é😀😀é😀😀é😀😀é😀😀é😀😀é"
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"9\t😀\t:.1Z\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-22",
+      "input": {
+        "": "x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世x\ryx\ny世",
+        "::bY b :1$ b1a00_": 1,
+        "-ZX::Y0:--_:_Z10c1bc9$$1X:$:9.X-Za$::bY": {},
+        "01Y0cb9:": null,
+        "-1-bZ-:..0-- ": [],
+        "b$.$1_$.X9-1YZY._c01aYac$-": "",
+        "9_bYbc-0cZ $0:Yc9a_ac$bX--.-": " x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry x\ry",
+        "Y_:1a$-  9.Z::1YZ10:_911-b99YZ.X $_.": 1,
+        "Za1-ab9$c:.0:-_c:.1a0c-cc0$": "ééééééééééééééééééééééééééééééééééééééééééééééé",
+        ".ab\n:0": "😀é😀😀é😀😀é😀",
+        "Z$": "😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é",
+        "91ZbZa10bbX-Y-XX.$1: Zb - _$1-Z-c9": "ok"
+      },
+      "output": {
+        "b$.$1_$.X9-1YZY._c01aYac$-": "",
+        "Za1-ab9$c:.0:-_c:.1a0c-cc0$": "ééééééééééééééééééééééééééééééééééééééééééééééé",
+        "Z$": "😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é😀é"
+      },
+      "logs": [
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"::bY b :1$ b1a00_\" — non-string value (got number)",
+        "Dropping invalid tag: \"-ZX::Y0:--_:_Z10c1bc9$$1X:$:9.X-Za$::bY\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"01Y0cb9:\" — non-string value (got object)",
+        "Dropping invalid tag: \"-1-bZ-:..0-- \" — non-string value (got object)",
+        "Dropping invalid tag: \"9_bYbc-0cZ $0:Yc9a_ac$bX--.-\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"Y_:1a$-  9.Z::1YZ10:_911-b99YZ.X $_.\" — key exceeds max length of 32",
+        "Dropping invalid tag: \".ab\n:0\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"91ZbZa10bbX-Y-XX.$1: Zb - _$1-Z-c9\" — key exceeds max length of 32"
+      ]
+    },
+    {
+      "name": "seeded-23",
+      "input": {
+        "0$.b_9Y$Z Zb$_-..: aYcZ$11": "",
+        "0cc Y9 :$0:$X$X1c": {},
+        "Y:91_ 100$cY:0:_Yc.--": "",
+        "Z": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "output": {
+        "0$.b_9Y$Z Zb$_-..: aYcZ$11": "",
+        "Y:91_ 100$cY:0:_Yc.--": "",
+        "Z": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "logs": [
+        "Dropping invalid tag: \"0cc Y9 :$0:$X$X1c\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-24",
+      "input": {
+        ":Z0$a": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        "ZcZa0:.-_0ZY:-.Z$YY": {},
+        ".Z_YZ0abX_c9.-.ca $_XX.cZ9-:_": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        " :Y9aX_-_ a$0_b10bYa": "😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 😀世 ",
+        "$:Z:$Y0-0-X:": "éx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\ryaéx\rya",
+        "bc": "",
+        "Y0YccZ Xba90": "世 a世 a",
+        " /": true
+      },
+      "output": {
+        ":Z0$a": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        ".Z_YZ0abX_c9.-.ca $_XX.cZ9-:_": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        "bc": "",
+        "Y0YccZ Xba90": "世 a世 a"
+      },
+      "logs": [
+        "Dropping invalid tag: \"ZcZa0:.-_0ZY:-.Z$YY\" — non-string value (got object)",
+        "Dropping invalid tag: \" :Y9aX_-_ a$0_b10bYa\" — value exceeds max length of 200",
+        "Dropping invalid tag: \"$:Z:$Y0-0-X:\" — value exceeds max length of 200",
+        "Dropping invalid tag: \" /\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-25",
+      "input": {
+        "": {},
+        "!\n !世Z!Y": "x\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bcx\ny😀bc",
+        "Y1$YX: bcY0c :_cYac1--$0Y1__Z": "世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc",
+        "0-.b_:$$:.Xc:-Z 9bYb-YaY_X09.-ZXcZ9bY-": "x\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ry",
+        "b 1X:.X_.:XbX.Y0aZXba0999Z1bbX0X:bXZ": {},
+        "a90Z1Y9.0Xc0:11b_:_9 XX0Y:99:$aX": "世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a ",
+        "9Xb9-aX-a_1bX_Z": 1
+      },
+      "output": {
+        "Y1$YX: bcY0c :_cYac1--$0Y1__Z": "世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc世😀bc",
+        "a90Z1Y9.0Xc0:11b_:_9 XX0Y:99:$aX": "世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a 世a "
+      },
+      "logs": [
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"!\n !世Z!Y\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"0-.b_:$$:.Xc:-Z 9bYb-YaY_X09.-ZXcZ9bY-\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"b 1X:.X_.:XbX.Y0aZXba0999Z1bbX0X:bXZ\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"9Xb9-aX-a_1bX_Z\" — non-string value (got number)"
+      ]
+    },
+    {
+      "name": "seeded-26",
+      "input": {
+        "X9$.:$.XZZ1-": true
+      },
+      "output": null,
+      "logs": [
+        "Dropping invalid tag: \"X9$.:$.XZZ1-\" — non-string value (got boolean)"
+      ]
+    },
+    {
+      "name": "seeded-27",
+      "input": {
+        "::0bc": "",
+        "$-._$.bb90:1_": []
+      },
+      "output": {
+        "::0bc": ""
+      },
+      "logs": [
+        "Dropping invalid tag: \"$-._$.bb90:1_\" — non-string value (got object)"
+      ]
+    },
+    {
+      "name": "seeded-28",
+      "input": {
+        "YY-XX_ZZ_cZ_.$Z1:c ZY19a :-0$0Xb190": "",
+        ".a b b9a1Z9:Yb__Y$9XYXZ": "x\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ry",
+        "-X_c-999-1a1a0c_00$.": "ééééééééééééééé",
+        "X\téab": 1,
+        "-X_YY1ZcZZ99a:-:__9c -Y0$": "😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry",
+        "": "",
+        "b": {},
+        "Z": "ok",
+        ".90-.1b:$b_ cXa$ZXcY:ccZ:": 1,
+        "\t-1:Z_0:": "",
+        "X_aXY c-a::0Y-:$": " a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a"
+      },
+      "output": {
+        ".a b b9a1Z9:Yb__Y$9XYXZ": "x\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ryx\ry",
+        "-X_c-999-1a1a0c_00$.": "ééééééééééééééé",
+        "-X_YY1ZcZZ99a:-:__9c -Y0$": "😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry😀x\ry",
+        "Z": "ok",
+        "X_aXY c-a::0Y-:$": " a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a a"
+      },
+      "logs": [
+        "Dropping invalid tag: \"YY-XX_ZZ_cZ_.$Z1:c ZY19a :-0$0Xb190\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"X\téab\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"b\" — non-string value (got object)",
+        "Dropping invalid tag: \".90-.1b:$b_ cXa$ZXcY:ccZ:\" — non-string value (got number)",
+        "Dropping invalid tag: \"\t-1:Z_0:\" — key contains invalid characters or is empty"
+      ]
+    },
+    {
+      "name": "seeded-29",
+      "input": {
+        "": "世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世世",
+        "$9-.11-1:a.0ZcaZa-$X": {},
+        "Y0X_ba19c$_$:1$9._:_  XX_$-ZXbXX9Y:b9a.": "ok",
+        "Zb$c YY$X$:$$. _0.b1_Y _": {},
+        "ZX -_- -YYb:b-bb_1ZbY-": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        "_119Ya_9$1X11$c1Z00a_-": [],
+        "b:b-世X": [],
+        "$X 90-$1 c:a9.X.X-": true,
+        ":😀": " x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny x\ny",
+        "Y$1": "ok"
+      },
+      "output": {
+        "ZX -_- -YYb:b-bb_1ZbY-": "bcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbcbc",
+        "Y$1": "ok"
+      },
+      "logs": [
+        "Dropping invalid tag: \"\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"$9-.11-1:a.0ZcaZa-$X\" — non-string value (got object)",
+        "Dropping invalid tag: \"Y0X_ba19c$_$:1$9._:_  XX_$-ZXbXX9Y:b9a.\" — key exceeds max length of 32",
+        "Dropping invalid tag: \"Zb$c YY$X$:$$. _0.b1_Y _\" — non-string value (got object)",
+        "Dropping invalid tag: \"_119Ya_9$1X11$c1Z00a_-\" — non-string value (got object)",
+        "Dropping invalid tag: \"b:b-世X\" — key contains invalid characters or is empty",
+        "Dropping invalid tag: \"$X 90-$1 c:a9.X.X-\" — non-string value (got boolean)",
+        "Dropping invalid tag: \":😀\" — key contains invalid characters or is empty"
+      ]
+    }
+  ]
+}

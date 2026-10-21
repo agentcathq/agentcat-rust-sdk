@@ -3898,47 +3898,69 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:special-chars; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop empty string keys"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:empty-key; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop keys longer than 32 characters"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:long-key; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop keys with invalid characters"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:invalid-key-chars; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop non-string values at runtime"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:non-string; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop values containing newlines"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:newline; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should drop values longer than 200 characters"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:long-value; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should keep only first 50 entries when exceeding limit"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:sixty-entries; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should pass through valid tags unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:pass-through; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should return null for empty object"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:empty; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should return null when all entries are invalid"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tags.json"
+reason = "tags.json case test:all-invalid; checked by agentcat-sdk::pipeline::tags::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: OFF by default > injects no agent_id param, tags nothing, and mints task-only"
