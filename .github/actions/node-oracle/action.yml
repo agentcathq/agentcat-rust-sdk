@@ -1,7 +1,7 @@
 name: Node and oracle cache
 description: >-
   Node 22 with corepack, the pnpm workspace install, and the oracle/.cache cache of the pinned TS
-  clone and its build. The Rust tests need it because oracle_smoke spawns node.
+  clone and its build. The Rust tests need it because the crate's unit tests spawn the JS oracle.
 inputs:
   cache:
     description: >-

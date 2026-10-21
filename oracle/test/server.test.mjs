@@ -69,6 +69,18 @@ test("a result the strict encoding rejects is an err line with a null stack", as
   assert.equal(line, '{"id":8,"err":"result is not strict JSON: $: reserved key $f64","stack":null}');
 });
 
+test("err and stack are in the strict encoding: a lone surrogate in a message is a $utf16 marker", async () => {
+  const line = await ask({ id: 9, fn: "oracle.throw", args: ["a\ud83d"] });
+  const reply = JSON.parse(line);
+  assert.equal(reply.id, 9);
+  assert.deepEqual(reply.err, { $utf16: [97, 0xd83d] });
+  assert.deepEqual(Object.keys(reply.stack), ["$utf16"]);
+  const stack = String.fromCharCode(...reply.stack.$utf16);
+  assert.ok(stack.startsWith("TypeError: a\ud83d\n"), stack);
+  // The line itself is well-formed: serde_json rejects a lone \udXXX escape.
+  assert.ok(line.isWellFormed() && !/\\ud[89a-f]/i.test(line), line);
+});
+
 test("a server started with ORACLE_SHA writes one trace line to stderr", { timeout: 120_000 }, async () => {
   const locked = JSON.parse(readFileSync(new URL("../oracle.lock", import.meta.url), "utf8")).sha;
   const traced = spawn(process.execPath, [SERVER], {

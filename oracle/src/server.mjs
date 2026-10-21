@@ -8,6 +8,9 @@
 //                                              Error's stack, or null. A bad request, and a result
 //                                              the strict encoding rejects ("result is not strict
 //                                              JSON: <reason>"), are err replies with a null stack.
+//                                              `err` and `stack` are in the strict encoding too: a
+//                                              message can quote a lone surrogate of the input, which
+//                                              is a $utf16 marker ({"$utf16": [...]}), not a string.
 // Exits when stdin closes.
 // Stdout is the reply channel: progress and diagnostics go to stderr only.
 import { createInterface } from "node:readline";
@@ -31,25 +34,31 @@ async function handle(line, functions) {
   try {
     request = JSON.parse(line);
   } catch (error) {
-    return { id: null, err: `invalid JSON request: ${error.message}`, stack: null };
+    return failure(null, `invalid JSON request: ${error.message}`);
   }
   const id = request?.id ?? null;
   let result;
   try {
     const fn = Object.hasOwn(functions, request?.fn) ? functions[request.fn] : undefined;
-    if (typeof fn !== "function") return { id, err: `unknown function ${JSON.stringify(request?.fn)}`, stack: null };
-    if (!Array.isArray(request.args)) return { id, err: '"args" must be an array', stack: null };
+    if (typeof fn !== "function") return failure(id, `unknown function ${JSON.stringify(request?.fn)}`);
+    if (!Array.isArray(request.args)) return failure(id, '"args" must be an array');
     result = await fn(...request.args);
   } catch (error) {
-    return { id, ...thrown(error) };
+    const { err, stack } = thrown(error);
+    return failure(id, err, stack);
   }
   if (result === undefined) return { id, undefined: true };
   try {
     return { id, ok: encodeStrict(result) };
   } catch (error) {
     const reason = String(error?.message ?? error).replace(/^strict-json: /, "");
-    return { id, err: `result is not strict JSON: ${reason}`, stack: null };
+    return failure(id, `result is not strict JSON: ${reason}`);
   }
+}
+
+/** An err reply. A string that is not well-formed UTF-16 becomes a $utf16 marker; null stays null. */
+function failure(id, err, stack = null) {
+  return { id, err: encodeStrict(err), stack: encodeStrict(stack) };
 }
 
 /** The err and stack of a thrown value: TS's message verbatim, apart from the stack. */

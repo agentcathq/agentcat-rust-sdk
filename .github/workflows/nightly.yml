@@ -163,7 +163,7 @@ jobs:
           fi
 
   # The Rust suite at the pinned SHA, with long property runs. The macOS and Windows legs
-  # need Node because oracle_smoke spawns the JS oracle.
+  # need Node because the crate's unit tests spawn the JS oracle.
   rust:
     name: rust (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
