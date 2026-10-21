@@ -2,6 +2,7 @@
 //   node oracle/src/vectors/run.mjs               write agentcat-sdk/tests/vectors/
 //   node oracle/src/vectors/run.mjs --out <dir>   write there instead
 //   node oracle/src/vectors/run.mjs --check       regenerate to a temp dir; exit 1 on any byte difference
+// Any other argument: the usage line and exit 2.
 // A generator is oracle/src/vectors/gen/<name>.mjs exporting `generate(): Promise<{cases}>`.
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
@@ -71,15 +72,22 @@ async function check() {
 }
 
 const args = process.argv.slice(2);
+const outAt = args.indexOf("--out");
+if (outAt >= 0 && !args[outAt + 1]) {
+  process.stderr.write("--out needs a directory\n");
+  process.exit(2);
+}
+// Anything else is a usage error: a misspelled --check must not regenerate and exit 0.
+const known = new Set(["--check", "--out"]);
+const unknown = args.filter((arg, i) => !known.has(arg) && !(outAt >= 0 && i === outAt + 1));
+if (unknown.length > 0 || args.length > (outAt >= 0 ? 2 : 1)) {
+  process.stderr.write("usage: node oracle/src/vectors/run.mjs [--check | --out <dir>]\n");
+  process.exit(2);
+}
 if (args.includes("--check")) {
   process.exitCode = await check();
 } else {
-  const i = args.indexOf("--out");
-  if (i >= 0 && !args[i + 1]) {
-    process.stderr.write("--out needs a directory\n");
-    process.exit(2);
-  }
-  const out = i >= 0 ? resolve(args[i + 1]) : DEFAULT_OUT;
+  const out = outAt >= 0 ? resolve(args[outAt + 1]) : DEFAULT_OUT;
   const counts = await writeAll(out);
   for (const [name, n] of Object.entries(counts)) process.stdout.write(`${name}: ${n} cases -> ${out}\n`);
 }
