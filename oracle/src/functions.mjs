@@ -10,6 +10,39 @@ const core = await loadCore();
 /** What the oracle.* handle wrappers write in place of a minted (random) session ID. */
 const MINTED = "<minted>";
 
+/** A copy of the JSON value `value`; a `__proto__` key stays an own key. */
+const copyJson = (value) => JSON.parse(JSON.stringify(value));
+
+/**
+ * `event` with a top-level string `timestamp` turned into a `Date`, the type it has in TS when the
+ * queue runs (the Rust event holds its ISO string). `dates` maps each such Date to its string.
+ * Nested `timestamp` keys stay strings, as in TS.
+ */
+function withDate(event, dates) {
+  if (event !== null && typeof event === "object" && typeof event.timestamp === "string") {
+    const date = new Date(event.timestamp);
+    dates.set(date, event.timestamp);
+    event.timestamp = date;
+  }
+  return event;
+}
+
+/**
+ * `event` as strict JSON: a top-level `timestamp` that is one of the Dates of `dates` back to its
+ * string (any other Date as its ISO string), and the top-level `undefined` values left out, as
+ * JSON.stringify leaves them out. A plain object, so a prototype that an assigned `__proto__` key
+ * set is gone (RD-24).
+ */
+function withoutDate(event, dates) {
+  const plain = (key, value) =>
+    key === "timestamp" && value instanceof Date ? (dates.get(value) ?? value.toISOString()) : value;
+  return Object.fromEntries(
+    Object.entries(event)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, plain(key, value)]),
+  );
+}
+
 /**
  * `result` ({sessionId, sessionSource, ...}) with a minted session ID replaced by MINTED, after
  * checking that it is a valid session ID; any other result as it is.
@@ -57,6 +90,38 @@ export const functions = {
     return { value: Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) };
   },
   "sanitization.sanitizeEvent": (event) => core.sanitization.sanitizeEvent(event),
+  // redactEvent with a recording redactor: s -> "[R:" + s + "]", throwing Error("redactor failed")
+  // on call number `throwAt` (1-based; absent: never). Gives {value, calls} or, when redactEvent
+  // throws, {error: String(error), calls}; `calls` lists every string the redactor got, the one
+  // it threw on included. A top-level string `timestamp` is a Date for TS (see withDate).
+  "oracle.redactEvent": async ({ event, throwAt }) => {
+    const calls = [];
+    const redactor = async (text) => {
+      calls.push(text);
+      if (calls.length === throwAt) throw new Error("redactor failed");
+      return `[R:${text}]`;
+    };
+    const dates = new Map();
+    let value;
+    try {
+      value = await core.redaction.redactEvent(withDate(copyJson(event), dates), redactor);
+    } catch (e) {
+      return { error: String(e), calls };
+    }
+    return { value: withoutDate(value, dates), calls };
+  },
+  // applyEventRedaction on a copy of `original` with a hook that returns a copy of `replacement`
+  // (null or absent: the hook returns null or undefined, and the event is dropped). Gives the
+  // event the hook left, or null for a drop. A top-level string `timestamp` of either is a Date
+  // for TS (see withDate). TS gives the event an own `redactionFn` (the original's: undefined
+  // here); the reply leaves undefined values out, as JSON.stringify does.
+  "oracle.applyEventRedaction": async ({ original, replacement }) => {
+    const dates = new Map();
+    const event = withDate(copyJson(original), dates);
+    const result = replacement === undefined ? undefined : withDate(copyJson(replacement), dates);
+    const kept = await core.redaction.applyEventRedaction(event, () => result);
+    return kept ? withoutDate(event, dates) : null;
+  },
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
   // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
   "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),

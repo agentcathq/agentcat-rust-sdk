@@ -1,5 +1,5 @@
-//! The event pipeline of the TS SDK: tag validation, normalization, truncation and
-//! sanitization now; redaction in a later task.
+//! The event pipeline of the TS SDK: tag validation, the event-level redaction hook's restore,
+//! string redaction, sanitization, normalization and truncation.
 //!
 //! The pipeline works on the event as TS holds it in memory when the queue runs ([`TsEvent`]): a
 //! JSON object with TS's camelCase field names (`sessionId`, `eventType`, `userIntent`,
@@ -10,6 +10,7 @@
 use serde_json::{Map, Value};
 
 pub(crate) mod normalize;
+pub(crate) mod redact;
 pub(crate) mod sanitize;
 pub(crate) mod tags;
 pub(crate) mod truncate;

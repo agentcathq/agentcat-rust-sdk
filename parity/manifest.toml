@@ -3128,23 +3128,33 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-sync-hook; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply an asynchronous hook in place"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-async-hook; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should hide internal function fields from the hook but preserve the string-redaction fn"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the hook fields hold functions, which a serde_json::Value cannot hold; JSON values under those keys are redact.json cases apply:internal-keys, apply:internal-keys-null and apply:original-*"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should honor field deletions instead of resurrecting them"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-deletions; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should keep the same object identity so pipeline observers see the changes"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "JS object identity and in-place mutation; Rust returns the new event"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should propagate hook errors to the caller"
@@ -3152,83 +3162,123 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-drop-null; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop when the hook returns undefined"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-drop-undefined; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should restore system-managed fields if the hook changes or removes them"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case apply:test-restore; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > redacts a shared (non-circular) reference once and reuses the clone"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a shared reference cannot be a serde_json::Value"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should create a new object without modifying the original"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "JS in-place mutation of the input; Rust takes the event by shared reference and builds a new one"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle arrays of strings"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:arrays-of-strings; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle complex identifyData object without redacting it"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:identify-data; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle custom redaction function errors gracefully"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:redactor-throws; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle deeply nested protected fields correctly"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:deeply-nested-protected-name; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle error objects"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:error-object; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle events with all possible fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:all-fields; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should handle mixed nested structures"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:mixed-nested; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should not redact nested fields within any protected field"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:nested-in-protected; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should not redact protected fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:protected-fields; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve Date objects"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "Date objects; the Rust event holds its timestamp as an ISO string, which redact.json cases timestamp:* cover"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve null and undefined values"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "an undefined value cannot be a serde_json::Value; the null and empty-string parts are redact.json case null-and-empty-string"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should redact basic string fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:basic; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should redact nested string fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:redact.json"
+reason = "redact.json case test:nested-strings; checked by agentcat-sdk::pipeline::redact::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should skip functions in objects"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a function cannot be a serde_json::Value"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > terminates on circular structures, preserving the cycle in the clone"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a circular value cannot be a serde_json::Value"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should apply the hook to custom events published on a tracked server"
