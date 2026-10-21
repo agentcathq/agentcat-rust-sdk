@@ -7,12 +7,12 @@ what the earlier milestones taught and the owner's rulings from the previous bat
 | Plan | Milestones (design §12) | Delivers | Status |
 |---|---|---|---|
 | 1 | 1 + 2 | Workspace, lints, local gate, CI skeleton; the TS oracle at the pinned SHA; the vector pipeline; the JS property-test oracle; the parity list and checker; the harness TS half (v1 and v2 reference servers, driver, mock API, normalizer, rulings); the L4 contract check; the nightly drift sweep. | [Done](2026-10-20-plan-1-foundation.md) — gate and CI green at `46eb58e` (CI run 39531843352, nightly run 39531843346); owner batch answered as R19–R21 |
-| 2 | 3 | Pure core against L1 and L2: constants, `js`, KSUID and handles, tokens, tag validation, normalize, truncation, sanitization, redaction. | [Written](2026-10-21-plan-2-pure-core.md) |
+| 2 | 3 | Pure core against L1 and L2: constants, `js`, KSUID and handles, tokens, tag validation, normalize, truncation, sanitization, redaction. | [Done](2026-10-21-plan-2-pure-core.md) — gate and CI green at `f59791e` (CI run 39677917276, nightly run 39677916538); owner batch answered as R24 |
 | 3 | 4 | Interception: `Tracked<H>`, tool-list and tool-call pipelines, registries, `get_more_tools`, client info, `parameters`, panics, `capture_error`; the Rust reference server joins the harness (MCP-wire delta). | Not written |
 | 4 | 5 | Delivery and lifecycle: event pipeline, worker thread, queue, retries, flush, shutdown, last-drop drain, logging, environment, custom events, `Fake`; event comparison in the harness. | Not written |
 | 5 | 6 | Finish: README and rustdoc, examples, CHANGELOG, public API snapshot, coverage and mutation floors, rmcp matrix and canary, zero `todo` in the manifest, ingest replay, dashboard demo, the PR. | Not written |
 
-Items that plan 1's reviews deferred to later plans are listed in [`carry-forward.md`](carry-forward.md).
+Items that the reviews of plans 1 and 2 deferred to later plans are listed in [`carry-forward.md`](carry-forward.md).
 
 Every plan ends with the same two steps:
 
