@@ -1,35 +1,9 @@
-# Items carried forward from plan 1
+# Items carried forward
 
-Reviews of plan 1 found these items and deferred them. The final review sorted each one into a later plan. The
-person who writes that plan reads this list, checks each item against the code as it stands, and either puts it
-in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
-
-## Plan 2 (pure core)
-
-- `oracle/src/vectors/run.mjs` and the generators: one strict serializer for every generator. It throws on
-  values that JSON cannot carry (`undefined`, `RegExp`), and it rejects or tags NaN, Infinity and -0 before
-  float vectors arrive.
-- Require unique case names in every vector set. `oracle/src/drift/compare.mjs` keys cases by name, so a
-  duplicate hides drift. Test the drift compare's missing-file branch and the `removed` direction.
-- `agentcat-sdk/tests/vector_integrity.rs` passes with zero vector files: assert that at least one set exists.
-- The L2 oracle error reply carries `error.stack` with bundle paths. Send the message and the stack separately,
-  because D40 needs the TS message verbatim.
-- `oracle/src/bundle.mjs`: a symlinked checkout turns off the `import.meta` rewrite. Use `realpathSync` on the
-  source directory.
-- Oracle tests share cache state, and the test `git()` helper keeps `GIT_DIR` and `GIT_INDEX_FILE`. Scrub them
-  as `run()` does.
-- `ORACLE_SHA` redirects every consumer without a trace. Print one stderr line when it is set, record the
-  effective SHA in `report.json`, and let `support/oracle.rs` compare the server's SHA with `oracle/oracle.lock`.
-- Parity: `ported` with `rust = []` gives a misleading message. Manifest order is not enforced, and
-  `--init-manifest` cannot append new keys after a SHA bump (add a sorted check or a print-missing mode).
-- Pending rulings: `harness/src/diff.mjs` rejects any ruling key except path, reason and deviation, and
-  `xtask` rejects a register row written as `| RD-22 (pending) |`. Before the first pending ruling, allow
-  `"pending": true` in `rulings.json`, and mark pending in the Why column of design section 9.
-- The `cargo hack --no-dev-deps` and minimal-versions steps warn about unused dependencies while the SDK library
-  is empty. Make sure that the warnings are gone once the SDK uses its dependencies.
-- `oracle/src/egress-guard.mjs`: a custom `lookup` with the host name `localhost` passes the guard. Say so in the
-  file header.
-- `CONTRIBUTING.md:14` and the `check.sh` hint say Node 22 and later include corepack. Node 25 and later do not.
+Reviews of plans 1 and 2 found these items and deferred them. Each plan's final review sorted them into a later
+plan. The person who writes that plan reads this list, checks each item against the code as it stands, and either
+puts it in a task or records why not. Line numbers are as of `b9b91e0` (plan 1 items) or `e685d14` (plan 2 items)
+and can drift. Plan 2 closed every item that plan 1 carried to it.
 
 ## Plan 3 (interception, Rust reference server)
 
@@ -68,6 +42,19 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
 - Found while writing plan 2: harness scenarios with decimals of more than 15 significant digits hit RD-23.
   Avoid them, or add a ruling.
 
+- From plan 2: `harness/src/diff.mjs` prints a pending ruling like any other `RULING` line. Mark it as pending
+  when `harness/rulings.json` gets its first pending entry.
+- From plan 2: a dependency that only one crate's tests use goes in that crate's `[dev-dependencies]`, not in
+  `[workspace.dependencies]` (`e685d14`): the `--no-dev-deps` builds of cargo-hack and minimal-versions report such
+  a workspace entry as unused. Write this exception into the plan's global constraints. The dev-dependency floors
+  (`hex` 0.4, `proptest` 1) are not checked by minimal-versions.
+- From plan 2: when the crate gets a public API, document that Cargo feature unification can turn on serde_json's
+  `arbitrary_precision` or `float_roundtrip` in a customer build. Number text then changes (the `js.rs`
+  `push_number` fallback writes non-JS text for `1e400`), and RD-23 changes with it. Consider a startup self-check.
+- From plan 2: `cargo deny` prints `license-not-encountered` for four allowed licenses (`Apache-2.0 WITH
+  LLVM-exception`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`). Check the list again when rmcp, reqwest and rustls join,
+  and remove each license that is still unused.
+
 ## Plan 4 (delivery and lifecycle)
 
 - The mock API keeps parsed JSON only, so `1` and `1.0` and integers above 2^53 look the same. Keep the raw body
@@ -80,11 +67,31 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
   order decides which of two strings of equal length the last-resort cut of the size guard takes first. Record
   that order from a TS probe.
 - Found while writing plan 2: run the async string-redaction hook through `pipeline::redact::redact_strings` in
-  two passes (collect the strings, await the hook for each in order, replay the results).
+  two passes (collect the strings with a recording closure, await the hook for each in order, replay the results).
+  `redact_strings` is the only definition of the walk order and the protected keys; do not copy its rules.
 - Found while writing plan 2: `handles::new_event_id()` returns `None` where TS throws. Drop the event with TS's
   delivery-failure log line.
 - Moved from plan 2: `scripts/check.sh` runs `cargo deny check`, and the CI deny action adds `--all-features`.
   Add it when the crate gets features.
+
+- From the plan 2 final review: the wire body. `assert_js_eq` compares `js::stringify` on both sides, so no plan 2
+  test catches a serializer that uses `serde_json::to_vec`. That serializer writes `1.0`, `-0.0`, exact integers
+  above 2^53, and index-like keys of `tags` and `properties` in insertion order; TS writes `1`, `0`, rounded
+  integers, and index keys first. Build the body with `js::stringify` rules, or record an RD.
+- From the plan 2 final review: the size guard measures `js::stringify` bytes, so the body that the SDK sends must
+  be that same text.
+- From the plan 2 final review: TS merges the sanitize and truncate results into the event with `Object.assign`;
+  Rust replaces the map. The two are equal only while no stage removes a key. Pin it with a test when the queue
+  composes the stages.
+- From the plan 2 final review: the event `timestamp` string must have the exact `toISOString` form (three
+  millisecond digits and `Z`).
+- From plan 2 (performance): `truncate_event` copies the event in `limit_fields` and again for each depth in
+  `normalize_fields`, and `byte_size` writes the whole event as text only to count its bytes (up to about 20
+  encodings of a 400 KB event). `js::own_entries` allocates a `Vec` for each object. Pass the event by value, count
+  bytes with a writer, and give `own_entries` a path that does not allocate.
+- From plan 2 (RD-24): Rust's restore keeps a top-level `__proto__` key of an event hook's result, so its strings
+  reach the customer's redactor; TS turns that key into the prototype and never redacts them. A typed event has no
+  such key; keep it that way, or record the extra redactor calls in RD-24.
 
 ## Plan 5 (finish)
 
@@ -92,7 +99,9 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
 - `ci.yml`'s `cancel-in-progress: true` also cancels runs on `main`. Cancel only PR runs once the mutation gate
   needs the previous green commit.
 - Windows: the clone-directory rename needs a retry under antivirus, and `shell: true` with an argument array
-  warns DEP0190 on Node 24 and later.
+  warns DEP0190 on Node 24 and later. From plan 2: `oracle/src/lock.mjs` throws on EPERM, EBUSY or EACCES in the
+  break path instead of retrying (lines 158-161), the write-then-rename of a fresh directory can fail again and
+  again under antivirus (113-114, 137, 163), and release gives up after one failed rename (206-210).
 - The msrv job runs nextest only. Add `cargo test --workspace --doc` on 1.88 before the README doctests land.
 - `harness/src/contract/extract-schema.mjs` does not compile its output with the validator's strict ajv
   settings.
@@ -100,3 +109,37 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
   HOME isolation claim (a new HOME hides only HOME-resolved configuration); say precisely that the DNS guard
   covers call-time lookups through the socket module; note that `poetry install` runs with the real HOME.
 - After the final PR merges (R21): dispatch the nightly once, so the issue-filing path runs for real.
+- From plan 2, lock robustness (`oracle/src/lock.mjs`): the claim holder is identified by pid (compare tokens
+  instead); an unreadable claim after a power loss blocks breakers forever; nothing sweeps `.new-*`, `.stale-*` and
+  `.done-*` leftovers; only interleaving A has a deterministic test; `isStale` treats a changed host name as another
+  host (macOS).
+- From plan 2, vector tooling (`oracle/src/vectors/write.mjs`, `oracle/src/strict-json.mjs`): a hole in `cases`
+  gives a `TypeError`, not a named error; a cyclic value overflows the stack with no path; extra array properties
+  are dropped silently; `$repeat` outside `input` is not rejected; the generator path is hard-coded although
+  `genDir` is a parameter; `writeAll` writes files before it checks later sets; tests miss the Set and class
+  instance throws, the exact bits of `1e23` and `2**53+2`, and a mulberry32 known answer. A generator that sets a
+  `deviation` other than RD-24 must not reuse the JSON round trip of `gen/normalize.mjs` and `gen/sanitize.mjs`.
+- From plan 2, oracle tooling: `GIT_REDIRECTS` (`oracle/test/fetch.test.mjs`) duplicates `DROPPED_ENV`
+  (`fetch-ts.mjs`); the `oracle-log-*` temp directory leaks on SIGINT or SIGTERM (`logs.mjs`); no test covers an
+  absent trace or the trace calls of `run.mjs`, `list-tests.mjs` and `driver.mjs`; `captureLogs` resets the sink to
+  `null`, not to the earlier sink; `loadModule` bundles are not log-isolated (say so in its doc);
+  `server.test.mjs:63` reuses request id 5.
+- From plan 2, `xtask parity`: the `UnclaimedVectorCase` text does not say whether the entry is missing, `todo` or
+  another category; a key repeated inside one case's `ts_test` is accepted; no repository-level test covers the
+  link problems; the case names written in `covered-by-vector` reasons are not checked against the vector files.
+- From plan 2, Rust test support: `OracleError`'s `Debug` puts the stack on one line; oracle error messages hold
+  the whole reply line, with no cap; `bmp_string` has a small modulo bias on its any-BMP part.
+- From plan 2, vector and test coverage: no vector for a key above the `u32` range (`"4294967296"`); the case name
+  `stringify:float-one` holds an integer; `constants/tests.rs:288` uses `unwrap_or_default` on the case input and
+  reloads the vector file per lookup; the KSUID tests' prefix list differs from TS and 10 distinct event IDs are not
+  checked; the `from_parts` proptest almost never reaches the out-of-range margins; `gen/handles.mjs` holds raw
+  invisible characters (use `\uXXXX`); an exhaustive `toLowerCase` vector would pin the sentinel equivalence across
+  ICU versions; an infallible KSUID encoder would remove an unreachable `Option` branch in `derive_session_id`; the
+  tokens divisor test does not assert 3.5; the tags proptest rarely reaches the 50-tag cap or the 200-unit limit
+  with astral characters; the normalize RD-24 check derives its expected value from `normalize` and
+  `test:same-object-twice` needs a comment; truncation has no RD-24 case and no astral case in the last-resort
+  cut, its tests repeat the `"[MaxProperties ~]"` literal, and two `expect` messages in `check_rd27` lack the case
+  name; the sanitize proptest needs a comment on the inputs it leaves out, and `ts_event` does not enforce that it
+  never makes a `toString` or `__proto__` key; `sanitize_parameters` also walks `structuredContent` (rename);
+  redaction has no fixed case for a `""` key inside an array element, and its tests type the hook-field and
+  restored-field lists again instead of importing them.
