@@ -3308,79 +3308,117 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - integration > should not mutate the original event"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "JS object identity and in-place mutation; Rust takes the event by shared reference and builds a new one"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - integration > should sanitize both parameters and response in a full event"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:full-event; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should find and redact deeply nested large base64"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:nested-base64; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should handle null and undefined parameters without error"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:null-parameters (null) and parameters:absent (undefined); checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave large non-base64 strings unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:non-base64-12000; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave small strings unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:small-strings; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should only redact large base64 in mixed-type parameters"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:mixed-types; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact base64 string at exactly SIZE_GATE boundary (10240 chars)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:size-gate-boundary; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 inside an array"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:base64-in-array; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 strings (>10KB)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:base64-12000; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle null and undefined response without error"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:null-response (null) and response:absent (undefined); checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle response without content array"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:no-content-array; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should leave text-only content unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:text-only; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through EmbeddedResource with text"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:resource-text; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through resource_link unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:resource-link; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact EmbeddedResource with blob"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:resource-blob; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact large base64 inside structuredContent"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:structured-content-base64; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact unknown content types with type name in message"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:unknown-type; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should replace image and audio blocks but keep text blocks"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:sanitize.json"
+reason = "sanitize.json case test:image-audio-text; checked by agentcat-sdk::pipeline::sanitize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > does not re-raise when the customer has their own listener for the signal"

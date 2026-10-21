@@ -56,6 +56,7 @@ export const functions = {
     }
     return { value: Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) };
   },
+  "sanitization.sanitizeEvent": (event) => core.sanitization.sanitizeEvent(event),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
   // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
   "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),
