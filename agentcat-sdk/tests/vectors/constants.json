@@ -145,17 +145,11 @@
     },
     {
       "name": "SESSION_ID_PARAM_PATTERN",
-      "value": "^(start|ses_[0-9A-Za-z]{27})$",
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "value": "^(start|ses_[0-9A-Za-z]{27})$"
     },
     {
       "name": "SESSION_START_SENTINEL",
-      "value": "start",
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "value": "start"
     },
     {
       "name": "getReportMissingToolDescriptor",

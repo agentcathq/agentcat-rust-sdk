@@ -11,7 +11,8 @@ const CHANNEL = "handle param descriptions name the delivery channel > ";
 
 // The TS tests of src/tests/constants.test.ts that pin each export, by export name. A test
 // that pins several exports appears under each of them. Tests of AGENTCAT_SOURCE and
-// DIAGNOSTICS_SCOPE_NAME are not linked (exporters and diagnostics: second pass).
+// DIAGNOSTICS_SCOPE_NAME are not linked (exporters and diagnostics: second pass). The
+// value-contract test also runs the pattern against inputs; Task 8 claims it in handles.json.
 const TS_TESTS = {
   AGENTCAT_CUSTOM_EVENT_TYPE: [k("brand constants (wire literals) > emits the agentcat custom event type on the wire")],
   MCP_SESSION_KEY: [
@@ -28,8 +29,6 @@ const TS_TESTS = {
   MCP_SESSION_STATUS_DESCRIPTION: [k(`${PINS}MCP_SESSION_STATUS_DESCRIPTION`)],
   MINT_BACK_ISSUED_BODY: [k(`${PINS}MINT_BACK_ISSUED_BODY`)],
   MINT_BACK_UNRECOGNIZED_BODY: [k(`${PINS}MINT_BACK_UNRECOGNIZED_BODY`)],
-  SESSION_ID_PARAM_PATTERN: [k(`${PINS}the session_id value-contract constants`)],
-  SESSION_START_SENTINEL: [k(`${PINS}the session_id value-contract constants`)],
 };
 
 const SESSION_ID = "ses_0123456789abcdefghijklmnopq";

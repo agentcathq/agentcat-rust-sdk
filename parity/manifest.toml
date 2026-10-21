@@ -799,9 +799,7 @@ reason = "constants.json case SESSION_ID_PARAM_DESCRIPTION; checked by agentcat-
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-status = "n/a"
-category = "covered-by-vector:constants.json"
-reason = "constants.json case SESSION_ID_PARAM_PATTERN, SESSION_START_SENTINEL; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
+status = "todo"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
