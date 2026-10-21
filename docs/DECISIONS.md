@@ -37,6 +37,8 @@ acts differently from that baseline is listed in the deviation register of the d
 | R19 | Shared handler on several servers (milestone 1-2 batch, 2026-10-21) | At `9b56e9e`, a tool handler function shared by two v1 servers is wrapped only on the first server, so errors on later servers lose their stack. Rust does not copy this: every server keeps the stack. Recorded as RD-21. |
 | R20 | Harness answer key (milestone 1-2 batch, 2026-10-21) | The TS v2 reference server is the answer key on both protocol lanes, 2025-11-25 and 2026-07-28. The v1 server stays in the harness but is not what the Rust server is diffed against. Plan 3 makes v2 the default reference server and generates the tool contract from it. |
 | R21 | Nightly schedule (milestone 1-2 batch, 2026-10-21) | `main` stays untouched until the final PR (R15). The scheduled nightly drift sweep starts when that PR merges; until then it runs on pushes to `rewrite` that change the oracle, the harness or the workflow. |
+| R22 | Float parsing (plan 2, 2026-10-21) | serde_json's `float_roundtrip` feature stays off. Without it, a decimal with 16 or 17 significant digits can parse to the neighboring `f64`, so a recorded number or a token estimate can differ from TS by one digit. The owner accepts this for the smaller and faster parser. Recorded as RD-23. |
+| R23 | JavaScript object-model artifacts (plan 2, 2026-10-21) | Rust does not copy TS results that come from the JavaScript object model rather than from SDK logic, as in R19. A `__proto__` key in customer JSON is kept (TS drops it while it copies objects), and an array tool `response` stays an array (TS turns it into an object with index keys). Recorded as RD-24 and RD-25. |
 
 ## 2. Designer calls (C)
 

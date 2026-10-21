@@ -25,8 +25,6 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
 - Pending rulings: `harness/src/diff.mjs` rejects any ruling key except path, reason and deviation, and
   `xtask` rejects a register row written as `| RD-22 (pending) |`. Before the first pending ruling, allow
   `"pending": true` in `rulings.json`, and mark pending in the Why column of design section 9.
-- `scripts/check.sh` runs `cargo deny check`. The CI deny action adds `--all-features`. Add it when the crate
-  gets features.
 - The `cargo hack --no-dev-deps` and minimal-versions steps warn about unused dependencies while the SDK library
   is empty. Make sure that the warnings are gone once the SDK uses its dependencies.
 - `oracle/src/egress-guard.mjs`: a custom `lookup` with the host name `localhost` passes the guard. Say so in the
@@ -62,6 +60,13 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
   stopping workflow commands (the job has `contents: read` and no secrets).
 - The egress guard does not cover worker threads, native addons or `dns.resolve*`. Revisit if TS main moves
   test work to worker threads.
+- Found while writing plan 2: TS puts array-index keys of `structuredContent` (for example `"0"`) before
+  `mcp_session` on the wire, because JavaScript orders those keys first. Decide how the `mcp-session-first` rule
+  (R07) and the Rust mirror treat them.
+- Found while writing plan 2: `handles::new_session_id()` returns `None` where TS throws. Take TS's "tracing
+  failed" path for that call.
+- Found while writing plan 2: harness scenarios with decimals of more than 15 significant digits hit RD-23.
+  Avoid them, or add a ruling.
 
 ## Plan 4 (delivery and lifecycle)
 
@@ -71,6 +76,15 @@ in a task or records why not. Line numbers are as of `b9b91e0` and can drift.
   RD-09 and R06 (5 s drain), a draining Rust server can be killed. Design the stdio close path.
 - An HTTP reference server that ignores SIGTERM only gets a stderr line, and the run still exits 0. Enforce the
   protocol when the Rust server must drain on SIGTERM.
+- Found while writing plan 2: build the TS event shape (`pipeline::TsEvent`) in TS's in-memory key order. The
+  order decides which of two strings of equal length the last-resort cut of the size guard takes first. Record
+  that order from a TS probe.
+- Found while writing plan 2: run the async string-redaction hook through `pipeline::redact::redact_strings` in
+  two passes (collect the strings, await the hook for each in order, replay the results).
+- Found while writing plan 2: `handles::new_event_id()` returns `None` where TS throws. Drop the event with TS's
+  delivery-failure log line.
+- Moved from plan 2: `scripts/check.sh` runs `cargo deny check`, and the CI deny action adds `--all-features`.
+  Add it when the crate gets features.
 
 ## Plan 5 (finish)
 

@@ -324,8 +324,12 @@ manifest point to these IDs.
 | RD-17 | High-level-server inner tap stashes the thrown `Error` for its stack (B-020). | `capture_error` helper (opt-in). | rmcp turns a tool's own error into text before the wrapper sees it. |
 | RD-18 | Hooks receive the raw `(request, extra)`. | Hooks receive a `ToolCall` snapshot (D35). | Rust ownership and `Send` bounds. |
 | RD-19 | Detection, compatibility errors, late registration, re-arm, Workers `waitUntil` (B-011, B-014 to B-016, B-019, B-049, B-106). | Not applicable. | rmcp is typed and the wrapper sees every call. |
-| RD-20 | Lone surrogates, cycles, functions, `undefined`, NaN in values (B-092, K-13). | Cannot occur (`serde_json::Value` and Rust strings forbid them); the corresponding normalize branches do not exist. | Rust types. |
+| RD-20 | Lone surrogates, cycles, shared references, functions, `undefined`, NaN in values (B-092, K-13). | Cannot occur (`serde_json::Value` and Rust strings forbid them); the corresponding normalize branches do not exist. A value that TS shares between two fields is two copies in Rust, so the string-redaction hook runs once for each copy. | Rust types. |
 | RD-21 | A tool handler function shared by several v1 servers is wrapped only on the first, so errors on later servers lose `stack` and `frames` (a JS function-identity artifact). | Every server records the error the same way. | Owner ruling R19. |
+| RD-22 | A cut at a UTF-16 limit that falls inside a surrogate pair keeps the lone high surrogate, which goes on the wire as `\udXXX` (B-066, B-091, B-092). | The cut drops the whole character (D09). A size check after such a cut counts up to 6 bytes fewer than TS. | Rust strings cannot hold a lone surrogate. |
+| RD-23 | `JSON.parse` reads every decimal to the nearest `f64`. | Without `float_roundtrip`, a decimal with 16 or 17 significant digits can become the neighboring `f64`, so a recorded number or a token estimate can differ. | Owner ruling R22. |
+| RD-24 | Sanitize, normalize and redaction drop a `__proto__` key of customer JSON while they copy objects. | The key is kept like any other key. | Owner ruling R23. |
+| RD-25 | An array tool `response` is spread into an object with index keys (`{"0": …, "1": …}`) before it is published. | The array stays an array. | Owner ruling R23. |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register and in `rulings.json`), and work continues;
