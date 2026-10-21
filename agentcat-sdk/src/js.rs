@@ -195,9 +195,10 @@ fn is_js_whitespace(c: char) -> bool {
 /// as `Array.prototype.join` gives it (its elements as this function writes them, a `null`
 /// element as the empty string, joined with `,`), and `"[object Object]"` for an object.
 ///
-/// JavaScript throws a `TypeError` for an object with an own `toString` key whose value is not
-/// a function (any JSON value), at any depth of an array; this function gives
-/// `"[object Object]"` for it.
+/// RD-27 (owner ruling R23): JavaScript throws `TypeError: Cannot convert object to primitive
+/// value` for an object with an own `toString` key (whose value, a JSON value, is never a
+/// function), alone or at any depth inside an array; this function gives `"[object Object]"`
+/// for it, as for any other object.
 pub(crate) fn to_js_string(value: Option<&Value>) -> String {
     let mut out = String::new();
     match value {

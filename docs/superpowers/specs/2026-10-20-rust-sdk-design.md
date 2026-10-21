@@ -330,6 +330,7 @@ manifest point to these IDs.
 | RD-23 | `JSON.parse` reads every decimal to the nearest `f64`. | Without `float_roundtrip`, a decimal with 16 or 17 significant digits can become the neighboring `f64`, so a recorded number or a token estimate can differ. | Owner ruling R22. |
 | RD-24 | Sanitize, normalize and redaction drop a `__proto__` key of customer JSON while they copy objects. | The key is kept like any other key. | Owner ruling R23. |
 | RD-25 | An array tool `response` is spread into an object with index keys (`{"0": …, "1": …}`) before it is published. | The array stays an array. | Owner ruling R23. |
+| RD-27 | `String()` of an object with an own `toString` key, at any depth inside an array, throws `TypeError: Cannot convert object to primitive value` (for example in sanitization's unsupported-type message and in the `userIntent` array join of truncation). | The object gives `[object Object]` like any other object. | Owner ruling R23. |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register and in `rulings.json`), and work continues;

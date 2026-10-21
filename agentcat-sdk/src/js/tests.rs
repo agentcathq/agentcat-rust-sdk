@@ -92,6 +92,33 @@ fn negative_zero_matches_js() {
     assert_eq!(Some(json!(number_to_string(&zero))), js);
 }
 
+/// RD-27 (owner ruling R23): JavaScript's `String()` throws for an object with an own
+/// `toString` key, alone or at any depth inside an array; `to_js_string` writes it as
+/// JavaScript writes the same object without that key.
+#[test]
+fn to_js_string_keeps_objects_with_a_to_string_key_rd27() {
+    let cases = [
+        (json!({"toString": 1}), json!({"other": 1})),
+        (json!([[{"toString": null}]]), json!([[{"other": null}]])),
+        (
+            json!([1, [{"toString": "f"}, null, "a"]]),
+            json!([1, [{"other": "f"}, null, "a"]]),
+        ),
+    ];
+    for (value, renamed) in &cases {
+        let err = oracle::call("oracle.String", &[json!({"value": value})]).unwrap_err();
+        assert!(
+            err.message
+                .contains("Cannot convert object to primitive value"),
+            "{value}: {err}"
+        );
+        let js = oracle::call("oracle.String", &[json!({"value": renamed})]).unwrap();
+        assert_eq!(Some(json!(to_js_string(Some(value)))), js, "{value}");
+    }
+    assert_eq!(to_js_string(Some(&cases[0].0)), "[object Object]");
+    assert_eq!(to_js_string(Some(&cases[1].0)), "[object Object]");
+}
+
 /// The plain JSON text of a number: a safe integer, or at most 15 digits times 10^e with
 /// |e| <= 22, written with or without a decimal point and an exponent (Ruling P3). `serde_json`
 /// without `float_roundtrip` (R22) parses such a text to the `f64` `JSON.parse` gives: an exact
