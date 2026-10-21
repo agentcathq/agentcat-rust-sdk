@@ -1,0 +1,1212 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/js.mjs",
+  "cases": [
+    {
+      "name": "stringify:float-one",
+      "input": {
+        "n": 1
+      },
+      "output": "{\"n\":1}"
+    },
+    {
+      "name": "stringify:1e21",
+      "input": 1e+21,
+      "output": "1e+21"
+    },
+    {
+      "name": "stringify:1e-7",
+      "input": 1e-7,
+      "output": "1e-7"
+    },
+    {
+      "name": "stringify:1e-6",
+      "input": 0.000001,
+      "output": "0.000001"
+    },
+    {
+      "name": "stringify:negative-zero",
+      "input": {
+        "$f64": "8000000000000000"
+      },
+      "output": "0"
+    },
+    {
+      "name": "stringify:0.1+0.2",
+      "input": {
+        "$f64": "3fd3333333333334"
+      },
+      "output": "0.30000000000000004"
+    },
+    {
+      "name": "stringify:min-subnormal",
+      "input": {
+        "$f64": "0000000000000001"
+      },
+      "output": "5e-324"
+    },
+    {
+      "name": "stringify:max-value",
+      "input": {
+        "$f64": "7fefffffffffffff"
+      },
+      "output": "1.7976931348623157e+308"
+    },
+    {
+      "name": "stringify:2^53",
+      "input": 9007199254740992,
+      "output": "9007199254740992"
+    },
+    {
+      "name": "stringify:u64-max-as-double",
+      "input": {
+        "$f64": "43f0000000000000"
+      },
+      "output": "18446744073709552000"
+    },
+    {
+      "name": "stringify:i64-min-as-double",
+      "input": {
+        "$f64": "c3e0000000000000"
+      },
+      "output": "-9223372036854776000"
+    },
+    {
+      "name": "stringify:control-characters",
+      "input": "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f",
+      "output": "\"\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000b\\f\\r\\u000e\\u000f\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f\""
+    },
+    {
+      "name": "stringify:backslash",
+      "input": "\\",
+      "output": "\"\\\\\""
+    },
+    {
+      "name": "stringify:quote",
+      "input": "\"",
+      "output": "\"\\\"\""
+    },
+    {
+      "name": "stringify:U+007F",
+      "input": "",
+      "output": "\"\""
+    },
+    {
+      "name": "stringify:line-and-paragraph-separators",
+      "input": "  ",
+      "output": "\"  \""
+    },
+    {
+      "name": "stringify:html-characters",
+      "input": "<>&",
+      "output": "\"<>&\""
+    },
+    {
+      "name": "stringify:astral",
+      "input": "😀𝄞",
+      "output": "\"😀𝄞\""
+    },
+    {
+      "name": "stringify:nested",
+      "input": {
+        "0": {
+          "x": "y"
+        },
+        "a": [
+          1,
+          [
+            2,
+            {
+              "b": null,
+              "c": [
+                true,
+                false
+              ]
+            }
+          ],
+          {}
+        ],
+        "": [
+          []
+        ]
+      },
+      "output": "{\"0\":{\"x\":\"y\"},\"a\":[1,[2,{\"b\":null,\"c\":[true,false]}],{}],\"\":[[]]}"
+    },
+    {
+      "name": "stringify:seeded-0",
+      "input": {},
+      "output": "{}"
+    },
+    {
+      "name": "stringify:seeded-1",
+      "input": {
+        "9": true,
+        "\u001f": [
+          {
+            "1": -691,
+            "9": true
+          },
+          "\\9\f 9 "
+        ],
+        "a": {
+          "": -502
+        },
+        "𝄞": [
+          {
+            "$f64": "4258a4204aad9b55"
+          },
+          {
+            "0": "é\n",
+            "4294967294": true,
+            "0😀": false,
+            "1.5": "  é\\"
+          }
+        ]
+      },
+      "output": "{\"9\":true,\"\\u001f\":[{\"1\":-691,\"9\":true},\"\\\\9\\f 9 \"],\"a\":{\"\":-502},\"𝄞\":[423331179190.42706,{\"0\":\"é\\n\",\"4294967294\":true,\"0😀\":false,\"1.5\":\"  é\\\\\"}]}"
+    },
+    {
+      "name": "stringify:seeded-2",
+      "input": [
+        {
+          "1.5": "ZZ"
+        }
+      ],
+      "output": "[{\"1.5\":\"ZZ\"}]"
+    },
+    {
+      "name": "stringify:seeded-3",
+      "input": [
+        [
+          true,
+          " ",
+          {
+            "$f64": "43f0000000000000"
+          }
+        ]
+      ],
+      "output": "[[true,\" \",18446744073709552000]]"
+    },
+    {
+      "name": "stringify:seeded-4",
+      "input": [
+        {
+          "$f64": "bcbd4419133f2147"
+        },
+        [
+          {
+            "$f64": "8000000000000000"
+          },
+          {
+            "\"\u0001": -1
+          },
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        false,
+        52
+      ],
+      "output": "[-4.0614744368940594e-16,[0,{\"\\\"\\u0001\":-1},0],false,52]"
+    },
+    {
+      "name": "stringify:seeded-5",
+      "input": [
+        [
+          null,
+          "a/\bé",
+          "\u001fa世"
+        ],
+        "Zb Z"
+      ],
+      "output": "[[null,\"a/\\bé\",\"\\u001fa世\"],\"Zb Z\"]"
+    },
+    {
+      "name": "stringify:seeded-6",
+      "input": {
+        "10": "b 0b\f\u0001 "
+      },
+      "output": "{\"10\":\"b 0b\\f\\u0001 \"}"
+    },
+    {
+      "name": "stringify:seeded-7",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-8",
+      "input": {
+        "4294967294": [
+          [
+            "aé世a﻿\f\r\u0001",
+            null,
+            "a\n\f"
+          ],
+          [
+            {
+              "$f64": "7fefffffffffffff"
+            },
+            " 0a 😀\u0000",
+            "\u001f\t\u001f\b9Z😀",
+            ""
+          ],
+          "00😀\\a"
+        ],
+        "id": true,
+        "01": "Z\\𝄞\u001f\fb",
+        "-1": 1
+      },
+      "output": "{\"4294967294\":[[\"aé世a﻿\\f\\r\\u0001\",null,\"a\\n\\f\"],[1.7976931348623157e+308,\" 0a 😀\\u0000\",\"\\u001f\\t\\u001f\\b9Z😀\",\"\"],\"00😀\\\\a\"],\"id\":true,\"01\":\"Z\\\\𝄞\\u001f\\fb\",\"-1\":1}"
+    },
+    {
+      "name": "stringify:seeded-9",
+      "input": [
+        {
+          "0": "",
+          "0é\r": "\u001f\r ",
+          " ": [
+            false
+          ]
+        }
+      ],
+      "output": "[{\"0\":\"\",\"0é\\r\":\"\\u001f\\r \",\" \":[false]}]"
+    },
+    {
+      "name": "stringify:seeded-10",
+      "input": [
+        "\bZ \u001f ",
+        null,
+        [
+          1.5,
+          {
+            "$f64": "43f0000000000000"
+          },
+          "\t \b世\t世"
+        ],
+        {
+          "0": " / 世",
+          "2": "\u0001😀\n",
+          "-1": "世\u0000世b\t"
+        }
+      ],
+      "output": "[\"\\bZ \\u001f \",null,[1.5,18446744073709552000,\"\\t \\b世\\t世\"],{\"0\":\" / 世\",\"2\":\"\\u0001😀\\n\",\"-1\":\"世\\u0000世b\\t\"}]"
+    },
+    {
+      "name": "stringify:seeded-11",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-12",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-13",
+      "input": {},
+      "output": "{}"
+    },
+    {
+      "name": "stringify:seeded-14",
+      "input": {
+        "9": null
+      },
+      "output": "{\"9\":null}"
+    },
+    {
+      "name": "stringify:seeded-15",
+      "input": [
+        " \u00010 \f"
+      ],
+      "output": "[\" \\u00010 \\f\"]"
+    },
+    {
+      "name": "stringify:seeded-16",
+      "input": [
+        null,
+        "𝄞\u0001\u001f\n\u0001"
+      ],
+      "output": "[null,\"𝄞\\u0001\\u001f\\n\\u0001\"]"
+    },
+    {
+      "name": "stringify:seeded-17",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-18",
+      "input": {
+        "0": 266,
+        "a\"": {},
+        "b": {
+          "\u001f0b0": "\n\t/\u001f"
+        }
+      },
+      "output": "{\"0\":266,\"a\\\"\":{},\"b\":{\"\\u001f0b0\":\"\\n\\t/\\u001f\"}}"
+    },
+    {
+      "name": "stringify:seeded-19",
+      "input": {
+        "4294967294": "\u0000 𝄞",
+        "id": "é\n\u0000",
+        "b": "9世\b Z\\/",
+        "...": -223
+      },
+      "output": "{\"4294967294\":\"\\u0000 𝄞\",\"id\":\"é\\n\\u0000\",\"b\":\"9世\\b Z\\\\/\",\"...\":-223}"
+    },
+    {
+      "name": "stringify:seeded-20",
+      "input": [
+        {
+          "9": [
+            true
+          ],
+          "10": 1,
+          "...": [
+            286
+          ]
+        },
+        {
+          "$f64": "c317a3e7603b7e25"
+        },
+        {
+          "\b9": {
+            "0": "",
+            "9": " a\rb",
+            "": {
+              "$f64": "4458f745f9a1995a"
+            }
+          },
+          "id": "/b 9",
+          "\u0001": {
+            "0": -49695763.62054795,
+            "2": null,
+            "a": true,
+            "01": false
+          },
+          " ": "世b"
+        }
+      ],
+      "output": "[{\"9\":[true],\"10\":1,\"...\":[286]},-1663534652907401.2,{\"\\b9\":{\"0\":\"\",\"9\":\" a\\rb\",\"\":1.8421591189689933e+21},\"id\":\"/b 9\",\"\\u0001\":{\"0\":-49695763.62054795,\"2\":null,\"a\":true,\"01\":false},\" \":\"世b\"}]"
+    },
+    {
+      "name": "stringify:seeded-21",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-22",
+      "input": [
+        "\u0000\t",
+        "\t  b",
+        "\bé",
+        {
+          "$f64": "3bb35ae594879e3d"
+        }
+      ],
+      "output": "[\"\\u0000\\t\",\"\\t  b\",\"\\bé\",4.098594568204135e-21]"
+    },
+    {
+      "name": "stringify:seeded-23",
+      "input": [
+        true,
+        true
+      ],
+      "output": "[true,true]"
+    },
+    {
+      "name": "stringify:seeded-24",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-25",
+      "input": [
+        {
+          "$f64": "bcf02b4ecac13d3a"
+        },
+        [
+          " b😀Z9\f\r\u001f",
+          true
+        ]
+      ],
+      "output": "[-3.590277191251516e-15,[\" b😀Z9\\f\\r\\u001f\",true]]"
+    },
+    {
+      "name": "stringify:seeded-26",
+      "input": {
+        "10": "\f😀\u0001\u0001\n/\u0001",
+        "01": [
+          "  /é \n\u0000 ",
+          {
+            "b": {
+              "$f64": "3fd3333333333334"
+            },
+            "...": "",
+            "a": " 😀世a\t",
+            "\u001f0": "\f"
+          },
+          -232,
+          true
+        ],
+        "4294967295": "\\"
+      },
+      "output": "{\"10\":\"\\f😀\\u0001\\u0001\\n/\\u0001\",\"01\":[\"  /é \\n\\u0000 \",{\"b\":0.30000000000000004,\"...\":\"\",\"a\":\" 😀世a\\t\",\"\\u001f0\":\"\\f\"},-232,true],\"4294967295\":\"\\\\\"}"
+    },
+    {
+      "name": "stringify:seeded-27",
+      "input": {},
+      "output": "{}"
+    },
+    {
+      "name": "stringify:seeded-28",
+      "input": [
+        "b😀b"
+      ],
+      "output": "[\"b😀b\"]"
+    },
+    {
+      "name": "stringify:seeded-29",
+      "input": [
+        1,
+        [
+          {
+            "9": {
+              "$f64": "bcc1e81d76f6bb6d"
+            },
+            "10": "/𝄞 ",
+            "4294967295": {
+              "$f64": "43f0000000000000"
+            }
+          }
+        ],
+        "😀 \\😀Z ",
+        ""
+      ],
+      "output": "[1,[{\"9\":-4.97010754654184e-16,\"10\":\"/𝄞 \",\"4294967295\":18446744073709552000}],\"😀 \\\\😀Z \",\"\"]"
+    },
+    {
+      "name": "stringify:seeded-30",
+      "input": [],
+      "output": "[]"
+    },
+    {
+      "name": "stringify:seeded-31",
+      "input": [
+        [
+          "𝄞\\😀\b\\",
+          [
+            " \\\u0000/",
+            "\u0001 a"
+          ],
+          {
+            "2": "﻿\" ",
+            "4294967294": "",
+            "1.5": true
+          }
+        ]
+      ],
+      "output": "[[\"𝄞\\\\😀\\b\\\\\",[\" \\\\\\u0000/\",\"\\u0001 a\"],{\"2\":\"﻿\\\" \",\"4294967294\":\"\",\"1.5\":true}]]"
+    },
+    {
+      "name": "stringify:seeded-32",
+      "input": [
+        {
+          "$f64": "3bb67ade4fef6074"
+        },
+        "//Z\u0001﻿\""
+      ],
+      "output": "[4.76031557423994e-21,\"//Z\\u0001﻿\\\"\"]"
+    },
+    {
+      "name": "stringify:seeded-33",
+      "input": {
+        "...": "é\r﻿世世",
+        "\b99": {},
+        "-1": false
+      },
+      "output": "{\"...\":\"é\\r﻿世世\",\"\\b99\":{},\"-1\":false}"
+    },
+    {
+      "name": "stringify:seeded-34",
+      "input": {
+        "1": true,
+        "10": {},
+        "4294967294": [
+          -107,
+          {
+            "0": ""
+          },
+          false,
+          {
+            "2": "\r﻿",
+            "...": null,
+            "1.5": "a\r﻿"
+          }
+        ]
+      },
+      "output": "{\"1\":true,\"10\":{},\"4294967294\":[-107,{\"0\":\"\"},false,{\"2\":\"\\r﻿\",\"...\":null,\"1.5\":\"a\\r﻿\"}]}"
+    },
+    {
+      "name": "stringify:seeded-35",
+      "input": {
+        "2": true,
+        "01": "9 \u0000\n\u0001\u0001世"
+      },
+      "output": "{\"2\":true,\"01\":\"9 \\u0000\\n\\u0001\\u0001世\"}"
+    },
+    {
+      "name": "stringify:seeded-36",
+      "input": [
+        "﻿ ﻿/﻿é\u001f",
+        null
+      ],
+      "output": "[\"﻿ ﻿/﻿é\\u001f\",null]"
+    },
+    {
+      "name": "stringify:seeded-37",
+      "input": {
+        "4294967294": "/\rb﻿é\n世",
+        "\t\r世": "9\b\f\n"
+      },
+      "output": "{\"4294967294\":\"/\\rb﻿é\\n世\",\"\\t\\r世\":\"9\\b\\f\\n\"}"
+    },
+    {
+      "name": "stringify:seeded-38",
+      "input": [
+        {
+          "a": "Z\\\n\\",
+          "01": null,
+          "b": false,
+          "": {
+            "$f64": "3d85cc3e0858a6fb"
+          }
+        }
+      ],
+      "output": "[{\"a\":\"Z\\\\\\n\\\\\",\"01\":null,\"b\":false,\"\":2.4781254003755746e-12}]"
+    },
+    {
+      "name": "stringify:seeded-39",
+      "input": [
+        "\r\f",
+        "9"
+      ],
+      "output": "[\"\\r\\f\",\"9\"]"
+    },
+    {
+      "name": "stringify-text:index-keys-first",
+      "input_text": "{\"b\":1,\"1\":2,\"a\":3,\"0\":4}",
+      "output": "{\"0\":4,\"1\":2,\"b\":1,\"a\":3}"
+    },
+    {
+      "name": "stringify-text:index-keys-ascending",
+      "input_text": "{\"10\":1,\"9\":2,\"x\":3}",
+      "output": "{\"9\":2,\"10\":1,\"x\":3}"
+    },
+    {
+      "name": "stringify-text:index-key-limits",
+      "input_text": "{\"4294967295\":1,\"4294967294\":2,\"01\":3,\"-1\":4,\"1.5\":5}",
+      "output": "{\"4294967294\":2,\"4294967295\":1,\"01\":3,\"-1\":4,\"1.5\":5}"
+    },
+    {
+      "name": "stringify-text:duplicate-keys",
+      "input_text": "{\"a\":1,\"b\":2,\"a\":3}",
+      "output": "{\"a\":3,\"b\":2}"
+    },
+    {
+      "name": "stringify-text:duplicate-index-keys",
+      "input_text": "{\"2\":\"a\",\"b\":1,\"2\":\"c\",\"0\":\"d\"}",
+      "output": "{\"0\":\"d\",\"2\":\"c\",\"b\":1}"
+    },
+    {
+      "name": "stringify-text:nested-index-keys",
+      "input_text": "{\"z\":{\"3\":[{\"y\":1,\"0\":2}],\"1\":{\"q\":0,\"10\":1,\"2\":2}},\"5\":{\"b\":1,\"a\":2,\"4\":3}}",
+      "output": "{\"5\":{\"4\":3,\"b\":1,\"a\":2},\"z\":{\"1\":{\"2\":2,\"10\":1,\"q\":0},\"3\":[{\"0\":2,\"y\":1}]}}"
+    },
+    {
+      "name": "stringify-text:float-one",
+      "input_text": "{\"n\":1.0}",
+      "output": "{\"n\":1}"
+    },
+    {
+      "name": "stringify-text:float-texts",
+      "input_text": "[1.0,-0.0,-0,1e21,1E+21,1e-7,0.000001,123.456e2,-5e-22,1e22,0.5,100]",
+      "output": "[1,0,0,1e+21,1e+21,1e-7,0.000001,12345.6,-5e-22,1e+22,0.5,100]"
+    },
+    {
+      "name": "stringify-text:int-2^53+1",
+      "input_text": "9007199254740993",
+      "output": "9007199254740992"
+    },
+    {
+      "name": "stringify-text:int-u64-max",
+      "input_text": "18446744073709551615",
+      "output": "18446744073709552000"
+    },
+    {
+      "name": "stringify-text:int-i64-min",
+      "input_text": "-9223372036854775808",
+      "output": "-9223372036854776000"
+    },
+    {
+      "name": "stringify-text:ints-past-2^53",
+      "input_text": "[9007199254740993,-9007199254740993,9007199254740995,18446744073709551615]",
+      "output": "[9007199254740992,-9007199254740992,9007199254740996,18446744073709552000]"
+    },
+    {
+      "name": "stringify-text:whitespace",
+      "input_text": " { \"b\" : [ 1 , 2 ] ,\n\t\"0\" : null }\r\n",
+      "output": "{\"0\":null,\"b\":[1,2]}"
+    },
+    {
+      "name": "stringify-text:seeded-0",
+      "input_text": "{\"01\":{\"4294967294\":[],\"2\":\"\\rZ\\u0000𝄞b世\",\"4294967294\":-6346521e22}}",
+      "output": "{\"01\":{\"2\":\"\\rZ\\u0000𝄞b世\",\"4294967294\":-6.346521e+28}}"
+    },
+    {
+      "name": "stringify-text:seeded-1",
+      "input_text": "[true]",
+      "output": "[true]"
+    },
+    {
+      "name": "stringify-text:seeded-2",
+      "input_text": "[]",
+      "output": "[]"
+    },
+    {
+      "name": "stringify-text:seeded-3",
+      "input_text": "{\"...\":false,\"2\":[],\"id\":[{},[\"\\fa﻿﻿\\f\",0.0000000000000003492688,\"\\b \",\"\\b9\\u001f 😀9\\\\\"]],\"01\":null}",
+      "output": "{\"2\":[],\"...\":false,\"id\":[{},[\"\\fa﻿﻿\\f\",3.492688e-16,\"\\b \",\"\\b9\\u001f 😀9\\\\\"]],\"01\":null}"
+    },
+    {
+      "name": "stringify-text:seeded-4",
+      "input_text": "{\"4294967294\":\"﻿\\t𝄞\"}",
+      "output": "{\"4294967294\":\"﻿\\t𝄞\"}"
+    },
+    {
+      "name": "stringify-text:seeded-5",
+      "input_text": "[]",
+      "output": "[]"
+    },
+    {
+      "name": "stringify-text:seeded-6",
+      "input_text": "{}",
+      "output": "{}"
+    },
+    {
+      "name": "stringify-text:seeded-7",
+      "input_text": "{\"10\":1692457127378944,\"...\":\"\\r\",\"0\":\" ﻿\\b\\n\",\"0\":\"\\r\\t\"}",
+      "output": "{\"0\":\"\\r\\t\",\"10\":1692457127378944,\"...\":\"\\r\"}"
+    },
+    {
+      "name": "stringify-text:seeded-8",
+      "input_text": "{\"9\":{\"2\":null,\"2\":{\"10\":405368e+14},\"4294967295\":{\"b\":true,\"1\":2540103987625984,\"1\":null,\"1.5\":\"\\u0001ébé0\",\"2\":0.0000000000000748425816}},\"1\":{},\"9\":{}}",
+      "output": "{\"1\":{},\"9\":{}}"
+    },
+    {
+      "name": "stringify-text:seeded-9",
+      "input_text": "{\"0\":\"世Z\\u001f\",\"0\":\"\\f\\tZ\\t\",\"0\":false}",
+      "output": "{\"0\":false}"
+    },
+    {
+      "name": "stringify-text:seeded-10",
+      "input_text": "{\"4294967294\":{\"01\":[true,\"\\t\\u001f \"],\"01\":{}}}",
+      "output": "{\"4294967294\":{\"01\":{}}}"
+    },
+    {
+      "name": "stringify-text:seeded-11",
+      "input_text": "[true,{\"0\":true}]",
+      "output": "[true,{\"0\":true}]"
+    },
+    {
+      "name": "stringify-text:seeded-12",
+      "input_text": "[[\"  \\u001f \\n/\"],{\"id\":[\"b \",\"é   \\n\\u0001\\\"\"],\"1.5\":-4157839524233216}]",
+      "output": "[[\"  \\u001f \\n/\"],{\"id\":[\"b \",\"é   \\n\\u0001\\\"\"],\"1.5\":-4157839524233216}]"
+    },
+    {
+      "name": "stringify-text:seeded-13",
+      "input_text": "[null,0.0000124296099878847,false]",
+      "output": "[null,0.0000124296099878847,false]"
+    },
+    {
+      "name": "stringify-text:seeded-14",
+      "input_text": "[\"\\r\"]",
+      "output": "[\"\\r\"]"
+    },
+    {
+      "name": "stringify-text:seeded-15",
+      "input_text": "[\"/ ﻿\\t \",false]",
+      "output": "[\"/ ﻿\\t \",false]"
+    },
+    {
+      "name": "stringify-text:seeded-16",
+      "input_text": "[7389955254910976,\"/﻿\\\"9\\t\\u001f\\u0000\"]",
+      "output": "[7389955254910976,\"/﻿\\\"9\\t\\u001f\\u0000\"]"
+    },
+    {
+      "name": "stringify-text:seeded-17",
+      "input_text": "{\"-1\":\"😀\",\"-1\":{\"a\":{\"10\":-0.000012921327678486,\"10\":\"b\\t\\u00009\"},\"1.5\":65680054272525E11,\"a\":985770309576e+17},\"...\":\"\\r\",\"...\":false}",
+      "output": "{\"-1\":{\"a\":9.85770309576e+28,\"1.5\":6.5680054272525e+24},\"...\":false}"
+    },
+    {
+      "name": "stringify-text:seeded-18",
+      "input_text": "{}",
+      "output": "{}"
+    },
+    {
+      "name": "stringify-text:seeded-19",
+      "input_text": "[false,[\" \\\\\\b\\f\\t\\u0000😀 \",{\"0\":-75E8},[null]]]",
+      "output": "[false,[\" \\\\\\b\\f\\t\\u0000😀 \",{\"0\":-7500000000},[null]]]"
+    },
+    {
+      "name": "cut:a😀b@0",
+      "input": [
+        "a😀b",
+        0
+      ],
+      "output": ""
+    },
+    {
+      "name": "cut:a😀b@1",
+      "input": [
+        "a😀b",
+        1
+      ],
+      "output": "a"
+    },
+    {
+      "name": "cut:a😀b@2",
+      "input": [
+        "a😀b",
+        2
+      ],
+      "output": {
+        "$utf16": [
+          97,
+          55357
+        ]
+      }
+    },
+    {
+      "name": "cut:a😀b@3",
+      "input": [
+        "a😀b",
+        3
+      ],
+      "output": "a😀"
+    },
+    {
+      "name": "cut:a😀b@4",
+      "input": [
+        "a😀b",
+        4
+      ],
+      "output": "a😀b"
+    },
+    {
+      "name": "cut:😀😀😀@1",
+      "input": [
+        "😀😀😀",
+        1
+      ],
+      "output": {
+        "$utf16": [
+          55357
+        ]
+      }
+    },
+    {
+      "name": "cut:😀😀😀@3",
+      "input": [
+        "😀😀😀",
+        3
+      ],
+      "output": {
+        "$utf16": [
+          55357,
+          56832,
+          55357
+        ]
+      }
+    },
+    {
+      "name": "cut:😀😀😀@5",
+      "input": [
+        "😀😀😀",
+        5
+      ],
+      "output": {
+        "$utf16": [
+          55357,
+          56832,
+          55357,
+          56832,
+          55357
+        ]
+      }
+    },
+    {
+      "name": "cut:empty@0",
+      "input": [
+        "",
+        0
+      ],
+      "output": ""
+    },
+    {
+      "name": "cut:empty@3",
+      "input": [
+        "",
+        3
+      ],
+      "output": ""
+    },
+    {
+      "name": "trim:U+0009",
+      "input": "\tx\t",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+000A",
+      "input": "\nx\n",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+000B",
+      "input": "\u000bx\u000b",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+000C",
+      "input": "\fx\f",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+000D",
+      "input": "\rx\r",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+0020",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+00A0",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+1680",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2000",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2001",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2002",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2003",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2004",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2005",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2006",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2007",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2008",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2009",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+200A",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2028",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+2029",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+202F",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+205F",
+      "input": " x ",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+3000",
+      "input": "　x　",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+FEFF",
+      "input": "﻿x﻿",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+0085",
+      "input": "x",
+      "output": "x"
+    },
+    {
+      "name": "trim:U+180E",
+      "input": "᠎x᠎",
+      "output": "᠎x᠎"
+    },
+    {
+      "name": "trim:U+200B",
+      "input": "​x​",
+      "output": "​x​"
+    },
+    {
+      "name": "trim:all-whitespace",
+      "input": "\t\n\u000b\f\r                  　﻿",
+      "output": ""
+    },
+    {
+      "name": "trim:inner-whitespace-kept",
+      "input": "\t\n\u000b\f\r                  　﻿x y　z\t\n\u000b\f\r                  　﻿",
+      "output": "x y　z"
+    },
+    {
+      "name": "trim:empty",
+      "input": "",
+      "output": ""
+    },
+    {
+      "name": "utf16-len:empty",
+      "input": "",
+      "output": 0
+    },
+    {
+      "name": "utf16-len:e-acute",
+      "input": "é",
+      "output": 1
+    },
+    {
+      "name": "utf16-len:emoji",
+      "input": "😀",
+      "output": 2
+    },
+    {
+      "name": "utf16-len:a-emoji-b",
+      "input": "a😀b",
+      "output": 4
+    },
+    {
+      "name": "string:0",
+      "input": {
+        "value": 0
+      },
+      "output": "0"
+    },
+    {
+      "name": "typeof:0",
+      "input": {
+        "value": 0
+      },
+      "output": "number"
+    },
+    {
+      "name": "string:undefined",
+      "input": {},
+      "output": "undefined"
+    },
+    {
+      "name": "typeof:undefined",
+      "input": {},
+      "output": "undefined"
+    },
+    {
+      "name": "string:null",
+      "input": {
+        "value": null
+      },
+      "output": "null"
+    },
+    {
+      "name": "typeof:null",
+      "input": {
+        "value": null
+      },
+      "output": "object"
+    },
+    {
+      "name": "string:true",
+      "input": {
+        "value": true
+      },
+      "output": "true"
+    },
+    {
+      "name": "typeof:true",
+      "input": {
+        "value": true
+      },
+      "output": "boolean"
+    },
+    {
+      "name": "string:-0",
+      "input": {
+        "value": {
+          "$f64": "8000000000000000"
+        }
+      },
+      "output": "0"
+    },
+    {
+      "name": "typeof:-0",
+      "input": {
+        "value": {
+          "$f64": "8000000000000000"
+        }
+      },
+      "output": "number"
+    },
+    {
+      "name": "string:1e21",
+      "input": {
+        "value": 1e+21
+      },
+      "output": "1e+21"
+    },
+    {
+      "name": "typeof:1e21",
+      "input": {
+        "value": 1e+21
+      },
+      "output": "number"
+    },
+    {
+      "name": "string:1.5",
+      "input": {
+        "value": 1.5
+      },
+      "output": "1.5"
+    },
+    {
+      "name": "typeof:1.5",
+      "input": {
+        "value": 1.5
+      },
+      "output": "number"
+    },
+    {
+      "name": "string:string",
+      "input": {
+        "value": "s"
+      },
+      "output": "s"
+    },
+    {
+      "name": "typeof:string",
+      "input": {
+        "value": "s"
+      },
+      "output": "string"
+    },
+    {
+      "name": "string:empty-array",
+      "input": {
+        "value": []
+      },
+      "output": ""
+    },
+    {
+      "name": "typeof:empty-array",
+      "input": {
+        "value": []
+      },
+      "output": "object"
+    },
+    {
+      "name": "string:mixed-array",
+      "input": {
+        "value": [
+          1,
+          [
+            2,
+            3
+          ],
+          null,
+          "a",
+          {}
+        ]
+      },
+      "output": "1,2,3,,a,[object Object]"
+    },
+    {
+      "name": "typeof:mixed-array",
+      "input": {
+        "value": [
+          1,
+          [
+            2,
+            3
+          ],
+          null,
+          "a",
+          {}
+        ]
+      },
+      "output": "object"
+    },
+    {
+      "name": "string:empty-object",
+      "input": {
+        "value": {}
+      },
+      "output": "[object Object]"
+    },
+    {
+      "name": "typeof:empty-object",
+      "input": {
+        "value": {}
+      },
+      "output": "object"
+    }
+  ]
+}

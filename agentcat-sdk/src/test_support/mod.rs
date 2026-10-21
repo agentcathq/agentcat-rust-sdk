@@ -8,6 +8,52 @@ pub(crate) mod vectors;
 mod smoke;
 
 use proptest::test_runner::Config;
+use serde_json::Value;
+
+use crate::js;
+
+/// The bytes of each side [`assert_js_eq`] shows around the first difference.
+const SHOWN_BYTES: usize = 40;
+
+/// Asserts that `actual` is `expected` as JavaScript writes it: [`js::stringify`] of `actual`
+/// equals [`js::stringify`] of `expected` after [`markers::d09`] (each `$utf16` marker, a string
+/// TS cut inside a surrogate pair, becomes that string without its half character: RD-22).
+///
+/// # Panics
+///
+/// When the two texts differ, with `context`, the byte offset of the first difference and
+/// [`SHOWN_BYTES`] bytes of each text around it.
+pub(crate) fn assert_js_eq(actual: &Value, expected: &Value, context: &str) {
+    let actual = js::stringify(actual);
+    let expected = js::stringify(&markers::d09(expected.clone()));
+    if actual == expected {
+        return;
+    }
+    let at = actual
+        .bytes()
+        .zip(expected.bytes())
+        .position(|(a, e)| a != e)
+        .unwrap_or_else(|| actual.len().min(expected.len()));
+    panic!(
+        "{context}: JSON.stringify texts differ at byte {at}\n  actual:   {}\n  expected: {}",
+        around(&actual, at),
+        around(&expected, at),
+    );
+}
+
+/// About [`SHOWN_BYTES`] bytes of `text` around byte `at`, widened to character boundaries,
+/// as a Rust string literal (so control characters show).
+fn around(text: &str, at: usize) -> String {
+    let mut start = at.saturating_sub(SHOWN_BYTES / 2);
+    while !text.is_char_boundary(start) {
+        start -= 1;
+    }
+    let mut end = (start + SHOWN_BYTES).min(text.len());
+    while !text.is_char_boundary(end) {
+        end += 1;
+    }
+    format!("{:?} (bytes {start}..{end})", &text[start..end])
+}
 
 /// The proptest settings for property tests: 256 cases unless `PROPTEST_CASES` says otherwise
 /// (proptest reads that variable itself).
@@ -38,8 +84,57 @@ pub(crate) fn config_capped(max: u32) -> Config {
 
 mod tests {
     use proptest::test_runner::Config;
+    use serde_json::json;
 
-    use super::{config, config_capped};
+    use super::{around, assert_js_eq, config, config_capped};
+
+    /// The message of the panic of `f`.
+    fn panic_message(f: impl FnOnce() + std::panic::UnwindSafe) -> String {
+        let payload = std::panic::catch_unwind(f).unwrap_err();
+        payload.downcast_ref::<String>().unwrap().clone()
+    }
+
+    #[test]
+    fn assert_js_eq_passes_equal_values() {
+        let value = json!({"a": [1, "x", null], "b": {"c": true}});
+        assert_js_eq(&value, &value, "same");
+    }
+
+    #[test]
+    fn assert_js_eq_drops_the_half_character_of_a_utf16_marker() {
+        assert_js_eq(&json!(["a"]), &json!([{"$utf16": [97, 55357]}]), "cut");
+    }
+
+    #[test]
+    fn assert_js_eq_names_the_context_and_the_first_difference() {
+        let message = panic_message(|| assert_js_eq(&json!("abc"), &json!("abd"), "ctx"));
+        let lines = [
+            "ctx: JSON.stringify texts differ at byte 3",
+            r#"  actual:   "\"abc\"" (bytes 0..5)"#,
+            r#"  expected: "\"abd\"" (bytes 0..5)"#,
+        ];
+        assert_eq!(message, lines.join("\n"));
+    }
+
+    #[test]
+    fn assert_js_eq_puts_a_missing_tail_at_the_end_of_the_shorter_text() {
+        let message = panic_message(|| assert_js_eq(&json!(1), &json!(12), "tail"));
+        assert!(
+            message.starts_with("tail: JSON.stringify texts differ at byte 1\n"),
+            "{message}"
+        );
+    }
+
+    #[test]
+    fn around_shows_about_40_bytes_widened_to_character_boundaries() {
+        // '"' then 3-byte characters: byte 31 starts one; 31 - 20 = 11 and 10 + 40 = 50 do not.
+        let text = format!("\"{}", "世".repeat(20));
+        assert_eq!(
+            around(&text, 31),
+            format!("{:?} (bytes 10..52)", "世".repeat(14))
+        );
+        assert_eq!(around("ab", 1), format!("{:?} (bytes 0..2)", "ab"));
+    }
 
     #[test]
     fn config_is_the_proptest_default() {

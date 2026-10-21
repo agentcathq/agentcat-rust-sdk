@@ -81,6 +81,22 @@ test("err and stack are in the strict encoding: a lone surrogate in a message is
   assert.ok(line.isWellFormed() && !/\\ud[89a-f]/i.test(line), line);
 });
 
+test("the JS built-ins answer as JavaScript does; String and typeof read an absent value as undefined", async () => {
+  const ok = async (id, fn, args) => {
+    const reply = JSON.parse(await ask({ id, fn, args }));
+    assert.equal(reply.id, id, JSON.stringify(reply));
+    return reply.ok;
+  };
+  assert.equal(await ok(30, "String.prototype.trim", ["\uFEFF x \u2028"]), "x");
+  assert.deepEqual(await ok(31, "String.prototype.slice", ["a\u{1F600}", 2]), { $utf16: [97, 0xd83d] });
+  assert.equal(await ok(32, "String.length", ["a\u{1F600}"]), 3);
+  assert.equal(await ok(33, "oracle.String", [{}]), "undefined");
+  assert.equal(await ok(34, "oracle.String", [{ value: [1, null, [2]] }]), "1,,2");
+  assert.equal(await ok(35, "oracle.typeof", [{}]), "undefined");
+  assert.equal(await ok(36, "oracle.typeof", [{ value: null }]), "object");
+  assert.equal(await ok(37, "oracle.reformat", ['{"b":1,"1":2,"b":3}']), '{"1":2,"b":3}');
+});
+
 test("a server started with ORACLE_SHA writes one trace line to stderr", { timeout: 120_000 }, async () => {
   const locked = JSON.parse(readFileSync(new URL("../oracle.lock", import.meta.url), "utf8")).sha;
   const traced = spawn(process.execPath, [SERVER], {

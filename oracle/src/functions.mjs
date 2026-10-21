@@ -15,6 +15,14 @@ export const functions = {
   "oracle.throw": (message) => {
     throw new TypeError(message);
   },
+  // JavaScript built-ins the TS SDK leans on (the Rust js module). String and typeof take
+  // {value?}, so that an absent value is undefined, which a JSON request cannot carry.
+  "String.prototype.trim": (s) => s.trim(),
+  "String.prototype.slice": (s, n) => s.slice(0, n),
+  "String.length": (s) => s.length,
+  "oracle.String": ({ value }) => String(value),
+  "oracle.typeof": ({ value }) => typeof value,
+  "oracle.reformat": (text) => JSON.stringify(JSON.parse(text)),
   "tokenEstimate.estimateInputTokens": (...args) => core.tokenEstimate.estimateInputTokens(...args),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
 };
