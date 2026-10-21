@@ -19,7 +19,7 @@ fn js_undefined_is_none() {
 
 #[test]
 fn an_unknown_function_is_an_err_and_the_oracle_keeps_serving() {
-    let mut oracle = support::oracle::oracle().lock().unwrap();
+    let mut oracle = support::oracle::lock();
     assert!(oracle.call("nope", &[]).is_err());
     assert_eq!(
         oracle
@@ -33,11 +33,11 @@ fn an_unknown_function_is_an_err_and_the_oracle_keeps_serving() {
 fn a_panic_while_holding_the_oracle_does_not_break_the_next_call() {
     assert!(support::oracle::call("nope", &[]).is_err());
     let panicked = std::panic::catch_unwind(|| {
-        let _guard = support::oracle::oracle().lock().unwrap();
+        let _guard = support::oracle::lock();
         panic!("a test failed while it held the oracle");
     });
     assert!(panicked.is_err());
-    assert!(support::oracle::oracle().is_poisoned());
+    assert!(support::oracle::is_poisoned());
     assert_eq!(
         support::oracle::call("JSON.stringify", &[serde_json::json!(7)]).unwrap(),
         Some(serde_json::json!("7"))

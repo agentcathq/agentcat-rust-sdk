@@ -6,7 +6,7 @@
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
 use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
-use std::sync::{Mutex, OnceLock, PoisonError};
+use std::sync::{Mutex, MutexGuard, OnceLock, PoisonError};
 
 use serde_json::{Value, json};
 
@@ -23,15 +23,26 @@ pub(crate) struct Oracle {
 /// so a caller that panics on the result does not poison it; a poisoned lock is still used,
 /// because every reply is matched to its request by id.
 pub(crate) fn call(func: &str, args: &[Value]) -> Result<Option<Value>, String> {
-    oracle()
-        .lock()
-        .unwrap_or_else(PoisonError::into_inner)
-        .call(func, args)
+    lock().call(func, args)
 }
 
-/// The oracle of this test process, started on first use.
+/// Holds the oracle of this test process, for a test that needs several calls in a row with no
+/// other test in between. A lock poisoned by a test that panicked while it held the oracle is
+/// still used (see [`call`]).
+pub(crate) fn lock() -> MutexGuard<'static, Oracle> {
+    oracle().lock().unwrap_or_else(PoisonError::into_inner)
+}
+
+/// Whether a test panicked while it held the oracle. [`call`] and [`lock`] work either way.
+pub(crate) fn is_poisoned() -> bool {
+    oracle().is_poisoned()
+}
+
+/// The oracle of this test process, started on first use. Private: tests reach it through
+/// [`call`] and [`lock`], which recover a poisoned lock (a plain `lock().unwrap()` fails every
+/// later test once one test panics while it holds the oracle).
 #[expect(clippy::expect_used, reason = "a test cannot run without the oracle")]
-pub(crate) fn oracle() -> &'static Mutex<Oracle> {
+fn oracle() -> &'static Mutex<Oracle> {
     static ORACLE: OnceLock<Mutex<Oracle>> = OnceLock::new();
     ORACLE.get_or_init(|| Mutex::new(Oracle::spawn().expect("cannot start the JS oracle")))
 }
@@ -47,7 +58,7 @@ impl Oracle {
             .spawn()
             .map_err(|e| {
                 format!(
-                    "cannot run `node` (tests that compare with the TS SDK need Node.js 20 or later \
+                    "cannot run `node` (tests that compare with the TS SDK need Node.js 22 or later \
                      on PATH, and `corepack pnpm install` run once): {e}"
                 )
             })?;
