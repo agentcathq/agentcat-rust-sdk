@@ -51,7 +51,7 @@ export function startup(name) {
 
   let options;
   try {
-    options = buildOptions(JSON.parse(process.env.HARNESS_OPTIONS ?? "{}"));
+    options = buildOptions(JSON.parse(process.env.HARNESS_OPTIONS ?? "{}"), apiUrl);
   } catch (err) {
     fail(name, `HARNESS_OPTIONS: ${err.message}`);
   }
@@ -73,9 +73,13 @@ const SYNC_HOOKS = ["resolveSessionId", "eventTags", "eventProperties"];
 // Hooks whose signature returns a Promise.
 const ASYNC_HOOKS = ["identify", "redactSensitiveInformation"];
 
-function buildOptions(profile) {
+// `apiUrl` (AGENTCAT_API_URL, which startup has checked) goes in as the `apiBaseUrl` option, the
+// name at the pinned commit, not only through the environment: a TS version that stopped reading
+// AGENTCAT_API_URL would otherwise fall back to the production default. `disableDiagnostics`
+// backs up DISABLE_DIAGNOSTICS=true the same way.
+function buildOptions(profile, apiUrl) {
   if (!profile || typeof profile !== "object" || Array.isArray(profile)) throw new Error("must be a JSON object");
-  const o = { disableDiagnostics: true };
+  const o = { apiBaseUrl: apiUrl, disableDiagnostics: true };
   for (const [key, value] of Object.entries(profile)) {
     if (FLAGS.includes(key)) o[key] = value; // copied as given
     else if (SYNC_HOOKS.includes(key) || ASYNC_HOOKS.includes(key)) o[key] = hook(key, value);

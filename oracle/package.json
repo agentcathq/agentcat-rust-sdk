@@ -5,7 +5,8 @@
   "exports": {
     "./paths": "./src/paths.mjs",
     "./fetch-ts": "./src/fetch-ts.mjs",
-    "./bundle": "./src/bundle.mjs"
+    "./bundle": "./src/bundle.mjs",
+    "./egress-guard": "./src/egress-guard.mjs"
   },
   "scripts": {
     "test": "node --test --test-concurrency=1 \"test/**/*.test.mjs\""

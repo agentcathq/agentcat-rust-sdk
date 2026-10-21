@@ -19,13 +19,20 @@ not run at the same time as `oracle/test/fetch.test.mjs`, which dirties the shar
 
 Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` or `[::1]`:
 
-- Every TS server run preloads `src/egress-guard.mjs` (`node --import`), which rejects any `fetch` to
-  another host with `egress-guard: blocked <origin>`. `ts-v1.mjs` and `ts-v2.mjs` also import the
-  guard as their first module.
+- Every TS server run preloads `src/egress-guard.mjs` (`node --import`), which loads the egress guard
+  of the oracle package (`oracle/src/egress-guard.mjs`). `ts-v1.mjs` and `ts-v2.mjs` also import it
+  as their first module. In the server process, the guard refuses, with
+  `egress-guard: blocked <target>` and before any packet leaves: a `fetch` to a host other than
+  `127.0.0.1`, `localhost` or `[::1]`; a TCP connection (`net`, `http`, `https`, undici) or a TLS
+  connection to a host other than `localhost`, `127.0.0.0/8` or `::1`; a DNS lookup of another host
+  name; a UDP send to another address. Unix sockets and named pipes pass. It does not cover worker
+  threads, child processes, native addons, or `dns.resolve*`.
 - `ts-v1.mjs` and `ts-v2.mjs` refuse to start (exit 2, `refusing to start`) unless
-  `AGENTCAT_API_URL` is an `http://` URL on one of those hosts.
+  `AGENTCAT_API_URL` is an `http://` URL on `127.0.0.1`, `localhost` or `[::1]`, and pass it to the
+  TS SDK as the `apiBaseUrl` option, so a TS SDK that stopped reading the variable still publishes
+  to the mock.
 - The driver gives every server `DISABLE_DIAGNOSTICS=true` and a temp `HOME` (the TS SDK writes
-  `~/agentcat.log` there).
+  `~/agentcat.log` there). The TS servers also pass `disableDiagnostics: true`.
 - Untracked (`HARNESS_NO_TRACK=1`), the TS servers never publish: `emit_custom` answers without
   calling `publishCustomEvent`.
 
@@ -165,7 +172,7 @@ Every reference server (TS now, Rust in plan 3) follows it. A Rust twin must mat
 | HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
 | SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first). |
-| `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. |
+| `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. The TS server passes it to `track` as `apiBaseUrl`. |
 | `HARNESS_PROJECT_ID` | Project ID passed to `track` and to custom events. Required unless untracked. |
 | `HARNESS_OPTIONS` | The options profile (JSON, below). Default `{}`. |
 | `HARNESS_NO_TRACK=1` | Serve the same tools untracked: no `track`, and `emit_custom` publishes nothing. |

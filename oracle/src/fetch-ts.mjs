@@ -166,6 +166,34 @@ export function pnpmArgs(dir) {
     : ["pnpm", "--ignore-workspace"];
 }
 
+/**
+ * NODE_OPTIONS for a process that runs TS code and needs no network: `existing` (by default the
+ * caller's own NODE_OPTIONS), then `--import` of the egress guard (oracle/src/egress-guard.mjs).
+ * Node applies NODE_OPTIONS to every Node process the child starts in turn (vitest's forks), but
+ * not to worker threads.
+ */
+export function guardedNodeOptions(existing = process.env.NODE_OPTIONS ?? "") {
+  const guard = `--import=${new URL("./egress-guard.mjs", import.meta.url).href}`;
+  return existing.trim() === "" ? guard : `${existing} ${guard}`;
+}
+
+/**
+ * vitest in the clone `dir`, under the egress guard: `run(cmd, args, dir, env)`. node runs vitest's
+ * own entry (the `bin` of its package.json), so corepack and pnpm, which may download, stay out of
+ * the guarded process. `nodeOptions` goes before the guard (see guardedNodeOptions).
+ */
+export function vitestCommand(dir, vitestArgs, nodeOptions = process.env.NODE_OPTIONS ?? "") {
+  const pkgDir = join(dir, "node_modules", "vitest");
+  const { bin } = JSON.parse(readFileSync(join(pkgDir, "package.json"), "utf8"));
+  const entry = typeof bin === "string" ? bin : bin?.vitest;
+  if (typeof entry !== "string") throw new Error(`oracle: ${join(pkgDir, "package.json")} has no vitest bin`);
+  return {
+    cmd: process.execPath,
+    args: [join(pkgDir, entry), ...vitestArgs],
+    env: { NODE_OPTIONS: guardedNodeOptions(nodeOptions) },
+  };
+}
+
 // Variables that point git at another repository (set inside git hooks) and
 // npm/pnpm/node:test settings inherited from the caller's own pnpm script.
 const DROPPED_ENV = new Set([

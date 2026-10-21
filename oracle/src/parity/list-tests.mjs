@@ -14,7 +14,7 @@ import { tmpdir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ensureTs, pnpmArgs, run, verifyTs } from "../fetch-ts.mjs";
+import { ensureTs, run, verifyTs, vitestCommand } from "../fetch-ts.mjs";
 import { lock, tsDir } from "../paths.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -43,20 +43,21 @@ async function listTests() {
   const dir = tsDir();
   const root = realpathSync(dir);
   // vitest writes the JSON to a file: test files may print to stdout while they are collected.
-  // The file sits next to the clone and is passed as a relative path with no spaces (corepack
-  // runs through a shell on Windows).
+  // The file sits next to the clone and is passed as a relative path with no spaces.
   const tmp = mkdtempSync(join(dirname(dir), "parity-list-"));
   try {
     const tests = [];
     for (const { project, args } of PROJECTS) {
       const out = join(tmp, `${project}.json`);
       const jsonArg = `--json=${relative(dir, out).split(sep).join("/")}`;
-      const stdout = await run(
-        "corepack",
-        [...pnpmArgs(dir), "exec", "vitest", "list", jsonArg, ...args],
-        dir,
-        { DISABLE_DIAGNOSTICS: "true", WRANGLER_SEND_METRICS: "false" },
-      );
+      // Collecting runs the top level of every TS test file (unreviewed code at TS main), so vitest
+      // and every Node process it starts load the egress guard.
+      const vitest = vitestCommand(dir, ["list", jsonArg, ...args]);
+      const stdout = await run(vitest.cmd, vitest.args, dir, {
+        ...vitest.env,
+        DISABLE_DIAGNOSTICS: "true",
+        WRANGLER_SEND_METRICS: "false",
+      });
       if (!existsSync(out)) {
         throw new Error(
           `parity: \`vitest list ${args.join(" ")}\` wrote no JSON (collection errors?) in ${dir}:\n${stdout.slice(-8_192)}`,
