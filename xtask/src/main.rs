@@ -1,10 +1,11 @@
 //! Repository tasks for the `AgentCat` Rust SDK workspace.
 //!
-//! `cargo run -p xtask -- parity [--final]` checks `parity/manifest.toml` against the TS test list
+//! `cargo run -p xtask -- parity [--final | --print-missing]` checks `parity/manifest.toml` against the TS test list
 //! (`parity/ts-tests.json`, which must come from the commit `oracle/oracle.lock` pins), the Rust
 //! tests that `cargo nextest list` reports, the harness scenarios in `harness/scenarios/`, the
 //! vector files and the spec's deviation register (see [`parity`]). It prints each problem and
-//! exits 1 if there is any. `todo` entries are problems only with `--final`.
+//! exits 1 if there is any. `todo` entries are problems only with `--final`. `--print-missing`
+//! instead prints a `todo` block for each TS test with no manifest entry and exits 0.
 //!
 //! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
 //! `cargo nextest run --workspace`).
@@ -17,10 +18,26 @@ use std::process::{Command, ExitCode};
 
 use parity::{Report, Status};
 
-const USAGE: &str = "usage: cargo run -p xtask -- parity [--final]";
+const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing]";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args
+        .iter()
+        .map(String::as_str)
+        .eq(["parity", "--print-missing"])
+    {
+        return match parity::print_missing_repo(&workspace_root()) {
+            Ok(text) => {
+                print_text(&text);
+                ExitCode::SUCCESS
+            }
+            Err(message) => {
+                report_error(&format!("xtask parity: {message}"));
+                ExitCode::FAILURE
+            }
+        };
+    }
     let final_gate = match args
         .iter()
         .map(String::as_str)
@@ -112,6 +129,14 @@ fn print_report(report: &Report, final_gate: bool) {
         count(Status::Todo),
         report.problems.len()
     );
+}
+
+#[expect(
+    clippy::print_stdout,
+    reason = "xtask prints the blocks for the caller to append"
+)]
+fn print_text(text: &str) {
+    print!("{text}");
 }
 
 #[expect(clippy::print_stderr, reason = "xtask reports errors on the terminal")]

@@ -6,13 +6,15 @@
 //! - `parity/manifest.toml` ([`Manifest`]), maintained by hand: one `[[test]]` table per TS key.
 //! - The Rust test names that `cargo nextest list` reports ([`rust_test_names`]).
 //! - The harness scenario names, the file stems of `harness/scenarios/*.json` ([`json_stems`]).
-//! - The vector file names, the file stems of `agentcat-sdk/tests/vectors/*.json`.
+//! - The vector files, `agentcat-sdk/tests/vectors/*.json`: their stems and, per case, the TS test
+//!   keys in `ts_test` ([`vector_ts_tests`]).
 //! - The deviation ids (`RD-NN`) of the spec's deviation register ([`divergence_ids`]).
 //! - The locked TS commit, the `sha` of `oracle/oracle.lock` ([`lock_sha`]).
 //!
 //! [`check`] compares them and returns every [`Problem`]; [`check_repo`] reads them all from a
 //! checkout first.
 use std::collections::{BTreeMap, BTreeSet};
+use std::fmt::Write as _;
 use std::path::Path;
 use std::{fmt, fs, io};
 
@@ -104,8 +106,34 @@ pub enum Problem {
         /// The `sha` of `oracle/oracle.lock`.
         lock_sha: String,
     },
-    /// A TS key with no manifest entry, or a `ported` entry with an empty `rust` list.
+    /// A TS key with no manifest entry.
     Unmapped(String),
+    /// A `ported` entry with an empty `rust` list.
+    EmptyPorted(String),
+    /// A manifest entry that comes before an entry whose TS test is earlier in `ts-tests.json`.
+    OutOfOrder {
+        /// The manifest key that is out of place.
+        key: String,
+        /// The manifest key just before it.
+        previous: String,
+    },
+    /// A `covered-by-vector:<file>` entry whose file has no case with the key in its `ts_test`.
+    MissingVectorCase {
+        /// The manifest key.
+        key: String,
+        /// The vector file name (`<stem>.json`).
+        file: String,
+    },
+    /// A vector case whose `ts_test` names a key whose entry is not
+    /// `covered-by-vector:<that file>`.
+    UnclaimedVectorCase {
+        /// The vector file name (`<stem>.json`).
+        file: String,
+        /// The case name.
+        case: String,
+        /// The TS test key in `ts_test`.
+        key: String,
+    },
     /// A manifest entry whose key is not in the TS test list.
     Stale(String),
     /// A `rust` entry that names a Rust test `cargo nextest list` does not report.
@@ -157,6 +185,26 @@ impl fmt::Display for Problem {
             Self::Unmapped(key) => write!(
                 f,
                 "unmapped: {key}: add an entry that maps it to Rust tests or scenarios, or n/a"
+            ),
+            Self::EmptyPorted(key) => write!(
+                f,
+                "ported without tests: {key}: list the Rust tests or harness scenarios in rust"
+            ),
+            Self::OutOfOrder { key, previous } => write!(
+                f,
+                "out of order: {key}: it comes after {previous} but the TS list \
+                 (parity/ts-tests.json) puts it first; move the entry"
+            ),
+            Self::MissingVectorCase { key, file } => write!(
+                f,
+                "missing vector case: {key}: no case in {VECTORS_DIR}/{file} lists it in \
+                 ts_test; add the case to the generator or change the category"
+            ),
+            Self::UnclaimedVectorCase { file, case, key } => write!(
+                f,
+                "unclaimed vector case: {VECTORS_DIR}/{file} case {case:?} pins {key}, whose \
+                 entry is not n/a with category covered-by-vector:{file}; fix the entry or \
+                 the generator"
             ),
             Self::Stale(key) => write!(f, "stale: {key}: no such TS test; remove the entry"),
             Self::DanglingRust { key, test } => {
@@ -292,6 +340,75 @@ pub fn json_stems(dir: &Path) -> Result<BTreeSet<String>, String> {
     Ok(names)
 }
 
+/// The `ts_test` keys of every case of every vector file: file stem, then case name.
+pub type VectorTsTests = BTreeMap<String, BTreeMap<String, Vec<String>>>;
+
+/// The TS test keys that each vector case pins: file stem, then case name, then the case's
+/// `ts_test` keys (empty when the case has none), for every `*.json` file in `dir`. A missing
+/// `dir` is an empty map.
+///
+/// # Errors
+///
+/// `dir` cannot be read, or a file is not `{"cases": [{"name": .., "ts_test": [..]?}, ..]}`.
+pub fn vector_ts_tests(dir: &Path) -> Result<VectorTsTests, String> {
+    #[derive(Deserialize)]
+    struct File {
+        cases: Vec<Case>,
+    }
+    #[derive(Deserialize)]
+    struct Case {
+        name: String,
+        #[serde(default)]
+        ts_test: Vec<String>,
+    }
+
+    let mut files = BTreeMap::new();
+    for stem in json_stems(dir)? {
+        let path = dir.join(format!("{stem}.json"));
+        let text = fs::read_to_string(&path)
+            .map_err(|e| format!("cannot read {}: {e}", path.display()))?;
+        let file: File = serde_json::from_str(&text)
+            .map_err(|e| format!("{}: not a vector file: {e}", path.display()))?;
+        let cases = file
+            .cases
+            .into_iter()
+            .map(|case| (case.name, case.ts_test))
+            .collect();
+        files.insert(stem, cases);
+    }
+    Ok(files)
+}
+
+/// Reads `parity/ts-tests.json` and `parity/manifest.toml` from the checkout at `root` and
+/// returns [`print_missing`] for them.
+///
+/// # Errors
+///
+/// A file cannot be read or parsed.
+pub fn print_missing_repo(root: &Path) -> Result<String, String> {
+    let read = |path: &str| {
+        fs::read_to_string(root.join(path)).map_err(|e| format!("cannot read {path}: {e}"))
+    };
+    let ts = TsTests::from_json(&read("parity/ts-tests.json")?)?;
+    let manifest = Manifest::from_toml(&read("parity/manifest.toml")?)?;
+    Ok(print_missing(&ts, &manifest))
+}
+
+/// One `[[test]]` block with `status = "todo"` for each TS key that has no manifest entry, in
+/// `ts-tests.json` order (empty when every key is mapped). Append it to `parity/manifest.toml`
+/// and fill it in.
+#[must_use]
+pub fn print_missing(ts: &TsTests, manifest: &Manifest) -> String {
+    let mapped: BTreeSet<&str> = manifest.tests.iter().map(|e| e.key.as_str()).collect();
+    let mut out = String::new();
+    for test in ts.tests.iter().filter(|t| !mapped.contains(t.key.as_str())) {
+        // A JSON string is a valid TOML basic string.
+        let key = serde_json::Value::String(test.key.clone());
+        let _ = write!(out, "[[test]]\nkey = {key}\nstatus = \"todo\"\n\n");
+    }
+    out
+}
+
 /// The `sha` field of `oracle/oracle.lock`: the TS commit the oracle is pinned to.
 ///
 /// # Errors
@@ -380,7 +497,7 @@ pub fn check_repo(
     let manifest = Manifest::from_toml(&read("parity/manifest.toml")?)?;
     let lock_sha = lock_sha(&read("oracle/oracle.lock")?)?;
     let divergences = divergence_ids(&read(SPEC_PATH)?)?;
-    let vectors = json_stems(&root.join(VECTORS_DIR))?;
+    let vectors = vector_ts_tests(&root.join(VECTORS_DIR))?;
     let scenarios = json_stems(&root.join("harness/scenarios"))?;
     let mut problems = check(
         &ts,
@@ -413,12 +530,20 @@ pub fn check(
     manifest: &Manifest,
     rust_tests: &BTreeSet<String>,
     scenarios: &BTreeSet<String>,
-    vectors: &BTreeSet<String>,
+    vectors: &VectorTsTests,
     divergences: &BTreeSet<String>,
     final_gate: bool,
 ) -> Vec<Problem> {
     let ts_keys: BTreeSet<&str> = ts.tests.iter().map(|t| t.key.as_str()).collect();
+    let ts_index: BTreeMap<&str, usize> = ts
+        .tests
+        .iter()
+        .enumerate()
+        .map(|(i, t)| (t.key.as_str(), i))
+        .collect();
     let mut seen = BTreeSet::new();
+    let mut previous: Option<(usize, &str)> = None;
+    let mut claims: BTreeMap<&str, &str> = BTreeMap::new();
     let mut problems = Vec::new();
     for entry in &manifest.tests {
         let key = &entry.key;
@@ -430,6 +555,17 @@ pub fn check(
             problems.push(Problem::Stale(key.clone()));
             continue;
         }
+        if let Some(&index) = ts_index.get(key.as_str()) {
+            if let Some((before, previous_key)) = previous
+                && index < before
+            {
+                problems.push(Problem::OutOfOrder {
+                    key: key.clone(),
+                    previous: previous_key.to_owned(),
+                });
+            }
+            previous = Some((index, key.as_str()));
+        }
         check_fields(entry, &mut problems);
         match entry.status {
             Status::Todo => {
@@ -440,14 +576,63 @@ pub fn check(
             Status::Ported => check_ported(entry, rust_tests, scenarios, &mut problems),
             Status::NotApplicable => {
                 check_not_applicable(entry, vectors, divergences, &mut problems);
+                if let Some(file) = vector_file(entry) {
+                    claims.insert(key.as_str(), file);
+                }
             }
         }
     }
+    check_vector_links(&claims, vectors, &mut problems);
     for key in ts_keys.difference(&seen) {
         problems.push(Problem::Unmapped((*key).to_owned()));
     }
     problems.sort();
     problems
+}
+
+/// The file name in an entry's `covered-by-vector:<file>` category, if it has one.
+fn vector_file(entry: &Entry) -> Option<&str> {
+    entry
+        .category
+        .as_deref()?
+        .strip_prefix("covered-by-vector:")
+}
+
+/// Checks both directions of the links between `covered-by-vector` entries (`claims`: key to
+/// file name) and the `ts_test` keys of the cases in the vector files that exist.
+fn check_vector_links(
+    claims: &BTreeMap<&str, &str>,
+    vectors: &VectorTsTests,
+    problems: &mut Vec<Problem>,
+) {
+    for (key, file) in claims {
+        let Some(cases) = file
+            .strip_suffix(".json")
+            .and_then(|stem| vectors.get(stem))
+        else {
+            continue; // BadCategory already says the file does not exist.
+        };
+        if !cases.values().any(|keys| keys.iter().any(|k| k == key)) {
+            problems.push(Problem::MissingVectorCase {
+                key: (*key).to_owned(),
+                file: (*file).to_owned(),
+            });
+        }
+    }
+    for (stem, cases) in vectors {
+        let file = format!("{stem}.json");
+        for (case, keys) in cases {
+            for key in keys {
+                if claims.get(key.as_str()) != Some(&file.as_str()) {
+                    problems.push(Problem::UnclaimedVectorCase {
+                        file: file.clone(),
+                        case: case.clone(),
+                        key: key.clone(),
+                    });
+                }
+            }
+        }
+    }
 }
 
 /// Reports each field that `entry.status` does not take.
@@ -483,7 +668,7 @@ fn check_ported(
     problems: &mut Vec<Problem>,
 ) {
     if entry.rust.is_empty() {
-        problems.push(Problem::Unmapped(entry.key.clone()));
+        problems.push(Problem::EmptyPorted(entry.key.clone()));
     }
     for name in &entry.rust {
         if let Some(scenario) = name.strip_prefix("harness:") {
@@ -504,7 +689,7 @@ fn check_ported(
 
 fn check_not_applicable(
     entry: &Entry,
-    vectors: &BTreeSet<String>,
+    vectors: &VectorTsTests,
     divergences: &BTreeSet<String>,
     problems: &mut Vec<Problem>,
 ) {
@@ -528,7 +713,7 @@ fn check_not_applicable(
 /// `covered-by-vector:<stem>.json` with a stem in `vectors`.
 fn is_valid_category(
     category: &str,
-    vectors: &BTreeSet<String>,
+    vectors: &VectorTsTests,
     divergences: &BTreeSet<String>,
 ) -> bool {
     if let Some(id) = category.strip_prefix("ruled-divergence:") {
@@ -540,7 +725,7 @@ fn is_valid_category(
     if let Some(file) = category.strip_prefix("covered-by-vector:") {
         return file
             .strip_suffix(".json")
-            .is_some_and(|stem| vectors.contains(stem));
+            .is_some_and(|stem| vectors.contains_key(stem));
     }
     matches!(category, "ts-host-only" | "second-pass")
 }
@@ -609,18 +794,62 @@ mod tests {
         items.iter().map(|s| (*s).to_owned()).collect()
     }
 
-    /// Runs `check` with one known Rust test, one known scenario (`basic`), one vector file
-    /// (`constants.json`) and two deviation ids (`RD-01`, `RD-13`).
-    fn run(entries: Vec<Entry>, final_gate: bool) -> Vec<Problem> {
+    /// One vector file's cases: `(case name, ts_test keys)`.
+    type Cases = BTreeMap<String, Vec<String>>;
+
+    type CaseSpec<'a> = (&'a str, &'a [&'a str]);
+
+    fn vector_files(files: &[(&str, &[CaseSpec<'_>])]) -> BTreeMap<String, Cases> {
+        files
+            .iter()
+            .map(|(stem, cases)| {
+                let cases = cases
+                    .iter()
+                    .map(|(name, keys)| {
+                        (
+                            (*name).to_owned(),
+                            keys.iter().map(|k| (*k).to_owned()).collect(),
+                        )
+                    })
+                    .collect();
+                ((*stem).to_owned(), cases)
+            })
+            .collect()
+    }
+
+    /// Runs `check` with one known Rust test, one known scenario (`basic`), the given vector
+    /// files and two deviation ids (`RD-01`, `RD-13`).
+    fn run_with(
+        entries: Vec<Entry>,
+        vectors: &BTreeMap<String, Cases>,
+        final_gate: bool,
+    ) -> Vec<Problem> {
         check(
             &ts(&[A, B]),
             &manifest(entries),
             &set(&[RUST_TEST]),
             &set(&["basic"]),
-            &set(&["constants"]),
+            vectors,
             &set(&["RD-01", "RD-13"]),
             final_gate,
         )
+    }
+
+    /// Runs `check` with the vector file `constants.json`, which has one case for each entry
+    /// that is `covered-by-vector:constants.json`, so only the other rules are under test.
+    fn run(entries: Vec<Entry>, final_gate: bool) -> Vec<Problem> {
+        let claimed: Vec<String> = entries
+            .iter()
+            .filter(|e| e.category.as_deref() == Some("covered-by-vector:constants.json"))
+            .map(|e| e.key.clone())
+            .collect();
+        let cases = claimed
+            .iter()
+            .enumerate()
+            .map(|(i, key)| (format!("case-{i}"), vec![key.clone()]))
+            .collect();
+        let vectors = BTreeMap::from([("constants".to_owned(), cases)]);
+        run_with(entries, &vectors, final_gate)
     }
 
     fn bad_category(category: &str) -> Vec<Problem> {
@@ -661,10 +890,116 @@ mod tests {
     }
 
     #[test]
-    fn ported_without_rust_is_unmapped() {
+    fn ported_with_empty_rust_is_empty_ported() {
         assert_eq!(
             run(vec![ported(A, &[]), todo(B)], false),
-            vec![Problem::Unmapped(A.to_owned())]
+            vec![Problem::EmptyPorted(A.to_owned())]
+        );
+        assert_eq!(
+            Problem::EmptyPorted(A.to_owned()).to_string(),
+            format!("ported without tests: {A}: list the Rust tests or harness scenarios in rust")
+        );
+    }
+
+    #[test]
+    fn entries_out_of_ts_order_are_reported() {
+        // `ts(&[A, B])` lists A first; "B" < "v1" would sort first by string collation.
+        assert_eq!(
+            run(vec![todo(B), todo(A)], false),
+            vec![Problem::OutOfOrder {
+                key: A.to_owned(),
+                previous: B.to_owned(),
+            }]
+        );
+        assert_eq!(run(vec![todo(A), todo(B)], false), Vec::new());
+    }
+
+    #[test]
+    fn covered_by_vector_needs_a_case_with_the_key() {
+        let entries = vec![
+            todo(A),
+            not_applicable(B, "covered-by-vector:constants.json", "reason"),
+        ];
+        let other = vector_files(&[("constants", &[("c1", &[A])])]);
+        assert_eq!(
+            run_with(entries.clone(), &other, false),
+            vec![
+                Problem::MissingVectorCase {
+                    key: B.to_owned(),
+                    file: "constants.json".to_owned(),
+                },
+                Problem::UnclaimedVectorCase {
+                    file: "constants.json".to_owned(),
+                    case: "c1".to_owned(),
+                    key: A.to_owned(),
+                },
+            ]
+        );
+        let ok = vector_files(&[("constants", &[("c1", &[B]), ("c2", &[])])]);
+        assert_eq!(run_with(entries, &ok, false), Vec::new());
+    }
+
+    #[test]
+    fn a_case_must_be_claimed_by_its_entry() {
+        let covered = not_applicable(B, "covered-by-vector:constants.json", "reason");
+        let vectors = vector_files(&[("constants", &[("c1", &[B])]), ("other", &[("o1", &[B])])]);
+        // B is claimed by constants.json, so the case in other.json is unclaimed.
+        assert_eq!(
+            run_with(vec![todo(A), covered], &vectors, false),
+            vec![Problem::UnclaimedVectorCase {
+                file: "other.json".to_owned(),
+                case: "o1".to_owned(),
+                key: B.to_owned(),
+            }]
+        );
+        // A todo entry claims nothing.
+        let vectors = vector_files(&[("constants", &[("c1", &[A])])]);
+        assert_eq!(
+            run_with(vec![todo(A), todo(B)], &vectors, false),
+            vec![Problem::UnclaimedVectorCase {
+                file: "constants.json".to_owned(),
+                case: "c1".to_owned(),
+                key: A.to_owned(),
+            }]
+        );
+    }
+
+    #[test]
+    fn print_missing_lists_unmapped_keys_in_order() {
+        let text = print_missing(&ts(&[A, B]), &manifest(vec![todo(B)]));
+        assert_eq!(
+            text,
+            format!("[[test]]\nkey = {A:?}\nstatus = \"todo\"\n\n")
+        );
+        assert_eq!(
+            print_missing(&ts(&[A, B]), &manifest(vec![todo(A), todo(B)])),
+            ""
+        );
+        // The output is valid manifest TOML.
+        assert_eq!(Manifest::from_toml(&text).unwrap(), manifest(vec![todo(A)]));
+    }
+
+    #[test]
+    fn vector_ts_tests_reads_case_names_and_keys() {
+        let dir = std::env::temp_dir().join(format!("xtask-vectors-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let text = r#"{"ts_sha": "s", "generator": "g", "cases": [
+            {"name": "a", "ts_test": ["k1", "k2"], "input": 1}, {"name": "b"}]}"#;
+        fs::write(dir.join("js.json"), text).unwrap();
+        fs::write(dir.join("MANIFEST.sha256"), "").unwrap();
+        let read = vector_ts_tests(&dir);
+        fs::write(dir.join("bad.json"), "{}").unwrap();
+        let bad = vector_ts_tests(&dir);
+        fs::remove_dir_all(&dir).unwrap();
+        assert_eq!(
+            read.unwrap(),
+            vector_files(&[("js", &[("a", &["k1", "k2"]), ("b", &[])])])
+        );
+        assert!(bad.unwrap_err().contains("bad.json"));
+        assert_eq!(
+            vector_ts_tests(&dir).unwrap(),
+            BTreeMap::new(),
+            "a missing directory is empty"
         );
     }
 
@@ -1106,7 +1441,10 @@ status = "todo"
                 &format!(r#"{{"repo": "https://example.com/x.git", "sha": "{SHA}"}}"#),
             );
             write(SPEC_PATH, SPEC);
-            write(&format!("{VECTORS_DIR}/constants.json"), "{}");
+            write(
+                &format!("{VECTORS_DIR}/constants.json"),
+                &format!(r#"{{"cases": [{{"name": "c", "ts_test": [{A:?}]}}]}}"#),
+            );
             write(&format!("{VECTORS_DIR}/MANIFEST.sha256"), "");
             Self(root)
         }
