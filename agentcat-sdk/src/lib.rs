@@ -11,6 +11,7 @@
     )
 )]
 
+mod constants;
 mod js;
 #[cfg(test)]
 mod test_support;

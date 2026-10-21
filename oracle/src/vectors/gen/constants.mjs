@@ -3,6 +3,34 @@
 // a new export shows up in the nightly diff), plus the output of the exported
 // functions for fixed inputs.
 import { loadCore } from "oracle/bundle";
+import { tsKey } from "../support.mjs";
+
+const k = (title) => tsKey("constants", title);
+const PINS = "v4 copy pins (byte-exact) > pins ";
+const CHANNEL = "handle param descriptions name the delivery channel > ";
+
+// The TS tests of src/tests/constants.test.ts that pin each export, by export name. A test
+// that pins several exports appears under each of them. Tests of AGENTCAT_SOURCE and
+// DIAGNOSTICS_SCOPE_NAME are not linked (exporters and diagnostics: second pass).
+const TS_TESTS = {
+  AGENTCAT_CUSTOM_EVENT_TYPE: [k("brand constants (wire literals) > emits the agentcat custom event type on the wire")],
+  MCP_SESSION_KEY: [
+    k("brand constants (wire literals) > mirrors under the mcp_session key"),
+    k(`${CHANNEL}session_id pre-announces both delivery channels and both text headers`),
+  ],
+  SESSION_ID_PARAM_DESCRIPTION: [
+    k(`${PINS}SESSION_ID_PARAM_DESCRIPTION`),
+    k(`${CHANNEL}session_id pre-announces both delivery channels and both text headers`),
+  ],
+  MINT_BACK_HEADER_ISSUED: [k(`${CHANNEL}session_id pre-announces both delivery channels and both text headers`)],
+  MINT_BACK_HEADER_UNRECOGNIZED: [k(`${CHANNEL}session_id pre-announces both delivery channels and both text headers`)],
+  AGENT_ID_PARAM_DESCRIPTION: [k(`${CHANNEL}agent_id describes self-chosen generation, not server delivery`)],
+  MCP_SESSION_STATUS_DESCRIPTION: [k(`${PINS}MCP_SESSION_STATUS_DESCRIPTION`)],
+  MINT_BACK_ISSUED_BODY: [k(`${PINS}MINT_BACK_ISSUED_BODY`)],
+  MINT_BACK_UNRECOGNIZED_BODY: [k(`${PINS}MINT_BACK_UNRECOGNIZED_BODY`)],
+  SESSION_ID_PARAM_PATTERN: [k(`${PINS}the session_id value-contract constants`)],
+  SESSION_START_SENTINEL: [k(`${PINS}the session_id value-contract constants`)],
+};
 
 const SESSION_ID = "ses_0123456789abcdefghijklmnopq";
 const CONTEXT = "Looking for a tool that converts spreadsheets to charts.";
@@ -35,7 +63,7 @@ export async function generate() {
     const mod = core[file];
     for (const [name, value] of Object.entries(mod)) {
       if (typeof value !== "function") {
-        cases.push({ name, value });
+        cases.push({ name, value, ...(TS_TESTS[name] && { ts_test: TS_TESTS[name] }) });
         continue;
       }
       if (file === "handles") continue;

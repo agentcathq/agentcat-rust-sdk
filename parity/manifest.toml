@@ -739,47 +739,69 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > emits the agentcat custom event type on the wire"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case AGENTCAT_CUSTOM_EVENT_TYPE; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > mirrors under the mcp_session key"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case MCP_SESSION_KEY; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > stamps exporter source as agentcat"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > uses the agentcat diagnostics scope name"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > agent_id describes self-chosen generation, not server delivery"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case AGENT_ID_PARAM_DESCRIPTION; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > session_id pre-announces both delivery channels and both text headers"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case SESSION_ID_PARAM_DESCRIPTION, MCP_SESSION_KEY, MINT_BACK_HEADER_ISSUED, MINT_BACK_HEADER_UNRECOGNIZED; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MCP_SESSION_STATUS_DESCRIPTION"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case MCP_SESSION_STATUS_DESCRIPTION; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MINT_BACK_ISSUED_BODY"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case MINT_BACK_ISSUED_BODY; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins MINT_BACK_UNRECOGNIZED_BODY"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case MINT_BACK_UNRECOGNIZED_BODY; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins SESSION_ID_PARAM_DESCRIPTION"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case SESSION_ID_PARAM_DESCRIPTION; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case SESSION_ID_PARAM_PATTERN, SESSION_START_SENTINEL; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
