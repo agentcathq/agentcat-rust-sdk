@@ -18,7 +18,7 @@ export async function generate() {
     names.add(name);
     let output = core.truncation.normalize(input, ...(limits ?? []));
     // An assigned `__proto__` leaves a non-plain object; a JSON round trip makes it plain.
-    if (deviation) output = JSON.parse(JSON.stringify(output));
+    if (deviation === "RD-24") output = JSON.parse(JSON.stringify(output));
     cases.push({
       name,
       ...fields,

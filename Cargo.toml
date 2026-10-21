@@ -11,7 +11,7 @@ repository = "https://github.com/agentcathq/agentcat-rust-sdk"
 [workspace.dependencies]
 serde_json = { version = "1.0.45", default-features = false, features = ["std"] }
 ryu-js = { version = "1", default-features = false }
-sha2 = { version = "0.10", default-features = false }
+sha2 = { version = "0.10.1", default-features = false }
 serde = { version = "1.0.225", default-features = false }
 getrandom = { version = "0.4.0", default-features = false }
 toml = { version = "1", default-features = false }

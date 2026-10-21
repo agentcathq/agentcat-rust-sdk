@@ -29,6 +29,8 @@ fn base62(bytes: &[u8; 20]) -> [u8; ENCODED_LEN] {
     let mut digits = [b'0'; ENCODED_LEN];
     for digit in digits.iter_mut().rev() {
         // Long division of the 160-bit number by 62; the remainder is the next digit.
+        // `remainder` is below 62, so `value` is below 62 * 2^32: the quotient fits in a `u32`,
+        // and the final remainder is below 62, so both conversions cannot fail.
         let mut remainder = 0_u64;
         for word in &mut words {
             let value = (remainder << 32) | u64::from(*word);

@@ -3247,8 +3247,8 @@ reason = "redact.json case test:protected-fields; checked by agentcat-sdk::pipel
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve Date objects"
 status = "n/a"
-category = "ts-host-only"
-reason = "Date objects; the Rust event holds its timestamp as an ISO string, which redact.json cases timestamp:* cover"
+category = "ruled-divergence:RD-20"
+reason = "a Rust event holds dates as ISO strings: the top-level timestamp is kept (redact.json cases timestamp:*), but a nested Date such as parameters.createdAt is a string that the redactor receives (RD-20)"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent > should preserve null and undefined values"
