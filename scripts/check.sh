@@ -47,9 +47,9 @@ cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
 cargo run -q -p xtask -- parity
 
-# msrv
-cargo +1.88 nextest run --workspace --all-features
-cargo +1.88 test -p agentcat-sdk --all-features --test json_key_order
+# msrv (warnings denied: an older rustc can warn where the current one does not)
+RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features
+RUSTFLAGS="-D warnings" cargo +1.88 test -p agentcat-sdk --all-features --test json_key_order
 
 # docs
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps

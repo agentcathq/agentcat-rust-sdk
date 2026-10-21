@@ -31,14 +31,10 @@ const SESSION_BODY_LEN: usize = 27;
 /// 2024-01-01T00:00:00Z in milliseconds since the Unix epoch, the base time of a derived ID.
 const DERIVE_EPOCH_MS: u64 = 1_704_067_200_000;
 
-/// The largest offset a derived ID adds to [`DERIVE_EPOCH_MS`]: the largest `u32`, in
-/// milliseconds (about 49.7 days).
-const DERIVE_MAX_OFFSET_MS: u64 = 0xFFFF_FFFF;
-
-// Every derived time is inside the KSUID range, so `ksuid::from_parts` never fails for one.
+// Every derived time is inside the KSUID range, so `ksuid::from_parts` never fails for one. The
+// largest offset is the largest `u32` (0xFFFF_FFFF), in milliseconds (about 49.7 days).
 const _: () = assert!(
-    DERIVE_EPOCH_MS >= ksuid::EPOCH_MS
-        && DERIVE_EPOCH_MS + DERIVE_MAX_OFFSET_MS <= ksuid::MAX_TIME_MS
+    DERIVE_EPOCH_MS >= ksuid::EPOCH_MS && DERIVE_EPOCH_MS + 0xFFFF_FFFF <= ksuid::MAX_TIME_MS
 );
 
 /// The most UTF-16 code units of the `agentcat_agent_id` tag.
