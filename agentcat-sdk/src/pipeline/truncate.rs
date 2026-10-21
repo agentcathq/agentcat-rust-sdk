@@ -3,10 +3,18 @@
 //! keeps an event's JSON at most [`MAX_EVENT_BYTES`] bytes where it can.
 //!
 //! Lengths are UTF-16 units, and a cut inside a surrogate pair drops the whole character (RD-22).
-//! Rust departs from TS in three recorded places: an array `response` stays an array (RD-25), an
-//! object with a small `length` key is an error like any other object (RD-26), and an object with
-//! an own `toString` key in a joined array becomes `[object Object]` (RD-27). Two steps take a
-//! different route to TS's result:
+//! Rust departs from TS in these other recorded places:
+//!
+//! - A `__proto__` key in `parameters`, `response`, `identifyActorData` or `error` stays, because
+//!   `normalize` keeps it (RD-24).
+//! - An array `response` stays an array (RD-25).
+//! - An object with a small `length` key is an error like any other object (RD-26).
+//! - An object with an own `toString` key in a joined array becomes `[object Object]` (RD-27).
+//! - An `error` without `message` gets no `message` key, so it does not count toward the 100-key
+//!   breadth of `normalize`: an `error` of 100 entries gets no `"..."` marker, and an existing
+//!   `"..."` key keeps its value (RD-28).
+//!
+//! Two steps take a different route to TS's result:
 //!
 //! - TS cuts each `text` block of `response.content` over 32 768 units before `normalize`, which
 //!   then cuts every string over 32 768 units at the same place, so that step changes nothing
@@ -175,7 +183,8 @@ fn cut(text: &str, units: usize) -> String {
 
 /// TS's limits on an `error` object: `message` as [`limit_string`] limits it, then `frames` as
 /// [`limit_frames`] cuts it. TS spreads an array `error` into an object with index keys
-/// (`{...error}`); any other value stays.
+/// (`{...error}`); any other value stays. TS also gives an `error` object without `message` the
+/// key `message` with the value `undefined`; Rust adds no key (RD-28).
 fn limit_error(error: &mut Value) -> Result<(), TruncateError> {
     match error {
         Value::Object(fields) => {

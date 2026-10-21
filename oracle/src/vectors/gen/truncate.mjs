@@ -13,7 +13,9 @@
 //   RD-25  an array `response` stays an array (TS spreads it into an object with index keys);
 //   RD-26  an object whose `length` is at most the limit passes TS's limit; Rust gives the error;
 //   RD-27  an object with an own `toString` key in a joined array throws in TS; Rust writes
-//          "[object Object]".
+//          "[object Object]";
+//   RD-28  TS gives an `error` without `message` an own `message: undefined`, which counts toward
+//          normalize's 100-key breadth; Rust counts only the keys JSON holds.
 import { loadCore } from "oracle/bundle";
 
 import { functions } from "../../functions.mjs";
@@ -251,6 +253,10 @@ export async function generate() {
   const withToString = Array.from({ length: 2049 }, (_, i) => (i === 16 ? { toString: "x" } : i));
   const thrown = add("intent:array-with-tostring-key", makeEvent({ userIntent: withToString }), { deviation: "RD-27" });
   check(thrown.error === "TypeError: Cannot convert object to primitive value", `RD-27 case: ${JSON.stringify(thrown)}`);
+  // The RD-27 twin: the same array with {"a": 1} at index 16, which TS joins as "[object Object]".
+  const withObject = withToString.map((item, i) => (i === 16 ? { a: 1 } : item));
+  const joined = add("intent:array-with-object", makeEvent({ userIntent: withObject })).value.userIntent;
+  check(joined.split(",")[16] === "[object Object]", `RD-27 twin: ${joined.slice(0, 80)}`);
 
   // The response: text blocks around the 32 768 limit, an emoji cut there, other shapes.
   add("content:text-32768", makeEvent({ response: { content: [{ type: "text", text: rep("c", 32768) }] } }));
@@ -293,6 +299,30 @@ export async function generate() {
   add("error:array", makeEvent({ error: ["a", { message: "b" }] }));
   add("error:string", makeEvent({ error: rep("e", 32769) }));
   add("error:number", makeEvent({ error: 3 }));
+
+  // An error without `message`: TS assigns it `message: undefined`, an own property that normalize
+  // counts toward the 100-key breadth before it skips the undefined value (RD-28). With 100
+  // entries TS adds the "..." marker; with 99 keys and a "..." key, TS writes the marker into that
+  // key. 99 and 101 entries are the twins, where Rust gives TS's output.
+  const marker = "[MaxProperties ~]";
+  const keyed = (from, to) => Array.from({ length: to - from }, (_, i) => [`k${from + i}`, from + i]);
+  const indexed = (n) => Array.from({ length: n }, (_, i) => i);
+  const errorOf = (reply) => reply.value.error;
+  for (const n of [99, 101]) {
+    const error = errorOf(add(`error:${n}-keys-no-message`, makeEvent({ error: Object.fromEntries(keyed(0, n)) })));
+    check((error["..."] === marker) === (n === 101) && !("message" in error), `error:${n}-keys-no-message`);
+  }
+  const hundred = errorOf(add("error:100-keys-no-message", makeEvent({ error: Object.fromEntries(keyed(0, 100)) }), { deviation: "RD-28" }));
+  check(hundred["..."] === marker && Object.keys(hundred).length === 101, "error:100-keys-no-message");
+  for (const n of [99, 101]) {
+    const error = errorOf(add(`error:array-${n}`, makeEvent({ error: indexed(n) })));
+    check((error["..."] === marker) === (n === 101), `error:array-${n}`);
+  }
+  const spread = errorOf(add("error:array-100", makeEvent({ error: indexed(100) }), { deviation: "RD-28" }));
+  check(spread["..."] === marker && Object.keys(spread).length === 101, "error:array-100");
+  const dotted = Object.fromEntries([...keyed(0, 50), ["...", "dots"], ...keyed(50, 99)]);
+  const dots = errorOf(add("error:99-keys-plus-dots", makeEvent({ error: dotted }), { deviation: "RD-28" }));
+  check(dots["..."] === marker && Object.keys(dots)[50] === "..." && Object.keys(dots).length === 100, "error:99-keys-plus-dots");
 
   // normalize on parameters, response, identifyActorData and error; tags and properties untouched.
   let deep = "leaf";

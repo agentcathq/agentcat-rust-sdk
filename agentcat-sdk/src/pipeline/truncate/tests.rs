@@ -13,12 +13,17 @@ use crate::test_support::{assert_js_eq, config, config_capped, markers, oracle, 
 /// The vector sets: the field limits and the TS tests, then the size guard.
 const SETS: [&str; 2] = ["truncate", "truncate_size"];
 
-/// Each RD-26 case and its twin: the same field with an object that has no `length` key. Rust
-/// gives the RD-26 case the error TS gives the twin.
-const RD26_TWINS: [(&str, &str); 2] = [
+/// Each RD-26 and RD-27 case and its twin, where Rust gives the twin's TS result. RD-26: the same
+/// field with an object that has no `length` key. RD-27: the same array with `{"a": 1}` in place
+/// of the object with an own `toString` key.
+const TWINS: [(&str, &str); 3] = [
     ("intent:length-object", "intent:object"),
     ("frames:object-length-10", "frames:object"),
+    ("intent:array-with-tostring-key", "intent:array-with-object"),
 ];
+
+/// The marker `normalize` writes at the `"..."` key of an object over its breadth.
+const MAX_PROPERTIES: &str = "[MaxProperties ~]";
 
 /// The largest event, in bytes, of the field-limit property test: far enough under the 102 400
 /// bytes of the size guard that a cut character (RD-22) never meets it.
@@ -93,7 +98,8 @@ fn vectors_match_ts() {
                 None => assert_matches_ts(&actual, expected, &context),
                 Some("RD-25") => check_rd25(&actual, expected, &context),
                 Some("RD-26") => check_rd26(&cases, name, &actual, expected, &context),
-                Some("RD-27") => check_rd27(input, &actual, expected, &context),
+                Some("RD-27") => check_rd27(&cases, name, input, &actual, expected, &context),
+                Some("RD-28") => check_rd28(name, input, &actual, expected, &context),
                 Some(other) => panic!("{context}: unknown deviation {other}"),
             }
         }
@@ -135,22 +141,25 @@ fn check_rd26(
         expected.get("value").is_some(),
         "{context}: TS keeps the object"
     );
-    let (_, twin) = RD26_TWINS
-        .iter()
-        .find(|(case, _)| *case == name)
-        .expect("an RD-26 case has a twin");
-    let twin_error = cases
-        .iter()
-        .find(|case| vectors::name(case) == *twin)
-        .and_then(|case| case.get("error")?.as_str())
-        .expect("the twin's TS error");
+    let (twin_name, twin) = twin_of(cases, name);
+    let twin_error = twin
+        .get("error")
+        .and_then(Value::as_str)
+        .unwrap_or_else(|| panic!("{context}: the twin {twin_name} has TS's error"));
     let error = actual.as_ref().expect_err("RD-26: Rust gives the error");
-    assert_eq!(error.to_string(), twin_error, "{context}: RD-26");
+    assert_eq!(
+        error.to_string(),
+        twin_error,
+        "{context}: RD-26, against the TS error of {twin_name}"
+    );
 }
 
-/// RD-27: TS throws on the object with an own `toString` key in the joined `userIntent` array;
-/// Rust writes `[object Object]` at its place, the only object of the array.
+/// RD-27: TS throws on the object with an own `toString` key in the joined `userIntent` array.
+/// Rust joins it as `[object Object]`: it gives TS's output for the twin, whose array has
+/// `{"a": 1}` at that index and is the same elsewhere.
 fn check_rd27(
+    cases: &[Map<String, Value>],
+    name: &str,
     input: &TsEvent,
     actual: &Result<TsEvent, TruncateError>,
     expected: &Value,
@@ -162,12 +171,88 @@ fn check_rd27(
         .iter()
         .position(|item| item.get("toString").is_some())
         .expect("an item with a toString key");
-    assert_eq!(items.iter().filter(|item| item.is_object()).count(), 1);
+    assert_eq!(
+        items.iter().filter(|item| item.is_object()).count(),
+        1,
+        "{context}: the object with the toString key is the only object of the array"
+    );
+    let (twin_name, twin) = twin_of(cases, name);
+    let mut swapped = input.clone();
+    swapped["userIntent"][at] = json!({ "a": 1 });
+    assert_eq!(
+        Value::Object(swapped),
+        Value::Object(input_of(twin, twin_name)),
+        "{context}: the twin {twin_name} differs only at index {at}"
+    );
     let event = actual.as_ref().expect("RD-27: Rust truncates the event");
-    let intent = event["userIntent"].as_str().expect("the joined userIntent");
-    let parts: Vec<&str> = intent.split(',').collect();
-    assert_eq!(parts.get(at), Some(&"[object Object]"), "{context}: RD-27");
-    assert_eq!(intent.matches("[object Object]").count(), 1, "{context}");
+    assert_js_eq(
+        &Value::Object(event.clone()),
+        &reply_of(twin, twin_name)["value"],
+        &format!("{context}: RD-27, against the TS output of {twin_name}"),
+    );
+}
+
+/// RD-28: TS gives an `error` without `message` an own `message: undefined` property, and
+/// `normalize` counts it toward the 100-key breadth before it skips it. With 100 entries, TS adds
+/// the `"..."` marker; with 99 keys and a `"..."` key, TS writes the marker into that key. Rust
+/// gives TS's event with the marker undone: the `"..."` key removed, or given back its value.
+fn check_rd28(
+    name: &str,
+    input: &TsEvent,
+    actual: &Result<TsEvent, TruncateError>,
+    expected: &Value,
+    context: &str,
+) {
+    let mut ts = expected["value"].as_object().expect("TS's event").clone();
+    let Some(Value::Object(error)) = ts.get_mut("error") else {
+        panic!("{context}: TS's error is an object");
+    };
+    assert_eq!(
+        error.get("..."),
+        Some(&json!(MAX_PROPERTIES)),
+        "{context}: TS writes the marker"
+    );
+    match name {
+        "error:100-keys-no-message" | "error:array-100" => {
+            // A filter, not `Map::remove`: with `preserve_order`, `remove` can move the last key.
+            *error = error
+                .iter()
+                .filter(|(key, _)| key.as_str() != "...")
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect();
+        }
+        "error:99-keys-plus-dots" => {
+            let original = input["error"]["..."].clone();
+            assert!(
+                original.is_string(),
+                "{context}: the input has a \"...\" key"
+            );
+            error.insert("...".to_owned(), original);
+        }
+        other => panic!("{context}: no RD-28 rule for {other}"),
+    }
+    let event = actual.as_ref().expect("RD-28: Rust truncates the event");
+    assert_js_eq(
+        &Value::Object(event.clone()),
+        &Value::Object(ts),
+        &format!("{context}: RD-28, against TS's event with the marker undone"),
+    );
+}
+
+/// The twin of the case `name` in [`TWINS`]: its name and the case.
+fn twin_of<'a>(
+    cases: &'a [Map<String, Value>],
+    name: &str,
+) -> (&'static str, &'a Map<String, Value>) {
+    let (_, twin_name) = TWINS
+        .iter()
+        .find(|(case, _)| *case == name)
+        .unwrap_or_else(|| panic!("{name} has a twin in TWINS"));
+    let twin = cases
+        .iter()
+        .find(|case| vectors::name(case) == *twin_name)
+        .unwrap_or_else(|| panic!("the twin {twin_name} of {name} is in the file"));
+    (twin_name, twin)
 }
 
 /// Runs `event` through Rust and through TS (the oracle) and compares the results.
