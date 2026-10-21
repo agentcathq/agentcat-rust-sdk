@@ -24,6 +24,9 @@ sha2 = { workspace = true }
 [lints]
 workspace = true
 
+# Test-only dependencies live here, not in `[workspace.dependencies]`: the `--no-dev-deps` builds of
+# cargo-hack and minimal-versions would report a workspace entry that only dev-dependencies use as unused.
 [dev-dependencies]
-hex = { workspace = true }
-proptest = { workspace = true }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+# "std" is needed to read PROPTEST_CASES and to save failing seeds in proptest-regressions/.
+proptest = { version = "1", default-features = false, features = ["std"] }
