@@ -1,15 +1,27 @@
 name: Node and oracle cache
 description: >-
-  Node 22 with corepack, the pnpm workspace install, and the oracle/.cache cache (the pinned TS clone
-  and its build). The Rust tests need it because oracle_smoke spawns node.
+  Node 22 with corepack, the pnpm workspace install, and the oracle/.cache cache of the pinned TS
+  clone and its build. The Rust tests need it because oracle_smoke spawns node.
 inputs:
-  key-suffix:
-    description: Appended to the cache key, for example -main-<sha> when the nightly builds TS main.
+  cache:
+    description: >-
+      save (default): restore the pinned cache and save it at the end of the job. restore: restore
+      it read-only, for a job that runs TS main code (the nightly drift job), so nothing TS main
+      writes into oracle/.cache reaches a later run.
     required: false
-    default: ""
+    default: save
 runs:
   using: composite
   steps:
+    - name: Check the cache input
+      env:
+        CACHE: ${{ inputs.cache }}
+      run: |
+        case "$CACHE" in
+          save | restore) ;;
+          *) echo "node-oracle: cache must be save or restore (got: $CACHE)"; exit 1 ;;
+        esac
+      shell: bash
     - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
         node-version: 22
@@ -17,12 +29,22 @@ runs:
       shell: bash
     - run: corepack pnpm install --frozen-lockfile
       shell: bash
-    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+    # The key ends in -pinned, and restore-keys is that exact key, so a prefix match can never fall
+    # into another namespace (such as the old -main-<sha> caches of the drift job).
+    - if: inputs.cache == 'save'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: oracle/.cache
-        key: oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}${{ inputs.key-suffix }}
+        key: oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}-pinned
         restore-keys: |
-          oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}
+          oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}-pinned
+    - if: inputs.cache == 'restore'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: oracle/.cache
+        key: oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}-pinned
+        restore-keys: |
+          oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}-pinned
     # A lock directory restored from another run is stale (the oracle lock treats another host's lock
     # as stale), but removing it up front also saves the wait.
     - name: Drop build locks restored from the cache
