@@ -6,7 +6,7 @@ what the earlier milestones taught and the owner's rulings from the previous bat
 
 | Plan | Milestones (design §12) | Delivers | Status |
 |---|---|---|---|
-| 1 | 1 + 2 | Workspace, lints, local gate, CI skeleton; the TS oracle at the pinned SHA; the vector pipeline; the JS property-test oracle; the parity list and checker; the harness TS half (v1 and v2 reference servers, driver, mock API, normalizer, rulings); the L4 contract check; the nightly drift sweep. | [Written](2026-10-20-plan-1-foundation.md) |
+| 1 | 1 + 2 | Workspace, lints, local gate, CI skeleton; the TS oracle at the pinned SHA; the vector pipeline; the JS property-test oracle; the parity list and checker; the harness TS half (v1 and v2 reference servers, driver, mock API, normalizer, rulings); the L4 contract check; the nightly drift sweep. | [Done](2026-10-20-plan-1-foundation.md) — gate and CI green at `46eb58e` (CI run 39531843352, nightly run 39531843346); owner batch answered as R19–R21 |
 | 2 | 3 | Pure core against L1 and L2: constants, `js`, KSUID and handles, tokens, tag validation, normalize, truncation, sanitization, redaction. | Not written |
 | 3 | 4 | Interception: `Tracked<H>`, tool-list and tool-call pipelines, registries, `get_more_tools`, client info, `parameters`, panics, `capture_error`; the Rust reference server joins the harness (MCP-wire delta). | Not written |
 | 4 | 5 | Delivery and lifecycle: event pipeline, worker thread, queue, retries, flush, shutdown, last-drop drain, logging, environment, custom events, `Fake`; event comparison in the harness. | Not written |

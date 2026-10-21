@@ -325,6 +325,7 @@ manifest point to these IDs.
 | RD-18 | Hooks receive the raw `(request, extra)`. | Hooks receive a `ToolCall` snapshot (D35). | Rust ownership and `Send` bounds. |
 | RD-19 | Detection, compatibility errors, late registration, re-arm, Workers `waitUntil` (B-011, B-014 to B-016, B-019, B-049, B-106). | Not applicable. | rmcp is typed and the wrapper sees every call. |
 | RD-20 | Lone surrogates, cycles, functions, `undefined`, NaN in values (B-092, K-13). | Cannot occur (`serde_json::Value` and Rust strings forbid them); the corresponding normalize branches do not exist. | Rust types. |
+| RD-21 | A tool handler function shared by several v1 servers is wrapped only on the first, so errors on later servers lose `stack` and `frames` (a JS function-identity artifact). | Every server records the error the same way. | Owner ruling R19. |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register and in `rulings.json`), and work continues;

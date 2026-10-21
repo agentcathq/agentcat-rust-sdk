@@ -34,6 +34,9 @@ acts differently from that baseline is listed in the deviation register of the d
 | R16 | Parity evidence | Side-by-side diff tests against the TS SDK, a real dashboard demo, and a TS test-by-test map. |
 | R18 | Private APIs of integrated libraries | The owner prefers reflection and patching of private members when it makes the code meaningfully cleaner, with rigorous monitoring of new releases. Rust form: see D21. |
 | R17 | Rulings during the build | For an unforced TS-vs-Rust difference, the builder records a provisional ruling and keeps building. At the end of each milestone, the builder brings that batch to the owner as multiple choice; changes land in the next milestone. |
+| R19 | Shared handler on several servers (milestone 1-2 batch, 2026-10-21) | At `9b56e9e`, a tool handler function shared by two v1 servers is wrapped only on the first server, so errors on later servers lose their stack. Rust does not copy this: every server keeps the stack. Recorded as RD-21. |
+| R20 | Harness answer key (milestone 1-2 batch, 2026-10-21) | The TS v2 reference server is the answer key on both protocol lanes, 2025-11-25 and 2026-07-28. The v1 server stays in the harness but is not what the Rust server is diffed against. Plan 3 makes v2 the default reference server and generates the tool contract from it. |
+| R21 | Nightly schedule (milestone 1-2 batch, 2026-10-21) | `main` stays untouched until the final PR (R15). The scheduled nightly drift sweep starts when that PR merges; until then it runs on pushes to `rewrite` that change the oracle, the harness or the workflow. |
 
 ## 2. Designer calls (C)
 
