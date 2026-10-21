@@ -47,6 +47,14 @@ node harness/src/diff.mjs harness/out/basic.ts.stdio.normalized.json \
 # Regenerate the tool contract, or check that it is current
 node harness/src/dump-contract.mjs
 node harness/src/dump-contract.mjs --check
+
+# Check the publish bodies of a run against the publish contract (the driver does this itself)
+node harness/src/contract/validate.mjs harness/out/basic.ts.stdio.raw.json
+
+# Regenerate the publish contract from agentcat-server, or check it (local only: needs the private checkout)
+git -C ~/agentcat-server fetch origin
+node harness/src/contract/extract-schema.mjs ~/agentcat-server origin/main
+node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
 ```
 
 ### driver.mjs
@@ -80,9 +88,13 @@ node harness/src/dump-contract.mjs --check
      SIGKILL); an HTTP server gets SIGTERM, then SIGKILL at the limit;
   3. keeps the mock open until no request arrived for `quietMs` (at most `settleTimeoutMs`), then
      takes the snapshot. A publish sent on client close or during a shutdown drain is counted.
-- Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request.
-  Exit 1 when the count differs, when any other request reached the mock (listed in the report as
-  `nonPublishRequests`), or when the run fails. Exit 2 on bad arguments or a bad scenario.
+- It then validates every publish body against the publish contract (`contract/`, below) and
+  records the result in `report.json` as `contract`: `"ok"`, or one entry per invalid body
+  (`{seq, id, event_type, resource_name, errors: [{instancePath, keyword, message, params}]}`).
+- Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request,
+  and every publish body is valid. Exit 1 when the count differs, when any other request reached the
+  mock (listed in the report as `nonPublishRequests`), when a publish body is invalid (each error on
+  stderr), or when the run fails. Exit 2 on bad arguments or a bad scenario.
 
 ### diff.mjs
 
@@ -104,6 +116,34 @@ arguments or a malformed rulings file.
 Runs `ts-v1.mjs` untracked over stdio and writes its full `tools/list` result to
 `contract/tool-contract.json`. Never edit that file by hand. `--check` regenerates it into a temp
 directory and exits 1 on any byte difference.
+
+## Publish contract (L4)
+
+Every body a reference server publishes must be one the AgentCat backend accepts.
+
+- `contract/publish-event.schema.json` is the request-body schema of `POST /v1/public/events/`
+  (operationId `publishEvent`) from agentcat-server's `schema.yml`, converted from OpenAPI 3.0 to
+  JSON Schema 2020-12. `contract/SOURCE` names the commit: `agentcat-server <sha> schema.yml`. Both
+  files are generated; never edit them by hand.
+- `src/contract/extract-schema.mjs <checkout> <sha or ref>` reads `schema.yml` with
+  `git show <sha>:schema.yml` (it never checks out or changes the checkout) and writes both files.
+  `--check <checkout>` regenerates from the SHA in `SOURCE` into a temp directory and exits 1 on any
+  byte difference. agentcat-server is private, so both run locally, never in CI (R14); the test for
+  `--check` skips when there is no checkout at `AGENTCAT_SERVER_DIR` (default `~/agentcat-server`).
+- The conversion copies `required`, `additionalProperties` and every other validation keyword as
+  written. `nullable: true` becomes `type: [<t>, "null"]`, or `anyOf: [{"type": "null"}, <schema>]`
+  when the schema has no `type` or uses `$ref`, `allOf`, `oneOf`, `anyOf` or `not`; local `$ref`s are
+  inlined; boolean `exclusiveMinimum`/`exclusiveMaximum` take the 2020-12 numeric form; `example`
+  becomes `examples`; `x-*` extensions are dropped. Any other keyword (`discriminator`, `readOnly`,
+  ...), a recursive or non-local `$ref`, or `nullable` with an `enum` that lacks `null` stops the
+  extraction with an error. `schema.yml` is read as YAML 1.2 and as YAML 1.1 (PyYAML writes it), and
+  the two readings must agree.
+- `src/contract/validate.mjs <raw.json>` validates every publish body of a run with ajv (strict mode,
+  formats such as `date-time` asserted). Exit 0 when all are valid; exit 1 with one
+  `INVALID publish seq=<n> id=<id> (<event_type> <resource_name>): <path> <message>` line per error;
+  exit 2 on bad arguments or an unreadable file. The driver runs the same check after every run.
+- `ingest/` replays the bodies of a run through the backend's real ingest function `process_event`,
+  locally, before the final PR (R14). See `ingest/README.md`.
 
 ## Server protocol
 

@@ -74,7 +74,7 @@ for (const transport of ["stdio", "http"]) {
     const report = readJson(outFile("one", "late", transport, "report"));
     assert.equal(report.publishes, 2);
     const raw = readJson(outFile("one", "late", transport, "raw"));
-    assert.ok(raw.some((r) => r.body?.event_type === "fixture:late"), "the late publish is in the snapshot");
+    assert.ok(raw.some((r) => r.body?.resource_name === "fixture:late"), "the late publish is in the snapshot");
   });
 }
 

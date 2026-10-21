@@ -12,8 +12,12 @@
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts.
-// Exit 0: exactly expectPublishes publishes and no other request reached the mock.
-// Exit 1: the count differs, another request arrived, or the run failed.
+// Every publish body is then validated against harness/contract/publish-event.schema.json
+// (src/contract/validate.mjs); report.json records the result as `contract`.
+// Exit 0: exactly expectPublishes publishes, no other request reached the mock,
+//         and every publish body is valid.
+// Exit 1: the count differs, another request arrived, a publish body is invalid,
+//         or the run failed.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -27,6 +31,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 
+import { contractResult, formatInvalid } from "./contract/validate.mjs";
 import { normalizeRun } from "./normalize.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -298,14 +303,23 @@ async function main() {
   const publishes = countPublishes(requests);
   // Any request other than a publish is a finding (an unexpected API call).
   const nonPublishRequests = report.nonPublishRequests.length;
-  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, report };
+  // L4: every publish body must be one the backend accepts ("ok" or the invalid bodies).
+  const contract = contractResult(requests);
+  const summary = { scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, contract, report };
   write("report", summary);
-  process.stdout.write(`${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests })}\n`);
+  const contractLine = contract === "ok" ? "ok" : `${contract.length} invalid`;
+  process.stdout.write(
+    `${JSON.stringify({ scenario: scenario.name, label, transport, lane, publishes, expected, nonPublishRequests, contract: contractLine })}\n`,
+  );
   if (publishes !== expected) process.stderr.write(`driver: ${publishes} publishes, expected exactly ${expected}\n`);
   if (nonPublishRequests > 0) {
     process.stderr.write(`driver: ${nonPublishRequests} request(s) other than a publish: ${JSON.stringify(report.nonPublishRequests)}\n`);
   }
-  return publishes === expected && nonPublishRequests === 0 ? 0 : 1;
+  if (contract !== "ok") {
+    process.stderr.write(`driver: ${contract.length} publish body/bodies fail the contract (harness/contract/publish-event.schema.json):\n`);
+    for (const line of formatInvalid(contract)) process.stderr.write(`driver: ${line}\n`);
+  }
+  return publishes === expected && nonPublishRequests === 0 && contract === "ok" ? 0 : 1;
 }
 
 main().then(
