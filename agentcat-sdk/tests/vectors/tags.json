@@ -905,6 +905,16 @@
       "logs": []
     },
     {
+      "name": "key:proto",
+      "input_text": "{\"a\":\"1\",\"__proto__\":\"v\",\"b\":\"2\"}",
+      "output": {
+        "a": "1",
+        "__proto__": "v",
+        "b": "2"
+      },
+      "logs": []
+    },
+    {
       "name": "key:allowed:\"$\"",
       "input": {
         "a$b": "v",

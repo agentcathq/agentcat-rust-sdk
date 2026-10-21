@@ -3,7 +3,7 @@
 //
 // Case fields: input: the tags object (or input_text: its JSON text, when the key order of the
 // input matters: a JS object literal in this generator already moves array-index keys first);
-// output: the validated object, null for undefined-free "no tags"; logs: the log lines written
+// output: the validated object, null when TS returns null ("no tags"); logs: the log lines written
 // (head stripped).
 import { loadCore } from "oracle/bundle";
 import { captureLogs } from "../../logs.mjs";
@@ -75,6 +75,9 @@ export async function generate() {
   for (let i = 9; i >= 0; i--) orderEntries.push(`"${i * 7}":"i${i}"`);
   await addText("order:index-keys-after-string-keys", `{${orderEntries.join(",")}}`);
   await addText("order:index-keys-not-canonical", '{"b":"1","01":"2","4294967295":"3","4294967294":"4","2":"5","a":"6","10":"7"}');
+
+  // `__proto__` passes the key pattern; Object.fromEntries makes it an own key, so TS keeps it.
+  await addText("key:proto", '{"a":"1","__proto__":"v","b":"2"}');
 
   // Each allowed special character, alone and in a key.
   for (const ch of "$_.:- ") await add(`key:allowed:${JSON.stringify(ch)}`, { [`a${ch}b`]: "v", [ch]: "w" });
