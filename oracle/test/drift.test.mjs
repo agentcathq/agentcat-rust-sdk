@@ -1,8 +1,10 @@
 // The nightly drift comparison looks only at the `cases` and `tests` arrays (R-6).
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 
 import { compare } from "../src/drift/compare.mjs";
@@ -46,4 +48,16 @@ test("a changed case and a new TS test are drift", (t) => {
   assert.match(out, /cases that changed \(1\)/);
   assert.match(out, /tests added to TS \(1\)/);
   assert.match(out, /v1\|a\.test\.ts\|two/);
+});
+
+test("the CLI exits 2 with a one-line message on a malformed file", (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "drift-cli-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  mkdirSync(join(dir, "v"));
+  mkdirSync(join(dir, "p"));
+  writeFileSync(join(dir, "v", "constants.json"), "{ not json");
+  const cli = fileURLToPath(new URL("../src/drift/compare.mjs", import.meta.url));
+  const res = spawnSync(process.execPath, [cli, join(dir, "v"), join(dir, "p")], { encoding: "utf8" });
+  assert.equal(res.status, 2);
+  assert.match(res.stdout, /^- The drift comparison could not run: .+\n$/);
 });

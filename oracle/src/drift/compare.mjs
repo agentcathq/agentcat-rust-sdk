@@ -84,12 +84,19 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     console.error("usage: node oracle/src/drift/compare.mjs <vectors dir> <parity dir>");
     process.exit(2);
   }
-  const lines = compare({
-    vectorsDir: resolve(vectorsDir),
-    parityDir: resolve(parityDir),
-    committedVectors: join(ROOT, "agentcat-sdk", "tests", "vectors"),
-    committedParity: join(ROOT, "parity", "ts-tests.json"),
-  });
+  let lines;
+  try {
+    lines = compare({
+      vectorsDir: resolve(vectorsDir),
+      parityDir: resolve(parityDir),
+      committedVectors: join(ROOT, "agentcat-sdk", "tests", "vectors"),
+      committedParity: join(ROOT, "parity", "ts-tests.json"),
+    });
+  } catch (err) {
+    // On stdout, so the nightly summary (which tees stdout) carries the reason.
+    console.log(`- The drift comparison could not run: ${err.message}`);
+    process.exit(2);
+  }
   if (lines.length === 0) {
     console.log("No drift: vector cases and the TS test list match the committed files.");
   } else {

@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  issues: write
 
 concurrency:
   group: nightly-${{ github.ref }}
@@ -33,6 +32,8 @@ jobs:
       summary: ${{ steps.summary.outputs.summary }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Resolve TS main
         id: main
         run: |
@@ -99,7 +100,9 @@ jobs:
           if [ -s "$out" ]; then
             { printf 'TS main `%s` against the pinned `%s`.\n\n' "$MAIN_SHA" "$PINNED_SHA"; cat "$out"; } > "$out.full"
             printf '\nRun: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$out.full"
-            { echo "summary<<EOF_SUMMARY"; head -c 50000 "$out.full"; echo; echo "EOF_SUMMARY"; } >> "$GITHUB_OUTPUT"
+            # Test titles come from upstream: a random delimiter stops them from injecting outputs.
+            delim="EOF_$(openssl rand -hex 16)"
+            { echo "summary<<$delim"; head -c 50000 "$out.full"; echo; echo "$delim"; } >> "$GITHUB_OUTPUT"
           fi
 
   # The Rust suite at the pinned SHA, with long property runs. The macOS and Windows legs
@@ -114,6 +117,8 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: stable
@@ -131,8 +136,14 @@ jobs:
     if: always()
     needs: [drift, rust]
     runs-on: ubuntu-latest
+    # Only this job can write issues; it runs no code from TS main.
+    permissions:
+      contents: read
+      issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Report
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
