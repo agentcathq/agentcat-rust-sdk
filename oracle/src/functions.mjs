@@ -44,6 +44,18 @@ export const functions = {
   "tokenEstimate.estimateOutputTokens": (...args) => core.tokenEstimate.estimateOutputTokens(...args),
   "tokenEstimate.estimateTokens": (...args) => core.tokenEstimate.estimateTokens(...args),
   "truncation.normalize": (...args) => core.truncation.normalize(...args),
+  // truncateEvent as {value} or, when it throws, {error: String(error)}. TS assigns undefined to
+  // each absent field it limits (userIntent, resourceName, the server and client fields); the
+  // value leaves those keys out, as JSON.stringify does, since strict JSON has no undefined.
+  "oracle.truncateEvent": (event) => {
+    let value;
+    try {
+      value = core.truncation.truncateEvent(event);
+    } catch (e) {
+      return { error: String(e) };
+    }
+    return { value: Object.fromEntries(Object.entries(value).filter(([, v]) => v !== undefined)) };
+  },
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
   // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
   "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),

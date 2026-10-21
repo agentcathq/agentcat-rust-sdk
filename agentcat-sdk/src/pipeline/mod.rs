@@ -1,4 +1,4 @@
-//! The event pipeline of the TS SDK: tag validation now; normalization, truncation,
+//! The event pipeline of the TS SDK: tag validation, normalization and truncation now;
 //! sanitization and redaction in later tasks.
 //!
 //! The pipeline works on the event as TS holds it in memory when the queue runs ([`TsEvent`]): a
@@ -11,7 +11,7 @@ use serde_json::{Map, Value};
 
 pub(crate) mod normalize;
 pub(crate) mod tags;
+pub(crate) mod truncate;
 
 /// The event as TS holds it in memory (see the module docs).
-#[cfg_attr(test, expect(dead_code, reason = "the queue uses it from plan 3 on"))]
 pub(crate) type TsEvent = Map<String, Value>;

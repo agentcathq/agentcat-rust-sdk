@@ -3870,87 +3870,129 @@ reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infini
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should handle empty event with minimal fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:minimal; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should handle event with null parameters and response"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:null-payloads; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should pass through already-small events unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:already-small; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should preserve SDK-controlled fields exactly"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:sdk-fields; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should handle error without frames"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:error-without-frames; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should leave frames at exactly 50 unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:frames-50; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should limit error.frames to 50 (first 25 + last 25)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:frames-80; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - error field limits > should truncate error.message exceeding 2048 chars"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:error-message-3000; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should handle undefined/null fields gracefully"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:absent-fields; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should leave short field values unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:short-fields; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate resourceName exceeding 256 chars"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:resource-name-300; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate serverName, serverVersion, clientName, clientVersion exceeding 256 chars"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:metadata-300; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - field-level string limits > should truncate userIntent exceeding 2048 chars"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:user-intent-3000; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - integration with sanitization pipeline > should work correctly after sanitizeEvent in the pipeline"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:after-sanitize; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - non-mutation > should not mutate the original event object"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "Rust borrows the input"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - response content text truncation > should truncate text content blocks exceeding 32KB"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:content-text-40000; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should guarantee 100KB max for pathological payloads"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate_size.json"
+reason = "truncate_size.json case test:pathological; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should leave small events unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:small-event; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should preserve timestamp as Date when last-resort truncation runs"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the Rust pipeline holds the timestamp as its ISO string, which no cut reaches"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should reduce depth progressively for events exceeding 100KB"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:depth-progressive; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - size targeting > should truncate largest string fields as last resort"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:truncate.json"
+reason = "truncate.json case test:last-resort; checked by agentcat-sdk::pipeline::truncate::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/validation.test.ts|validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs"

@@ -4,7 +4,9 @@
 use std::ops::{Range, RangeInclusive};
 
 use proptest::prelude::*;
-use serde_json::{Map, Number, Value};
+use serde_json::{Map, Number, Value, json};
+
+use crate::pipeline::TsEvent;
 
 /// One part of a character mix: its weight, and the characters it draws from, evenly.
 type Part = (u32, &'static [RangeInclusive<char>]);
@@ -173,14 +175,226 @@ pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Valu
     )
 }
 
+/// A tool-call event as the TS SDK holds it when its pipeline runs ([`TsEvent`]), its keys in the
+/// order TS sets them: `id` (`""`), `sessionId`, `projectId`, `eventType` (`"mcp:tools/call"`),
+/// `timestamp` (ISO 8601 with milliseconds), `duration`, `inputTokens`, `resourceName`,
+/// `parameters` (`{request, extra}`), `response` (`{content, structuredContent?, isError?}`, see
+/// [`content_block`]), `userIntent`, `isError`, `error` (`{message, type, platform, frames?}`),
+/// `identifyActorGivenId`, `identifyActorName`, `identifyActorData`, `sdkLanguage`,
+/// `agentcatVersion`, `serverName`, `serverVersion`, `clientName`, `clientVersion`, `tags` and
+/// `properties`. Each field but `id`, `sessionId`, `eventType` and `timestamp` is present or
+/// absent; every string a customer, a client or the SDK sets is drawn from `text`, and the JSON
+/// payloads are [`payload`]s.
+///
+/// The fields TS truncation limits with `truncateString` hold strings and `frames` is an array,
+/// so no event meets RD-26 (an object with a `length` key) or RD-27 (an object with a `toString`
+/// key in a joined array): the objects of the payloads only reach `normalize`.
+pub(crate) fn ts_event(
+    text: impl Strategy<Value = String> + Clone + 'static,
+) -> impl Strategy<Value = TsEvent> + Clone {
+    let string = || text.clone().prop_map(Value::String).boxed();
+    let present = |strategy: BoxedStrategy<Value>| strategy.prop_map(Some).boxed();
+    let maybe = |strategy: BoxedStrategy<Value>| prop::option::of(strategy).boxed();
+    let count = || any::<u32>().prop_map(Value::from).boxed();
+    let fields: Vec<(&'static str, BoxedStrategy<Option<Value>>)> = vec![
+        ("id", Just(Some(Value::String(String::new()))).boxed()),
+        ("sessionId", present(string())),
+        ("projectId", maybe(string())),
+        ("eventType", Just(Some(json!("mcp:tools/call"))).boxed()),
+        ("timestamp", present(timestamp().boxed())),
+        ("duration", maybe(count())),
+        ("inputTokens", maybe(count())),
+        ("resourceName", maybe(string())),
+        ("parameters", maybe(parameters(text.clone()))),
+        ("response", maybe(response(text.clone()))),
+        ("userIntent", maybe(string())),
+        (
+            "isError",
+            maybe(any::<bool>().prop_map(Value::Bool).boxed()),
+        ),
+        ("error", maybe(error_data(text.clone()))),
+        ("identifyActorGivenId", maybe(string())),
+        ("identifyActorName", maybe(string())),
+        ("identifyActorData", maybe(object(text.clone()))),
+        ("sdkLanguage", maybe(string())),
+        ("agentcatVersion", maybe(string())),
+        ("serverName", maybe(string())),
+        ("serverVersion", maybe(string())),
+        ("clientName", maybe(string())),
+        ("clientVersion", maybe(string())),
+        ("tags", maybe(tags(text.clone()))),
+        ("properties", maybe(object(text))),
+    ];
+    let (names, values): (Vec<_>, Vec<_>) = fields.into_iter().unzip();
+    values.prop_map(move |values| {
+        names
+            .iter()
+            .zip(values)
+            .filter_map(|(name, value)| Some(((*name).to_owned(), value?)))
+            .collect()
+    })
+}
+
+/// An ISO 8601 timestamp with milliseconds, as `Date.prototype.toISOString` writes it.
+fn timestamp() -> impl Strategy<Value = Value> + Clone {
+    (
+        (2000u32..2100, 1u32..=12, 1u32..=28),
+        (0u32..24, 0u32..60, 0u32..60, 0u32..1000),
+    )
+        .prop_map(|((year, month, day), (hour, minute, second, ms))| {
+            Value::String(format!(
+                "{year:04}-{month:02}-{day:02}T{hour:02}:{minute:02}:{second:02}.{ms:03}Z"
+            ))
+        })
+}
+
+/// A JSON value like [`json_value`] (at most 3 levels, 4 items per container) whose strings are
+/// drawn from `text`.
+fn payload(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    let leaf = prop_oneof![
+        Just(Value::Null),
+        any::<bool>().prop_map(Value::Bool),
+        number().prop_map(Value::Number),
+        text.prop_map(Value::String),
+    ];
+    leaf.prop_recursive(3, 24, 4, |inner| {
+        prop_oneof![
+            prop::collection::vec(inner.clone(), 0..=4).prop_map(Value::Array),
+            prop::collection::vec((object_key(), inner), 0..=4)
+                .prop_map(|entries| Value::Object(entries.into_iter().collect())),
+        ]
+    })
+    .boxed()
+}
+
+/// An object of up to 4 [`payload`]s under [`object_key`]s.
+fn object(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    prop::collection::vec((object_key(), payload(text)), 0..=4)
+        .prop_map(|entries| Value::Object(entries.into_iter().collect()))
+        .boxed()
+}
+
+/// Up to 5 tags: [`object_key`]s with strings drawn from `text`.
+fn tags(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    prop::collection::vec((object_key(), text.prop_map(Value::String)), 0..=5)
+        .prop_map(|entries| Value::Object(entries.into_iter().collect()))
+        .boxed()
+}
+
+/// `{request, extra}`: an MCP `tools/call` request with [`payload`] arguments, and a payload.
+fn parameters(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    (text.clone(), payload(text.clone()), payload(text))
+        .prop_map(|(name, arguments, extra)| {
+            json!({
+                "request": {"method": "tools/call", "params": {"name": name, "arguments": arguments}},
+                "extra": extra,
+            })
+        })
+        .boxed()
+}
+
+/// `{content, structuredContent?, isError?}`, with up to 4 [`content_block`]s.
+fn response(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    (
+        prop::collection::vec(content_block(text.clone()), 0..=4),
+        prop::option::of(payload(text)),
+        prop::option::of(any::<bool>()),
+    )
+        .prop_map(|(content, structured, is_error)| {
+            let mut response = Map::new();
+            response.insert("content".to_owned(), Value::Array(content));
+            if let Some(structured) = structured {
+                response.insert("structuredContent".to_owned(), structured);
+            }
+            if let Some(is_error) = is_error {
+                response.insert("isError".to_owned(), Value::Bool(is_error));
+            }
+            Value::Object(response)
+        })
+        .boxed()
+}
+
+/// One content block of a tool result: `text`, `image`, `audio`, `resource` with `text` or with
+/// `blob`, `resource_link`, or the unknown type `"custom"` with a [`payload`].
+fn content_block(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    let pair = || (text.clone(), text.clone());
+    prop_oneof![
+        text.clone().prop_map(|text| json!({"type": "text", "text": text})),
+        text.clone().prop_map(|data| json!({"type": "image", "data": data, "mimeType": "image/png"})),
+        text.clone().prop_map(|data| json!({"type": "audio", "data": data, "mimeType": "audio/wav"})),
+        pair().prop_map(|(uri, text)| {
+            json!({"type": "resource", "resource": {"uri": uri, "mimeType": "text/plain", "text": text}})
+        }),
+        pair().prop_map(|(uri, blob)| json!({"type": "resource", "resource": {"uri": uri, "blob": blob}})),
+        pair().prop_map(|(uri, name)| json!({"type": "resource_link", "uri": uri, "name": name})),
+        payload(text.clone()).prop_map(|value| json!({"type": "custom", "value": value})),
+    ]
+    .boxed()
+}
+
+/// `{message, type, platform: "rust", frames?}`, with up to 60 frames.
+fn error_data(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStrategy<Value> {
+    let frame = (text.clone(), text.clone(), any::<u32>(), any::<bool>()).prop_map(
+        |(filename, function, lineno, in_app)| {
+            json!({"filename": filename, "function": function, "lineno": lineno, "in_app": in_app})
+        },
+    );
+    (
+        text.clone(),
+        text,
+        prop::option::of(prop::collection::vec(frame, 0..=60)),
+    )
+        .prop_map(|(message, kind, frames)| {
+            let mut error = Map::new();
+            error.insert("message".to_owned(), Value::String(message));
+            error.insert("type".to_owned(), Value::String(kind));
+            error.insert("platform".to_owned(), json!("rust"));
+            if let Some(frames) = frames {
+                error.insert("frames".to_owned(), Value::Array(frames));
+            }
+            Value::Object(error)
+        })
+        .boxed()
+}
+
 mod tests {
     use proptest::prelude::*;
     use serde_json::Value;
 
-    use super::{BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick};
+    use super::{
+        BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick, ts_event,
+    };
     use crate::test_support::config;
 
     const RESERVED: [&str; 4] = ["__proto__", "$utf16", "$f64", "$repeat"];
+
+    /// The keys of a [`ts_event`], in order.
+    const EVENT_KEYS: [&str; 24] = [
+        "id",
+        "sessionId",
+        "projectId",
+        "eventType",
+        "timestamp",
+        "duration",
+        "inputTokens",
+        "resourceName",
+        "parameters",
+        "response",
+        "userIntent",
+        "isError",
+        "error",
+        "identifyActorGivenId",
+        "identifyActorName",
+        "identifyActorData",
+        "sdkLanguage",
+        "agentcatVersion",
+        "serverName",
+        "serverVersion",
+        "clientName",
+        "clientVersion",
+        "tags",
+        "properties",
+    ];
 
     /// The deepest nesting of arrays and objects in `value` (a scalar is 0), and checks every
     /// container has at most `width` items and every number is finite.
@@ -255,6 +469,28 @@ mod tests {
         #[test]
         fn json_values_keep_to_depth_and_width(value in json_value(3, 4)) {
             prop_assert!(depth(&value, 4) <= 3, "{value}");
+        }
+
+        #[test]
+        fn ts_events_have_the_ts_key_order_and_the_fixed_fields(event in ts_event(js_string(8))) {
+            let keys: Vec<&str> = event.keys().map(String::as_str).collect();
+            let mut order = EVENT_KEYS.iter();
+            for key in &keys {
+                prop_assert!(order.any(|known| known == key), "{keys:?}");
+            }
+            for key in ["id", "sessionId", "eventType", "timestamp"] {
+                prop_assert!(event.contains_key(key), "{key}");
+            }
+            prop_assert_eq!(&event["id"], "");
+            prop_assert_eq!(&event["eventType"], "mcp:tools/call");
+            let timestamp = event["timestamp"].as_str().unwrap_or_default();
+            prop_assert_eq!(timestamp.len(), "2025-01-15T12:00:00.000Z".len(), "{}", timestamp);
+            if let Some(Value::Object(error)) = event.get("error") {
+                prop_assert!(error.get("frames").is_none_or(Value::is_array));
+            }
+            for key in ["userIntent", "resourceName", "serverName", "serverVersion", "clientName", "clientVersion"] {
+                prop_assert!(event.get(key).is_none_or(Value::is_string), "{key}");
+            }
         }
     }
 }
