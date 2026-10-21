@@ -5,7 +5,11 @@
 //! tests that `cargo nextest list` reports, the harness scenarios in `harness/scenarios/`, the
 //! vector files and the spec's deviation register (see [`parity`]). It prints each problem and
 //! exits 1 if there is any. `todo` entries are problems only with `--final`.
+//!
+//! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
+//! `cargo nextest run --workspace`).
 pub mod parity;
+pub mod sdk_manifest;
 
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
