@@ -7,7 +7,11 @@ const ORACLE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOCK_FILE = join(ORACLE_DIR, "oracle.lock");
 const CACHE_DIR = join(ORACLE_DIR, ".cache");
 
-/** The TS repository and the commit the oracle is pinned to (`oracle/oracle.lock`). */
+/**
+ * The TS repository and the commit the oracle is pinned to (`oracle/oracle.lock`).
+ * A non-empty `ORACLE_SHA` environment variable replaces the SHA (the nightly drift sweep builds
+ * TS `main` this way); it must be a full 40-character lowercase commit SHA, like the lock's.
+ */
 export function lock() {
   const { repo, sha } = JSON.parse(readFileSync(LOCK_FILE, "utf8"));
   if (typeof repo !== "string" || repo === "") {
@@ -15,6 +19,13 @@ export function lock() {
   }
   if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha)) {
     throw new Error(`${LOCK_FILE}: "sha" must be a full 40-character lowercase commit SHA`);
+  }
+  const override = process.env.ORACLE_SHA;
+  if (override !== undefined && override !== "") {
+    if (!/^[0-9a-f]{40}$/.test(override)) {
+      throw new Error("ORACLE_SHA must be a full 40-character lowercase commit SHA");
+    }
+    return { repo, sha: override };
   }
   return { repo, sha };
 }

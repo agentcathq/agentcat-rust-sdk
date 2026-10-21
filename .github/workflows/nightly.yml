@@ -1,0 +1,165 @@
+name: Nightly
+
+# GitHub schedules and dispatches only workflows on the default branch (main), so the schedule starts
+# once this file reaches main. The push trigger runs it on rewrite when the oracle, the harness or this
+# file change (R-14); a push run prints the findings and fails, but never opens an issue.
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+  push:
+    branches: [rewrite]
+    paths: [".github/workflows/nightly.yml", "oracle/**", "harness/**"]
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Builds TS `main`, regenerates the vectors and the test list, compares them with the committed
+  # files, and runs basic.json twice (A/A) on each TS server. Nothing here contacts AgentCat: the
+  # harness egress guard refuses every host except localhost.
+  drift:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      summary: ${{ steps.summary.outputs.summary }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Resolve TS main
+        id: main
+        run: |
+          repo="$(jq -r .repo oracle/oracle.lock)"
+          sha="$(git ls-remote "$repo" refs/heads/main | cut -f1)"
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "could not resolve main of $repo (got: $sha)"
+            exit 1
+          fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "pinned=$(jq -r .sha oracle/oracle.lock)" >> "$GITHUB_OUTPUT"
+      - uses: ./.github/actions/node-oracle
+        with:
+          key-suffix: -main-${{ steps.main.outputs.sha }}
+      - name: Regenerate the vectors and the test list at TS main
+        id: generate
+        continue-on-error: true
+        env:
+          ORACLE_SHA: ${{ steps.main.outputs.sha }}
+        run: |
+          node oracle/src/vectors/run.mjs --out "$RUNNER_TEMP/vectors"
+          node oracle/src/parity/list-tests.mjs --out "$RUNNER_TEMP/parity"
+      - name: Compare with the committed files
+        id: compare
+        if: steps.generate.outcome == 'success'
+        continue-on-error: true
+        run: node oracle/src/drift/compare.mjs "$RUNNER_TEMP/vectors" "$RUNNER_TEMP/parity" | tee "$RUNNER_TEMP/compare.md"; exit "${PIPESTATUS[0]}"
+      - name: A/A runs of basic.json on both TS servers at TS main
+        id: aa
+        continue-on-error: true
+        env:
+          ORACLE_SHA: ${{ steps.main.outputs.sha }}
+        run: |
+          for server in ts-v1 ts-v2; do
+            for n in 1 2; do
+              node harness/src/driver.mjs harness/scenarios/basic.json "$server-aa$n" stdio \
+                -- node --import ./harness/src/egress-guard.mjs "harness/src/servers/$server.mjs"
+            done
+            node harness/src/diff.mjs \
+              "harness/out/basic.$server-aa1.stdio.normalized.json" \
+              "harness/out/basic.$server-aa2.stdio.normalized.json" \
+              --rulings harness/rulings.json
+          done
+      - name: Summarize
+        id: summary
+        env:
+          MAIN_SHA: ${{ steps.main.outputs.sha }}
+          PINNED_SHA: ${{ steps.main.outputs.pinned }}
+          GENERATE: ${{ steps.generate.outcome }}
+          COMPARE: ${{ steps.compare.outcome }}
+          AA: ${{ steps.aa.outcome }}
+        run: |
+          out="$RUNNER_TEMP/summary.md"
+          : > "$out"
+          if [ "$GENERATE" != success ]; then
+            echo "- Generating the vectors or the test list at TS main failed." >> "$out"
+          fi
+          if [ "$COMPARE" = failure ]; then
+            { echo "Differences from the committed files:"; echo; cat "$RUNNER_TEMP/compare.md"; } >> "$out"
+          fi
+          if [ "$AA" != success ]; then
+            echo "- The A/A run of basic.json on a TS server failed at TS main." >> "$out"
+          fi
+          if [ -s "$out" ]; then
+            { printf 'TS main `%s` against the pinned `%s`.\n\n' "$MAIN_SHA" "$PINNED_SHA"; cat "$out"; } > "$out.full"
+            printf '\nRun: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$out.full"
+            { echo "summary<<EOF_SUMMARY"; head -c 50000 "$out.full"; echo; echo "EOF_SUMMARY"; } >> "$GITHUB_OUTPUT"
+          fi
+
+  # The Rust suite at the pinned SHA, with long property runs. The macOS and Windows legs
+  # need Node because oracle_smoke spawns the JS oracle.
+  rust:
+    name: rust (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest
+      - run: cargo nextest run --workspace --all-features
+        env:
+          PROPTEST_CASES: "10000"
+
+  # Opens or updates the one open `ts-drift` issue. On a push run it only prints the findings.
+  report:
+    if: always()
+    needs: [drift, rust]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Report
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRIFT_RESULT: ${{ needs.drift.result }}
+          RUST_RESULT: ${{ needs.rust.result }}
+          DRIFT_SUMMARY: ${{ needs.drift.outputs.summary }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          out="$RUNNER_TEMP/issue.md"
+          : > "$out"
+          if [ -n "$DRIFT_SUMMARY" ]; then
+            printf '%s\n' "$DRIFT_SUMMARY" >> "$out"
+          elif [ "$DRIFT_RESULT" != success ]; then
+            echo "- The drift job ended with: $DRIFT_RESULT" >> "$out"
+          fi
+          if [ "$RUST_RESULT" != success ]; then
+            printf '\n- The Rust suite (PROPTEST_CASES=10000, macOS, Windows and Linux) ended with: %s\n' "$RUST_RESULT" >> "$out"
+            printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$out"
+          fi
+          if [ ! -s "$out" ]; then
+            echo "no drift and no failure: no issue opened"
+            exit 0
+          fi
+          cat "$out"
+          if [ "$EVENT" = push ]; then
+            echo "push run: no issue opened"
+          else
+            scripts/ts-drift-issue.sh "$out"
+          fi
+          exit 1

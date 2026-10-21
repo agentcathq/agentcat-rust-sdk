@@ -97,3 +97,21 @@ test("verifyTs checks the clone without cloning or building", async () => {
     rmSync(join(tsDir(), "src", "dirty.txt"));
   }
 });
+
+test("ORACLE_SHA overrides the locked SHA and everything keyed by it", () => {
+  const other = "0123456789abcdef0123456789abcdef01234567";
+  const before = process.env.ORACLE_SHA;
+  process.env.ORACLE_SHA = other;
+  try {
+    assert.equal(lock().sha, other);
+    assert.ok(tsDir().endsWith(`ts-${other}`));
+    assert.ok(bundleDir().endsWith(`bundle-${other}`));
+    process.env.ORACLE_SHA = "main";
+    assert.throws(() => lock(), /ORACLE_SHA/);
+    process.env.ORACLE_SHA = "";
+    assert.equal(lock().sha, JSON.parse(readFileSync(new URL("../oracle.lock", import.meta.url), "utf8")).sha);
+  } finally {
+    if (before === undefined) delete process.env.ORACLE_SHA;
+    else process.env.ORACLE_SHA = before;
+  }
+});

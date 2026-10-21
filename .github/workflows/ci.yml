@@ -65,6 +65,7 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
@@ -79,6 +80,7 @@ jobs:
         with:
           toolchain: "1.88"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
@@ -117,9 +119,25 @@ jobs:
           tool: cargo-hack,cargo-minimal-versions
       - run: cargo minimal-versions check --direct --workspace
 
+  oracle-harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      # One package at a time: oracle/test/fetch.test.mjs dirties the shared TS clone on purpose (R-17).
+      - run: corepack pnpm -r --workspace-concurrency=1 test
+      - run: node oracle/src/vectors/run.mjs --check
+      - run: node oracle/src/parity/list-tests.mjs --check
+      - run: node harness/src/dump-contract.mjs --check
+      - run: cargo run -q -p xtask -- parity
+
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions]
+    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to succeed

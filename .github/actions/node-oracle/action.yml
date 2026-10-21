@@ -1,0 +1,30 @@
+name: Node and oracle cache
+description: >-
+  Node 22 with corepack, the pnpm workspace install, and the oracle/.cache cache (the pinned TS clone
+  and its build). The Rust tests need it because oracle_smoke spawns node.
+inputs:
+  key-suffix:
+    description: Appended to the cache key, for example -main-<sha> when the nightly builds TS main.
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 22
+    - run: corepack enable
+      shell: bash
+    - run: corepack pnpm install --frozen-lockfile
+      shell: bash
+    - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: oracle/.cache
+        key: oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}${{ inputs.key-suffix }}
+        restore-keys: |
+          oracle-cache-${{ runner.os }}-${{ hashFiles('oracle/oracle.lock') }}
+    # A lock directory restored from another run is stale (the oracle lock treats another host's lock
+    # as stale), but removing it up front also saves the wait.
+    - name: Drop build locks restored from the cache
+      run: rm -rf oracle/.cache/*.lock oracle/.cache/*.lock.*
+      shell: bash
