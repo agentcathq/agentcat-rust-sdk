@@ -11,6 +11,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { ensureTs } from "oracle/fetch-ts";
+import { traceOverride } from "oracle/paths";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONTRACT = join(HERE, "..", "contract", "tool-contract.json");
@@ -82,6 +83,7 @@ if (args.length > 1 || (args.length === 1 && args[0] !== "--check")) {
   process.exit(2);
 }
 try {
+  traceOverride();
   if (args[0] === "--check") {
     process.exitCode = await check();
   } else {

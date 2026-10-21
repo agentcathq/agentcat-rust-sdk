@@ -2,7 +2,7 @@
 // processes (nextest runs one oracle server per test binary).
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
-import {
+import fs, {
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -11,6 +11,7 @@ import {
   utimesSync,
   writeFileSync,
 } from "node:fs";
+import { syncBuiltinESMExports } from "node:module";
 import { hostname, tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
@@ -37,12 +38,14 @@ function plant(lockDir, record) {
   writeFileSync(join(lockDir, OWNER_FILE), typeof record === "string" ? record : JSON.stringify(record));
 }
 
-test("an empty owner record is a lock being taken, not a stale one", async () => {
+test("a lock without a readable owner record is stale only once it is old", async () => {
+  // A lock gets its record before it reaches its path, so this lock is damaged
+  // (or left by an older lock.mjs, whose locks were empty for a moment).
   const lockDir = newLockDir();
   plant(lockDir, "");
   await assert.rejects(withLock(lockDir, async () => {}, fast), /timed out/);
 
-  // Its creator died before writing the record: once old, the lock is broken.
+  // Once old, the lock is broken.
   const old = new Date(Date.now() - 5 * 60_000);
   utimesSync(lockDir, old, old);
   let ran = false;
@@ -65,6 +68,62 @@ test("a waiter that breaks a stale lock late leaves the lock another waiter took
     assert.deepEqual(readOwner(lockDir), holder);
   }, fast);
   assert.equal(existsSync(lockDir), false);
+});
+
+test("a waiter that breaks a stale lock late never frees the path of the lock another waiter took", async () => {
+  const lockDir = newLockDir();
+  plant(lockDir, { pid: deadPid(), host: hostname(), token: "dead" });
+  const judged = readOwner(lockDir); // waiters A and B both read the dead owner
+  assert.equal(breakStale(lockDir, judged), true); // B breaks the stale lock...
+  await withLock(lockDir, async () => {
+    // ...and takes it. Then A breaks late, while a third waiter C takes the
+    // lock path at any moment the path is free.
+    const holder = readOwner(lockDir);
+    const third = { pid: process.pid, host: hostname(), token: "third" };
+    let thirdTook = false;
+    const rename = fs.renameSync;
+    fs.renameSync = (from, to) => {
+      rename(from, to);
+      if (from === lockDir && !existsSync(lockDir)) {
+        plant(lockDir, third);
+        thirdTook = true;
+      }
+    };
+    syncBuiltinESMExports(); // lock.mjs's `renameSync` import now calls the wrapper
+    try {
+      assert.equal(breakStale(lockDir, judged), false);
+    } finally {
+      fs.renameSync = rename;
+      syncBuiltinESMExports();
+    }
+    assert.equal(thirdTook, false, "holders overlap: the late breaker let a third waiter take a held lock");
+    assert.deepEqual(readOwner(lockDir), holder);
+  }, fast);
+  assert.equal(existsSync(lockDir), false);
+});
+
+test("a breaker that died while it broke a stale lock does not block the lock", async () => {
+  const lockDir = newLockDir();
+  plant(lockDir, { pid: deadPid(), host: hostname(), token: "dead" });
+  // The claim of a breaker that died, then the claim of one on another host.
+  writeFileSync(join(lockDir, "break-dead"), JSON.stringify({ pid: deadPid(), host: hostname(), token: "b1" }));
+  writeFileSync(join(lockDir, "break-dead.b1"), JSON.stringify({ pid: 1, host: `not-${hostname()}`, token: "b2" }));
+  let ran = false;
+  await withLock(lockDir, async () => {
+    ran = true;
+  }, fast);
+  assert.ok(ran);
+  assert.equal(existsSync(lockDir), false);
+});
+
+test("a breaker at work keeps other breakers off the stale lock", () => {
+  const lockDir = newLockDir();
+  plant(lockDir, { pid: deadPid(), host: hostname(), token: "dead" });
+  const judged = readOwner(lockDir);
+  // A live process (the test runner) holds the claim on the stale lock.
+  writeFileSync(join(lockDir, "break-dead"), JSON.stringify({ pid: process.ppid, host: hostname(), token: "b1" }));
+  assert.equal(breakStale(lockDir, judged), false);
+  assert.deepEqual(readOwner(lockDir), judged);
 });
 
 test("a holder never removes a lock that is no longer its own", async () => {

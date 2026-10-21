@@ -22,7 +22,7 @@ import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { isAlive, withLock } from "./lock.mjs";
-import { lock, tsDir, tsDist } from "./paths.mjs";
+import { lock, traceOverride, tsDir, tsDist } from "./paths.mjs";
 
 /** Holds the SHA once install and build have succeeded; git-excluded in the clone. */
 const MARKER = ".oracle-ok";
@@ -277,6 +277,12 @@ if (isMain()) {
   if (args.some((arg) => arg !== "--force")) {
     process.stderr.write("usage: node oracle/src/fetch-ts.mjs [--force]\n");
     process.exit(2);
+  }
+  try {
+    traceOverride(); // the clone this CLI builds follows ORACLE_SHA
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
   }
   ensureTs({ force: args.includes("--force") }).then(
     () => process.stdout.write(`oracle: TS SDK ${lock().sha} ready in ${tsDir()}\n`),

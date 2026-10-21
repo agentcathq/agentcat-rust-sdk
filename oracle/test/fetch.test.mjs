@@ -27,7 +27,8 @@ function git(args) {
   return execFileSync("git", ["-C", tsDir(), ...args], { encoding: "utf8", env }).trim();
 }
 
-test("the git() helper ignores GIT_DIR, as run() does", () => {
+test("the git() helper ignores GIT_DIR, as run() does", async () => {
+  await ensureTs(); // the clone must exist, so a failure means GIT_DIR, not a missing clone
   const before = process.env.GIT_DIR;
   process.env.GIT_DIR = "/nonexistent";
   try {

@@ -100,3 +100,24 @@ test("the import.meta rewrite works when the clone is reached through a symlink"
   const source = realpathSync(join(tsDir(), "src", "modules", "logging.ts"));
   assert.ok(result.outputFiles[0].text.includes(JSON.stringify(pathToFileURL(source).href)));
 });
+
+test("the import.meta rewrite leaves a module that is not a file on disk to its own plugin", async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), "oracle-virtual-"));
+  t.after(() => rmSync(dir, { recursive: true, force: true }));
+  const virtual = {
+    name: "virtual",
+    setup(esbuild) {
+      esbuild.onResolve({ filter: /^virtual:/ }, (args) => ({ path: args.path, namespace: "virtual" }));
+      esbuild.onLoad({ filter: /.*/, namespace: "virtual" }, () => ({ contents: "export const x = 41 + 1;" }));
+    },
+  };
+  const result = await build({
+    stdin: { contents: 'export { x } from "virtual:x.js";', resolveDir: dir },
+    format: "esm",
+    bundle: true,
+    write: false,
+    logLevel: "silent",
+    plugins: [sourceImportMeta(dir), virtual],
+  });
+  assert.match(result.outputFiles[0].text, /41 \+ 1/);
+});

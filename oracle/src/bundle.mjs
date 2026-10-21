@@ -146,8 +146,9 @@ export function sourceImportMeta(srcDir) {
   return {
     name: "oracle-source-import-meta",
     setup(esbuild) {
-      esbuild.onLoad({ filter: /\.[cm]?[jt]s$/ }, async (args) => {
-        const path = realpathSync(args.path);
+      // Only files on disk: a module of another namespace (a virtual one) has no real path.
+      esbuild.onLoad({ filter: /\.[cm]?[jt]s$/, namespace: "file" }, async (args) => {
+        const path = realPath(args.path);
         const rel = relative(realSrcDir, path);
         if (rel === "" || rel.startsWith("..") || isAbsolute(rel)) return undefined;
         const text = await readFile(path, "utf8");
@@ -167,6 +168,15 @@ export function sourceImportMeta(srcDir) {
       });
     },
   };
+}
+
+/** `path` with its symlinks resolved, or `path` as given when it cannot be resolved. */
+function realPath(path) {
+  try {
+    return realpathSync(path);
+  } catch {
+    return path;
+  }
 }
 
 function isCurrent(file, head) {
