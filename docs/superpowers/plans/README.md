@@ -12,6 +12,8 @@ what the earlier milestones taught and the owner's rulings from the previous bat
 | 4 | 5 | Delivery and lifecycle: event pipeline, worker thread, queue, retries, flush, shutdown, last-drop drain, logging, environment, custom events, `Fake`; event comparison in the harness. | Not written |
 | 5 | 6 | Finish: README and rustdoc, examples, CHANGELOG, public API snapshot, coverage and mutation floors, rmcp matrix and canary, zero `todo` in the manifest, ingest replay, dashboard demo, the PR. | Not written |
 
+Items that plan 1's reviews deferred to later plans are listed in [`carry-forward.md`](carry-forward.md).
+
 Every plan ends with the same two steps:
 
 1. Run the full local gate (`scripts/check.sh`) and confirm CI is green on `rewrite`.
