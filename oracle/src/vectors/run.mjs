@@ -8,6 +8,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { traceOverride } from "../paths.mjs";
 import { writeAll } from "./write.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -56,6 +57,7 @@ if (unknown.length > 0 || args.length > (outAt >= 0 ? 2 : 1)) {
   process.stderr.write("usage: node oracle/src/vectors/run.mjs [--check | --out <dir>]\n");
   process.exit(2);
 }
+traceOverride();
 if (args.includes("--check")) {
   process.exitCode = await check();
 } else {

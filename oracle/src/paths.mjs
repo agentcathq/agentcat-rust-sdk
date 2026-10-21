@@ -13,13 +13,7 @@ const CACHE_DIR = join(ORACLE_DIR, ".cache");
  * TS `main` this way); it must be a full 40-character lowercase commit SHA, like the lock's.
  */
 export function lock() {
-  const { repo, sha } = JSON.parse(readFileSync(LOCK_FILE, "utf8"));
-  if (typeof repo !== "string" || repo === "") {
-    throw new Error(`${LOCK_FILE}: "repo" must be a non-empty string`);
-  }
-  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha)) {
-    throw new Error(`${LOCK_FILE}: "sha" must be a full 40-character lowercase commit SHA`);
-  }
+  const { repo, sha } = locked();
   const override = process.env.ORACLE_SHA;
   if (override !== undefined && override !== "") {
     if (!/^[0-9a-f]{40}$/.test(override)) {
@@ -28,6 +22,34 @@ export function lock() {
     return { repo, sha: override };
   }
   return { repo, sha };
+}
+
+/** `oracle/oracle.lock` as written, without the `ORACLE_SHA` override. */
+function locked() {
+  const { repo, sha } = JSON.parse(readFileSync(LOCK_FILE, "utf8"));
+  if (typeof repo !== "string" || repo === "") {
+    throw new Error(`${LOCK_FILE}: "repo" must be a non-empty string`);
+  }
+  if (typeof sha !== "string" || !/^[0-9a-f]{40}$/.test(sha)) {
+    throw new Error(`${LOCK_FILE}: "sha" must be a full 40-character lowercase commit SHA`);
+  }
+  return { repo, sha };
+}
+
+let traced = false;
+
+/**
+ * When `ORACLE_SHA` is set (non-empty), writes `oracle: ORACLE_SHA=<sha> overrides
+ * oracle/oracle.lock (<locked sha>)` to stderr, once per process, so no run takes another TS
+ * commit without a trace. Throws, as lock() does, on a malformed `ORACLE_SHA`. Every entry point
+ * that builds or runs the oracle calls it at start.
+ */
+export function traceOverride() {
+  const override = process.env.ORACLE_SHA;
+  if (traced || override === undefined || override === "") return;
+  const { sha } = lock();
+  process.stderr.write(`oracle: ORACLE_SHA=${sha} overrides oracle/oracle.lock (${locked().sha})\n`);
+  traced = true;
 }
 
 /** The clone of the TS repository at the locked commit: `oracle/.cache/ts-<sha>`. */

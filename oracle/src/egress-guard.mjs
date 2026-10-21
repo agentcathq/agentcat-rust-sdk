@@ -21,7 +21,8 @@
 // Not covered: worker threads (Node runs no preload in them), child processes started without
 // the guard (git, corepack and pnpm, which need the network), other runtimes (workerd), native
 // addons, dns.resolve* and dns.Resolver. Rust servers get no guard: they only ever receive a local
-// base URL.
+// base URL. A connection whose custom `lookup` receives the host name `localhost` passes: the guard
+// checks the name, not the address that lookup returns.
 import dgram from "node:dgram";
 import dns from "node:dns";
 import { syncBuiltinESMExports } from "node:module";

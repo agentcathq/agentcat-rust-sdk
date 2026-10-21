@@ -101,6 +101,8 @@ node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
   `"no publish bodies"` (nothing to check although the scenario expects publishes), or one entry
   per invalid body (`{seq, id, event_type, resource_name, errors: [{instancePath, keyword, message, params}]}`).
   A run with no publish body passes the contract only when the scenario expects 0 publishes.
+  `ts_sha` in `report.json` is the TS commit the run used: `oracle/oracle.lock`, or `ORACLE_SHA`
+  when it is set (the driver then writes a trace line to stderr).
 - Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request,
   and the contract is `"ok"`. Exit 1 when the count differs, when any other request reached the
   mock (listed in the report as `nonPublishRequests`), when the contract fails (each error on
@@ -353,4 +355,6 @@ The ordered checks read key order as JavaScript keeps it, so they do not apply t
 alone matches nothing. A diff path looks like `$.events[3].body.resource_name` or
 `$.transcript[1].result.tools[0].inputSchema.<properties-order>`; a violation's path ends with
 `.<rule>`. Write `\$`, `\.`, `\[` and `\]` for the literal characters. `deviation` names the ruled
-divergence in the design decision log. The list is empty until the Rust half produces differences.
+divergence in the design decision log. A ruling may also carry `"pending": true` (a boolean, nothing
+else): a provisional ruling that waits for the owner's answer. It allows differences like any other.
+The list is empty until the Rust half produces differences.

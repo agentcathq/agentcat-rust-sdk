@@ -6,7 +6,9 @@
 // usage: node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]
 // rulings: JSON array of {"path": "<regex>", "reason": "...", "deviation": "RD-xx"}; a
 // difference whose whole path matches a ruling's regex is allowed (each regex is
-// anchored as ^(?:<regex>)$). The output gives each ruling's match count.
+// anchored as ^(?:<regex>)$). The output gives each ruling's match count. A ruling
+// may also carry "pending": true (a boolean): a provisional ruling the owner has not
+// answered yet (R17); it allows differences like any other.
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
@@ -42,8 +44,9 @@ function loadRulings(path) {
   return list.map((r, i) => {
     const where = `${path}[${i}]`;
     if (r === null || typeof r !== "object" || Array.isArray(r)) usage(`${where}: must be an object`);
-    const extra = Object.keys(r).filter((k) => !["path", "reason", "deviation"].includes(k));
+    const extra = Object.keys(r).filter((k) => !["path", "reason", "deviation", "pending"].includes(k));
     if (extra.length > 0) usage(`${where}: unknown key ${JSON.stringify(extra[0])}`);
+    if (Object.hasOwn(r, "pending") && typeof r.pending !== "boolean") usage(`${where}: "pending" must be a boolean`);
     if (typeof r.path !== "string" || r.path === "") usage(`${where}: "path" must be a non-empty regex string`);
     if (typeof r.reason !== "string" || r.reason.trim() === "") usage(`${where}: "reason" must be a non-empty string`);
     if (typeof r.deviation !== "string" || !/^RD-\d+$/.test(r.deviation)) usage(`${where}: "deviation" must look like RD-<n>`);

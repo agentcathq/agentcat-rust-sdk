@@ -22,8 +22,9 @@ need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --ve
 need "cargo install cargo-deny --locked" cargo deny --version
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
-need "Node 22 (it includes corepack): the oracle tests need it" command -v node
-need "Node 22 (it includes corepack): the oracle tests need it" command -v corepack
+node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'
+need "$node_hint" command -v node
+need "$node_hint" command -v corepack
 if [ "$missing" -ne 0 ]; then
   exit 1
 fi

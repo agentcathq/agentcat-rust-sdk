@@ -14,7 +14,8 @@
 // and keeps the mock open for a final quiet window before it counts.
 // Every publish body is then validated against harness/contract/publish-event.schema.json
 // (src/contract/validate.mjs); report.json records the result as `contract` and the
-// number of bodies checked as `contractChecked`. No body to check is a contract failure
+// number of bodies checked as `contractChecked`, and the TS commit of the oracle
+// (oracle/oracle.lock, or ORACLE_SHA) as `ts_sha`. No body to check is a contract failure
 // unless the scenario expects no publish (an untracked run).
 // Exit 0: exactly expectPublishes publishes, no other request reached the mock,
 //         and the contract holds (every publish body is valid).
@@ -32,6 +33,8 @@ import { StdioClientTransport as V2StdioClientTransport } from "@modelcontextpro
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+
+import { lock, traceOverride } from "oracle/paths";
 
 import { NO_BODIES, contractResult, formatInvalid } from "./contract/validate.mjs";
 import { normalizeRun } from "./normalize.mjs";
@@ -147,6 +150,7 @@ const mock = spawn(process.execPath, [join(HERE, "mock-api.mjs"), "0"], { stdio:
 children.push(mock);
 
 async function main() {
+  traceOverride();
   const { port: mockPort } = await readyLine(mock, "mock API");
   const mockUrl = `http://127.0.0.1:${mockPort}`;
   const getRequests = async () => (await fetch(`${mockUrl}/__requests`)).json();
@@ -313,6 +317,7 @@ async function main() {
     label,
     transport,
     lane,
+    ts_sha: lock().sha,
     publishes,
     expected,
     nonPublishRequests,

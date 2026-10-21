@@ -11,7 +11,8 @@ Install these tools:
 - Rust nightly, for the docs build and the minimal-versions check: `rustup toolchain install nightly`
 - The cargo tools of the gate:
   `cargo install cargo-nextest cargo-hack cargo-minimal-versions cargo-deny --locked`
-- Node.js 22 or later, which includes corepack. The tests use Node to run the TypeScript SDK.
+- Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.
+  The tests use Node to run the TypeScript SDK.
 
 If a tool is missing, `scripts/check.sh` stops and prints the install command.
 

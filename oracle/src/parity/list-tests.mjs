@@ -15,7 +15,7 @@ import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { ensureTs, run, verifyTs, vitestCommand } from "../fetch-ts.mjs";
-import { lock, tsDir } from "../paths.mjs";
+import { lock, traceOverride, tsDir } from "../paths.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DEFAULT_OUT = resolve(HERE, "../../../parity");
@@ -175,6 +175,7 @@ if (unknown.length > 0 || (args.includes("--check") && args.length > 1)) {
 }
 const out = outAt >= 0 ? resolve(args[outAt + 1]) : DEFAULT_OUT;
 try {
+  traceOverride();
   if (args.includes("--check")) {
     process.exitCode = await check();
   } else if (args.includes("--init-manifest")) {

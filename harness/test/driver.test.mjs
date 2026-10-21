@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { before, test } from "node:test";
 
 import { ensureTs } from "oracle/fetch-ts";
-import { tsDir } from "oracle/paths";
+import { lock, tsDir } from "oracle/paths";
 
 import {
   BASIC,
@@ -55,6 +55,7 @@ test("basic.json with expectPublishes 11 exits 0 and reports 11 publishes", { ti
   const report = readJson(outFile("basic", "driver11", "stdio", "report"));
   assert.equal(report.publishes, 11);
   assert.equal(report.lane, "2025-11-25");
+  assert.equal(report.ts_sha, lock().sha);
   for (const kind of ["raw", "transcript", "normalized"]) readJson(outFile("basic", "driver11", "stdio", kind));
 });
 

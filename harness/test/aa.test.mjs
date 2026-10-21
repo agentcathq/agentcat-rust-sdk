@@ -70,6 +70,22 @@ test("(d) one changed resource_name makes diff.mjs exit 1, and a ruling for it m
   assert.match(res.stdout, /RULED/);
 });
 
+test("a pending ruling is a ruling; a pending value other than a boolean makes diff.mjs exit 2", async (t) => {
+  const dir = tempDir(t);
+  const { original, changed } = changedResourceName(dir);
+  const ruling = { path: "\\$\\.events\\[\\d+\\]\\.body\\.resource_name", reason: "awaits the owner", deviation: "RD-01" };
+
+  const pending = writeJson(join(dir, "pending.json"), [{ ...ruling, pending: true }]);
+  let res = await diff(original, changed, ["--rulings", pending]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /^RULING RD-01 matched 1:/m);
+
+  const notBoolean = writeJson(join(dir, "not-boolean.json"), [{ ...ruling, pending: "yes" }]);
+  res = await diff(original, changed, ["--rulings", notBoolean]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /\[0\]: .*"pending"/);
+});
+
 test("(e) a ruling that matches nothing makes diff.mjs exit 1", async (t) => {
   const rulings = writeJson(join(tempDir(t), "rulings.json"), [
     { path: "^\\$\\.nothing\\.here$", reason: "matches nothing", deviation: "RD-98" },

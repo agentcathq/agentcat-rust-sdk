@@ -2,7 +2,7 @@
 // constants.ts, handles.ts and tools.ts (enumerated from the module objects, so
 // a new export shows up in the nightly diff), plus the output of the exported
 // functions for fixed inputs.
-import { loadModule } from "oracle/bundle";
+import { loadCore } from "oracle/bundle";
 
 const SESSION_ID = "ses_0123456789abcdefghijklmnopq";
 const CONTEXT = "Looking for a tool that converts spreadsheets to charts.";
@@ -29,9 +29,10 @@ const MINT_BACK_RESOLUTIONS = {
 };
 
 export async function generate() {
+  const core = await loadCore();
   const cases = [];
   for (const file of ["constants", "handles", "tools"]) {
-    const mod = await loadModule(file);
+    const mod = core[file];
     for (const [name, value] of Object.entries(mod)) {
       if (typeof value !== "function") {
         cases.push({ name, value });
@@ -44,7 +45,7 @@ export async function generate() {
       for (const c of FUNCTION_CASES[name](value)) cases.push({ name, input: c.input, value: c.value });
     }
   }
-  const { buildMintBackText } = await loadModule("handles");
+  const { buildMintBackText } = core.handles;
   for (const [kind, input] of Object.entries(MINT_BACK_RESOLUTIONS)) {
     cases.push({ name: `mintBack:${kind}`, input, value: buildMintBackText(input) });
   }
