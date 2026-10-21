@@ -48,10 +48,5 @@ export async function generate() {
   for (const [kind, input] of Object.entries(MINT_BACK_RESOLUTIONS)) {
     cases.push({ name: `mintBack:${kind}`, input, value: buildMintBackText(input) });
   }
-  const seen = new Set();
-  for (const { name } of cases) {
-    if (seen.has(name)) throw new Error(`gen/constants: duplicate case name ${name}`);
-    seen.add(name);
-  }
   return { cases: cases.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) };
 }

@@ -50,6 +50,29 @@ test("a changed case and a new TS test are drift", (t) => {
   assert.match(out, /v1\|a\.test\.ts\|two/);
 });
 
+test("a vector file on one side only is drift, in both directions", (t) => {
+  const same = { vectors: { cases: [{ name: "x", v: 1 }] }, list: { tests: [t1] } };
+  const dirs = setup(t, { committed: same, fresh: same });
+  writeFileSync(join(dirs.committedVectors, "gone.json"), JSON.stringify({ cases: [] }));
+  writeFileSync(join(dirs.vectorsDir, "new.json"), JSON.stringify({ cases: [] }));
+  assert.deepEqual(compare(dirs), [
+    "- `gone.json` exists only in the committed vectors",
+    "- `new.json` exists only in the fresh vectors",
+  ]);
+});
+
+test("a case missing from the fresh file is listed by name", (t) => {
+  const dirs = setup(t, {
+    committed: { vectors: { cases: [{ name: "x", v: 1 }, { name: "y", v: 2 }] }, list: { tests: [t1] } },
+    fresh: { vectors: { cases: [{ name: "x", v: 1 }] }, list: { tests: [t1] } },
+  });
+  assert.deepEqual(compare(dirs), [
+    "### Vectors: `constants.json`",
+    "- cases only in the committed file (1):",
+    "  - `y`",
+  ]);
+});
+
 test("the CLI exits 2 with a one-line message on a malformed file", (t) => {
   const dir = mkdtempSync(join(tmpdir(), "drift-cli-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));

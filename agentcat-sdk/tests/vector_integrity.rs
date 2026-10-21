@@ -50,6 +50,20 @@ fn json_files() -> Res<Vec<String>> {
     Ok(names)
 }
 
+/// The checks below pass vacuously on an empty directory or manifest.
+#[test]
+fn at_least_one_vector_set_exists() -> Res<()> {
+    assert!(
+        !json_files()?.is_empty(),
+        "tests/vectors holds no vector file"
+    );
+    assert!(
+        !manifest()?.is_empty(),
+        "MANIFEST.sha256 lists no vector file"
+    );
+    Ok(())
+}
+
 #[test]
 fn every_vector_file_matches_the_manifest() -> Res<()> {
     for (hash, name) in manifest()? {
