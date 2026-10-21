@@ -1,46 +1,91 @@
 //! The input generators the property tests share. They lean on the inputs where JavaScript and
 //! Rust differ: escapes, JavaScript whitespace, characters outside the BMP (two UTF-16 units),
 //! array-index-like object keys, and numbers that `JSON.stringify` writes in its own way.
-use std::ops::Range;
+use std::ops::{Range, RangeInclusive};
 
 use proptest::prelude::*;
 use serde_json::{Map, Number, Value};
 
-/// The JavaScript whitespace set (what `String.prototype.trim` removes) and its neighbors
-/// U+0085, U+180E and U+200B, which are not JavaScript whitespace.
-const WHITESPACE: [char; 28] = [
-    '\u{9}', '\u{A}', '\u{B}', '\u{C}', '\u{D}', '\u{20}', '\u{85}', '\u{A0}', '\u{1680}',
-    '\u{180E}', '\u{2000}', '\u{2001}', '\u{2002}', '\u{2003}', '\u{2004}', '\u{2005}', '\u{2006}',
-    '\u{2007}', '\u{2008}', '\u{2009}', '\u{200A}', '\u{200B}', '\u{2028}', '\u{2029}', '\u{202F}',
-    '\u{205F}', '\u{3000}', '\u{FEFF}',
+/// One part of a character mix: its weight, and the characters it draws from, evenly.
+type Part = (u32, &'static [RangeInclusive<char>]);
+
+/// The BMP characters of [`js_char`] in their weights, then any BMP character (the last part, for
+/// [`bmp_string`] only). The third part lists the JavaScript whitespace set (what
+/// `String.prototype.trim` removes) and its neighbors U+0085, U+180E and U+200B, which are not
+/// JavaScript whitespace.
+#[expect(
+    clippy::single_range_in_vec_init,
+    reason = "a part is a list of ranges, and the private use area is one range"
+)]
+static BMP_PARTS: [Part; 7] = [
+    (6, &['a'..='z', 'A'..='Z', '0'..='9']),
+    (1, &['"'..='"', '\\'..='\\']),
+    (
+        2,
+        &[
+            '\u{9}'..='\u{D}',
+            '\u{20}'..='\u{20}',
+            '\u{85}'..='\u{85}',
+            '\u{A0}'..='\u{A0}',
+            '\u{1680}'..='\u{1680}',
+            '\u{180E}'..='\u{180E}',
+            '\u{2000}'..='\u{200B}',
+            '\u{2028}'..='\u{2029}',
+            '\u{202F}'..='\u{202F}',
+            '\u{205F}'..='\u{205F}',
+            '\u{3000}'..='\u{3000}',
+            '\u{FEFF}'..='\u{FEFF}',
+        ],
+    ),
+    (1, &['\u{0}'..='\u{1F}', '\u{7F}'..='\u{7F}']),
+    (1, &['é'..='é', '世'..='世']),
+    (1, &['\u{E000}'..='\u{F8FF}']),
+    (1, &['\u{0}'..='\u{D7FF}', '\u{E000}'..='\u{FFFF}']),
 ];
+
+/// The draws per unit of weight: at least the size of the largest part (any BMP character,
+/// 63 488), so every character of a part can come up.
+const SLOTS: u32 = 1 << 16;
+
+/// One character of `parts`. A single integer draw mapped through the table, not a union of
+/// strategies: a 400 000-character [`bmp_string`] holds one small value tree per character.
+fn mix(parts: &'static [Part]) -> impl Strategy<Value = char> + Clone {
+    let draws: u32 = parts.iter().map(|&(weight, _)| weight * SLOTS).sum();
+    (0..draws).prop_map(move |n| pick(parts, n))
+}
+
+/// The character of `draw`: the parts take `weight * SLOTS` draws each, in order, and a part
+/// gives its characters in turn. Draw 0 is `'a'`, where a shrunk character ends.
+fn pick(parts: &[Part], draw: u32) -> char {
+    let mut n = draw;
+    let len =
+        |range: &RangeInclusive<char>| u32::from(*range.end()) - u32::from(*range.start()) + 1;
+    for &(weight, ranges) in parts {
+        if n < weight * SLOTS {
+            let mut k = n % ranges.iter().map(len).sum::<u32>();
+            for range in ranges {
+                if k < len(range) {
+                    let code = u32::from(*range.start()) + k;
+                    return char::from_u32(code).expect("no range holds a surrogate");
+                }
+                k -= len(range);
+            }
+        }
+        n -= weight * SLOTS;
+    }
+    panic!("draw {draw} is past the end of the mix")
+}
 
 /// Object keys a strategy never gives: `__proto__` (RD-24 has its own vector cases) and the
 /// marker keys of the strict JSON encoding.
 const RESERVED_KEYS: [&str; 4] = ["__proto__", "$utf16", "$f64", "$repeat"];
-
-/// The characters of [`js_char`] that are in the BMP, in their weights.
-fn bmp_mix() -> impl Strategy<Value = char> + Clone {
-    prop_oneof![
-        6 => prop_oneof![
-            prop::char::range('a', 'z'),
-            prop::char::range('A', 'Z'),
-            prop::char::range('0', '9'),
-        ],
-        1 => prop::sample::select(vec!['"', '\\']),
-        1 => prop_oneof![prop::char::range('\u{0}', '\u{1F}'), Just('\u{7F}')],
-        2 => prop::sample::select(WHITESPACE.to_vec()),
-        1 => prop::sample::select(vec!['é', '世']),
-        1 => prop::char::range('\u{E000}', '\u{F8FF}'),
-    ]
-}
 
 /// One character: a weighted mix of ASCII letters and digits, `"` and `\`, U+0000 to U+001F,
 /// U+007F, the JavaScript whitespace set and its neighbors, BMP letters, the private use area
 /// U+E000 to U+F8FF, characters outside the BMP, and any `char`.
 pub(crate) fn js_char() -> impl Strategy<Value = char> + Clone {
     prop_oneof![
-        12 => bmp_mix(),
+        12 => mix(&BMP_PARTS[..BMP_PARTS.len() - 1]),
         2 => prop::sample::select(vec!['\u{1F600}', '\u{1D11E}']),
         1 => any::<char>(),
     ]
@@ -52,13 +97,10 @@ pub(crate) fn js_string(max_len: usize) -> impl Strategy<Value = String> + Clone
 }
 
 /// A string of `len` characters, all in the BMP, so its UTF-16 length is its length in
-/// characters: the characters of [`js_char`] without those outside the BMP, and any BMP `char`.
+/// characters: the characters of [`js_char`] without those outside the BMP, and any BMP `char`
+/// (weight 1 against 12). Fast enough for strings of several hundred thousand characters.
 pub(crate) fn bmp_string(len: Range<usize>) -> impl Strategy<Value = String> + Clone {
-    let bmp_char = prop_oneof![
-        12 => bmp_mix(),
-        1 => prop::char::range('\u{0}', '\u{FFFF}'),
-    ];
-    prop::collection::vec(bmp_char, len).prop_map(String::from_iter)
+    prop::collection::vec(mix(&BMP_PARTS), len).prop_map(String::from_iter)
 }
 
 /// An object key: array-index-like keys (`"0"` to `"20"`, `"4294967294"`, `"4294967295"`, and
@@ -135,7 +177,7 @@ mod tests {
     use proptest::prelude::*;
     use serde_json::Value;
 
-    use super::{bmp_string, js_string, json_value, number, object_key};
+    use super::{BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick};
     use crate::test_support::config;
 
     const RESERVED: [&str; 4] = ["__proto__", "$utf16", "$f64", "$repeat"];
@@ -160,6 +202,28 @@ mod tests {
                 0
             }
             _ => 0,
+        }
+    }
+
+    /// Every draw of the whole mix: each part gets `weight * SLOTS` draws, every character of a
+    /// part comes up, no draw leaves its part, and no character is outside the BMP.
+    #[test]
+    fn the_mix_gives_each_part_its_weight_and_every_character() {
+        let mut n = 0;
+        for &(weight, ranges) in &BMP_PARTS {
+            let mut seen = std::collections::BTreeSet::new();
+            for _ in 0..weight * SLOTS {
+                let c = pick(&BMP_PARTS, n);
+                assert!(
+                    ranges.iter().any(|r| r.contains(&c)),
+                    "draw {n}: {c:?} not in {ranges:?}"
+                );
+                assert!(u32::from(c) <= 0xFFFF, "draw {n}: {c:?}");
+                seen.insert(c);
+                n += 1;
+            }
+            let size: usize = ranges.iter().map(|r| r.clone().count()).sum();
+            assert_eq!(seen.len(), size, "{ranges:?}");
         }
     }
 
