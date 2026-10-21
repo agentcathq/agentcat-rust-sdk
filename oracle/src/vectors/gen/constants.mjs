@@ -12,7 +12,7 @@ const CHANNEL = "handle param descriptions name the delivery channel > ";
 // The TS tests of src/tests/constants.test.ts that pin each export, by export name. A test
 // that pins several exports appears under each of them. Tests of AGENTCAT_SOURCE and
 // DIAGNOSTICS_SCOPE_NAME are not linked (exporters and diagnostics: second pass). The
-// value-contract test also runs the pattern against inputs; Task 8 claims it in handles.json.
+// value-contract test also runs the pattern against inputs, so handles.json (valid:*) claims it.
 const TS_TESTS = {
   AGENTCAT_CUSTOM_EVENT_TYPE: [k("brand constants (wire literals) > emits the agentcat custom event type on the wire")],
   MCP_SESSION_KEY: [
@@ -36,23 +36,14 @@ const CONTEXT = "Looking for a tool that converts spreadsheets to charts.";
 
 // Fixed inputs for the exported functions of constants.ts and tools.ts, by
 // export name. A new function export there without an entry fails the run, so it
-// cannot be left out unnoticed. The functions of handles.ts belong to later
-// vector sets; only its plain values and buildMintBackText are taken here.
+// cannot be left out unnoticed. The functions of handles.ts are in handles.json;
+// only its plain values are taken here.
 const FUNCTION_CASES = {
   // constants.ts
   mintBackSessionLine: (fn) => [{ input: SESSION_ID, value: fn(SESSION_ID) }],
   // tools.ts
   getReportMissingToolDescriptor: (fn) => [{ input: null, value: fn() }],
   handleReportMissing: (fn) => [{ input: { context: CONTEXT }, value: fn({ context: CONTEXT }) }],
-};
-
-// One buildMintBackText case per resolution kind (and hook mode), with fixed IDs.
-const MINT_BACK_RESOLUTIONS = {
-  minted: { sessionId: SESSION_ID, sessionSource: "minted", hookMode: false },
-  invalid: { sessionId: "", sessionSource: "invalid", hookMode: false },
-  supplied: { sessionId: SESSION_ID, sessionSource: "supplied", hookMode: false },
-  foreign: { sessionId: "", sessionSource: "foreign", hookMode: false },
-  hook: { sessionId: "", sessionSource: "hook", hookMode: true },
 };
 
 export async function generate() {
@@ -71,10 +62,6 @@ export async function generate() {
       }
       for (const c of FUNCTION_CASES[name](value)) cases.push({ name, input: c.input, value: c.value });
     }
-  }
-  const { buildMintBackText } = core.handles;
-  for (const [kind, input] of Object.entries(MINT_BACK_RESOLUTIONS)) {
-    cases.push({ name: `mintBack:${kind}`, input, value: buildMintBackText(input) });
   }
   return { cases: cases.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0)) };
 }

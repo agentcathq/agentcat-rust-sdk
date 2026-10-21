@@ -7,6 +7,21 @@ import { lock } from "./paths.mjs";
 
 const core = await loadCore();
 
+/** What the oracle.* handle wrappers write in place of a minted (random) session ID. */
+const MINTED = "<minted>";
+
+/**
+ * `result` ({sessionId, sessionSource, ...}) with a minted session ID replaced by MINTED, after
+ * checking that it is a valid session ID; any other result as it is.
+ */
+function maskMinted(result) {
+  if (result.sessionSource !== "minted") return result;
+  if (!core.handles.isValidSessionId(result.sessionId)) {
+    throw new Error(`minted session ID ${JSON.stringify(result.sessionId)} is not valid`);
+  }
+  return { ...result, sessionId: MINTED };
+}
+
 export const functions = {
   "JSON.stringify": (...args) => JSON.stringify(...args),
   // The oracle itself: the TS commit it runs, and fixed replies for testing a client.
@@ -27,4 +42,26 @@ export const functions = {
     core.KSUID.withPrefix(prefix).fromParts(timeMs, Buffer.from(payloadHex, "hex")),
   "tokenEstimate.estimateInputTokens": (...args) => core.tokenEstimate.estimateInputTokens(...args),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
+  // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
+  "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),
+  "handles.isValidSessionId": (value) => core.handles.isValidSessionId(value),
+  "handles.extractHandle": (args, name) => core.handles.extractHandle(args, name),
+  "handles.buildMintBackText": (res) => core.handles.buildMintBackText(res),
+  "handles.buildStructuredMintBack": (res) => core.handles.buildStructuredMintBack(res),
+  "handles.buildHandleTags": (res, protocolVersion) => core.handles.buildHandleTags(res, protocolVersion),
+  // resolveHandles for a tool call with `args` (absent: undefined). Hook mode is a configured
+  // resolveSessionId; resolveHandles never calls it (the caller does, then sessionFromHookValue).
+  "oracle.resolveHandles": ({ args, hookMode, agentTracking, sessionParamIsOurs }) =>
+    maskMinted(
+      core.handles.resolveHandles(
+        { enableAgentTracking: agentTracking, ...(hookMode && { resolveSessionId: () => null }) },
+        "proj_1",
+        { params: { name: "tool", arguments: args } },
+        undefined,
+        sessionParamIsOurs,
+      ),
+    ),
+  // sessionFromHookValue for a hook value (absent: null) and a project ID (absent: undefined).
+  "oracle.sessionFromHookValue": ({ value, projectId }) =>
+    maskMinted(core.handles.sessionFromHookValue(value ?? null, projectId)),
 };

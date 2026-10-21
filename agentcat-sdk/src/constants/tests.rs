@@ -13,7 +13,7 @@ const NOT_PORTED: [&str; 4] = [
     "DEFAULT_DIAGNOSTICS_TOKEN",
 ];
 
-/// The TS function cases and the `mintBack:*` cases; every other case is a plain constant.
+/// The TS function cases; every other case is a plain constant.
 const FUNCTION_CASES: [&str; 3] = [
     "mintBackSessionLine",
     "getReportMissingToolDescriptor",
@@ -99,7 +99,7 @@ fn every_ts_constant_is_ported_or_listed() {
     let plain: Vec<String> = vectors::cases("constants")
         .iter()
         .map(|c| vectors::name(c).to_owned())
-        .filter(|n| !n.starts_with("mintBack:") && !FUNCTION_CASES.contains(&n.as_str()))
+        .filter(|n| !FUNCTION_CASES.contains(&n.as_str()))
         .collect();
     for name in &plain {
         let ported = PORTED.iter().any(|(p, _)| p == name);

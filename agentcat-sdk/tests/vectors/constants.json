@@ -193,51 +193,6 @@
       }
     },
     {
-      "name": "mintBack:foreign",
-      "input": {
-        "sessionId": "",
-        "sessionSource": "foreign",
-        "hookMode": false
-      },
-      "value": null
-    },
-    {
-      "name": "mintBack:hook",
-      "input": {
-        "sessionId": "",
-        "sessionSource": "hook",
-        "hookMode": true
-      },
-      "value": null
-    },
-    {
-      "name": "mintBack:invalid",
-      "input": {
-        "sessionId": "",
-        "sessionSource": "invalid",
-        "hookMode": false
-      },
-      "value": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
-    },
-    {
-      "name": "mintBack:minted",
-      "input": {
-        "sessionId": "ses_0123456789abcdefghijklmnopq",
-        "sessionSource": "minted",
-        "hookMode": false
-      },
-      "value": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_0123456789abcdefghijklmnopq\nThis is the first-call issuance described in this tool's session_id parameter description."
-    },
-    {
-      "name": "mintBack:supplied",
-      "input": {
-        "sessionId": "ses_0123456789abcdefghijklmnopq",
-        "sessionSource": "supplied",
-        "hookMode": false
-      },
-      "value": null
-    },
-    {
       "name": "mintBackSessionLine",
       "input": "ses_0123456789abcdefghijklmnopq",
       "value": "session_id: ses_0123456789abcdefghijklmnopq"

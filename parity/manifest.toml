@@ -799,7 +799,9 @@ reason = "constants.json case SESSION_ID_PARAM_DESCRIPTION; checked by agentcat-
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases valid:contract:start, valid:contract:ses-27-a, valid:contract:ses-25-a, valid:contract:restart, valid:contract:upper-start, each with TS's RegExp(SESSION_ID_PARAM_PATTERN) verdict in pattern; checked by agentcat-sdk::handles::tests::pattern_is_the_valid_shape_plus_the_sentinel (the verdict of every valid:* case is is_valid_session_id or the start sentinel) and agentcat-sdk::handles::tests::vectors_match_ts; the pattern and sentinel strings are constants.json cases SESSION_ID_PARAM_PATTERN and SESSION_START_SENTINEL, checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
@@ -2255,119 +2257,176 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > clamps a >200-char agent_id to exactly 200 chars in the tag only"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case tags:ts:clamps-500; checked by agentcat-sdk::handles::tests::vectors_match_ts (build_handle_tags borrows the resolution, so the tag cut cannot change the resolution's agent_id)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > omits agent and protocol keys when absent"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case tags:ts:omits-absent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > passes a normal agent_id through unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case tags:ts:normal-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > stamps sources, agent id, and protocol version"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case tags:ts:stamps-all; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > strips newlines from the agent_id tag"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case tags:ts:strips-newlines; checked by agentcat-sdk::handles::tests::vectors_match_ts (build_handle_tags borrows the resolution, so the tag cut cannot change the resolution's agent_id)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildMintBackText > hook mode never emits task instructions, even when hook-null minted"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:hook-mode-minted; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildMintBackText > task minted without agent tracking: same task-only block"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:minted-without-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildMintBackText > task minted: task-only block, no agent mention even when agent supplied"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:minted-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildMintBackText > task supplied -> null (nothing to announce, agent never mints)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:supplied; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > agent tracking off: task only, status active"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:supplied-without-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode never exposes session_id or status; supplied agent is echoed"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:hook-mode-minted-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode with agent tracking off: nothing echoable -> null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:hook-mode-without-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > steady state (both supplied): ids plus status active"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:supplied-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildStructuredMintBack > task minted + agent supplied: both ids, status issued"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:minted-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > derives deterministic session ids from id+project"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case derive:customer-abc+proj_1; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > derives without a project id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases derive:customer-abc, derive:customer-abc+proj_1; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > different project yields a different derived id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases derive:customer-abc+proj_1, derive:customer-abc+proj_2; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > does not trim its input"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases derive:space-x-space+p, derive:x+p; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns any non-empty string; validation happens in resolveHandles"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case extract:ts:any-string; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases extract:ts:spaced-ses_x, extract:ts:empty, extract:ts:spaces, extract:ts:number, extract:ts:args-undefined, extract:ts:args-null, extract:ts:args-string; checked by agentcat-sdk::handles::tests::vectors_match_ts (rmcp's tool arguments are an object or absent; the test passes a non-object args as None, which is what TS reads off it)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > mints session ids with the ses_ prefix"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::tests::new_ids_have_the_shape"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|handle primitives > pins derived session ids to their golden values"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases derive:customer-abc+proj_1, derive:customer-abc; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: never echoes session state, which is the customer's"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:foreign-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: says nothing when agent_id is not in play either"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases mint-back:ts:foreign, structured:ts:foreign; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: still echoes agent_id, which AgentCat did inject"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:foreign-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid + agent supplied: agent_id rides along with the unrecognized status"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:invalid-with-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: corrects the agent without issuing a replacement"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:invalid; checked by agentcat-sdk::handles::tests::vectors_match_ts (the text equals TS's, so it holds no session ID)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: offers an escape to an agent that was never issued one"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case mint-back:ts:invalid; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: structured mirror carries status unrecognized but no session_id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case structured:ts:invalid; checked by agentcat-sdk::handles::tests::vectors_match_ts (assert_js_eq compares JSON.stringify texts, so the key order counts)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invokeSessionHook > contains a rejection"
@@ -2387,47 +2446,68 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > accepts an ID this SDK actually mints"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::handles::tests::new_ids_have_the_shape"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > accepts the test helper's IDs"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:sid-parent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects customer value"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:customer-value; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects empty"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:empty; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects inner whitespace"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:inner-whitespace; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects no prefix"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:no-prefix; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects non-base62 body"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:non-base62-body; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects prefix only"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:prefix-only; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects too long"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:too-long; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects too short"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:too-short; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > rejects wrong prefix"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case valid:ts:wrong-prefix; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating"
@@ -2447,19 +2527,27 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases resolve:ts:hook-agent-supplied, resolve:ts:hook-agent-omitted; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > ignores agent-supplied session_id — the hook wins"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:hook-ignores-session; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > returns a provisional resolution: empty id, source 'hook', hookMode on"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:hook-provisional; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > accepts a well-formed supplied session_id verbatim"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:well-formed; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > agent tracking is OFF by default — omitted option resolves no agent id"
@@ -2467,87 +2555,129 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > enableAgentTracking:false resolves no agent id at all"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:tracking-off; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: sessionless regardless of what the agent sent"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases resolve:ts:foreign-with-value, resolve:ts:foreign-without-value; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: start is the customer's value, never a sentinel"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:foreign-start; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > hook mode wins over foreign: arguments are never read"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:hook-over-foreign; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > mints the task but never the agent when nothing supplied (agent tracking on)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:mint-no-agent; checked by agentcat-sdk::handles::tests::vectors_match_ts (a minted ID is checked valid, then masked as <minted> on both sides)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases resolve:ts:near-sentinel-restart, resolve:ts:near-sentinel-start-space-now, resolve:ts:near-sentinel-starts, resolve:ts:near-sentinel-star-space-t; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > never stores the raw rejected value"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:secret; checked by agentcat-sdk::handles::tests::vectors_match_ts (the whole resolution equals TS's, so it holds no part of the value)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > rejects a malformed supplied session_id: sessionless, source invalid"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:malformed; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"  start  \" mints"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:sentinel-spaces-start-spaces; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \" START\\t\" mints"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:sentinel-space-START-tab; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"START\" mints"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:sentinel-START; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"Start\" mints"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:sentinel-Start; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"sTaRt\" mints"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:sentinel-sTaRt; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel resolves exactly like omission: fresh mint, source minted"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:start; checked by agentcat-sdk::handles::tests::vectors_match_ts (it resolves each minted case a second time and checks the two IDs differ)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > still mints when nothing is supplied on our own param"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:still-mints; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > subagent flow: supplied task + omitted agent leaves the agent unresolved"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:subagent; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > uses supplied handles verbatim"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case resolve:ts:supplied-verbatim; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|sessionFromHookValue > derives deterministically from the hook value + project"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases hook-value:ts:customer-42, derive:customer-42+proj_1; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|sessionFromHookValue > mints a fresh id per null — silent mint, never 'supplied'"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case hook-value:ts:null; checked by agentcat-sdk::handles::tests::vectors_match_ts (it computes each minted case a second time and checks the two IDs differ)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|sessionFromHookValue > treats a whitespace-only value as null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json case hook-value:ts:spaces; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|sessionFromHookValue > trims the value before deriving"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:handles.json"
+reason = "handles.json cases hook-value:ts:padded-corr-1, derive:corr-1+proj_1; checked by agentcat-sdk::handles::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle async operations in identify function"
