@@ -133,6 +133,9 @@ jobs:
       - run: node oracle/src/vectors/run.mjs --check
       - run: node oracle/src/parity/list-tests.mjs --check
       - run: node harness/src/dump-contract.mjs --check
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest
       - run: cargo run -q -p xtask -- parity
 
   all-green:
