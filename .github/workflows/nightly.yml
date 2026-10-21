@@ -1,15 +1,22 @@
 name: Nightly
 
 # GitHub schedules and dispatches only workflows on the default branch (main), so the schedule starts
-# once this file reaches main. The push trigger runs it on rewrite when the oracle, the harness or this
-# file change (R-14); a push run prints the findings and fails, but never opens an issue.
+# once this file reaches main. The push trigger runs it on rewrite when the oracle, the harness or the
+# workflow files change (R-14). A scheduled or dispatched run fails on drift and opens or updates the
+# `ts-drift` issue. A push run never opens an issue: it reports drift as a warning and fails only when
+# a job crashes (the drift job itself, or the Rust suite).
 on:
   schedule:
     - cron: "0 6 * * *"
   workflow_dispatch:
   push:
     branches: [rewrite]
-    paths: [".github/workflows/nightly.yml", "oracle/**", "harness/**"]
+    paths:
+      - ".github/workflows/nightly.yml"
+      - ".github/actions/**"
+      - "scripts/ts-drift-issue.sh"
+      - "oracle/**"
+      - "harness/**"
 
 permissions:
   contents: read
@@ -22,9 +29,18 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  # Builds TS `main`, regenerates the vectors and the test list, compares them with the committed
-  # files, and runs basic.json twice (A/A) on each TS server. Nothing here contacts AgentCat: the
-  # harness egress guard refuses every host except localhost.
+  # Runs basic.json on each TS server at the pinned commit first, before any TS main code runs in
+  # this job. Then builds TS `main`, regenerates the vectors and the test list and compares them with
+  # the committed files, runs basic.json twice (A/A) on each TS server at main, and diffs the pinned
+  # runs against the first main runs. A failure at TS main is drift; a failure at the pinned commit
+  # fails the job.
+  #
+  # The TS reference servers get the local mock as their API URL (AGENTCAT_API_URL and the apiBaseUrl
+  # option). They, the vector generators and `vitest list` run under the egress guard
+  # (oracle/src/egress-guard.mjs), which refuses non-loopback fetch, TCP and TLS connections, DNS
+  # lookups and UDP sends in those Node processes and in the Node processes vitest starts. It does
+  # not cover worker threads or other runtimes (workerd), and the clone, `pnpm install` and build of
+  # TS main run unguarded because they need the network. This job saves no cache.
   drift:
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -45,16 +61,25 @@ jobs:
           fi
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "pinned=$(jq -r .sha oracle/oracle.lock)" >> "$GITHUB_OUTPUT"
+      # Read-only: TS main code runs later in this job with write access to oracle/.cache.
       - uses: ./.github/actions/node-oracle
         with:
-          key-suffix: -main-${{ steps.main.outputs.sha }}
+          cache: restore
+      - name: Runs of basic.json on both TS servers at the pinned commit
+        run: |
+          node oracle/src/fetch-ts.mjs
+          for server in ts-v1 ts-v2; do
+            node harness/src/driver.mjs harness/scenarios/basic.json "$server-pinned" stdio \
+              -- node --import ./harness/src/egress-guard.mjs "harness/src/servers/$server.mjs"
+          done
       - name: Regenerate the vectors and the test list at TS main
         id: generate
         continue-on-error: true
         env:
           ORACLE_SHA: ${{ steps.main.outputs.sha }}
         run: |
-          node oracle/src/vectors/run.mjs --out "$RUNNER_TEMP/vectors"
+          node oracle/src/fetch-ts.mjs
+          node --import ./oracle/src/egress-guard.mjs oracle/src/vectors/run.mjs --out "$RUNNER_TEMP/vectors"
           node oracle/src/parity/list-tests.mjs --out "$RUNNER_TEMP/parity"
       - name: Compare with the committed files
         id: compare
@@ -77,6 +102,34 @@ jobs:
               "harness/out/basic.$server-aa2.stdio.normalized.json" \
               --rulings harness/rulings.json
           done
+      - name: Diff the pinned runs against TS main
+        id: harness
+        continue-on-error: true
+        run: |
+          report="$RUNNER_TEMP/harness.md"
+          : > "$report"
+          for server in ts-v1 ts-v2; do
+            main="harness/out/basic.$server-aa1.stdio.normalized.json"
+            if [ ! -f "$main" ]; then
+              echo "- basic.json on $server: no run at TS main to compare with." >> "$report"
+              continue
+            fi
+            code=0
+            node harness/src/diff.mjs "harness/out/basic.$server-pinned.stdio.normalized.json" "$main" \
+              --rulings harness/rulings.json > "$RUNNER_TEMP/diff-$server.txt" 2>&1 || code=$?
+            cat "$RUNNER_TEMP/diff-$server.txt"
+            if [ "$code" -ne 0 ]; then
+              {
+                echo "basic.json on $server, pinned against TS main (diff.mjs exit $code; at most 50 lines):"
+                echo
+                echo '```'
+                grep -E '^(DIFF|UNUSED RULING) ' "$RUNNER_TEMP/diff-$server.txt" | head -n 50 || true
+                echo '```'
+                echo
+              } >> "$report"
+            fi
+          done
+          if [ -s "$report" ]; then exit 1; fi
       - name: Summarize
         id: summary
         env:
@@ -85,6 +138,7 @@ jobs:
           GENERATE: ${{ steps.generate.outcome }}
           COMPARE: ${{ steps.compare.outcome }}
           AA: ${{ steps.aa.outcome }}
+          HARNESS: ${{ steps.harness.outcome }}
         run: |
           out="$RUNNER_TEMP/summary.md"
           : > "$out"
@@ -96,6 +150,9 @@ jobs:
           fi
           if [ "$AA" != success ]; then
             echo "- The A/A run of basic.json on a TS server failed at TS main." >> "$out"
+          fi
+          if [ "$HARNESS" != success ]; then
+            { echo; echo "Harness runs at the pinned commit against TS main:"; echo; cat "$RUNNER_TEMP/harness.md"; } >> "$out"
           fi
           if [ -s "$out" ]; then
             { printf 'TS main `%s` against the pinned `%s`.\n\n' "$MAIN_SHA" "$PINNED_SHA"; cat "$out"; } > "$out.full"
@@ -131,7 +188,8 @@ jobs:
         env:
           PROPTEST_CASES: "10000"
 
-  # Opens or updates the one open `ts-drift` issue. On a push run it only prints the findings.
+  # Opens or updates the one open `ts-drift` issue (scheduled and dispatched runs). A push run only
+  # prints the findings: drift is a warning there, a crashed job a failure.
   report:
     if: always()
     needs: [drift, rust]
@@ -154,23 +212,37 @@ jobs:
         run: |
           out="$RUNNER_TEMP/issue.md"
           : > "$out"
+          crashed=0
           if [ -n "$DRIFT_SUMMARY" ]; then
             printf '%s\n' "$DRIFT_SUMMARY" >> "$out"
-          elif [ "$DRIFT_RESULT" != success ]; then
-            echo "- The drift job ended with: $DRIFT_RESULT" >> "$out"
+          fi
+          if [ "$DRIFT_RESULT" != success ]; then
+            printf '\n- The drift job ended with: %s\n' "$DRIFT_RESULT" >> "$out"
+            crashed=1
           fi
           if [ "$RUST_RESULT" != success ]; then
             printf '\n- The Rust suite (PROPTEST_CASES=10000, macOS, Windows and Linux) ended with: %s\n' "$RUST_RESULT" >> "$out"
-            printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$out"
+            crashed=1
           fi
           if [ ! -s "$out" ]; then
             echo "no drift and no failure: no issue opened"
             exit 0
           fi
-          cat "$out"
-          if [ "$EVENT" = push ]; then
-            echo "push run: no issue opened"
-          else
-            scripts/ts-drift-issue.sh "$out"
+          if [ "$crashed" = 1 ] && [ -z "$DRIFT_SUMMARY" ]; then
+            printf 'Run: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> "$out"
           fi
+          cat "$out" >> "$GITHUB_STEP_SUMMARY"
+          # The findings quote upstream test titles: print them with workflow commands turned off.
+          stop="$(openssl rand -hex 16)"
+          echo "::stop-commands::$stop"
+          cat "$out"
+          echo "::$stop::"
+          if [ "$EVENT" = push ]; then
+            if [ -n "$DRIFT_SUMMARY" ]; then
+              echo "::warning title=TS drift::TS main differs from the pinned commit; the run summary lists the findings. A push run opens no issue."
+            fi
+            echo "push run: no issue opened"
+            exit "$crashed"
+          fi
+          scripts/ts-drift-issue.sh "$out"
           exit 1

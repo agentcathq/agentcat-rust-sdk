@@ -1,8 +1,9 @@
 // The egress guard. Preloaded with `node --import <this file>` into every TS reference server
-// (harness/src/egress-guard.mjs re-exports it) and, through NODE_OPTIONS, into the `vitest list`
-// run of oracle/src/parity/list-tests.mjs and every Node process it starts. It refuses outbound
-// connections to anything but loopback, so these runs cannot reach AgentCat production (events,
-// OTLP diagnostics, exporters) even when the TS code ignores the local API URL.
+// (harness/src/egress-guard.mjs re-exports it) and into the nightly's vector generators at TS main,
+// and, through NODE_OPTIONS, into the `vitest list` run of oracle/src/parity/list-tests.mjs and
+// every Node process it starts. It refuses outbound connections to anything but loopback, so these
+// runs cannot reach AgentCat production (events, OTLP diagnostics, exporters) even when the TS code
+// ignores the local API URL.
 //
 // It patches, in the process that loads it:
 // - globalThis.fetch: a URL whose host is not 127.0.0.1, localhost or [::1] rejects.
