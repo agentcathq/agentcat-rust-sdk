@@ -41,6 +41,8 @@ export const functions = {
   "ksuid.fromParts": (prefix, timeMs, payloadHex) =>
     core.KSUID.withPrefix(prefix).fromParts(timeMs, Buffer.from(payloadHex, "hex")),
   "tokenEstimate.estimateInputTokens": (...args) => core.tokenEstimate.estimateInputTokens(...args),
+  "tokenEstimate.estimateOutputTokens": (...args) => core.tokenEstimate.estimateOutputTokens(...args),
+  "tokenEstimate.estimateTokens": (...args) => core.tokenEstimate.estimateTokens(...args),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
   // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
   "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),

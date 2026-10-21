@@ -3460,159 +3460,237 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > never throws: a toJSON that throws yields an omitted field"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a throwing toJSON is code; a serde_json::Value cannot hold it"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > omits the field for absent arguments"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:null; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > omits the field when the arguments cannot be serialized"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a circular value cannot be a serde_json::Value"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"html\":\"<a>&</a>\"} -> 6"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{\"html\":\"<a>&</a>\"}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"ids\":[1,2,3],\"opts\":{\"deep\":true,\"n\":null}} -> 13"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{\"ids\":[1,2,3],\"opts\":{\"deep\":true,\"n\":null}}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"name\":\"café\"} -> 5"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{\"name\":\"café\"}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"q\":\"hello\"} -> 4"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{\"q\":\"hello\"}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {\"t\":\"你好\"} -> 4"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{\"t\":\"你好\"}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > {} -> 1"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case input:{}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > falls back to the whole response when there is no content list"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:no-content-list; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > ignores blocks whose text is not a string"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:non-string-text-blocks; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > never throws: a content getter that throws yields an omitted field"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a throwing getter is code; a serde_json::Value cannot hold it"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > omits the field for an absent response"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:null; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":null} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[],\"structuredContent\":null}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[],\"structuredContent\":{\"result\":\"ok\"}} -> 5"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[],\"structuredContent\":{\"result\":\"ok\"}}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[]} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}],\"structuredContent\":{\"result\":\"ok\"}} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}],\"structuredCo#103; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}]} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"image\",\"data\":\"QUJD\",\"mimeType\":\"image/png\"}]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"blob\":\"QUJD\"}}]} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"blob\":\"QUJD\"}}]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"text\":\"resource body\"}}]} -> 4"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"resource\",\"resource\":{\"uri\":\"file:///a\",\"text\":\"resource bo#87; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"\"}]} -> 0"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"\"}]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"abcd\"},{\"type\":\"text\",\"text\":\"e\"}]} -> 2"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"abcd\"},{\"type\":\"text\",\"text\":\"e\"}]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hello world\"}]} -> 4"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"hello world\"}]}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"isError\":true} -> 1"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"isError\":true}; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"structuredContent\":{\"big\":\"yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy\"}} -> 1"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"hi\"}],\"structuredContent\":{\"big\":\"yyyyyyyyyyy#1072; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateOutputTokens (content blocks) > {\"content\":[{\"type\":\"text\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\"}]} -> 1171"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case output:{\"content\":[{\"type\":\"text\",\"text\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx#4135; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 0 -> 0 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:0; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 1 -> 1 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:1; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 13 -> 4 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:13; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 4096 -> 1171 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:4096; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 7 -> 2 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:7; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > bytes 7516192765 -> 2147483647 tokens"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case bytes:7516192765; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateTokens > pins the divisor"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case divisor; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"\" -> 0 bytes"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case utf8:\"\"; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"\\ud83d\" -> 3 bytes"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "a lone surrogate cannot be a Rust string"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"café\" -> 5 bytes"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case utf8:\"café\"; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"hello\" -> 5 bytes"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case utf8:\"hello\"; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"你好\" -> 6 bytes"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case utf8:\"你好\"; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|utf8ByteLength > \"😀\" -> 4 bytes"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:tokens.json"
+reason = "tokens.json case utf8:\"😀\"; checked by agentcat-sdk::tokens::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/tracing-initialization.test.ts|Tracing Initialization Tests > should not create duplicate events when track() is called multiple times"
