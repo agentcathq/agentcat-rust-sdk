@@ -43,6 +43,7 @@ export const functions = {
   "tokenEstimate.estimateInputTokens": (...args) => core.tokenEstimate.estimateInputTokens(...args),
   "tokenEstimate.estimateOutputTokens": (...args) => core.tokenEstimate.estimateOutputTokens(...args),
   "tokenEstimate.estimateTokens": (...args) => core.tokenEstimate.estimateTokens(...args),
+  "truncation.normalize": (...args) => core.truncation.normalize(...args),
   "validation.validateTags": (tags) => captureLogs(core, () => core.validation.validateTags(tags)),
   // Session handles. A resolution is TS's HandleResolution, in its camelCase form.
   "handles.deriveSessionId": (id, projectId) => core.handles.deriveSessionId(id, projectId),

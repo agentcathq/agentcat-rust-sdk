@@ -3702,115 +3702,171 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should leave objects within breadth limit unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:within-breadth; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should limit array elements to maxBreadth"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:wide-array; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should limit object properties to maxBreadth"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:wide-object; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should allow same object in different branches (not a cycle)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect circular array references"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect circular object references"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - circular reference detection > should detect deeply nested circular references"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should collapse arrays beyond max depth to '[Array]'"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:array-depth-3; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should collapse objects beyond max depth to '[Object]'"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:object-depth-5; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should handle depth=0 by collapsing top-level objects"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:array-depth-0; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - depth limiting > should not collapse primitives regardless of depth"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:number-depth-0; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert BigInt to string marker"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert Date to ISO string"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "no Date values reach the Rust pipeline"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert Infinity to string marker"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert NaN to string marker"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert anonymous functions"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert functions to descriptive string"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert symbols"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should convert undefined to string marker"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should handle Invalid Date gracefully"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "no Date values reach the Rust pipeline"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through booleans unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:true; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through null as null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:null; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - non-serializable values > should pass through numbers unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:number; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should leave short strings unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:short-string; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should leave strings at exactly maxStringLength unchanged"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:exact-string; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - string truncation > should truncate strings exceeding maxStringLength with '...'"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:normalize.json"
+reason = "normalize.json case test:long-string; checked by agentcat-sdk::pipeline::normalize::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - undefined property handling > should omit undefined object properties (matching JSON.stringify behavior)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - undefined property handling > should still convert top-level undefined to marker"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "the input holds a value serde_json cannot hold (undefined, NaN, Infinity, BigInt, symbol, function) or a shared or circular reference"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - edge cases > should handle empty event with minimal fields"

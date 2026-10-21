@@ -9,6 +9,7 @@
 //! `undefined`) are absent keys.
 use serde_json::{Map, Value};
 
+pub(crate) mod normalize;
 pub(crate) mod tags;
 
 /// The event as TS holds it in memory (see the module docs).
