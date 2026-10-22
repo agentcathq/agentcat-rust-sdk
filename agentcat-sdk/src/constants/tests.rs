@@ -2,6 +2,7 @@
 use serde_json::{Map, Value};
 
 use super::*;
+use crate::js;
 use crate::test_support::{assert_js_eq, vectors};
 
 /// TS exports that stay out of the crate for now (exporters and diagnostics: second pass, R04,
@@ -149,5 +150,30 @@ fn get_more_tools_result_matches_ts() {
         &get_more_tools_result(),
         &expected("handleReportMissing"),
         "handleReportMissing",
+    );
+}
+
+#[test]
+fn get_more_tools_result_text_matches_ts() {
+    let value = expected("handleReportMissing");
+    assert_js_eq(
+        &Value::from(GET_MORE_TOOLS_RESULT_TEXT),
+        &value["content"][0]["text"],
+        "handleReportMissing text",
+    );
+}
+
+/// The case's `logs` are the lines `handleReportMissing` wrote for its input; the length TS
+/// reads off the `context` string is its length in UTF-16 units.
+#[test]
+fn report_missing_log_line_matches_ts() {
+    let case = case("handleReportMissing");
+    let context = case["input"]["context"].as_str().unwrap_or_default();
+    let logs = case["logs"].as_array().cloned().unwrap_or_default();
+    assert_eq!(logs.len(), 1, "handleReportMissing logs one line: {logs:?}");
+    assert_js_eq(
+        &Value::from(report_missing_log_line(js::utf16_len(context))),
+        &logs[0],
+        "handleReportMissing log",
     );
 }

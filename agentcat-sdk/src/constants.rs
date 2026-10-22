@@ -1,6 +1,7 @@
 //! The agent-facing strings and tag names of the TS SDK, equal to it character for character:
 //! agents read the parameter descriptions and the mint-back text, and the dashboard keys on the
-//! tag names. `constants/tests.rs` checks each one against `tests/vectors/constants.json`.
+//! tag names; also the report-missing log line. `constants/tests.rs` checks each one against
+//! `tests/vectors/constants.json`.
 //! Not ported (exporters and diagnostics: second pass, R04, C05, RD-16): `AGENTCAT_SOURCE`,
 //! `DIAGNOSTICS_SCOPE_NAME`, `DEFAULT_DIAGNOSTICS_ENDPOINT`, `DEFAULT_DIAGNOSTICS_TOKEN`.
 use serde_json::{Value, json};
@@ -89,9 +90,18 @@ pub(crate) const SESSION_ID_PARAM: &str = "session_id";
 /// Name of the `agent_id` tool parameter; agents send it in tool arguments.
 pub(crate) const AGENT_ID_PARAM: &str = "agent_id";
 
+/// The text of the report-missing tool's result (B-046); agents read it.
+pub(crate) const GET_MORE_TOOLS_RESULT_TEXT: &str = "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future.";
+
 /// The text line that carries an issued `session_id` in a tool result.
 pub(crate) fn mint_back_session_line(session_id: &str) -> String {
     format!("session_id: {session_id}")
+}
+
+/// The log line of a call to the report-missing tool (B-046), as `handleReportMissing` writes it:
+/// `context_length` is the length TS reads off the `context` argument.
+pub(crate) fn report_missing_log_line(context_length: usize) -> String {
+    format!("Missing tool reported (context length: {context_length})")
 }
 
 /// The descriptor of the injected report-missing tool, as `getReportMissingToolDescriptor()`
@@ -125,7 +135,7 @@ pub(crate) fn get_more_tools_result() -> Value {
     json!({
         "content": [{
             "type": "text",
-            "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            "text": GET_MORE_TOOLS_RESULT_TEXT
         }]
     })
 }

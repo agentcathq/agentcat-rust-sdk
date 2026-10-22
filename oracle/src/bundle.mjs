@@ -17,7 +17,7 @@ import { bundleDir, tsDir } from "./paths.mjs";
 // First line of every bundle. Bump BUNDLE_FORMAT when the build options change,
 // so bundles cached under an unchanged SHA are rebuilt. The clone's path is in
 // it too: bundles embed source paths, so a cache restored elsewhere rebuilds.
-// The last part names the entry, so a change to CORE_MODULES rebuilds core.mjs.
+// The last part names the entry, so a change to CORE_MODULES or CORE_ENGINE_MODULES rebuilds core.mjs.
 const BUNDLE_FORMAT = 3;
 const stamp = (entry) => `// oracle bundle ${BUNDLE_FORMAT}, esbuild ${esbuildVersion}, ${tsDir()}, ${entry}\n`;
 
@@ -33,8 +33,11 @@ const CORE_MODULES = [
   "redaction",
   "logging",
 ];
+/** The engine namespaces of loadCore: `src/engine/<name>.ts` each (the tool-list pipeline and its state). */
+const CORE_ENGINE_MODULES = ["listWrap", "registry"];
 const CORE_ENTRY = [
   ...CORE_MODULES.map((name) => `export * as ${name} from "./src/modules/${name}.ts";`),
+  ...CORE_ENGINE_MODULES.map((name) => `export * as ${name} from "./src/engine/${name}.ts";`),
   'export { default as KSUID } from "./src/thirdparty/ksuid/index.js";',
 ].join("\n");
 
@@ -43,8 +46,8 @@ let core;
 
 /**
  * Imports the pure modules of the pinned TS SDK as one bundle, `<bundleDir>/core.mjs`: an object
- * with one namespace per name of CORE_MODULES and `KSUID`, the default export of
- * `src/thirdparty/ksuid/index.js`. Every namespace uses the same `logging` instance, whose log
+ * with one namespace per name of CORE_MODULES and CORE_ENGINE_MODULES, and `KSUID`, the default
+ * export of `src/thirdparty/ksuid/index.js`. Every namespace uses the same `logging` instance, whose log
  * file isolateLogFile (logs.mjs) has moved out of the developer's home.
  */
 export async function loadCore() {
@@ -60,7 +63,7 @@ export async function loadCore() {
 async function buildCore() {
   await ensureTs();
   const entry = { stdin: { contents: CORE_ENTRY, resolveDir: tsDir(), sourcefile: "oracle-core.js", loader: "js" } };
-  const mod = await bundle("core", `core: ${CORE_MODULES.join(" ")} KSUID`, entry);
+  const mod = await bundle("core", `core: ${[...CORE_MODULES, ...CORE_ENGINE_MODULES].join(" ")} KSUID`, entry);
   isolateLogFile(mod);
   return mod;
 }

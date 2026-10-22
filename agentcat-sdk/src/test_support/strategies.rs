@@ -4,6 +4,7 @@
 use std::ops::{Range, RangeInclusive};
 
 use proptest::prelude::*;
+use rmcp::model::Tool;
 use serde_json::{Map, Number, Value, json};
 
 use crate::pipeline::TsEvent;
@@ -355,6 +356,168 @@ fn error_data(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStr
             Value::Object(error)
         })
         .boxed()
+}
+
+/// A tool listing of 1 to 6 tools in the shapes of the `seeded:` cases of
+/// `oracle/src/vectors/gen/inject.mjs`, each one rmcp's `Tool` holds. Names come from a small set
+/// with `get_more_tools` and `unknown`, so they repeat. An input schema has, in any key order: a
+/// `type` or none; `properties` that is an object of customer properties (some named `session_id`,
+/// `agent_id` or `context`, with truthy or falsy schemas, and index keys), absent, falsy, a string,
+/// number or boolean, or an array; `required` absent, a list or another value;
+/// `additionalProperties`; and a composition key with a truthy or falsy value. A tool sometimes has
+/// a description, an output schema ([`output_schema`]) and annotations.
+pub(crate) fn tool_list() -> impl Strategy<Value = Vec<Tool>> + Clone {
+    let name = prop::sample::select(vec!["echo", "search", "get_more_tools", "own", "unknown"]);
+    let description = prop::option::of(prop::sample::select(vec!["Search", "", "d"]));
+    let annotations =
+        prop::option::weighted(0.15, Just(json!({"title": "T", "readOnlyHint": true})));
+    let tool = (
+        name,
+        description,
+        input_schema(),
+        prop::option::weighted(0.4, output_schema()),
+        annotations,
+    )
+        .prop_map(|(name, description, input, output, annotations)| {
+            let mut tool = Map::new();
+            tool.insert("name".to_owned(), json!(name));
+            if let Some(description) = description {
+                tool.insert("description".to_owned(), json!(description));
+            }
+            tool.insert("inputSchema".to_owned(), input);
+            if let Some(output) = output {
+                tool.insert("outputSchema".to_owned(), output);
+            }
+            if let Some(annotations) = annotations {
+                tool.insert("annotations".to_owned(), annotations);
+            }
+            serde_json::from_value::<Tool>(Value::Object(tool)).expect("rmcp's Tool holds the tool")
+        });
+    prop::collection::vec(tool, 1..=6)
+}
+
+/// An input schema of [`tool_list`].
+fn input_schema() -> impl Strategy<Value = Value> + Clone {
+    let select = |values: Vec<Value>| prop::sample::select(values);
+    let property = select(vec![
+        json!({"type": "string"}),
+        json!({"type": "number", "description": "n"}),
+        json!({}),
+        json!(false),
+        Value::Null,
+        json!(0),
+        json!(""),
+    ]);
+    let key = prop::sample::select(vec![
+        "text",
+        "q",
+        "session_id",
+        "agent_id",
+        "context",
+        "10",
+        "2",
+    ]);
+    let customer = prop::collection::vec((key, property), 0..=4).prop_map(|entries| {
+        Value::Object(
+            entries
+                .into_iter()
+                .map(|(key, value)| (key.to_owned(), value))
+                .collect(),
+        )
+    });
+    let properties = prop_oneof![
+        3 => customer.prop_map(Some),
+        1 => Just(None),
+        1 => select(vec![Value::Null, json!(false), json!(0), json!("")]).prop_map(Some),
+        1 => select(vec![json!("abc"), json!(5), json!(true)]).prop_map(Some),
+        1 => select(vec![json!([]), json!([{"type": "string"}])]).prop_map(Some),
+    ];
+    let names = prop::sample::subsequence(vec!["text", "session_id", "agent_id", "context"], 0..=4);
+    let required = prop_oneof![
+        2 => Just(None),
+        2 => names.prop_map(|names| Some(json!(names))),
+        1 => select(vec![json!("text"), Value::Null, json!({})]).prop_map(Some),
+    ];
+    let additional = prop::option::weighted(
+        0.4,
+        select(vec![
+            json!(false),
+            json!(false),
+            json!(true),
+            json!({"type": "string"}),
+        ]),
+    );
+    let composition = prop::option::weighted(
+        0.25,
+        (
+            prop::sample::select(vec!["oneOf", "allOf", "anyOf"]),
+            select(vec![
+                json!([]),
+                json!([{"required": ["q"]}]),
+                json!({}),
+                Value::Null,
+                json!(0),
+                json!(false),
+                json!(""),
+            ]),
+        ),
+    );
+    (
+        prop::bool::weighted(0.7),
+        properties,
+        required,
+        additional,
+        composition,
+    )
+        .prop_flat_map(|(typed, properties, required, additional, composition)| {
+            let mut entries = Vec::new();
+            if typed {
+                entries.push(("type".to_owned(), json!("object")));
+            }
+            let keyed = [
+                ("properties", properties),
+                ("required", required),
+                ("additionalProperties", additional),
+            ];
+            for (key, value) in keyed {
+                if let Some(value) = value {
+                    entries.push((key.to_owned(), value));
+                }
+            }
+            if let Some((key, value)) = composition {
+                entries.push((key.to_owned(), value));
+            }
+            Just(entries).prop_shuffle()
+        })
+        .prop_map(|entries| Value::Object(entries.into_iter().collect()))
+}
+
+/// An output schema of [`tool_list`]: a plain object schema (sometimes with `required` and
+/// `additionalProperties: false`), one without `properties`, `{"type": "array"}`, a composition, one
+/// that declares `mcp_session` (truthy or `false`), and `properties` that is a string, a number or an
+/// array.
+fn output_schema() -> impl Strategy<Value = Value> + Clone {
+    let select = |values: Vec<Value>| prop::sample::select(values);
+    let count = || json!({"count": {"type": "number"}});
+    prop_oneof![
+        2 => any::<bool>().prop_map(move |strict| if strict {
+            json!({"type": "object", "properties": count(), "required": ["count"], "additionalProperties": false})
+        } else {
+            json!({"type": "object", "properties": count()})
+        }),
+        1 => select(vec![json!({"type": "object"}), json!({})]),
+        1 => Just(json!({"type": "array"})),
+        1 => (
+            prop::sample::select(vec!["oneOf", "allOf", "anyOf"]),
+            select(vec![json!([{"type": "object"}]), json!([]), Value::Null]),
+        )
+            .prop_map(|(key, value)| Value::Object(Map::from_iter([(key.to_owned(), value)]))),
+        1 => select(vec![json!({"type": "object"}), json!(false)]).prop_map(|own| {
+            json!({"type": "object", "properties": {"count": {"type": "number"}, "mcp_session": own}})
+        }),
+        1 => select(vec![json!("x"), json!(3), json!([])])
+            .prop_map(|properties| json!({"type": "object", "properties": properties})),
+    ]
 }
 
 mod tests {

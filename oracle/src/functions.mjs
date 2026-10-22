@@ -145,4 +145,29 @@ export const functions = {
   // sessionFromHookValue for a hook value (absent: null) and a project ID (absent: undefined).
   "oracle.sessionFromHookValue": ({ value, projectId }) =>
     maskMinted(core.handles.sessionFromHookValue(value ?? null, projectId)),
+  // buildInjectedList (src/engine/listWrap.ts) on each listing page in turn, with one tracking-data
+  // object for all pages, as one tracked server holds it: its reported-conflict and declared-session
+  // sets and its get_more_tools shadow warning carry over from page to page. `options` are the TS
+  // option names; hook mode is a resolveSessionId hook (never called here). Gives one entry per page:
+  // {tools, registry: [[name, [params]]], outputRegistry: [names], declaredSessionParams: [names],
+  // logs}, the registry and sets in their insertion order and the declared set as it stands after the
+  // page. Each page is a copy, so the input stays as it was.
+  "oracle.buildInjectedList": async ({ options, hookMode, pages }) => {
+    const data = {
+      projectId: "proj_1",
+      options: { ...options, ...(hookMode && { resolveSessionId: () => null }) },
+    };
+    const out = [];
+    for (const page of pages) {
+      const { value, logs } = await captureLogs(core, () => core.listWrap.buildInjectedList(data, copyJson(page)));
+      out.push({
+        tools: value.tools,
+        registry: [...value.registry].map(([name, params]) => [name, [...params]]),
+        outputRegistry: [...value.outputRegistry],
+        declaredSessionParams: [...core.registry.getDeclaredSessionParams(data)],
+        logs,
+      });
+    }
+    return out;
+  },
 };

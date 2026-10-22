@@ -41,7 +41,8 @@
       "name": "AGENT_ID_PARAM_DESCRIPTION",
       "value": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you.",
       "ts_test": [
-        "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > agent_id describes self-chosen generation, not server delivery"
+        "v1|src/tests/constants.test.ts|handle param descriptions name the delivery channel > agent_id describes self-chosen generation, not server delivery",
+        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > agent_id copy prescribes the self-chosen model|harness|nonce format"
       ]
     },
     {
@@ -190,7 +191,10 @@
             "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
           }
         ]
-      }
+      },
+      "logs": [
+        "Missing tool reported (context length: 56)"
+      ]
     },
     {
       "name": "mintBackSessionLine",

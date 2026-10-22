@@ -805,51 +805,75 @@ reason = "handles.json cases valid:contract:start, valid:contract:ses-27-a, vali
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:mixed; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should skip get_more_tools entirely"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:skips-get_more_tools; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should inject context and remove additionalProperties:false constraint"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:additional-false; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should preserve additionalProperties:true when injecting"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:additional-true; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for allOf schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:all-of; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for anyOf schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:any-of; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for oneOf schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:one-of; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle empty object schema {}"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:empty-schema; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with no inputSchema"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case rd20:ts:context-parameters-edge-cases:no-input-schema; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with only type specified"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:type-only; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should skip injection for tools with existing context parameter"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:owns-context; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should warn with tool name when context exists"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters-edge-cases:warns-with-name; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should capture context parameter when tools are called after tracking"
@@ -861,7 +885,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should inject context into tool schemas when listing tools"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:default-description; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should remove context parameter before calling tool callback"
@@ -869,7 +895,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should use default context description when no custom description is provided"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:default-description; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should work with tools that have context parameter"
@@ -877,19 +905,27 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools with existing inputSchema"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters:existing-schema; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools without inputSchema"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case rd20:ts:context-parameters:no-input-schema; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should handle tools with empty required array"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters:empty-required; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should not duplicate context parameter if already exists"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:context-parameters:owns-context; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/context-preservation.test.ts|Context Parameter Preservation > should add context parameter when it doesn't exist"
@@ -901,7 +937,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should apply custom description to all tools when listing"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:custom-all-tools; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should capture tool calls with custom description configured"
@@ -909,23 +947,33 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description even with long descriptions"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:custom-long; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description for Zod object schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:custom-zod-object; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description instead of default for JSON Schema tools"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:custom-json-schema; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description with special characters"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:custom-special-characters; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use default description when customContextDescription is not provided"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:todo-server:default-description; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should work end-to-end with custom description and multiple tool calls"
@@ -933,11 +981,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/debug-tool-schema.test.ts|Debug Tool Schema Structure > should show the structure of tools registered with description and schema"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "prints McpServer._registeredTools of Zod-registered tools to the console and asserts only that the server exists; Rust has no Zod registry or console dump"
 
 [[test]]
 key = "v1|src/tests/debug-tool-schema.test.ts|Debug Tool Schema Structure > should show the structure of tools registered with shorthand Zod syntax"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "prints McpServer._registeredTools of Zod-registered tools to the console and asserts only that the server exists; Rust has no Zod registry or console dump"
 
 [[test]]
 key = "v1|src/tests/detect-shapes.test.ts|detectServer (fake shapes) > detects fake high-level shells with .tool (v1) and registerTool (v2)"
@@ -1389,19 +1441,26 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > appends get_more_tools and injects session_id + context"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:engine-listwrap:appends-get_more_tools; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > does not mutate the input tool objects"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::inject::tests::shared_schemas_stay_unchanged"]
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips get_more_tools when enableReportMissing is false"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:engine-listwrap:report-missing-off; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips handle injection entirely when tracing is off, but still registers empty entries"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:engine-listwrap:tracing-off; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|installListWrap (synthetic seam) > passes the original response through verbatim and warns when tracking data is missing"
@@ -1969,23 +2028,33 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > keys per AgentCatData object, like reportedConflicts"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:keys-per-data-object; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records a composed schema that also declares session_id at its root"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:records-composed-with-session_id; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records nothing in hook mode, where session_id is never injected"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:hook-mode-records-nothing; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records only the tools whose own schema declares session_id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:records-own-schemas-only; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > buildInjectedList dedupes per AgentCatData object: repeat tools/list on the same server logs once, a second server logs its own once"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json cases ts:handle-conflict-report:server-a-three-listings, ts:handle-conflict-report:server-b-two-listings; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > getReportedConflicts returns a stable set per key, and independent sets for different keys"
@@ -1993,87 +2062,128 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > logs the error even without a dedupe set — once per pass, no dedupe"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "calls addHandleParametersToTools without its optional dedupe set; the Rust pipeline always takes an InjectState, so a call without one does not exist (a fresh state per listing logs once per listing, as the inject.json report cases show)"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports a session_id collision once per tool, as an error with remediation"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:server-a-three-listings; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports two different colliding tools each once"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-conflict-report:two-tools-two-listings; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > agent_id copy prescribes the self-chosen model|harness|nonce format"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:constants.json"
+reason = "constants.json case AGENT_ID_PARAM_DESCRIPTION; checked by agentcat-sdk::constants::tests::every_ported_constant_equals_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > creates the required array when the schema has none"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:creates-required; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does NOT skip get_more_tools (handles are injected; context stays bespoke)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:get_more_tools; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate agent_id in an existing required array"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:required-holds-agent_id; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate session_id in an existing required array"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:required-holds-session_id; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > full order with context injector: customer, session_id, agent_id, context"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:full-order; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > hook mode: no session_id, agent_id uses the same single description"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:hook-mode; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > injects session_id and agent_id after customer params, both required"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:after-customer-params; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > leaves required untouched when the customer declares agent_id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:owns-agent_id; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > removes additionalProperties:false and handles missing schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json cases ts:handle-injection:strict, rd20:ts:handle-injection:bare; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips a param the tool already defines, and does not record it"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:owns-session_id; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips complex schemas entirely"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:complex; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > collision: a customer-declared mcp_session is never clobbered"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-collision; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > composed inputSchema: early-return skips output injection too, nothing registered"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-input-composed; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > does not mutate the customer's outputSchema object"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::inject::tests::shared_schemas_stay_unchanged"]
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > injects mcp_session into a plain object outputSchema and registers the tool"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-object; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > no injection at all (neither handle) leaves outputSchema alone"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-no-handles; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > no outputSchema: untouched, nothing registered"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-absent; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > output registry accessors are keyed per server object"
@@ -2081,11 +2191,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > skips complex outputSchema (oneOf/allOf/anyOf) and does not register"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:handle-injection:output-complex; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > sub-properties track modes: hook mode drops session_id and status, tracking off drops agent_id"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json cases ts:handle-injection:output-hook-mode, ts:handle-injection:output-tracking-off; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > clones the request with stripped arguments, leaving the original intact"
@@ -4478,35 +4592,51 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > builds a default object schema for a tool listed without one"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case rd20:ts:v2/schema-edges:bare; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > drops additionalProperties:false so optional handles can ride along"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:strict; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > preserves a customer-declared session_id/agent_id instead of overwriting"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:own-handles; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > skips handle injection entirely on composed (oneOf) input schemas"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:composed-input; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > declares mcp_session in a listed plain-object outputSchema"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:output-object; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > leaves composed (anyOf) outputSchemas untouched"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:output-composed; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > never overwrites a customer-declared mcp_session output field"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:output-collision; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > omits agent_id from mcp_session when agent tracking is off"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:v2/schema-edges:output-tracking-off; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > advertises no session_id param; agent_id stays available"

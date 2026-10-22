@@ -17,6 +17,7 @@ mod client;
 mod config;
 mod constants;
 mod handles;
+mod inject;
 mod js;
 mod pipeline;
 mod sink;
