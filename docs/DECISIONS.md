@@ -40,6 +40,8 @@ acts differently from that baseline is listed in the deviation register of the d
 | R22 | Float parsing (plan 2, 2026-10-21) | serde_json's `float_roundtrip` feature stays off. Without it, a decimal with 16 or 17 significant digits can parse to the neighboring `f64`, so a recorded number or a token estimate can differ from TS by one digit. The owner accepts this for the smaller and faster parser. Recorded as RD-23. |
 | R23 | JavaScript object-model artifacts (plan 2, 2026-10-21) | Rust does not copy TS results that come from the JavaScript object model rather than from SDK logic, as in R19. A `__proto__` key in customer JSON is kept (TS drops it while it copies objects), and an array tool `response` stays an array (TS turns it into an object with index keys). Recorded as RD-24 to RD-28 (RD-26 to RD-28 confirmed in R24). |
 | R24 | Milestone 3 batch (plan 2, 2026-10-21) | RD-26: Rust treats every object in a truncated text field (`userIntent`, `resourceName`, the server and client fields, `error.message`) and in `error.frames` as an error and drops the event, also when TS lets an object with a small `length` through. The owner files this under R23, because the gap comes from JavaScript duck typing, not from SDK logic. The owner also confirms RD-27 and RD-28 under R23. |
+| R25 | rmcp version matrix (2026-10-22) | Like the TS SDK's MCP SDK compatibility workflow, CI runs the test suite against every rmcp 3.x minor release at its latest patch, read from crates.io at run time, on every push and pull request. This replaces "floor and latest only" (design §11 gate 10). Plan 3 adds it, because rmcp joins the crate there. |
+| R26 | Docs site (2026-10-22) | The Rust SDK gets pages on docs.agentcat.com: Rust tabs next to TypeScript, Python and Go in the Mintlify site (`agentcathq/agentcat-ui`, `apps/docs`), in the quickstart and in every `sdk/*.mdx` page that shows code. Plan 5 writes them as a pull request to that repository, which the owner approves at that time. |
 
 ## 2. Designer calls (C)
 
@@ -125,7 +127,7 @@ with nothing to port), **OVERRIDDEN** (an R- or C-decision replaces it).
 | D60, D61 | Default log destination | ADAPT (C07). |
 | D62 | Content-Length on symfony/mcp-bundle answers | N/A. |
 | D63 | First release version | ADOPT (R13): `1.0.0`. |
-| D64 | Where the docs live | ADAPT: README, rustdoc on docs.rs, and the shared docs site later. |
+| D64 | Where the docs live | ADAPT: README, rustdoc on docs.rs, and pages on docs.agentcat.com (R26). |
 | D65 | README images | ADOPT: images stay out of the published crate (`include` list). |
 | D66 | B10 pagination fix | ADOPT (C03). |
 | D67 | Release steps | Second pass: crates.io trusted publishing. |

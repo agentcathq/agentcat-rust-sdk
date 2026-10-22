@@ -411,7 +411,8 @@ green commit of `rewrite` (not `main`, which is an empty root commit):
 8. Line coverage ≥ 90 % overall and ≥ 95 % for the pure modules (`cargo llvm-cov`).
 9. `cargo mutants` on the diff against the previous green commit: zero missed mutants in core modules; any skip
    needs a written reason.
-10. rmcp legs: floor 3.0.0 and latest 3.x, each with a test that proves which rmcp version compiled.
+10. rmcp legs (R25): every rmcp 3.x minor at its latest patch, read from crates.io at run time, on every push and
+    pull request, each with a test that proves which rmcp version compiled.
 11. Workflow hygiene: actions pinned by SHA, least-privilege `permissions:`.
 
 Nightly: full mutation run (≥ 90 % caught); branch coverage report; every 3.x minor (latest patch) and rmcp `main`;

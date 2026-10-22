@@ -55,6 +55,11 @@ and can drift. Plan 2 closed every item that plan 1 carried to it.
   LLVM-exception`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`). Check the list again when rmcp, reqwest and rustls join,
   and remove each license that is still unused.
 
+- Owner ruling R25 (2026-10-22): add the rmcp version matrix to CI when rmcp joins the crate. Like the TS SDK's
+  `.github/workflows/mcp-compatibility.yml` (read it in the oracle's TS clone), list every rmcp 3.x minor at its
+  latest patch from crates.io at run time, and run the suite against each on every push and pull request, with a
+  test that proves which rmcp version compiled. This replaces "floor and latest only".
+
 ## Plan 4 (delivery and lifecycle)
 
 - The mock API keeps parsed JSON only, so `1` and `1.0` and integers above 2^53 look the same. Keep the raw body
@@ -143,3 +148,8 @@ and can drift. Plan 2 closed every item that plan 1 carried to it.
   never makes a `toString` or `__proto__` key; `sanitize_parameters` also walks `structuredContent` (rename);
   redaction has no fixed case for a `""` key inside an array element, and its tests type the hook-field and
   restored-field lists again instead of importing them.
+- Owner ruling R26 (2026-10-22): write the Rust pages for docs.agentcat.com. The site is Mintlify, in
+  `agentcathq/agentcat-ui` under `apps/docs`. Add a Rust tab next to TypeScript, Python and Go in `quickstart.mdx`
+  and in every `sdk/*.mdx` page that shows code (custom events, debug mode, tags and properties, identifying
+  users, missing tools, stateless servers, tool-call context). Open it as a pull request to that repository; the
+  owner approves it at that time.
