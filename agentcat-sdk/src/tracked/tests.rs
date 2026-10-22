@@ -450,3 +450,27 @@ async fn registries_are_per_inner_type() {
     has(true, "beta", false);
     has(false, "echo", false);
 }
+
+#[tokio::test]
+async fn get_tool_leaves_the_listing_logs_intact() {
+    // The logs of a first listing on a fresh handle.
+    let (fresh, fresh_sink) = recording_handle();
+    all_tools(&connect(fresh.track(Sample), "fresh").await).await;
+    let expected = fresh_sink.logs();
+    assert!(
+        expected.iter().any(|line| line.contains("own_session")),
+        "the listing logs the session_id conflict"
+    );
+
+    // The same listing after lookups of the tool that declares its own session_id.
+    let (agentcat, sink) = recording_handle();
+    let tracked = agentcat.track(Sample);
+    let (_, entry) = tracked
+        .lookup_tool("own_session")
+        .expect("listed by the macro");
+    assert!(entry.declares_session, "C19");
+    assert!(tracked.get_tool("own_session").is_some());
+    assert!(sink.logs().is_empty(), "a lookup logs nothing");
+    all_tools(&connect(tracked, "later").await).await;
+    assert_eq!(sink.logs(), expected);
+}

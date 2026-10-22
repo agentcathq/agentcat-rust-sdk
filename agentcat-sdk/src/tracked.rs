@@ -22,7 +22,9 @@ use rmcp::{ErrorData, RoleServer, ServerHandler};
 
 use crate::client::AgentCat;
 use crate::constants::GET_MORE_TOOLS_NAME;
-use crate::inject::{InjectConfig, build_injected_list, get_more_tools_tool, inject_tool};
+use crate::inject::{
+    InjectConfig, ToolEntry, build_injected_list, get_more_tools_tool, inject_tool,
+};
 
 #[cfg(test)]
 mod tests;
@@ -83,6 +85,23 @@ impl<H> Tracked<H> {
     /// The handle this wrapper reports to.
     pub fn agentcat(&self) -> &AgentCat {
         &self.agentcat
+    }
+
+    /// The handler's tool `name` as the listing shows it, with the entry the pipeline gives it
+    /// (its `declares_session` is the foreign status of `session_id`, C19). The pipeline runs on
+    /// a copy of the registry's state and nothing is written back, so a lookup never uses up a
+    /// log line that only a listing writes. The lock is held to copy the state only.
+    pub(crate) fn lookup_tool(&self, name: &str) -> Option<(Tool, ToolEntry)>
+    where
+        H: ServerHandler,
+    {
+        let tool = self.inner.get_tool(name)?;
+        let config = InjectConfig::from_options(&self.agentcat.inner().options);
+        let mut state = self
+            .agentcat
+            .inner()
+            .with_registry::<H, _>(|registry| registry.state_mut().clone());
+        Some(inject_tool(&config, tool, &mut state, &mut Vec::new()))
     }
 
     /// The client that `initialize` named on this instance, if it has run (C16).
@@ -286,12 +305,7 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         if shared.options.report_missing() && name == GET_MORE_TOOLS_NAME {
             return Some(get_more_tools_tool());
         }
-        let tool = self.inner.get_tool(name)?;
-        let config = InjectConfig::from_options(&shared.options);
-        let (tool, _entry) = shared.with_registry::<H, _>(|registry| {
-            inject_tool(&config, tool, registry.state_mut(), &mut Vec::new())
-        });
-        Some(tool)
+        self.lookup_tool(name).map(|(tool, _entry)| tool)
     }
 
     fn on_custom_request(
