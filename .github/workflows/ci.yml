@@ -214,6 +214,10 @@ jobs:
         with:
           tool: nextest
       - run: cargo update -p rmcp --precise ${{ matrix.version }}
+      # rmcp-macros keeps its locked version otherwise (it still satisfies the older rmcp's requirement);
+      # a version that does not exist makes this step fail.
+      - run: cargo update -p rmcp-macros --precise ${{ matrix.version }}
+      - run: grep -A1 -E '^name = "rmcp(-macros)?"$' Cargo.lock
       - run: cargo nextest run -p agentcat-sdk --all-features
       - run: cargo nextest run -p agentcat-sdk --test rmcp_version
         env:
