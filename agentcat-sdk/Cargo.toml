@@ -20,6 +20,10 @@ serde_json = { workspace = true, features = ["preserve_order"] }
 ryu-js = { workspace = true }
 getrandom = { workspace = true }
 sha2 = { workspace = true }
+rmcp = { workspace = true }
+http = { workspace = true, features = ["std"] }
+tokio = { workspace = true, features = ["rt", "time"] }
+futures = { workspace = true, features = ["std"] }
 
 [lints]
 workspace = true
@@ -30,3 +34,13 @@ workspace = true
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 # "std" is needed to read PROPTEST_CASES and to save failing seeds in proptest-regressions/.
 proptest = { version = "1", default-features = false, features = ["std"] }
+rmcp = { workspace = true, features = [
+  "client",
+  "macros",
+  "transport-streamable-http-server",
+  "transport-streamable-http-client-reqwest",
+] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util", "time", "test-util"] }
+schemars = "1"
+serde = { workspace = true, features = ["derive"] }
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }

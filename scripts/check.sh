@@ -53,7 +53,7 @@ RUSTFLAGS="-D warnings" cargo +1.88 test -p agentcat-sdk --all-features --test j
 
 # docs
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps
-# a second run checks the doc links of private items (the crate has no public API yet)
+# a second run checks the doc links of the crate-private items, which the first run skips
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps --document-private-items
 
 # deny
