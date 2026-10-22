@@ -444,7 +444,9 @@ Verification infrastructure comes first, so drift is caught while the code is wr
 ## 13. Risks
 
 - rmcp churn: new defaulted `ServerHandler` methods (canary), and a 4.0 within months (an rmcp major forces an
-  AgentCat major, R13).
+  AgentCat major, R13). CI tests the newest patch of every 3.x minor and runs the canary on each (R25).
+- `Tracked<H>` does not forward `negotiate_initialize` (rmcp 3.3.0 and later, C25): forwarding it would break
+  the 3.0 floor, so a customer override of it is lost. The canary allowlists it.
 - Blocking drain in `Drop` on a current-thread runtime while hooks still need that runtime: hooks cannot progress,
   so the drain waits up to its timeout. The plan must test this case and keep the drain bounded.
 - `preserve_order` changes JSON map order for the whole customer build. It is required (R07); the README states it.

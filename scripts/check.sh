@@ -40,12 +40,15 @@ corepack pnpm -r --workspace-concurrency=1 test
 node oracle/src/vectors/run.mjs --check
 node oracle/src/parity/list-tests.mjs --check
 node harness/src/dump-contract.mjs --check
+# scripts/ tests never contact the network (rmcp-versions.mjs fetches only when run as a script)
+node --test "scripts/*.test.mjs"
 
 # test (R07 in a build of the SDK alone: another workspace member could turn the feature on)
 cargo nextest run --workspace --all-features
 cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
 cargo run -q -p xtask -- parity
+cargo run -q -p xtask -- rmcp-canary
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features
@@ -61,3 +64,10 @@ cargo deny check
 
 # minimal-versions
 cargo +nightly minimal-versions check --direct --workspace
+
+# rmcp-versions: the current rmcp is the one in Cargo.lock; CI repeats the tests for every 3.x minor
+# (job `rmcp`, R25). Run `node scripts/rmcp-versions.mjs` (network) to see the list.
+RMCP_EXPECTED_VERSION="$(sed -n '/^name = "rmcp"$/{n;s/^version = "\(.*\)"$/\1/p;q}' Cargo.lock)"
+export RMCP_EXPECTED_VERSION
+cargo nextest run -p agentcat-sdk --test rmcp_version
+unset RMCP_EXPECTED_VERSION

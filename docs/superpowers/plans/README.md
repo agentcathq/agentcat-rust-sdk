@@ -10,7 +10,7 @@ what the earlier milestones taught and the owner's rulings from the previous bat
 | 2 | 3 | Pure core against L1 and L2: constants, `js`, KSUID and handles, tokens, tag validation, normalize, truncation, sanitization, redaction. | [Done](2026-10-21-plan-2-pure-core.md) — gate and CI green at `f59791e` (CI run 39677917276, nightly run 39677916538); owner batch answered as R24 |
 | 3 | 4 | Interception: `Tracked<H>`, tool-list and tool-call pipelines, registries, `get_more_tools`, client info, `parameters`, panics, `capture_error`; the Rust reference server joins the harness (MCP-wire delta); the rmcp version matrix in CI (R25). | Not written |
 | 4 | 5 | Delivery and lifecycle: event pipeline, worker thread, queue, retries, flush, shutdown, last-drop drain, logging, environment, custom events, `Fake`; event comparison in the harness. | Not written |
-| 5 | 6 | Finish: README and rustdoc, examples, CHANGELOG, public API snapshot, coverage and mutation floors, rmcp canary, docs.agentcat.com pages (R26), zero `todo` in the manifest, ingest replay, dashboard demo, the PR. | Not written |
+| 5 | 6 | Finish: README and rustdoc, examples, CHANGELOG, public API snapshot, coverage and mutation floors, the rmcp `main` nightly leg (the canary and the version matrix are in plan 3), docs.agentcat.com pages (R26), zero `todo` in the manifest, ingest replay, dashboard demo, the PR. | Not written |
 
 Items that the reviews of plans 1 and 2 deferred to later plans are listed in [`carry-forward.md`](carry-forward.md).
 

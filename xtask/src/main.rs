@@ -7,9 +7,13 @@
 //! exits 1 if there is any. `todo` entries are problems only with `--final`. `--print-missing`
 //! instead prints a `todo` block for each TS test with no manifest entry and exits 0.
 //!
+//! `cargo run -q -p xtask -- rmcp-canary` checks that `Tracked<H>` forwards every method of rmcp's
+//! `ServerHandler` (see [`rmcp_canary`]).
+//!
 //! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
 //! `cargo nextest run --workspace`).
 pub mod parity;
+pub mod rmcp_canary;
 pub mod sdk_manifest;
 
 use std::collections::BTreeSet;
@@ -18,7 +22,7 @@ use std::process::{Command, ExitCode};
 
 use parity::{Report, Status};
 
-const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing]";
+const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -37,6 +41,13 @@ fn main() -> ExitCode {
                 ExitCode::FAILURE
             }
         };
+    }
+    if args.first().map(String::as_str) == Some("rmcp-canary") {
+        let (code, lines) = rmcp_canary::run(&args[1..], &workspace_root());
+        for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
     }
     let final_gate = match args
         .iter()

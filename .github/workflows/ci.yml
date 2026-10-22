@@ -172,11 +172,57 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
+      - run: node --test "scripts/*.test.mjs"
       - run: cargo run -q -p xtask -- parity
+
+  rmcp-versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      versions: ${{ steps.list.outputs.versions }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - id: list
+        run: echo "versions=$(node scripts/rmcp-versions.mjs)" >> "$GITHUB_OUTPUT"
+
+  rmcp:
+    name: rmcp (${{ matrix.version }})
+    needs: rmcp-versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RUSTFLAGS: -D warnings
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ${{ fromJSON(needs.rmcp-versions.outputs.versions) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest
+      - run: cargo update -p rmcp --precise ${{ matrix.version }}
+      - run: cargo nextest run -p agentcat-sdk --all-features
+      - run: cargo nextest run -p agentcat-sdk --test rmcp_version
+        env:
+          RMCP_EXPECTED_VERSION: ${{ matrix.version }}
+      - run: cargo run -q -p xtask -- rmcp-canary
 
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness]
+    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness, rmcp-versions, rmcp]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
