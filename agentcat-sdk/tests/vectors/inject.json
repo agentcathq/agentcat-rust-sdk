@@ -6647,6 +6647,207 @@
       ]
     },
     {
+      "name": "ts:engine-listwrap:shadow-once",
+      "input": {
+        "options": {
+          "enableReportMissing": true,
+          "enableTracing": true,
+          "enableToolCallContext": true,
+          "enableAgentTracking": false
+        },
+        "hookMode": false,
+        "pages": [
+          [
+            {
+              "name": "get_more_tools",
+              "description": "customer version",
+              "inputSchema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            {
+              "name": "echo",
+              "description": "Echo",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "msg": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "msg"
+                ]
+              }
+            }
+          ],
+          [
+            {
+              "name": "get_more_tools",
+              "description": "customer version",
+              "inputSchema": {
+                "type": "object",
+                "properties": {}
+              }
+            },
+            {
+              "name": "echo",
+              "description": "Echo",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "msg": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "msg"
+                ]
+              }
+            }
+          ]
+        ]
+      },
+      "output": [
+        {
+          "tools": [
+            {
+              "name": "get_more_tools",
+              "description": "customer version",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "session_id": {
+                    "type": "string",
+                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                  }
+                },
+                "required": [
+                  "session_id"
+                ]
+              }
+            },
+            {
+              "name": "echo",
+              "description": "Echo",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "msg": {
+                    "type": "string"
+                  },
+                  "session_id": {
+                    "type": "string",
+                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                  }
+                },
+                "required": [
+                  "msg",
+                  "session_id",
+                  "context"
+                ]
+              }
+            }
+          ],
+          "registry": [
+            [
+              "get_more_tools",
+              [
+                "session_id"
+              ]
+            ],
+            [
+              "echo",
+              [
+                "session_id",
+                "context"
+              ]
+            ]
+          ],
+          "outputRegistry": [],
+          "declaredSessionParams": [],
+          "logs": [
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+          ]
+        },
+        {
+          "tools": [
+            {
+              "name": "get_more_tools",
+              "description": "customer version",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "session_id": {
+                    "type": "string",
+                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                  }
+                },
+                "required": [
+                  "session_id"
+                ]
+              }
+            },
+            {
+              "name": "echo",
+              "description": "Echo",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "msg": {
+                    "type": "string"
+                  },
+                  "session_id": {
+                    "type": "string",
+                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                  },
+                  "context": {
+                    "type": "string",
+                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                  }
+                },
+                "required": [
+                  "msg",
+                  "session_id",
+                  "context"
+                ]
+              }
+            }
+          ],
+          "registry": [
+            [
+              "get_more_tools",
+              [
+                "session_id"
+              ]
+            ],
+            [
+              "echo",
+              [
+                "session_id",
+                "context"
+              ]
+            ]
+          ],
+          "outputRegistry": [],
+          "declaredSessionParams": [],
+          "logs": []
+        }
+      ],
+      "ts_test": [
+        "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled"
+      ]
+    },
+    {
       "name": "flags:no-report-no-tracing-no-hook-no-agent-no-context",
       "input": {
         "options": {

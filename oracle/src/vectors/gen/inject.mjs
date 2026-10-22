@@ -484,6 +484,11 @@ async function listWrapCases() {
   await one(`${f}tracing-off`, data({ enableTracing: false, enableToolCallContext: false }), [echo], {
     ts_test: k("skips handle injection entirely when tracing is off, but still registers empty entries"),
   });
+  // The fault-containment test lists a customer-owned get_more_tools twice and counts the shadow warning.
+  const own = { name: "get_more_tools", description: "customer version", inputSchema: { type: "object", properties: {} } };
+  await add(`${f}shadow-once`, data(), [[own, echo], [own, echo]], {
+    ts_test: [tsKey("engine-listwrap", "tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled")],
+  });
 }
 
 // A listing for the flag cases: a plain tool with an output schema and a composed one.

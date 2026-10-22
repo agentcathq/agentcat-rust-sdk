@@ -1,9 +1,10 @@
 //! rmcp helpers for the crate's tests: an in-memory client connection, the [`Probe`] server, whose
-//! answers are sentinels, and the [`RecordingSink`].
+//! answers are sentinels, the [`Paged`] and [`Sample`] servers and the [`RecordingSink`].
 use std::borrow::Cow;
 use std::future::ready;
 use std::sync::{Mutex, PoisonError};
 
+use rmcp::handler::server::wrapper::{Json, Parameters};
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CancelTaskParams, ClientCapabilities,
     CompleteRequestParams, CompleteResult, CompletionInfo, CustomRequest, CustomResult,
@@ -12,13 +13,15 @@ use rmcp::model::{
     ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, MetaObject,
     PaginatedRequestParams, Prompt, ProtocolVersion, ReadResourceRequestParams,
     ReadResourceResponse, ReadResourceResult, Resource, ResourceContents, ResourceTemplate,
-    ServerCapabilities, SubscribeRequestParams, SubscriptionFilter, UnsubscribeRequestParams,
+    ServerCapabilities, SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams,
     UpdateTaskParams,
 };
 use rmcp::service::{
     MaybeSendFuture, RequestContext, RoleClient, RunningService, SubscriptionContext,
 };
-use rmcp::{ErrorData, RoleServer, ServerHandler, ServiceExt};
+use rmcp::{ErrorData, RoleServer, ServerHandler, ServiceExt, tool, tool_handler, tool_router};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use crate::sink::Sink;
@@ -273,6 +276,131 @@ impl ServerHandler for Probe {
         ready(Ok(()))
     }
 }
+
+/// A hand-written server with two tool pages and no `get_tool`: page 1 lists `alpha` with the
+/// cursor `p2` and a `meta` value, page 2 (the request cursor `p2`) lists `beta`.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Paged;
+
+/// The cursor of the second page of [`Paged`].
+pub(crate) const PAGED_CURSOR: &str = "p2";
+
+impl ServerHandler for Paged {
+    fn list_tools(
+        &self,
+        request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
+        let schema = || {
+            let schema = json!({"type": "object", "properties": {"x": {"type": "string"}}});
+            schema.as_object().cloned().unwrap_or_default()
+        };
+        let second = request.and_then(|r| r.cursor).as_deref() == Some(PAGED_CURSOR);
+        let result = if second {
+            ListToolsResult::with_all_items(vec![Tool::new("beta", "page 2", schema())])
+        } else {
+            let mut result =
+                ListToolsResult::with_all_items(vec![Tool::new("alpha", "page 1", schema())]);
+            result.next_cursor = Some(PAGED_CURSOR.to_owned());
+            let mut meta = MetaObject::default();
+            meta.0.insert("note".to_owned(), json!("paged page 1"));
+            result.meta = Some(meta);
+            result
+        };
+        ready(Ok(result))
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// The arguments of the `echo` tool of [`Sample`].
+#[derive(Debug, Deserialize, JsonSchema)]
+pub(crate) struct EchoArgs {
+    /// The text to echo.
+    msg: String,
+}
+
+/// The arguments of the `strict` tool, which refuses unknown fields.
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct StrictArgs {
+    /// The text to echo.
+    text: String,
+}
+
+/// The arguments of the `own_context` tool, which declares a `context` parameter.
+#[derive(Debug, Deserialize, JsonSchema)]
+pub(crate) struct OwnContextArgs {
+    /// The tool's own `context`.
+    context: String,
+}
+
+/// The arguments of the `own_session` tool, which declares a `session_id` parameter.
+#[derive(Debug, Deserialize, JsonSchema)]
+pub(crate) struct OwnSessionArgs {
+    /// The tool's own `session_id`.
+    session_id: String,
+}
+
+/// The structured output of the `structured` tool.
+#[derive(Debug, Serialize, JsonSchema)]
+pub(crate) struct Structured {
+    /// The echoed text.
+    msg: String,
+}
+
+/// A `#[tool_router]` server: `echo {msg}`, `strict {text}` (unknown fields refused),
+/// `structured {msg}` (output schema), `own_context {context}`, `own_session {session_id}`,
+/// `fail` (returns `Err`) and `explode` (panics).
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct Sample;
+
+#[tool_router]
+impl Sample {
+    #[tool(description = "Echoes msg")]
+    async fn echo(&self, Parameters(args): Parameters<EchoArgs>) -> String {
+        args.msg
+    }
+
+    #[tool(description = "Echoes text; refuses unknown fields")]
+    async fn strict(&self, Parameters(args): Parameters<StrictArgs>) -> String {
+        args.text
+    }
+
+    #[tool(description = "Echoes msg as structured content")]
+    async fn structured(&self, Parameters(args): Parameters<EchoArgs>) -> Json<Structured> {
+        Json(Structured { msg: args.msg })
+    }
+
+    #[tool(description = "Declares its own context")]
+    async fn own_context(&self, Parameters(args): Parameters<OwnContextArgs>) -> String {
+        args.context
+    }
+
+    #[tool(description = "Declares its own session_id")]
+    async fn own_session(&self, Parameters(args): Parameters<OwnSessionArgs>) -> String {
+        args.session_id
+    }
+
+    #[tool(description = "Always returns an error")]
+    async fn fail(&self) -> Result<String, String> {
+        Err("failed".to_owned())
+    }
+
+    #[tool(description = "Panics")]
+    async fn explode(&self) -> String {
+        panic!("explode")
+    }
+}
+
+#[expect(
+    clippy::unused_async_trait_impl,
+    reason = "the methods #[tool_handler] generates are async without an await"
+)]
+#[tool_handler]
+impl ServerHandler for Sample {}
 
 /// A [`Sink`] that keeps every log line.
 #[derive(Debug, Default)]

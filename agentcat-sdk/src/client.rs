@@ -1,10 +1,13 @@
 //! [`AgentCat`]: the handle that every [`Tracked`] server of a project shares, and [`track`].
 
-use std::sync::Arc;
+use std::any::TypeId;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use rmcp::ServerHandler;
 
 use crate::config::Options;
+use crate::registry::ToolRegistry;
 use crate::sink::{DiscardSink, Sink};
 use crate::tracked::Tracked;
 
@@ -40,6 +43,20 @@ pub(crate) struct Inner {
     pub(crate) options: Options,
     /// Where the SDK hands its own log lines.
     pub(crate) sink: Arc<dyn Sink>,
+    /// What the listings taught the SDK, one registry per inner handler type (C19).
+    registries: Mutex<HashMap<TypeId, ToolRegistry>>,
+}
+
+impl Inner {
+    /// Runs `f` on the registry of the handler type `H`, made on first use. A poisoned lock is
+    /// taken over. The lock is held for `f` only, never across an `.await`.
+    pub(crate) fn with_registry<H: 'static, R>(&self, f: impl FnOnce(&mut ToolRegistry) -> R) -> R {
+        let mut registries = self
+            .registries
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        f(registries.entry(TypeId::of::<H>()).or_default())
+    }
 }
 
 const _: () = {
@@ -55,6 +72,7 @@ impl AgentCat {
             project_id: project_id.into(),
             options,
             sink: Arc::new(DiscardSink),
+            registries: Mutex::default(),
         })
     }
 
@@ -65,6 +83,7 @@ impl AgentCat {
             project_id: project_id.to_owned(),
             options,
             sink,
+            registries: Mutex::default(),
         })
     }
 

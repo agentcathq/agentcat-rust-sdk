@@ -591,147 +591,219 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle McpServer instances with server property"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle objects with null server property"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should handle objects with server property that is not an object"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should validate all required properties on the underlying server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer compatibility > should validate the underlying server when McpServer wrapper is provided"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should show compatibility message when McpServer is not available"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should validate real McpServer underlying server properties"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > McpServer integration tests > should work with real McpServer instances if available"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with custom properties"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle Error instances with standard properties"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle arrays"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle booleans"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle circular reference errors"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle null"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle numbers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle plain objects"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle string errors"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > getMCPCompatibleErrorMessage > should handle undefined"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > logs '(none)' as the fingerprint for signal-free non-object rejects"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > logs a shape-fingerprint beacon when rejecting an unrecognized server shape"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for non-object server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for null server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning for undefined server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo is not an object"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when _serverInfo.name is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw error and log warning when getClientVersion is not a function"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is a non-Map with a get method"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when _requestHandlers is not a Map"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should throw the unknown-shape error when setRequestHandler is not a function"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > should validate a fully compatible server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > isCompatibleServerType > unknown-shape error names the full support matrix, never 'upgrade to v1.11'"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/compatibility.test.ts|Compatibility Module > logCompatibilityWarning > should log the correct compatibility message to the log file"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/concurrency.test.ts|concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
@@ -993,11 +1065,15 @@ reason = "prints McpServer._registeredTools of Zod-registered tools to the conso
 
 [[test]]
 key = "v1|src/tests/detect-shapes.test.ts|detectServer (fake shapes) > detects fake high-level shells with .tool (v1) and registerTool (v2)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v1|src/tests/detect-shapes.test.ts|detectServer (fake shapes) > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > falls back to a stable install_id when projectId is absent"
@@ -1205,39 +1281,57 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Cloudflare Workers pattern"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Node.js environment correctly"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect generic edge runtime pattern"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Event Queue Signal Handlers > should handle process being undefined"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Event Queue Signal Handlers > should not throw when process.once is unavailable"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should capture basic exception info without filesystem access"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle chained errors (Error.cause)"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should handle non-Error objects being thrown"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Exception Capture - Graceful Degradation > should parse stack traces without requiring fs module"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export publishCustomEvent function"
@@ -1245,11 +1339,14 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export track function"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::client::tests::track_returns_a_wrapper_around_the_handler"]
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Full SDK API Availability > should export type definitions"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test checks TypeScript type exports."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Logging Module Behavior > should export writeToLog function"
@@ -1265,35 +1362,51 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Path Normalization Without cwd > should handle various path formats"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test normalizes JavaScript stack paths against process.cwd."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Process Object Availability > should handle missing process.cwd gracefully"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Process Object Availability > should handle process.cwd throwing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should handle circular reference in error.cause"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should handle deeply nested error chains"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Error Handling Robustness > should not crash on malformed stack traces"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test builds JavaScript Error objects, stacks or causes."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Integration: SDK in Limited Environment > should handle environment transitions gracefully"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Integration: SDK in Limited Environment > should work when process has limited functionality"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The test covers the Workers, edge or process environment of TS, which Rust does not have."
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|MRTR helpers > isInputRequiredShape matches only resultType === 'input_required'"
@@ -1464,35 +1577,50 @@ reason = "inject.json case ts:engine-listwrap:tracing-off; checked by agentcat-s
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|installListWrap (synthetic seam) > passes the original response through verbatim and warns when tracking data is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Tracked always holds its AgentCat handle, so TS's missing tracking data cannot occur."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|installListWrap (synthetic seam) > passes through and warns on empty or missing tools; registries stay unset"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::tracked::tests::empty_listing_is_untouched_and_logged"]
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a BigInt-carrying schema uninjected without failing the listing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "A schema with a BigInt cannot reach the SDK: serde_json holds no BigInt."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a boolean-schema tool uninjected while the healthy tool keeps its handles"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "A tool whose inputSchema is not an object cannot reach the SDK: rmcp's Tool holds an object schema only."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > lists a circular-schema tool uninjected without failing the listing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "A circular schema cannot reach the SDK: serde_json values have no cycles."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > passes a null tools-array entry through and injects the rest"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "A null entry in the tools list cannot reach the SDK: rmcp's Tool list holds tools only."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > returns the customer's original listing when the whole pipeline fails"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test makes a JavaScript array iterator throw; the Rust pipeline has no such failure."
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:inject.json"
+reason = "inject.json case ts:engine-listwrap:shadow-once; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should NOT publish identify events when identify function throws"
@@ -1540,7 +1668,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/esm-consumer.test.ts|ESM consumer smoke test > can import the SDK package from a real Node ESM process"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "The test imports the package from a Node ESM process."
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > both callbacks configured > should attach both tags and properties to the same event"
@@ -2231,15 +2361,21 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should have either callback or handler property (SDK version dependent)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The callback/handler property of TS registered tools does not exist in Rust."
 
 [[test]]
 key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should preserve property name for tools registered after track()"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The callback/handler property of TS registered tools does not exist in Rust."
 
 [[test]]
 key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should preserve the original property name after track() is called"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "The callback/handler property of TS registered tools does not exist in Rust."
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > agent tracking is OFF by default: no param, no tag, task-only mint-back"
@@ -3022,7 +3158,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/mcp-version-compatibility.test.ts|MCP Version Compatibility > should be compatible with currently installed MCP version"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS checks the installed MCP SDK version; Rust links one rmcp, tested on every 3.x minor by CI."
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should NOT emit $ai_span for non-tool-call events even with enableAITracing"
@@ -4288,39 +4426,57 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > describeSignals lists only true signals"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v1 high-level McpServer"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v1 low-level Server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v2 high-level McpServer (no .tool method)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > detects a v2 low-level Server"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > returns null for a high-level shell passing low-level gates but with neither .tool nor registerTool"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > returns null for non-server shapes"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|fingerprintServerShape > reports the same signals detection computes for a v2 McpServer"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|fingerprintServerShape > returns the empty string for null and non-objects"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a typed ServerHandler."
 
 [[test]]
 key = "v2|src/tests/v2/era-2026.test.ts|2026-07-28 era via createMcpHandler > rebuild-on-demand serves calls on instances that never listed"
@@ -4444,19 +4600,27 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > advertises a tool registered after track() with injected params"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Late registration is a TS mechanism: the wrapper in Rust sees every listing and call."
 
 [[test]]
 key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > captures full error stacks from a late-registered tool via the executor tap"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Late registration is a TS mechanism: the wrapper in Rust sees every listing and call."
 
 [[test]]
 key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > stamps resolved identity onto events from late-registered tools"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Late registration is a TS mechanism: the wrapper in Rust sees every listing and call."
 
 [[test]]
 key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > strips injected args that a loose schema passes through (inner tap on the late executor)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Late registration is a TS mechanism: the wrapper in Rust sees every listing and call."
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > an invalid session_id publishes sessionless and tells the agent to re-send"
@@ -4580,15 +4744,21 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > does not fire for non-tool methods"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS patches setRequestHandler to re-arm after registrations; Rust has no registration to patch."
 
 [[test]]
 key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > fires the re-arm callback for string tools/call registrations"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS patches setRequestHandler to re-arm after registrations; Rust has no registration to patch."
 
 [[test]]
 key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > forwards 3-arg custom registrations intact (regression: dropped handler)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS patches setRequestHandler to re-arm after registrations; Rust has no registration to patch."
 
 [[test]]
 key = "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > builds a default object schema for a tool listed without one"
@@ -4684,11 +4854,14 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > injects params + get_more_tools into tools/list and mirrors outputSchema"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::tracked::tests::listing_equals_the_pure_pipeline", "agentcat-sdk::tracked::tests::get_more_tools_on_every_page"]
 
 [[test]]
 key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > re-wraps the regenerated executor after update() on the next list"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS re-wraps the executor after update(); Rust has no executor to re-wrap."
 
 [[test]]
 key = "v2|src/tests/v2/track-lowlevel.test.ts|track() on v2 low-level Server > rebuilds registries on demand when tools/call arrives before any tools/list"

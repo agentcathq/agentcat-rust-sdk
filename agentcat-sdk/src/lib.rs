@@ -20,6 +20,7 @@ mod handles;
 mod inject;
 mod js;
 mod pipeline;
+mod registry;
 mod sink;
 #[cfg(test)]
 mod test_support;

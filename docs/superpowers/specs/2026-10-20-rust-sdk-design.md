@@ -316,7 +316,7 @@ manifest point to these IDs.
 | RD-09 | Signal and `beforeExit` handlers; no public flush or shutdown (B-105). | No signal handlers; public `flush`/`shutdown`; automatic bounded drain when the last handle drops (R06). | Rust has no `beforeExit`; a tokio signal listener would change the process's signal behavior. |
 | RD-10 | No kill switch; no test fake. | `AGENTCAT_ENABLED`, `testing::Fake` (D44, D41). | PHP decisions. |
 | RD-11 | `null` project ID = telemetry only. | `from_env` reads `AGENTCAT_PROJECT_ID`; `""` = telemetry only (D36). | PHP decision. |
-| RD-12 | Each listing page replaces the registries; rebuild reads page 1 (K-01, K-02, B-048). | Registries merged per tool; rebuild follows `next_cursor`; `get_tool` first (C03). | PHP D66. |
+| RD-12 | Each listing page replaces the registries; rebuild reads page 1 (K-01, K-02, B-048). | Registries merged per tool; rebuild follows `next_cursor`; `get_tool` first (C03). A tool found through `get_tool` takes its foreign status from its current schema; the registry's set of tools that declare their own `session_id` only grows, as in TS (C19). | PHP D66. |
 | RD-13 | Host SDK behavior of the TS MCP SDK (`execution` on tools, omitted `isError`, zod validation). | rmcp's own behavior. | Not AgentCat's; the harness compares the AgentCat delta, not host output (section 11). |
 | RD-14 | `sdkLanguage: "TypeScript"`, `agentcatVersion` 2.1.1. | `"Rust"`, crate version. | D01. |
 | RD-15 | Log prefix `[sdk=… node=… mcp=…]`. | `[sdk=… rust=… rmcp=…]`; optional `tracing` route. | C07. |

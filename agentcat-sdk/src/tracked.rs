@@ -6,31 +6,46 @@
 use std::any::type_name;
 use std::borrow::Cow;
 use std::fmt;
+use std::sync::{Mutex, PoisonError};
 
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CancelTaskParams, CancelledNotificationParam,
     CompleteRequestParams, CompleteResult, CustomNotification, CustomRequest, CustomResult,
     DiscoverResult, GetPromptRequestParams, GetPromptResponse, GetTaskParams, GetTaskResult,
-    InitializeRequestParams, InitializeResult, ListPromptsResult, ListResourceTemplatesResult,
-    ListResourcesResult, ListToolsResult, PaginatedRequestParams, ProgressNotificationParam,
-    ProtocolVersion, ReadResourceRequestParams, ReadResourceResponse, SubscribeRequestParams,
-    SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
+    Implementation, InitializeRequestParams, InitializeResult, ListPromptsResult,
+    ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, PaginatedRequestParams,
+    ProgressNotificationParam, ProtocolVersion, ReadResourceRequestParams, ReadResourceResponse,
+    SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
 };
 use rmcp::service::{MaybeSendFuture, NotificationContext, RequestContext, SubscriptionContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 
 use crate::client::AgentCat;
+use crate::constants::GET_MORE_TOOLS_NAME;
+use crate::inject::{InjectConfig, build_injected_list, get_more_tools_tool, inject_tool};
 
 #[cfg(test)]
 mod tests;
 
 /// A server handler wrapped by [`AgentCat::track`] or [`track`](crate::track). It implements
 /// rmcp's `ServerHandler`, so it is served like the handler it wraps.
-#[derive(Clone)]
 pub struct Tracked<H> {
     inner: H,
     agentcat: AgentCat,
+    /// The client that `initialize` named on this instance (C16). A clone starts with none.
+    identity: Mutex<Option<Implementation>>,
 }
+
+impl<H: Clone> Clone for Tracked<H> {
+    /// Clones the handler and the handle; the clone has seen no `initialize`, so it holds no
+    /// client identity.
+    fn clone(&self) -> Self {
+        Self::new(self.inner.clone(), self.agentcat.clone())
+    }
+}
+
+/// The warning TS logs for a listing with no tools (B-048).
+const EMPTY_LISTING_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
 
 const _: () = {
     const fn send_sync_static<T: Send + Sync + 'static>() {}
@@ -43,7 +58,11 @@ const _: () = {
 impl<H> Tracked<H> {
     /// Wraps `inner` for `agentcat`.
     pub(crate) fn new(inner: H, agentcat: AgentCat) -> Self {
-        Self { inner, agentcat }
+        Self {
+            inner,
+            agentcat,
+            identity: Mutex::new(None),
+        }
     }
 
     /// The wrapped handler.
@@ -65,6 +84,14 @@ impl<H> Tracked<H> {
     pub fn agentcat(&self) -> &AgentCat {
         &self.agentcat
     }
+
+    /// The client that `initialize` named on this instance, if it has run (C16).
+    pub(crate) fn client_identity(&self) -> Option<Implementation> {
+        self.identity
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
 }
 
 impl<H> fmt::Debug for Tracked<H> {
@@ -73,7 +100,7 @@ impl<H> fmt::Debug for Tracked<H> {
         f.debug_struct("Tracked")
             .field("inner", &type_name::<H>())
             .field("agentcat", &self.agentcat)
-            .finish()
+            .finish_non_exhaustive()
     }
 }
 
@@ -85,12 +112,21 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.ping(context)
     }
 
+    #[expect(
+        clippy::manual_async_fn,
+        reason = "the signature of rmcp's trait method: a returned future with MaybeSendFuture"
+    )]
     fn initialize(
         &self,
         request: InitializeRequestParams,
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<InitializeResult, ErrorData>> + MaybeSendFuture + '_ {
-        self.inner.initialize(request, context)
+        async move {
+            let client = request.client_info.clone();
+            let result = self.inner.initialize(request, context).await?;
+            *self.identity.lock().unwrap_or_else(PoisonError::into_inner) = Some(client);
+            Ok(result)
+        }
     }
 
     fn supported_protocol_versions(&self) -> Cow<'static, [ProtocolVersion]> {
@@ -211,16 +247,51 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.call_tool(request, context)
     }
 
+    #[expect(
+        clippy::manual_async_fn,
+        reason = "the signature of rmcp's trait method: a returned future with MaybeSendFuture"
+    )]
     fn list_tools(
         &self,
         request: Option<PaginatedRequestParams>,
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
-        self.inner.list_tools(request, context)
+        async move {
+            let mut result = self.inner.list_tools(request, context).await?;
+            let shared = self.agentcat.inner();
+            if result.tools.is_empty() {
+                shared.sink.log(EMPTY_LISTING_WARNING.to_owned());
+                return Ok(result);
+            }
+            let config = InjectConfig::from_options(&shared.options);
+            let tools = std::mem::take(&mut result.tools);
+            let list = shared.with_registry::<H, _>(|registry| {
+                let list = build_injected_list(&config, tools, registry.state_mut());
+                registry.record(&list);
+                list
+            });
+            for line in list.logs {
+                shared.sink.log(line);
+            }
+            result.tools = list.tools;
+            Ok(result)
+        }
     }
 
+    /// C02: the injected descriptor of `get_more_tools`, or the handler's tool through the
+    /// pipeline, so the call path sees what the listing showed. The pipeline's log lines are
+    /// dropped: the listing logs them once.
     fn get_tool(&self, name: &str) -> Option<Tool> {
-        self.inner.get_tool(name)
+        let shared = self.agentcat.inner();
+        if shared.options.report_missing() && name == GET_MORE_TOOLS_NAME {
+            return Some(get_more_tools_tool());
+        }
+        let tool = self.inner.get_tool(name)?;
+        let config = InjectConfig::from_options(&shared.options);
+        let (tool, _entry) = shared.with_registry::<H, _>(|registry| {
+            inject_tool(&config, tool, registry.state_mut(), &mut Vec::new())
+        });
+        Some(tool)
     }
 
     fn on_custom_request(

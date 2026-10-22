@@ -1,8 +1,10 @@
 //! `Tracked<H>` forwards: each `ServerHandler` method that a client can reach answers through the
 //! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only
 //! the streamable HTTP transport calls it) are forwarded too; a client cannot call them.
+use std::sync::Arc;
 use std::time::Duration;
 
+use rmcp::ServerHandler;
 use rmcp::model::{
     ArgumentInfo, CallToolRequest, CallToolRequestParams, CancelTaskParams, CancelTaskRequest,
     ClientCapabilities, ClientRequest, CompleteRequest, CompleteRequestParams, CustomRequest,
@@ -14,12 +16,17 @@ use rmcp::model::{
     SubscriptionsListenRequest, SubscriptionsListenRequestParams, UnsubscribeRequestParams,
     UpdateTaskParams, UpdateTaskRequest,
 };
+use rmcp::model::{ListToolsResult, PaginatedRequestParams, Tool};
 use rmcp::service::{RoleClient, RunningService, ServiceError};
 use serde_json::{Value, json};
 
-use crate::client::track;
+use crate::client::{AgentCat, track};
 use crate::config::Options;
-use crate::test_support::rmcp::{PROBE_VERSIONS, Probe, connect};
+use crate::constants::GET_MORE_TOOLS_NAME;
+use crate::inject::{InjectConfig, InjectState, build_injected_list, inject_tool};
+use crate::test_support::rmcp::{
+    PAGED_CURSOR, PROBE_VERSIONS, Paged, Probe, RecordingSink, Sample, connect,
+};
 
 /// How long one request may take: a `listen` that is not forwarded waits for cancellation, and
 /// the test fails instead of hanging.
@@ -278,8 +285,168 @@ async fn forwards_every_method() {
 fn tracked_debug_names_the_inner_type() {
     /// A handler without a `Debug` impl.
     struct Opaque;
-    impl rmcp::ServerHandler for Opaque {}
+    impl ServerHandler for Opaque {}
 
     let text = format!("{:?}", track(Opaque, "", Options::default()));
     assert!(text.contains(std::any::type_name::<Opaque>()), "{text}");
+}
+
+/// The warning for a listing with no tools.
+const EMPTY_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
+
+/// A tracked handle that logs to a [`RecordingSink`].
+fn recording_handle() -> (AgentCat, Arc<RecordingSink>) {
+    let sink = Arc::new(RecordingSink::default());
+    let agentcat = AgentCat::with_sink("", Options::default(), sink.clone());
+    (agentcat, sink)
+}
+
+/// The tools `client` lists, page by page.
+async fn all_tools(client: &RunningService<RoleClient, InitializeRequestParams>) -> Vec<Tool> {
+    client.list_all_tools().await.expect("the listing works")
+}
+
+/// One listing page, for the cursor `cursor`.
+async fn page(
+    client: &RunningService<RoleClient, InitializeRequestParams>,
+    cursor: Option<&str>,
+) -> ListToolsResult {
+    let params = PaginatedRequestParams::default().with_cursor(cursor.map(str::to_owned));
+    client
+        .list_tools(Some(params))
+        .await
+        .expect("the page lists")
+}
+
+#[tokio::test]
+async fn listing_equals_the_pure_pipeline() {
+    let plain = connect(Sample, "plain").await;
+    let own = all_tools(&plain).await;
+    let config = InjectConfig::from_options(&Options::default());
+    let pure = build_injected_list(&config, own, &mut InjectState::default());
+    let expected = pure.tools;
+
+    let (agentcat, sink) = recording_handle();
+    let tracked = connect(agentcat.track(Sample), "tracked").await;
+    assert_eq!(all_tools(&tracked).await, expected);
+    assert_eq!(sink.logs(), pure.logs);
+    assert!(expected.iter().any(|t| t.name == GET_MORE_TOOLS_NAME));
+}
+
+#[tokio::test]
+async fn empty_listing_is_untouched_and_logged() {
+    let plain = connect(Probe, "plain").await;
+    let expected = page(&plain, None).await;
+    assert_eq!(expected.tools, Vec::<Tool>::new());
+
+    let (agentcat, sink) = recording_handle();
+    let tracked = connect(agentcat.track(Probe), "tracked").await;
+    assert_eq!(page(&tracked, None).await, expected);
+    assert_eq!(sink.logs(), [EMPTY_WARNING]);
+    let listed = agentcat
+        .inner()
+        .with_registry::<Probe, _>(|registry| registry.listed());
+    assert!(!listed, "the registry stays unset");
+}
+
+#[tokio::test]
+async fn cursor_and_other_fields_pass_through() {
+    let plain = connect(Paged, "plain").await;
+    let expected = page(&plain, None).await;
+    assert_eq!(expected.next_cursor.as_deref(), Some(PAGED_CURSOR));
+    assert!(expected.meta.is_some());
+
+    let tracked = connect(track(Paged, "", Options::default()), "tracked").await;
+    let actual = page(&tracked, None).await;
+    assert_eq!(actual.next_cursor, expected.next_cursor);
+    assert_eq!(actual.meta, expected.meta);
+    assert_eq!(actual.tools.len(), expected.tools.len() + 1);
+}
+
+#[tokio::test]
+async fn get_more_tools_on_every_page() {
+    let tracked = connect(track(Paged, "", Options::default()), "tracked").await;
+    for (cursor, own) in [(None, "alpha"), (Some(PAGED_CURSOR), "beta")] {
+        let names: Vec<String> = page(&tracked, cursor)
+            .await
+            .tools
+            .iter()
+            .map(|t| t.name.to_string())
+            .collect();
+        assert_eq!(names, [own, GET_MORE_TOOLS_NAME], "C20");
+    }
+}
+
+#[test]
+fn get_tool_returns_the_injected_schema() {
+    let tracked = track(Sample, "", Options::default());
+    let config = InjectConfig::from_options(&Options::default());
+
+    // Before any listing, a customer tool comes through the pure pipeline.
+    let own = Sample.get_tool("echo").expect("the macro serves get_tool");
+    let (expected, _) = inject_tool(
+        &config,
+        own.clone(),
+        &mut InjectState::default(),
+        &mut Vec::new(),
+    );
+    assert_ne!(expected, own);
+    assert_eq!(tracked.get_tool("echo"), Some(expected));
+
+    // C02: the report-missing tool answers by name; an unknown name has none.
+    let more = tracked.get_tool(GET_MORE_TOOLS_NAME).expect("injected");
+    assert_eq!(more, crate::inject::get_more_tools_tool());
+    assert_eq!(tracked.get_tool("nope"), None);
+
+    // With report missing off, the name falls through to the handler, which has none.
+    let off = track(Sample, "", Options::default().enable_report_missing(false));
+    assert_eq!(off.get_tool(GET_MORE_TOOLS_NAME), None);
+}
+
+#[tokio::test]
+async fn initialize_keeps_the_client_identity() {
+    let tracked = Arc::new(track(Sample, "", Options::default()));
+    assert_eq!(tracked.client_identity(), None);
+    let _client = connect(tracked.clone(), "identity-test").await;
+    assert_eq!(
+        tracked.client_identity(),
+        Some(Implementation::new("identity-test", "1.0.0"))
+    );
+    assert_eq!(
+        (*tracked).clone().client_identity(),
+        None,
+        "a clone starts with none"
+    );
+}
+
+#[tokio::test]
+async fn registries_are_per_inner_type() {
+    let agentcat = AgentCat::new("", Options::default());
+    let sample = connect(agentcat.track(Sample), "sample").await;
+    let paged = connect(agentcat.track(Paged), "paged").await;
+    all_tools(&sample).await;
+    all_tools(&paged).await;
+
+    let has = |present: bool, name: &str, sample_side: bool| {
+        let seen = if sample_side {
+            agentcat
+                .inner()
+                .with_registry::<Sample, _>(|r| r.entry(name).is_some())
+        } else {
+            agentcat
+                .inner()
+                .with_registry::<Paged, _>(|r| r.entry(name).is_some())
+        };
+        assert_eq!(
+            seen,
+            present,
+            "{name} in the {} registry",
+            if sample_side { "Sample" } else { "Paged" }
+        );
+    };
+    has(true, "echo", true);
+    has(false, "alpha", true);
+    has(true, "alpha", false);
+    has(true, "beta", false);
+    has(false, "echo", false);
 }
