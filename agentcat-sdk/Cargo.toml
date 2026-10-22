@@ -21,7 +21,6 @@ ryu-js = { workspace = true }
 getrandom = { workspace = true }
 sha2 = { workspace = true }
 rmcp = { workspace = true }
-http = { workspace = true, features = ["std"] }
 tokio = { workspace = true, features = ["rt", "time"] }
 futures = { workspace = true, features = ["std"] }
 

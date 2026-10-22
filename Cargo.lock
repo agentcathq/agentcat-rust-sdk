@@ -10,7 +10,6 @@ dependencies = [
  "futures",
  "getrandom",
  "hex",
- "http",
  "proptest",
  "rmcp",
  "ryu-js",
