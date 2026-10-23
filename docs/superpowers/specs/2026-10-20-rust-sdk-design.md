@@ -222,9 +222,9 @@ In the TS order (B-022), with these Rust mechanics:
 
 Exactly B-052 to B-069: `ses_` + 27-char base62 KSUID (segmentio epoch); resolution `minted` / `supplied` /
 `invalid` / `foreign`; hook mode with `derive_session_id(id, project_id)` from sha256; mint-back strings byte-equal to
-TS; `agent_id` tags clamped to 200 UTF-16 units with CR/LF replaced; `agentcat_protocol_version` from
-`_meta["io.modelcontextprotocol/protocolVersion"]` or the 2026-07-28 envelope; `agentcat_session_id_source` always
-present. The transport session (`Mcp-Session-Id`) is never used for correlation (B-063).
+TS; `agent_id` tags clamped to 200 UTF-16 units with CR/LF replaced; `agentcat_protocol_version` from the request
+`_meta["io.modelcontextprotocol/protocolVersion"]` only (B-067; rmcp keeps the 2026-07-28 envelope keys in `_meta`),
+never from `RequestContext::protocol_version()` (C28); `agentcat_session_id_source` always present. The transport session (`Mcp-Session-Id`) is never used for correlation (B-063).
 
 ### 6.6 Event building
 
@@ -233,8 +233,11 @@ Fields as B-077, with `sdk_language = "Rust"` and `agentcat_version` = the crate
 - `parameters.request` reproduces the raw JSON-RPC request TS records (B-082): `method`, `params` (`name`, raw
   `arguments` with injected keys, `_meta` when present), `jsonrpc`, `id`, in TS key order.
 - `parameters.extra` (D34): `sessionId` (the `Mcp-Session-Id` header, stateful HTTP only), `requestId` (as sent),
-  `_meta` (when sent), `requestInfo: {headers, url}` from `http::request::Parts` (all headers, lower-case, repeated
-  values joined with `", "`, D06; absolute URL rebuilt from `Host`, path and query). On stdio there is no
+  `_meta` (when sent), `requestInfo: {headers, url}` from `http::request::Parts` (D06: every header under its
+  lower-case name, as TS's WHATWG `Headers` gives them, B-081: values trimmed of HTTP whitespace; repeated values
+  joined in arrival order with `", "`, `"; "` for `cookie`; only the last `set-cookie` kept; names in byte order
+  with array-index names first; a value that is not UTF-8 read lossily, RD-30. The absolute URL is rebuilt from
+  `Host`, path and query). On stdio there is no
   `requestInfo`.
 - Client info ladder (B-085): the `_meta` client info (rmcp keeps the 2026-07-28 envelope keys in `_meta`, which it
   moves whole into `RequestContext::meta`), then the client of the peer's `initialize` (`peer_info`). rmcp's
@@ -312,7 +315,7 @@ manifest point to these IDs.
 | RD-03 | Tag keys keep insertion order on the wire. | Random order on the wire (`HashMap` in `agentcat-api`); which tags survive the 50 cap is unchanged. | `agentcat-api` model type. |
 | RD-04 | Timestamps always have milliseconds (`….000Z`). | chrono drops the fraction when it is zero (`…:00Z`). | `agentcat-api` model type; still RFC 3339. |
 | RD-05 | Thrown errors and unknown tools become `isError` results with mint-back (B-024, B-022 step 13). | rmcp returns JSON-RPC errors for `Err(ErrorData)` and unknown tools; no mint-back, the event has `error` and no `response`. Argument deserialization failures stay `is_error` results (rmcp 3.6 `router/tool.rs:145-155`) and get mint-back like any result. | rmcp semantics (D16; C# and TS v2 behave the same). |
-| RD-06 | `error` = `{message, type: constructor name, platform: "javascript", stack, frames, chained_errors}` from V8. | `error` = `{message, type?, platform: "rust", stack?, chained_errors?}`, with no `frames` (C23). A panic gives `type: "panic"` and the payload as `message`; otherwise, when the call fails, an error recorded with `capture_error` during the call gives its type path, its `Display` text, `stack` (only when a backtrace was captured, `RUST_BACKTRACE`) and `chained_errors` (`[{message}]` from `source()`, at most 10), in place of the result's error (B-097) or the JSON-RPC code name; otherwise `ErrorData` gives its code name (C24) and an `is_error` result gives no `type` (B-097). | Rust has no exception classes (R09). |
+| RD-06 | `error` = `{message, type: constructor name, platform: "javascript", stack, frames, chained_errors}` from V8. | `error` = `{message, type?, platform: "rust", stack?, chained_errors?}`, with no `frames` (C23). A panic gives `type: "panic"` and the payload as `message`; otherwise, when the call fails, an error recorded with `capture_error` during the call gives its type path, its `Display` text, `stack` (only when a backtrace was captured, `RUST_BACKTRACE` or `RUST_LIB_BACKTRACE`) and `chained_errors` (`[{message}]` from `source()`, at most 10), in place of the result's error (B-097) or the JSON-RPC code name; otherwise `ErrorData` gives its code name (C24) and an `is_error` result gives no `type` (B-097). | Rust has no exception classes (R09). |
 | RD-07 | `parameters.extra` is the whole JS handler context (`signal`, function stubs, `authInfo` with token). | The D34 shape from `RequestContext`; no function stubs, no `authInfo`. | No equivalent objects in rmcp. |
 | RD-08 | Process-global queue, API URL (last wins) and exporter settings (K-09). | Per `AgentCat` handle (C10); the log destination stays process-global (D38). | Explicit handles. |
 | RD-09 | Signal and `beforeExit` handlers; no public flush or shutdown (B-105). | No signal handlers; public `flush`/`shutdown`; automatic bounded drain when the last handle drops (R06). | Rust has no `beforeExit`; a tokio signal listener would change the process's signal behavior. |
@@ -336,6 +339,7 @@ manifest point to these IDs.
 | RD-27 | `String()` of an object with an own `toString` key, at any depth inside an array, throws `TypeError: Cannot convert object to primitive value` (for example in sanitization's unsupported-type message and in the `userIntent` array join of truncation). | The object gives `[object Object]` like any other object. | Owner ruling R23. |
 | RD-28 | Truncation assigns an own `message: undefined` to an `error` that has no `message` (an object, or an array spread into index keys), and normalize counts that property toward the 100-key breadth. So an `error` of exactly 100 keys gets `"...": "[MaxProperties ~]"`, and an existing `"..."` key at the breadth limit gets the marker as its value. | Only keys that JSON holds count, so these `error` values keep their keys and values. | Owner ruling R23. |
 | RD-29 | With `enableTracing: false`, the inner tap of a high-level server (B-020) still strips the injected names from a tool's arguments. On a server instance that has not served `tools/list` (a per-request server: stateless HTTP, or the 2026-07-28 HTTP handler), nothing has built the registries (B-022 returns at step 2, before the rebuild of B-027), so it strips `session_id`, `agent_id` and `context` by the heuristic (B-051), a tool's own `context` too: the handler receives none of them (K-01, K-05). | With tracing off, the handler receives the raw arguments on every transport (B-023, K-05): Rust has no inner tap (RD-17). | **Pending** (R17): unforced. Rust could strip with tracing off, but it learns a tool's schema through `get_tool` and per-handle registries (C03, C19), so it would still keep the tool's own `context` where TS loses it. Harness: the `own_context` call of `tracing-off.json`. |
+| RD-30 | Node's `Headers` reads a header value byte by byte as Latin-1, so `caf\xe9` gives `café` and UTF-8 bytes give mojibake (`cafÃ©`). | A value that is not UTF-8 is read lossily (`caf\xe9` gives `caf\u{FFFD}`), and UTF-8 bytes give the text they encode (`café`). | **Pending** (R17): unforced. Rust could decode Latin-1 as Node does; lossy UTF-8 is the Rust idiom for `http::HeaderValue` bytes. ASCII values, the usual case, are equal. No harness scenario sends such a header (event comparison is plan 4). |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register, and in `rulings.json` once a harness scenario reaches it), and work continues;

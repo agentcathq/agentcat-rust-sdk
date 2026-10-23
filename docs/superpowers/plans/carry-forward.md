@@ -2,63 +2,12 @@
 
 Reviews of plans 1 and 2 found these items and deferred them. Each plan's final review sorted them into a later
 plan. The person who writes that plan reads this list, checks each item against the code as it stands, and either
-puts it in a task or records why not. Line numbers are as of `b9b91e0` (plan 1 items) or `e685d14` (plan 2 items)
-and can drift. Plan 2 closed every item that plan 1 carried to it.
+puts it in a task or records why not. Line numbers are as of `b9b91e0` (plan 1 items), `e685d14` (plan 2 items)
+or `dd67f1d` (plan 3 items) and can drift. Plan 2 closed every item that plan 1 carried to it.
 
 ## Plan 3 (interception, Rust reference server)
 
-- Before the Rust server joins: `extra-headers-only` in `harness/src/normalize.mjs` hides D06 (every header
-  verbatim) and D34 (the shape of `extra`). Keep every header except a named volatile set, keep the key set of
-  `extra`, keep `requestInfo.url`, and record the known shape difference as an RD-07 ruling.
-- Owner ruling R20: make `ts-v2` the default reference server on both lanes, generate
-  `harness/contract/tool-contract.json` from v2, and reword `harness/README.md` (the "Tools" paragraph that omits
-  `execution`). The planned automated v1-vs-v2 diff on the 2025-11-25 lane is no longer needed as an answer key.
-- The nightly diff of pinned runs against TS main counts unused rulings as drift. Give it a TS-only rulings file
-  before Rust rulings arrive.
-- RD-04: a Rust timestamp with zero milliseconds becomes `<bad-timestamp:…>` about once per 1000 events. Add an
-  optional-ruling flag or a class token for RFC 3339 without a fraction.
-- The driver records but does not enforce the negotiated protocol version against `--lane`. Exit 1 on a
-  fallback. The initialize transcript entry records only `protocolVersion`; add `serverInfo`, `capabilities`
-  and `instructions` so the MCP-wire delta sees whether `Tracked<H>` forwards `get_info`.
-- Driver and scenarios: `saveHandleAs` with no handle sends the literal `${S1}` (fail the run);
-  `checkScenario` accepts unknown keys; unknown `expectPublishes` lane keys are ignored (reject them) and the
-  `<transport>` fallback has no test; the sort tie-breaker uses the raw duration (sort on the normalized body);
-  the same-millisecond sort limit needs a line in the scenario-authoring rules; placeholders do not tell
-  derived `ses_` IDs from minted ones; `diff.mjs` reports only `.length` for arrays of different length, and
-  A/A tests (d) and (e) depend on (a).
-- On a driver error, `killAll` cannot reach SDK-spawned stdio servers.
-- The contract test compares tool names and input schemas only. The Rust server also loads descriptions and
-  output schemas.
-- Nightly reporting: `head -c` can cut the "Run:" link and split a UTF-8 character (truncate first, then append
-  the link); an A/A failure reports no output tail; the drift job prints TS-main output to the log without
-  stopping workflow commands (the job has `contents: read` and no secrets).
-- The egress guard does not cover worker threads, native addons or `dns.resolve*`. Revisit if TS main moves
-  test work to worker threads.
-- Found while writing plan 2: TS puts array-index keys of `structuredContent` (for example `"0"`) before
-  `mcp_session` on the wire, because JavaScript orders those keys first. Decide how the `mcp-session-first` rule
-  (R07) and the Rust mirror treat them.
-- Found while writing plan 2: `handles::new_session_id()` returns `None` where TS throws. Take TS's "tracing
-  failed" path for that call.
-- Found while writing plan 2: harness scenarios with decimals of more than 15 significant digits hit RD-23.
-  Avoid them, or add a ruling.
-
-- From plan 2: `harness/src/diff.mjs` prints a pending ruling like any other `RULING` line. Mark it as pending
-  when `harness/rulings.json` gets its first pending entry.
-- From plan 2: a dependency that only one crate's tests use goes in that crate's `[dev-dependencies]`, not in
-  `[workspace.dependencies]` (`e685d14`): the `--no-dev-deps` builds of cargo-hack and minimal-versions report such
-  a workspace entry as unused. Write this exception into the plan's global constraints. The dev-dependency floors
-  (`hex` 0.4, `proptest` 1) are not checked by minimal-versions.
-- From plan 2: when the crate gets a public API, document that Cargo feature unification can turn on serde_json's
-  `arbitrary_precision` or `float_roundtrip` in a customer build. Number text then changes (the `js.rs`
-  `push_number` fallback writes non-JS text for `1e400`), and RD-23 changes with it. Consider a startup self-check.
-- From plan 2: `cargo deny` prints `license-not-encountered` for four allowed licenses (`Apache-2.0 WITH
-  LLVM-exception`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`). Check the list again when rmcp, reqwest and rustls join,
-  and remove each license that is still unused.
-
-- Owner ruling R25 (2026-10-22): add the rmcp version matrix to CI when rmcp joins the crate. Like the TS SDK's
-  `.github/workflows/mcp-compatibility.yml` (read it in the oracle's TS clone), list every rmcp 3.x minor at its
-  latest patch from crates.io at run time, and run the suite against each on every push and pull request, with a
-  test that proves which rmcp version compiled. This replaces "floor and latest only".
+Plan 3 closed or moved every item carried to it. The moved items are below, marked "From plan 3".
 
 ## Plan 4 (delivery and lifecycle)
 
@@ -97,6 +46,38 @@ and can drift. Plan 2 closed every item that plan 1 carried to it.
 - From plan 2 (RD-24): Rust's restore keeps a top-level `__proto__` key of an event hook's result, so its strings
   reach the customer's redactor; TS turns that key into the prototype and never redacts them. A typed event has no
   such key; keep it that way, or record the extra redactor calls in RD-24.
+
+- From plan 3, because events are compared in plan 4: `extra-headers-only` in `harness/src/normalize.mjs` hides D06
+  (every header verbatim) and D34 (the shape of `extra`). Keep every header except a named volatile set, keep the
+  key set of `extra`, keep `requestInfo.url`, and record the known shape difference as an RD-07 ruling. The
+  `extra` key order differs from TS v1 (`_meta` before `requestId`), and `request.params` puts `_meta` last
+  where B-082 says "as received" (rmcp's own client sends it first): align each, or name it in RD-07.
+- From plan 3, because events are compared in plan 4: RD-04: a Rust timestamp with zero milliseconds becomes
+  `<bad-timestamp:…>` about once per 1000 events. Add an optional-ruling flag or a class token for RFC 3339 without
+  a fraction.
+- From plan 3, because events are compared in plan 4: placeholders do not tell derived `ses_` IDs from minted
+  ones; the event sort tie-breaker uses the raw duration (sort on the normalized body); the same-millisecond sort
+  limit needs a line in the scenario-authoring rules.
+- From plan 3: build `parameters.request` in TS's key order, recorded from a TS probe.
+- From plan 3: the event builder drops rmcp's `resultType: "complete"` from `CallRecord.response` (TS events have
+  none).
+- From plan 3: insert `CallContext` on the `AGENTCAT_ENABLED=false` pass-through too (C29).
+- From plan 3: hook settling reads `CallRecord.pending`; it must abort or bound a hook that never finishes (today
+  it stays a detached task). Document that a panicking hook prints through the process panic hook.
+- From plan 3: `capture_error` renders the backtrace on the tool's task when `RUST_BACKTRACE` or
+  `RUST_LIB_BACKTRACE` is set. Keep the `Backtrace` and render it in the delivery pipeline.
+- From plan 3: the Rust reference server's `emit_custom` publishes a custom event, and its
+  `redactSensitiveInformation` profile key reaches the SDK option. It passes `AGENTCAT_API_URL` to the SDK as the API
+  base URL (the TS servers' second guard; the `#[expect(dead_code)]` on `Startup.api_url` does not fire if this is
+  forgotten), and its HTTP modes drain the SDK queue on SIGTERM before they exit (today they exit at once).
+- From plan 3: `harness/src/matrix.mjs` stops passing `--expect-publishes 0` for tracked Rust runs.
+- From plan 3: `harness/rulings.json` holds delta rulings only. When event rulings for `diff.mjs` join, split the
+  file or make the full-matrix unused-ruling check count only rulings that can match `$.delta.*`
+  (`matrix.mjs`).
+- From plan 3: the feature-unification self-check (it logs when serde_json's `arbitrary_precision` or
+  `float_roundtrip` is on in a customer build).
+- From plan 3: check the four unused `cargo deny` licenses again after reqwest and rustls join, and remove each
+  license that is still unused.
 
 ## Plan 5 (finish)
 
@@ -153,3 +134,12 @@ and can drift. Plan 2 closed every item that plan 1 carried to it.
   and in every `sdk/*.mdx` page that shows code (custom events, debug mode, tags and properties, identifying
   users, missing tools, stateless servers, tool-call context). Open it as a pull request to that repository; the
   owner approves it at that time.
+
+- From plan 3: document that a tracked server needs a tokio runtime with the time driver (C32); that rmcp's
+  `local` feature is not supported (C27); that Cargo feature unification can turn on serde_json's
+  `arbitrary_precision` or `float_roundtrip` in a customer build (number text and RD-23 change with it); and that
+  axum's `nest_service` strips the path prefix from `requestInfo.url`.
+- From plan 3 (watch item): the egress guard does not cover worker threads, native addons or `dns.resolve*`.
+  Revisit if TS main moves test work to worker threads.
+- From plan 3: the harness reference server's `cfg(not(unix))` branch (`harness/rust-server/src/main.rs`) has been
+  built only on Linux; the final PR's macOS and Windows runs (C17) build it.
