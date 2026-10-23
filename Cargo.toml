@@ -16,7 +16,7 @@ serde = { version = "1.0.225", default-features = false }
 getrandom = { version = "0.4.0", default-features = false }
 toml = { version = "1", default-features = false }
 rmcp = { version = "3.0.0", default-features = false, features = ["server"] }
-http = { version = "1", default-features = false }
+http = { version = "1.1", default-features = false }
 tokio = { version = "1.37", default-features = false }
 futures = { version = "0.3", default-features = false }
 agentcat-sdk = { path = "agentcat-sdk" }
@@ -24,6 +24,8 @@ axum = { version = "0.8", default-features = false }
 thiserror = { version = "2.0.0", default-features = false }
 chrono = { version = "0.4.39", default-features = false }
 tracing = { version = "0.1.23", default-features = false, features = ["std"] }
+# R11: 0.0.x breaks on every bump. No TLS feature until the HTTP client joins (plan 4 task 8).
+agentcat-api = { version = "=0.0.3", default-features = false }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

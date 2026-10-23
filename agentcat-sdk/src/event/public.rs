@@ -73,10 +73,6 @@ impl Event {
     /// The typed event of `event`. Keys the type has no field for are left out; a field of the
     /// wrong type is `None`; a `timestamp` that does not parse is the Unix epoch, which the
     /// restore of `timestamp` after the hook makes harmless.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the redaction stage (plan 4 task 5)")
-    )]
     pub(crate) fn from_ts(event: &TsEvent) -> Event {
         let text = |key: &str| event.get(key).and_then(Value::as_str).map(str::to_owned);
         let object = |key: &str| event.get(key).and_then(Value::as_object).cloned();
@@ -131,10 +127,6 @@ impl Event {
     /// `sessionId`, `projectId`, `eventType`, `timestamp`, `duration`, ...). A field that is
     /// `None` is absent, except `sessionId`, which is `""` without a session. Custom events with
     /// a session string skip the redaction hooks, so only this order is needed.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the redaction stage (plan 4 task 5)")
-    )]
     pub(crate) fn into_ts(self) -> TsEvent {
         let mut out = TsEvent::new();
         let mut put = |key: &str, value: Option<Value>| {

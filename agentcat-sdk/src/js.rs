@@ -84,6 +84,16 @@ fn push_quoted(out: &mut String, text: &str) {
     out.push('"');
 }
 
+/// `value` as TS sends it (C40): its [`stringify()`] text read back with `serde_json`, so that
+/// `serde_json` writes the integers, the `-0` (as `0`), the integers above 2^53 (rounded as
+/// `JSON.parse` rounds them) and the order of index-like keys as `JSON.stringify` does. A float
+/// (a number whose `JSON.stringify` text is not a 64-bit integer) reads back to the same `f64`, which
+/// `serde_json` writes in its own text (`1e-6` for JavaScript's `0.000001`, RD-32). A value nested
+/// deeper than `serde_json` reads (128 levels) does not read back and comes back unchanged.
+pub(crate) fn to_js_value(value: &Value) -> Value {
+    serde_json::from_str(&stringify(value)).unwrap_or_else(|_| value.clone())
+}
+
 /// JavaScript's `Number.prototype.toString()` of `number` as an `f64`: the shortest text that
 /// reads back as the same `f64`, with an exponent from 1e21 up and below 1e-6 (`1e+21`, `1e-7`),
 /// and `"0"` for `-0`. An integer beyond 2^53 is first rounded to the nearest `f64`, as

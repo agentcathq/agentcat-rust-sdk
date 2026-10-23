@@ -10,40 +10,19 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde_json::{Map, Value, json};
-use tokio::task::JoinHandle;
 use tokio::time::Instant;
 
-use super::{
-    EVENT_PROPERTIES, EVENT_TAGS, HookResults, IDENTIFY, RESOLVE_SESSION_ID, apply, settle,
-};
+use super::{HookResults, apply, settle};
 use crate::config::{HookError, UserIdentity};
 use crate::handles::{derive_session_id, is_valid_session_id};
 use crate::hooks::PendingHooks;
 use crate::js;
 use crate::pipeline::TsEvent;
+use crate::test_support::queue::{self, Task, returns, throws};
 use crate::test_support::{assert_js_eq, vectors};
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
-
-/// The task of one hook.
-type Task<T> = JoinHandle<Result<Option<T>, HookError>>;
-
-/// A hook task that gives `value`.
-fn returns<T: Send + 'static>(value: Option<T>) -> Task<T> {
-    tokio::spawn(async move { Ok(value) })
-}
-
-/// A hook task that fails with the error `message`.
-fn throws<T: Send + 'static>(message: &str) -> Task<T> {
-    let message = message.to_owned();
-    tokio::spawn(async move { Err(message.into()) })
-}
-
-/// A hook task that never finishes.
-fn hangs<T: Send + 'static>() -> Task<T> {
-    tokio::spawn(pending())
-}
 
 /// Sets its flag when it is dropped.
 struct DropFlag(Arc<AtomicBool>);
@@ -341,71 +320,6 @@ fn hook_mode_without_value_mints() {
 
 // ------------------------------------------------------------------- queue.json hooks:* cases
 
-/// The task of a raw hook outcome of `queue.json`: `{"returns": v}` (`null` gives nothing),
-/// `{"throws": message}` or `{"hangs": true}`; `value` reads a returned value.
-fn outcome_task<T: Send + 'static>(outcome: &Value, value: fn(&Value) -> T) -> Task<T> {
-    if outcome.get("hangs").is_some() {
-        return hangs();
-    }
-    if let Some(message) = outcome.get("throws") {
-        return throws(message.as_str().expect("a message"));
-    }
-    let returned = &outcome["returns"];
-    returns((!returned.is_null()).then(|| value(returned)))
-}
-
-/// The `UserIdentity` of an identify result `{userId, userName?, userData?}`.
-fn identity_of(value: &Value) -> UserIdentity {
-    let mut identity = UserIdentity::new(value["userId"].as_str().expect("a userId"));
-    if let Some(name) = value.get("userName").and_then(Value::as_str) {
-        identity = identity.user_name(name);
-    }
-    if let Some(Value::Object(data)) = value.get("userData") {
-        identity = identity.user_data(data.clone());
-    }
-    identity
-}
-
-/// The hook tasks of a case's `hooks`.
-fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
-    PendingHooks {
-        resolve_session_id: hooks.get("resolveSessionId").map(|outcome| {
-            outcome_task(outcome, |value| {
-                value.as_str().expect("a string").to_owned()
-            })
-        }),
-        identify: hooks
-            .get("identify")
-            .map(|outcome| outcome_task(outcome, identity_of)),
-        event_tags: hooks
-            .get("eventTags")
-            .map(|outcome| outcome_task(outcome, |value| object(value.clone()))),
-        event_properties: hooks
-            .get("eventProperties")
-            .map(|outcome| outcome_task(outcome, |value| object(value.clone()))),
-    }
-}
-
-/// A TS log line as Rust writes it (ruling P7): TS renders a thrown `Error` as `Error: M` after
-/// its per-hook text, Rust writes the error's `Display`, `M`.
-fn ts_line_as_rust(line: &str) -> String {
-    let prefixes = [
-        RESOLVE_SESSION_ID.error_prefix,
-        IDENTIFY.error_prefix,
-        EVENT_TAGS.error_prefix,
-        EVENT_PROPERTIES.error_prefix,
-    ];
-    for prefix in prefixes {
-        let message = line
-            .strip_prefix(prefix)
-            .and_then(|rest| rest.strip_prefix("Error: "));
-        if let Some(message) = message {
-            return format!("{prefix}{message}");
-        }
-    }
-    line.to_owned()
-}
-
 /// The request fields `apply` decides (ruling P3), each with the event key it comes from.
 const APPLIED: [(&str, &str); 6] = [
     ("sessionId", "sessionId"),
@@ -417,33 +331,18 @@ const APPLIED: [(&str, &str); 6] = [
 ];
 
 /// Runs the `queue.json` case `name`: its hook outcomes settle under [`BUDGET`] and apply to its
-/// event. The log lines must be TS's (without the delivery lines, Tasks 5 and 6), and each field
+/// event. The log lines must be TS's, as `queue::expected_logs` gives them, and each field
 /// of [`APPLIED`] must be the one of TS's first request; a minted session (`<minted>`) must be a
 /// valid session ID with the `minted` source. A case without a request checks only the logs.
 async fn check_hook_case(name: &str) {
-    let cases = vectors::cases("queue");
-    let case = cases
-        .iter()
-        .find(|case| vectors::name(case) == name)
-        .unwrap_or_else(|| panic!("queue.json has no case {name}"));
+    let case = queue::case(name);
     let hooks = case["hooks"].as_object().expect("hooks");
     let hook_mode = case.get("hook_mode").and_then(Value::as_bool) == Some(true);
     let mut event = object(case["event"].clone());
 
     let mut log = Vec::new();
-    let results = settle(pending_of(hooks), BUDGET, &mut log).await;
-    let expected_logs: Vec<String> = case["logs"]
-        .as_array()
-        .expect("logs")
-        .iter()
-        .map(|line| line.as_str().expect("a line"))
-        .filter(|line| {
-            !line.starts_with("Successfully sent event ")
-                && !line.starts_with("Failed to send event ")
-        })
-        .map(ts_line_as_rust)
-        .collect();
-    assert_eq!(log, expected_logs, "{name}: logs");
+    let results = settle(queue::pending_of(hooks), BUDGET, &mut log).await;
+    assert_eq!(log, queue::expected_logs(&case), "{name}: logs");
 
     apply(&mut event, results, hook_mode).expect("minting works");
     let Some(request) = case["requests"]
@@ -516,7 +415,7 @@ hook_cases! {
 /// Every `hooks:*` case of `queue.json` has its test above.
 #[test]
 fn every_hook_case_has_a_test() {
-    let cases = vectors::cases("queue");
+    let cases = queue::cases();
     let names: Vec<&str> = cases
         .iter()
         .map(vectors::name)

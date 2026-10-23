@@ -12,6 +12,7 @@
 use serde_json::{Map, Value};
 
 pub(crate) mod normalize;
+pub(crate) mod process;
 pub(crate) mod redact;
 pub(crate) mod sanitize;
 pub(crate) mod settle;

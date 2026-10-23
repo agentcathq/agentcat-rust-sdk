@@ -172,7 +172,7 @@ async fn settle_one<T>(
 
 /// The message of a hook task that did not finish: the panic's message, or tokio's text for a
 /// cancelled task.
-fn failure_message(error: JoinError) -> String {
+pub(super) fn failure_message(error: JoinError) -> String {
     match error.try_into_panic() {
         Ok(payload) => panic_message(&*payload),
         Err(error) => error.to_string(),

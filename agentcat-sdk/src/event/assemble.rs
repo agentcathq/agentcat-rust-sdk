@@ -178,10 +178,6 @@ fn without_complete_type(response: Value) -> Value {
 /// `platform` and before `chained_errors`, the place `capture_error` gives it. An event without
 /// an `error` object is left as it is. Rendering resolves symbols, so the delivery worker calls
 /// this, never the call path.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the event pipeline (plan 4 task 5)")
-)]
 pub(crate) fn render_backtrace(event: &mut TsEvent, backtrace: &Backtrace) {
     if backtrace.status() != BacktraceStatus::Captured {
         return;

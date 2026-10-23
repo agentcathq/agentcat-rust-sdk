@@ -15,6 +15,7 @@ mod config;
 mod constants;
 mod context;
 mod custom;
+mod delivery;
 mod error;
 mod event;
 mod handles;
@@ -22,10 +23,6 @@ mod hooks;
 mod inject;
 mod js;
 mod logging;
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
-)]
 mod pipeline;
 mod registry;
 mod sink;

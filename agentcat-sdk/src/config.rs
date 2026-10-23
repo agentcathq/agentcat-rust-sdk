@@ -122,10 +122,6 @@ impl<A, T> Redactor<A, T> {
 
     /// The future of one call of the hook. The hook's own code runs when the future is first
     /// polled, not here.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the redaction stage (plan 4 task 5)")
-    )]
     pub(crate) fn call(&self, input: A) -> RedactFuture<T>
     where
         A: Send + 'static,
@@ -537,7 +533,7 @@ impl Options {
     /// The `redact_sensitive_information` hook.
     #[cfg_attr(
         not(test),
-        expect(dead_code, reason = "read by the redaction stage (plan 4 task 5)")
+        expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
     )]
     pub(crate) fn string_redactor(&self) -> Option<&StringRedactor> {
         self.string_redactor.as_ref()
@@ -546,7 +542,7 @@ impl Options {
     /// The `redact_event` hook.
     #[cfg_attr(
         not(test),
-        expect(dead_code, reason = "read by the redaction stage (plan 4 task 5)")
+        expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
     )]
     pub(crate) fn event_redactor(&self) -> Option<&EventRedactor> {
         self.event_redactor.as_ref()

@@ -106,10 +106,6 @@ impl Drop for SessionIdFailure {
 
 /// A new random event ID (`evt_` and a KSUID of the current time); `None` as for
 /// [`new_session_id`].
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
-)]
 pub(crate) fn new_event_id() -> Option<String> {
     ksuid::random(EVENT_PREFIX)
 }

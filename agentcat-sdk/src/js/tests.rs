@@ -7,8 +7,8 @@ use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{
-    cut_utf16, iso_millis, number_to_string, parse_iso_millis, stringify, to_js_string, trim,
-    type_of, utf16_len,
+    cut_utf16, iso_millis, number_to_string, parse_iso_millis, stringify, to_js_string,
+    to_js_value, trim, type_of, utf16_len,
 };
 use crate::test_support::strategies::{js_string, json_value, object_key};
 use crate::test_support::{assert_js_eq, config, oracle, vectors};
@@ -179,6 +179,38 @@ fn negative_zero_matches_js() {
     let zero = serde_json::Number::from_f64(-0.0).unwrap();
     let js = oracle::call("oracle.String", &[json!({"value": -0.0})]).unwrap();
     assert_eq!(Some(json!(number_to_string(&zero))), js);
+}
+
+/// C40: `to_js_value` is the `JSON.stringify` text read back, so `serde_json` writes it as
+/// JavaScript does: `1.0` as `1`, `-0.0` as `0`, an integer above 2^53 rounded to the nearest
+/// `f64`, and index-like keys first in ascending order, at every depth.
+#[test]
+fn to_js_value_writes_stringify_text() {
+    let value = json!({
+        "10": 1.0,
+        "2": [-0.0, 9_007_199_254_740_993_u64, {"b": 2.0, "1": 0.5}],
+        "text": "a\u{2028}b",
+    });
+    let read_back = to_js_value(&value);
+    assert_eq!(
+        serde_json::to_string(&read_back).unwrap(),
+        stringify(&value)
+    );
+    assert_eq!(
+        stringify(&value),
+        "{\"2\":[0,9007199254740992,{\"1\":0.5,\"b\":2}],\"10\":1,\"text\":\"a\u{2028}b\"}"
+    );
+}
+
+/// A value nested deeper than `serde_json` reads (128 levels) cannot be read back, so
+/// `to_js_value` gives it unchanged.
+#[test]
+fn to_js_value_past_the_nesting_limit_is_a_copy() {
+    let mut value = json!(1.0);
+    for _ in 0..200 {
+        value = json!([value]);
+    }
+    assert_eq!(to_js_value(&value), value);
 }
 
 /// RD-27 (owner ruling R23): JavaScript's `String()` throws for an object with an own

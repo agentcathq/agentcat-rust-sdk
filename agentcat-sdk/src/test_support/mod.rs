@@ -2,6 +2,7 @@
 //! encoding, the vector loader and the proptest strategies.
 pub(crate) mod markers;
 pub(crate) mod oracle;
+pub(crate) mod queue;
 pub(crate) mod rmcp;
 pub(crate) mod strategies;
 pub(crate) mod vectors;

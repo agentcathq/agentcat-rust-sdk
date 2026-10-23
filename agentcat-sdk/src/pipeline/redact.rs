@@ -13,8 +13,8 @@
 //!
 //! Rust departs from TS in one recorded place: a `__proto__` key is kept (RD-24). TS passes the
 //! strings under it to the hook, then assigns it to the new object, which sets that object's
-//! prototype instead of making a key. The restore keeps a top-level `__proto__` key of the hook's
-//! result, which TS's `Object.assign` drops in the same way.
+//! prototype instead of making a key. The hook's result is a typed `Event` (C39), so it has no
+//! such key, and the restore never meets one.
 //!
 //! The one `undefined` TS assigns is the restore's `redactionFn` when the original has no
 //! string-redaction hook. JSON leaves it out, it moves no other key, and no later step counts

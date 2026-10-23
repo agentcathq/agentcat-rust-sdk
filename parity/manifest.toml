@@ -1392,35 +1392,43 @@ reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should preserve normal todo tool calls while sanitizing problematic ones"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_media_blocks_are_sanitized"]
 
 [[test]]
 key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize audio content blocks in tool responses"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_media_blocks_are_sanitized"]
 
 [[test]]
 key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize image content blocks in tool responses"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_media_blocks_are_sanitized"]
 
 [[test]]
 key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should sanitize large base64 strings in tool call parameters"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_base64_argument_is_sanitized"]
 
 [[test]]
 key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should handle both sanitization and truncation in the same tool call"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_long_text_is_truncated"]
 
 [[test]]
 key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should keep total event size under 100KB for oversized parameters"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_oversized_arguments_fit_the_size_guard"]
 
 [[test]]
 key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should preserve normal todo responses while truncating large ones"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_long_text_is_truncated"]
 
 [[test]]
 key = "v1|src/tests/e2e-truncation.test.ts|E2E Truncation - real MCP tool calls > should truncate tool responses with text exceeding 32KB"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_long_text_is_truncated"]
 
 [[test]]
 key = "v1|src/tests/edge-runtime-compatibility.test.ts|Edge Runtime Compatibility > Edge Environment Detection Patterns > should detect Cloudflare Workers pattern"
@@ -1813,7 +1821,8 @@ reason = "inject.json case ts:engine-listwrap:shadow-once; checked by agentcat-s
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should NOT publish identify events when identify function throws"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::identify_error_still_publishes_the_call"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture Error.cause chains"
@@ -1829,7 +1838,8 @@ reason = "asserts the JavaScript constructor name TypeError, a V8 stack and fram
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture errors for unknown tool names"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each", "agentcat-sdk::call::run::tests::unknown_tool_error_unchanged"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture non-Error thrown values"
@@ -1845,19 +1855,23 @@ reason = "asserts the JavaScript type Error, a V8 stack and frames; rmcp turns t
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture validation errors for invalid enum values"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture validation errors for missing required parameters"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should handle successful tool calls without errors"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should publish exactly one event per tool call"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each"]
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should still propagate errors to MCP client"
@@ -3867,7 +3881,8 @@ reason = "JS object identity and in-place mutation; Rust returns the new event"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should propagate hook errors to the caller"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
@@ -3997,27 +4012,33 @@ reason = "queue.json case custom:server-form-redact-merge; checked by agentcat-s
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should drop only the events the hook rejects, while the others still publish"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::event_hook_replaces_fields_and_drops_rejected_events"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should let the hook inspect event metadata and replace event fields"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::event_hook_replaces_fields_and_drops_rejected_events"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should run the event hook on raw values before string redaction"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::event_hook_sees_raw_values_before_string_redaction"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should handle complex nested structures with redaction"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_strings_are_redacted_except_protected_fields"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should not redact protected fields even if they contain sensitive patterns"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_strings_are_redacted_except_protected_fields"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent integration tests > should properly redact sensitive data in published events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_strings_are_redacted_except_protected_fields"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should NOT add get_more_tools when enableReportMissing is false"
@@ -5248,11 +5269,13 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: redactSensitiveInformation on captured events > applies the string-redaction hook to a v2-captured event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_strings_are_redacted_except_protected_fields"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: redactSensitiveInformation on captured events > sanitizes image content blocks in v2 tool responses"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::tool_call_media_blocks_are_sanitized"]
 
 [[test]]
 key = "v2|src/tests/v2/registration-patch.test.ts|patchSetRequestHandler on v2 > does not fire for non-tool methods"
