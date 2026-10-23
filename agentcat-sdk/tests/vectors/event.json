@@ -1,0 +1,1243 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/event.mjs",
+  "cases": [
+    {
+      "name": "client-info:ts:meta-preferred",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "claude",
+            "version": "3.0"
+          }
+        },
+        "initialize": {
+          "name": "legacy",
+          "version": "1"
+        }
+      },
+      "output": {
+        "name": "claude",
+        "version": "3.0"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > prefers per-request _meta clientInfo (modern client)"
+      ]
+    },
+    {
+      "name": "client-info:ts:initialize-fallback",
+      "input": {
+        "initialize": {
+          "name": "legacy",
+          "version": "1"
+        }
+      },
+      "output": {
+        "name": "legacy",
+        "version": "1"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > falls back to getClientVersion (legacy initialize capture)"
+      ]
+    },
+    {
+      "name": "client-info:ts:both-missing",
+      "input": {},
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > both missing -> undefined (client declined to identify)"
+      ]
+    },
+    {
+      "name": "client-info:ts:malformed-string",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": "not-an-object"
+        }
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > ignores malformed _meta clientInfo"
+      ]
+    },
+    {
+      "name": "client-info:ts:non-string-version",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "x",
+            "version": 42
+          }
+        }
+      },
+      "output": {
+        "name": "x"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > drops non-string fields from partially malformed _meta clientInfo"
+      ]
+    },
+    {
+      "name": "client-info:ts:meta-name-only",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "meta-client"
+          }
+        },
+        "initialize": {
+          "name": "from-handshake",
+          "version": "9.9.9"
+        }
+      },
+      "output": {
+        "name": "meta-client"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
+      ]
+    },
+    {
+      "name": "client-info:ts:handshake",
+      "input": {
+        "initialize": {
+          "name": "from-handshake",
+          "version": "9.9.9"
+        }
+      },
+      "output": {
+        "name": "from-handshake",
+        "version": "9.9.9"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
+      ]
+    },
+    {
+      "name": "client-info:ts:non-string-name",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": 42
+          }
+        },
+        "initialize": {
+          "name": "from-handshake",
+          "version": "9.9.9"
+        }
+      },
+      "output": {
+        "name": "from-handshake",
+        "version": "9.9.9"
+      },
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > rejects non-string envelope fields (field-level narrowing)"
+      ]
+    },
+    {
+      "name": "client-info:name-version:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": "1.2.3"
+          }
+        }
+      },
+      "output": {
+        "name": "client",
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:name-version:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "client",
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:name-only:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client"
+          }
+        }
+      },
+      "output": {
+        "name": "client"
+      }
+    },
+    {
+      "name": "client-info:name-only:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "client"
+      }
+    },
+    {
+      "name": "client-info:version-only:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "version": "1.2.3"
+          }
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:version-only:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:name-number-version:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": 1
+          }
+        }
+      },
+      "output": {
+        "name": "client"
+      }
+    },
+    {
+      "name": "client-info:name-number-version:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": 1
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "client"
+      }
+    },
+    {
+      "name": "client-info:number-name-version:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": 1,
+            "version": "1.2.3"
+          }
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:number-name-version:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": 1,
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:numbers:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": 1,
+            "version": 2
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:numbers:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": 1,
+            "version": 2
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:null-name-version:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": null,
+            "version": "1.2.3"
+          }
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:null-name-version:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": null,
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:nulls:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": null,
+            "version": null
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:nulls:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": null,
+            "version": null
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:empty-strings:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "",
+            "version": ""
+          }
+        }
+      },
+      "output": {
+        "name": "",
+        "version": ""
+      }
+    },
+    {
+      "name": "client-info:empty-strings:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "",
+            "version": ""
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "",
+        "version": ""
+      }
+    },
+    {
+      "name": "client-info:empty-name-number-version:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "",
+            "version": 0
+          }
+        }
+      },
+      "output": {
+        "name": ""
+      }
+    },
+    {
+      "name": "client-info:empty-name-number-version:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "",
+            "version": 0
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": ""
+      }
+    },
+    {
+      "name": "client-info:bool-name:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": true
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:bool-name:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": true
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:object-name:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": {
+              "first": "client"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:object-name:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": {
+              "first": "client"
+            }
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:array-name:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": [
+              "client"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:array-name:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": [
+              "client"
+            ]
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:extra-fields:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": "1.2.3",
+            "title": "Client",
+            "websiteUrl": "https://example.com"
+          }
+        }
+      },
+      "output": {
+        "name": "client",
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:extra-fields:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": "1.2.3",
+            "title": "Client",
+            "websiteUrl": "https://example.com"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "client",
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:other-fields-only:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "title": "Client",
+            "description": "no name or version"
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:other-fields-only:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "title": "Client",
+            "description": "no name or version"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:unicode:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "клиент 😀",
+            "version": "β-2"
+          }
+        }
+      },
+      "output": {
+        "name": "клиент 😀",
+        "version": "β-2"
+      }
+    },
+    {
+      "name": "client-info:unicode:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "клиент 😀",
+            "version": "β-2"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "клиент 😀",
+        "version": "β-2"
+      }
+    },
+    {
+      "name": "client-info:empty-object:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {}
+        }
+      }
+    },
+    {
+      "name": "client-info:empty-object:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": {}
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:array-empty:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": []
+        }
+      }
+    },
+    {
+      "name": "client-info:array-empty:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": []
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:array-of-strings:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": [
+            "client",
+            "1.2.3"
+          ]
+        }
+      }
+    },
+    {
+      "name": "client-info:array-of-strings:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": [
+            "client",
+            "1.2.3"
+          ]
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:array-of-object:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": [
+            {
+              "name": "client",
+              "version": "1.2.3"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "client-info:array-of-object:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": [
+            {
+              "name": "client",
+              "version": "1.2.3"
+            }
+          ]
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:null:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": null
+        }
+      }
+    },
+    {
+      "name": "client-info:null:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": null
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:string:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": "client"
+        }
+      }
+    },
+    {
+      "name": "client-info:string:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": "client"
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:string-empty:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": ""
+        }
+      }
+    },
+    {
+      "name": "client-info:string-empty:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": ""
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:number:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": 7
+        }
+      }
+    },
+    {
+      "name": "client-info:number:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": 7
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:zero:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": 0
+        }
+      }
+    },
+    {
+      "name": "client-info:zero:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": 0
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:true:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": true
+        }
+      }
+    },
+    {
+      "name": "client-info:true:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": true
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:false:no-initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": false
+        }
+      }
+    },
+    {
+      "name": "client-info:false:initialize",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": false
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:no-meta:no-initialize",
+      "input": {}
+    },
+    {
+      "name": "client-info:meta-empty:no-initialize",
+      "input": {
+        "meta": {}
+      }
+    },
+    {
+      "name": "client-info:meta-other-keys:no-initialize",
+      "input": {
+        "meta": {
+          "progressToken": 3,
+          "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+        }
+      }
+    },
+    {
+      "name": "client-info:meta-unprefixed-key:no-initialize",
+      "input": {
+        "meta": {
+          "clientInfo": {
+            "name": "client",
+            "version": "1.2.3"
+          }
+        }
+      }
+    },
+    {
+      "name": "client-info:no-meta:initialize",
+      "input": {
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:meta-empty:initialize",
+      "input": {
+        "meta": {},
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:meta-other-keys:initialize",
+      "input": {
+        "meta": {
+          "progressToken": 3,
+          "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:meta-unprefixed-key:initialize",
+      "input": {
+        "meta": {
+          "clientInfo": {
+            "name": "client",
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "version": "2.1.0"
+      }
+    },
+    {
+      "name": "client-info:meta-beside-other-keys",
+      "input": {
+        "meta": {
+          "progressToken": "t",
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client",
+            "version": "1.2.3"
+          }
+        },
+        "initialize": {
+          "name": "init-client",
+          "version": "2.1.0"
+        }
+      },
+      "output": {
+        "name": "client",
+        "version": "1.2.3"
+      }
+    },
+    {
+      "name": "client-info:initialize:with-optional-fields",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": null
+        },
+        "initialize": {
+          "name": "init-client",
+          "title": "Init Client",
+          "version": "2.1.0",
+          "description": "a client",
+          "websiteUrl": "https://example.com"
+        }
+      },
+      "output": {
+        "name": "init-client",
+        "title": "Init Client",
+        "version": "2.1.0",
+        "description": "a client",
+        "websiteUrl": "https://example.com"
+      }
+    },
+    {
+      "name": "client-info:initialize:empty-strings",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": null
+        },
+        "initialize": {
+          "name": "",
+          "version": ""
+        }
+      },
+      "output": {
+        "name": "",
+        "version": ""
+      }
+    },
+    {
+      "name": "client-info:initialize:unicode",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/clientInfo": null
+        },
+        "initialize": {
+          "name": "клиент 😀",
+          "version": "β-2"
+        }
+      },
+      "output": {
+        "name": "клиент 😀",
+        "version": "β-2"
+      }
+    },
+    {
+      "name": "protocol-version:ts:reads-meta",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28"
+        }
+      },
+      "output": "2026-07-28",
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getProtocolVersion > reads _meta protocolVersion"
+      ]
+    },
+    {
+      "name": "protocol-version:ts:absent",
+      "input": {},
+      "ts_test": [
+        "v1|src/tests/client-identity.test.ts|getProtocolVersion > absent -> undefined"
+      ]
+    },
+    {
+      "name": "protocol-version:legacy",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+        }
+      },
+      "output": "2025-11-25"
+    },
+    {
+      "name": "protocol-version:unknown-text",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": "not-a-version"
+        }
+      },
+      "output": "not-a-version"
+    },
+    {
+      "name": "protocol-version:space",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": " "
+        }
+      },
+      "output": " "
+    },
+    {
+      "name": "protocol-version:unicode",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": "😀"
+        }
+      },
+      "output": "😀"
+    },
+    {
+      "name": "protocol-version:empty",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": ""
+        }
+      }
+    },
+    {
+      "name": "protocol-version:number",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": 20260728
+        }
+      }
+    },
+    {
+      "name": "protocol-version:zero",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": 0
+        }
+      }
+    },
+    {
+      "name": "protocol-version:null",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": null
+        }
+      }
+    },
+    {
+      "name": "protocol-version:true",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": true
+        }
+      }
+    },
+    {
+      "name": "protocol-version:object",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": {
+            "version": "2026-07-28"
+          }
+        }
+      }
+    },
+    {
+      "name": "protocol-version:array",
+      "input": {
+        "meta": {
+          "io.modelcontextprotocol/protocolVersion": [
+            "2026-07-28"
+          ]
+        }
+      }
+    },
+    {
+      "name": "protocol-version:meta-empty",
+      "input": {
+        "meta": {}
+      }
+    },
+    {
+      "name": "protocol-version:meta-other-keys",
+      "input": {
+        "meta": {
+          "progressToken": 1,
+          "io.modelcontextprotocol/clientInfo": {
+            "name": "client"
+          }
+        }
+      }
+    },
+    {
+      "name": "protocol-version:meta-unprefixed-key",
+      "input": {
+        "meta": {
+          "protocolVersion": "2026-07-28"
+        }
+      }
+    },
+    {
+      "name": "protocol-version:meta-beside-other-keys",
+      "input": {
+        "meta": {
+          "progressToken": 1,
+          "io.modelcontextprotocol/protocolVersion": "2025-06-18"
+        }
+      },
+      "output": "2025-06-18"
+    }
+  ]
+}

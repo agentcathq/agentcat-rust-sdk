@@ -1,29 +1,38 @@
-//! rmcp helpers for the crate's tests: an in-memory client connection, the [`Probe`] server, whose
-//! answers are sentinels, the [`Paged`] and [`Sample`] servers and the [`RecordingSink`].
+//! rmcp helpers for the crate's tests: in-memory and streamable HTTP client connections, a bare
+//! request context, the [`Probe`] server, whose answers are sentinels, the [`Paged`], [`Sample`]
+//! and [`ContextEcho`] servers and the [`RecordingSink`].
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::future::ready;
-use std::sync::{Mutex, PoisonError};
+use std::sync::{Arc, Mutex, PoisonError};
 
+use http::{HeaderName, HeaderValue};
 use rmcp::handler::server::wrapper::{Json, Parameters};
 use rmcp::model::{
-    CallToolRequestParams, CallToolResponse, CancelTaskParams, ClientCapabilities,
+    CallToolRequestParams, CallToolResponse, CallToolResult, CancelTaskParams, ClientCapabilities,
     CompleteRequestParams, CompleteResult, CompletionInfo, CustomRequest, CustomResult,
     DiscoverResult, GetPromptRequestParams, GetPromptResponse, GetPromptResult, GetTaskParams,
     GetTaskResult, Implementation, InitializeRequestParams, InitializeResult, ListPromptsResult,
     ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, MetaObject,
     PaginatedRequestParams, Prompt, ProtocolVersion, ReadResourceRequestParams,
-    ReadResourceResponse, ReadResourceResult, Resource, ResourceContents, ResourceTemplate,
-    ServerCapabilities, SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams,
-    UpdateTaskParams,
+    ReadResourceResponse, ReadResourceResult, RequestId, Resource, ResourceContents,
+    ResourceTemplate, ServerCapabilities, SubscribeRequestParams, SubscriptionFilter, Tool,
+    UnsubscribeRequestParams, UpdateTaskParams,
 };
 use rmcp::service::{
     MaybeSendFuture, RequestContext, RoleClient, RunningService, SubscriptionContext,
+    serve_directly,
 };
+use rmcp::transport::StreamableHttpClientTransport;
+use rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
+use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
+use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
 use rmcp::{ErrorData, RoleServer, ServerHandler, ServiceExt, tool, tool_handler, tool_router};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
+use serde_json::{Map, Value, json};
 
+use crate::event::{CallRecord, ClientIdentity, client_identity, extra_value, request_value};
 use crate::sink::Sink;
 
 /// The capacity of the in-memory pipe between client and server, in bytes per direction.
@@ -54,6 +63,74 @@ pub(crate) async fn connect<S: ServerHandler>(
     .serve(client_end)
     .await
     .expect("the client connects")
+}
+
+/// The path the streamable HTTP server of [`serve_http`] answers on.
+pub(crate) const HTTP_PATH: &str = "/mcp";
+
+/// Serves `server` over streamable HTTP with `config`, at `http://127.0.0.1:<port>/mcp` on a free
+/// loopback port, on a spawned task, and returns that URL. Each HTTP session (or, in stateless
+/// mode, each request) gets a clone of `server`. The path is routed as it is, not nested, so the
+/// request URI that rmcp hands the handler keeps it.
+///
+/// # Panics
+///
+/// When no loopback port is free, or the server stops with an error.
+pub(crate) async fn serve_http<S: ServerHandler + Clone>(
+    server: S,
+    config: StreamableHttpServerConfig,
+) -> String {
+    let service: StreamableHttpService<S, LocalSessionManager> = StreamableHttpService::new(
+        move || Ok(server.clone()),
+        Arc::new(LocalSessionManager::default()),
+        config,
+    );
+    let router = axum::Router::new().route_service(HTTP_PATH, service);
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("a loopback port is free");
+    let address = listener.local_addr().expect("the listener has an address");
+    tokio::spawn(async move {
+        axum::serve(listener, router)
+            .await
+            .expect("the HTTP server runs");
+    });
+    format!("http://{address}{HTTP_PATH}")
+}
+
+/// Connects a client to the streamable HTTP server at `url`, with rmcp's reqwest transport. The
+/// client is `client_name` version `1.0.0` and asks for protocol version 2025-11-25, as in
+/// [`connect`], so the session is a legacy one; every HTTP request carries `headers`.
+///
+/// # Panics
+///
+/// When the client fails to connect.
+pub(crate) async fn connect_http(
+    url: &str,
+    client_name: &str,
+    headers: HashMap<HeaderName, HeaderValue>,
+) -> RunningService<RoleClient, InitializeRequestParams> {
+    let config =
+        StreamableHttpClientTransportConfig::with_uri(url.to_owned()).custom_headers(headers);
+    InitializeRequestParams::new(
+        ClientCapabilities::default(),
+        Implementation::new(client_name, "1.0.0"),
+    )
+    .with_protocol_version(ProtocolVersion::V_2025_11_25)
+    .serve(StreamableHttpClientTransport::from_config(config))
+    .await
+    .expect("the HTTP client connects")
+}
+
+/// A request context with id 1, an empty `meta` and no extensions, from a server connection
+/// whose client never answers; its peer's handshake info is `peer_info`. A test sets the public
+/// fields it needs. Must run inside a tokio runtime.
+pub(crate) fn bare_context(
+    peer_info: Option<InitializeRequestParams>,
+) -> RequestContext<RoleServer> {
+    let (server_end, _client_end) = tokio::io::duplex(PIPE_BYTES);
+    let running = serve_directly::<RoleServer, _, _, _, _>(Probe, server_end, peer_info);
+    RequestContext::new(RequestId::Number(1), running.peer().clone())
 }
 
 /// The protocol versions the [`Probe`] supports: fewer than rmcp knows, so a request for
@@ -402,10 +479,57 @@ impl Sample {
 #[tool_handler]
 impl ServerHandler for Sample {}
 
-/// A [`Sink`] that keeps every log line.
+/// A hand-written server whose `call_tool` answers, as structured content, what the SDK reads
+/// off that call's own request and context: `{"request": request_value, "extra": extra_value,
+/// "client": client_identity, "peer": the client of the peer's handshake info}`, a client as
+/// [`identity_json`].
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct ContextEcho;
+
+impl ServerHandler for ContextEcho {
+    fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        let peer = context
+            .peer
+            .peer_info()
+            .map(|info| ClientIdentity::from(&info.client_info));
+        let echo = json!({
+            "request": request_value(&request, &context),
+            "extra": extra_value(&context),
+            "client": identity_json(client_identity(&context).as_ref()),
+            "peer": identity_json(peer.as_ref()),
+        });
+        ready(Ok(CallToolResult::structured(echo).into()))
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// `identity` as JSON: `{"name"?, "version"?}` with the fields it has, or `null` for none.
+pub(crate) fn identity_json(identity: Option<&ClientIdentity>) -> Value {
+    let Some(identity) = identity else {
+        return Value::Null;
+    };
+    let mut object = Map::new();
+    if let Some(name) = &identity.name {
+        object.insert("name".to_owned(), json!(name));
+    }
+    if let Some(version) = &identity.version {
+        object.insert("version".to_owned(), json!(version));
+    }
+    Value::Object(object)
+}
+
+/// A [`Sink`] that keeps every log line and every call record.
 #[derive(Debug, Default)]
 pub(crate) struct RecordingSink {
     logs: Mutex<Vec<String>>,
+    records: Mutex<Vec<CallRecord>>,
 }
 
 impl RecordingSink {
@@ -416,6 +540,11 @@ impl RecordingSink {
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
     }
+
+    /// The call records so far, oldest first; the sink keeps none of them.
+    pub(crate) fn take_records(&self) -> Vec<CallRecord> {
+        std::mem::take(&mut *self.records.lock().unwrap_or_else(PoisonError::into_inner))
+    }
 }
 
 impl Sink for RecordingSink {
@@ -424,5 +553,12 @@ impl Sink for RecordingSink {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .push(message);
+    }
+
+    fn record(&self, record: CallRecord) {
+        self.records
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .push(record);
     }
 }

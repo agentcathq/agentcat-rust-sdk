@@ -17,6 +17,7 @@ mod call;
 mod client;
 mod config;
 mod constants;
+mod event;
 mod handles;
 mod inject;
 mod js;

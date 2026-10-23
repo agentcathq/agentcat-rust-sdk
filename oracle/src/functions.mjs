@@ -6,9 +6,10 @@ import { captureLogs } from "./logs.mjs";
 import { lock } from "./paths.mjs";
 
 const core = await loadCore();
-// Two modules the shared core bundle does not hold: they log nothing, so a bundle of their own is fine.
+// Modules the shared core bundle does not hold: they log nothing, so a bundle of their own is fine.
 const exceptions = await loadModule("exceptions");
 const handleInjection = await loadModule("handle-injection");
+const session = await loadModule("session");
 
 /** What the oracle.* handle wrappers write in place of a minted (random) session ID. */
 const MINTED = "<minted>";
@@ -163,6 +164,16 @@ export const functions = {
       { method: "tools/call", params: { name, arguments: args } },
       registry === null ? undefined : new Map(registry.map(([tool, params]) => [tool, new Set(params)])),
     ).params.arguments,
+  // getClientInfoForRequest (src/modules/session.ts) for a tool call whose params have the `_meta`
+  // `meta` (absent: no `_meta`), on a server whose getClientVersion() returns `initialize` (the
+  // client of the initialize handshake; absent: undefined, no handshake). No `extra`, so no v2
+  // envelope: rmcp keeps the reserved keys in `_meta`.
+  "oracle.clientInfo": ({ meta, initialize }) =>
+    session.getClientInfoForRequest(
+      { getClientVersion: () => initialize },
+      { params: meta === undefined ? {} : { _meta: meta } },
+    ),
+  "session.getProtocolVersion": (...args) => session.getProtocolVersion(...args),
   // handleReportMissing (src/modules/tools.ts) for a call whose `context` argument is `context`
   // (absent: undefined): {value: the result, logs}.
   "oracle.reportMissing": ({ context }) => captureLogs(core, () => core.tools.handleReportMissing({ context })),

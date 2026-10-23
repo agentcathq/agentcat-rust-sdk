@@ -236,9 +236,11 @@ Fields as B-077, with `sdk_language = "Rust"` and `agentcat_version` = the crate
   `_meta` (when sent), `requestInfo: {headers, url}` from `http::request::Parts` (all headers, lower-case, repeated
   values joined with `", "`, D06; absolute URL rebuilt from `Host`, path and query). On stdio there is no
   `requestInfo`.
-- Client info ladder (B-085): the 2026-07-28 envelope, then `_meta` client info, then `context.client_info()`. rmcp's
-  stateless HTTP mode fabricates rmcp's own name and version (`research/03-rmcp.md` §5.2); the builder decides,
-  with the harness, how to treat that identity and records the ruling.
+- Client info ladder (B-085): the `_meta` client info (rmcp keeps the 2026-07-28 envelope keys in `_meta`, which it
+  moves whole into `RequestContext::meta`), then the client of the peer's `initialize` (`peer_info`). rmcp's
+  stateless HTTP mode fabricates rmcp's own name and version as that peer info (`research/03-rmcp.md` §5.2), so an
+  HTTP request without an `mcp-session-id` header skips the `initialize` step (C22): TS's per-request server never
+  saw `initialize` either, so both have no client identity there unless the `_meta` names one.
 - Server info from `inner.get_info().server_info`.
 - Token estimates (B-070 to B-076) over `js::stringify` output (C04).
 
@@ -459,7 +461,6 @@ Verification infrastructure comes first, so drift is caught while the code is wr
 
 - Final public names, provided the capabilities and rules above hold and the public API snapshot is reviewed.
 - Internal data structures (queue, registries, task layout), within the rules of sections 6 and 8.
-- The handling of rmcp's fabricated stateless client identity (section 6.6), recorded as a ruling.
 - The exact scenario list beyond the minimum in section 11.
 - Optional improvements to the `agentcat-api` generator (default TLS, User-Agent, `#[non_exhaustive]` enum,
   `Retry-After`, the `session_id` double option) are follow-ups for `agentcat-server`, not part of this pass.

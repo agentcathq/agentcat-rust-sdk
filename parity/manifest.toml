@@ -15,7 +15,9 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/header-capture.test.ts|e2e-http: HTTP headers land in published event parameters > v2 (longlived lane): sentinel header at extra.http.req.headers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "asserts the v2 paths extra.http.req.headers and extra.http.req.method; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), requestInfo {headers, url} with no method; the sentinel header over HTTP is pinned by agentcat-sdk::event::tests::stateful_http_record_has_session_and_client"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/sse-smoke-v1.test.ts|e2e-http v1 SSE smoke (stateful, enableJsonResponse: false) > baseline-defaults over streamed POST responses"
@@ -531,47 +533,69 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json cases client-info:ts:meta-name-only and client-info:ts:handshake (the test's extra is {}, so it has no envelope); checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > getProtocolVersion prefers the envelope, then _meta"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the v2 envelope (ctx.mcpReq.envelope) is a host object of the TS MCP SDK v2; rmcp keeps the reserved io.modelcontextprotocol/* keys in _meta and moves the whole _meta into RequestContext::meta, so Rust reads one place (C28) and has no envelope-over-_meta precedence; the _meta reads are event.json cases protocol-version:*, checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > prefers ctx.mcpReq.envelope.clientInfo over _meta and handshake"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the v2 envelope (ctx.mcpReq.envelope) is a host object of the TS MCP SDK v2; rmcp keeps the reserved io.modelcontextprotocol/* keys in _meta and moves the whole _meta into RequestContext::meta, so Rust reads one place and has no envelope-over-_meta precedence; _meta over the handshake is event.json case client-info:ts:meta-preferred, checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > rejects non-string envelope fields (field-level narrowing)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:non-string-name (the envelope candidate sits in _meta, where rmcp keeps the envelope keys); checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > both missing -> undefined (client declined to identify)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:both-missing; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > drops non-string fields from partially malformed _meta clientInfo"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:non-string-version; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > falls back to getClientVersion (legacy initialize capture)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:initialize-fallback; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > ignores malformed _meta clientInfo"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:malformed-string; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > prefers per-request _meta clientInfo (modern client)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case client-info:ts:meta-preferred; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getProtocolVersion > absent -> undefined"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case protocol-version:ts:absent (the test's undefined request has no rmcp counterpart: rmcp always hands over a request); checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|getProtocolVersion > reads _meta protocolVersion"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:event.json"
+reason = "event.json case protocol-version:ts:reads-meta; checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|resolveIdentity > identify throwing -> null, never throws"
@@ -2262,35 +2286,51 @@ reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a ca
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > pass-through > returns non-rewritable values by identity"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "projectExtraForEvent hands back arbitrary JS values (null, strings, plain objects) by identity; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), so there is no JS value to pass through"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > snapshot semantics > later top-level mutations of the original do not appear in the projection"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a JS handler context mutated after the projection (the __agentcat_error stash); Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value) as an owned value, which nothing else holds"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v1: URL instance under requestInfo.url > passes an already-string url through unchanged"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a JS handler context with a string url; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value); its url string is pinned by agentcat-sdk::event::tests::extra_url_from_host"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v1: URL instance under requestInfo.url > replaces the URL instance with its href, headers untouched by reference"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a JS URL instance and object identity; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), with requestInfo.url built as a string from the http::request::Parts (agentcat-sdk::event::tests::extra_url_from_host)"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > is idempotent: a projected req has no headers.entries and passes through"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "re-projection of a JS handler context; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value) once per call"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > lowercases header names (Headers semantics)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a JS web Request under http.req; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), whose header names are the lower-case names of the http crate (agentcat-sdk::event::tests::extra_joins_repeated_headers)"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > projects a real Request into plain { method, url, headers }"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "the v2 shape http.req {method, url, headers} of a JS web Request; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), requestInfo {headers, url} with no method (agentcat-sdk::event::tests::extra_joins_repeated_headers, stateful_http_record_has_session_and_client)"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > v2: web Request under http.req > returns the original extra when headers.entries throws"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a JS object whose headers.entries throws; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value) from typed http::request::Parts, which cannot throw"
 
 [[test]]
 key = "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > keys per AgentCatData object, like reportedConflicts"
@@ -4752,15 +4792,21 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > captures headers, method, and url from the web Request"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "asserts the v2 path extra.http.req {method, url, headers}; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), requestInfo {headers, url} with no method; the headers and url over HTTP are pinned by agentcat-sdk::event::tests::stateful_http_record_has_session_and_client"
 
 [[test]]
 key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > does not throw on a malformed req and still publishes the event"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "a malformed JS req object (headers: 42); Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value) from typed http::request::Parts, which cannot be malformed"
 
 [[test]]
 key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > leaves stdio-shaped extra (no http) unchanged"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "asserts the v2 host object extra.mcpReq; Rust builds `extra` from the RequestContext in the D34 shape (event::extra_value), which on stdio is {requestId, _meta} without requestInfo (agentcat-sdk::event::tests::extra_stdio_has_no_request_info)"
 
 [[test]]
 key = "v2|src/tests/v2/late-registration.test.ts|v2 late registration: registerTool AFTER track() > advertises a tool registered after track() with injected params"
