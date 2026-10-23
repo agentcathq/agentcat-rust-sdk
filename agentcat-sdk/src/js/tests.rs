@@ -114,6 +114,20 @@ fn iso_millis_matches_to_iso_string() {
     );
 }
 
+/// A time outside chrono's range gives the epoch text, not a panic; a time before the epoch with
+/// a fraction cuts the milliseconds as `toISOString` does.
+#[test]
+fn iso_millis_out_of_range_does_not_panic() {
+    let epoch = "1970-01-01T00:00:00.000Z";
+    let far = Duration::from_secs(u64::MAX / 4);
+    assert_eq!(iso_millis(UNIX_EPOCH + far), epoch);
+    assert_eq!(iso_millis(UNIX_EPOCH - far), epoch);
+    assert_eq!(
+        iso_millis(UNIX_EPOCH - Duration::from_micros(1500)),
+        "1969-12-31T23:59:59.998Z"
+    );
+}
+
 /// `parse_iso_millis` reads the `parse-iso:` texts of `js.json` to the instant `Date.parse`
 /// gives, and the `iso:` outputs back to their instants; text that is not a date gives `None`.
 #[test]

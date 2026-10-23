@@ -2,7 +2,7 @@
 //! properties, string lengths and cuts in UTF-16 code units, `String.prototype.trim`,
 //! `String(value)` and `typeof`. Token estimates and the event-size check count the bytes of
 //! `JSON.stringify` output, so these follow JavaScript, not Rust or `serde_json`.
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use chrono::{DateTime, Utc};
 use serde_json::{Map, Number, Value};
@@ -250,11 +250,28 @@ pub(crate) fn type_of(value: Option<&Value>) -> &'static str {
 /// `time.toISOString()` of JavaScript: `YYYY-MM-DDTHH:MM:SS.mmmZ` with exactly three millisecond
 /// digits, the milliseconds cut, not rounded. A time outside the years 0 to 9999 (where
 /// JavaScript writes a signed six-digit year) is written with chrono's year form; the SDK only
-/// writes the present.
+/// writes the present. A time outside chrono's range (about 262,000 years either way) gives
+/// `1970-01-01T00:00:00.000Z` and never panics: the only such time comes from a customer's
+/// `redact_event` hook, and the restore of `timestamp` replaces it with the original.
 pub(crate) fn iso_millis(time: SystemTime) -> String {
-    DateTime::<Utc>::from(time)
-        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
-        .to_string()
+    let (secs, nanos) = match time.duration_since(UNIX_EPOCH) {
+        Ok(after) => (i64::try_from(after.as_secs()).ok(), after.subsec_nanos()),
+        Err(error) => {
+            let before = error.duration();
+            // Seconds round down: 0.25 s before the epoch is -1 s plus 0.75 s.
+            match (before.as_secs(), before.subsec_nanos()) {
+                (secs, 0) => (i64::try_from(secs).ok().map(|s| -s), 0),
+                (secs, nanos) => (
+                    i64::try_from(secs).ok().map(|s| -s - 1),
+                    1_000_000_000 - nanos,
+                ),
+            }
+        }
+    };
+    let date = secs
+        .and_then(|secs| DateTime::<Utc>::from_timestamp(secs, nanos))
+        .unwrap_or(DateTime::UNIX_EPOCH);
+    date.format("%Y-%m-%dT%H:%M:%S%.3fZ").to_string()
 }
 
 /// The time of an RFC 3339 text such as `iso_millis` writes, with or without a fraction of a
