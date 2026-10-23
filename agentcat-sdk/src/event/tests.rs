@@ -7,7 +7,7 @@ use std::collections::{BTreeSet, HashMap};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use http::request::Parts;
-use http::{HeaderName, HeaderValue, Request};
+use http::{HeaderMap, HeaderName, HeaderValue, Request};
 use rmcp::RoleServer;
 use rmcp::model::{
     CallToolRequestParams, ClientCapabilities, Implementation, InitializeRequestParams, JsonObject,
@@ -30,7 +30,7 @@ use crate::test_support::rmcp::{
 use crate::test_support::vectors;
 
 /// The case name prefixes of `event.json`.
-const KINDS: [&str; 2] = ["client-info", "protocol-version"];
+const KINDS: [&str; 3] = ["client-info", "protocol-version", "headers"];
 
 /// The kind (name prefix) of the case `name`.
 fn kind_of(name: &str) -> &'static str {
@@ -82,6 +82,26 @@ fn check_client_info(input: &Value, output: Option<&Value>, name: &str) {
     assert_eq!(actual, ts_client(output), "{name}");
 }
 
+/// A "headers:" case: [`project_headers`] of a header map that holds the case's `[name, value]`
+/// pairs in their order, against TS's object, in its key order too.
+fn check_headers(input: &Value, output: Option<&Value>, name: &str) {
+    let mut headers = HeaderMap::new();
+    for pair in input.as_array().unwrap() {
+        let header = HeaderName::from_bytes(pair[0].as_str().unwrap().as_bytes())
+            .unwrap_or_else(|e| panic!("{name}: http refuses the name {}: {e}", pair[0]));
+        let value = HeaderValue::from_str(pair[1].as_str().unwrap())
+            .unwrap_or_else(|e| panic!("{name}: http refuses the value {}: {e}", pair[1]));
+        headers.append(header, value);
+    }
+    let actual = Value::Object(project_headers(&headers));
+    let ts = output.unwrap_or_else(|| panic!("{name}: no output"));
+    assert_eq!(
+        serde_json::to_string(&actual).unwrap(),
+        serde_json::to_string(ts).unwrap(),
+        "{name}"
+    );
+}
+
 #[tokio::test]
 async fn vectors_match_ts() {
     let mut seen = BTreeSet::new();
@@ -90,11 +110,13 @@ async fn vectors_match_ts() {
         let kind = kind_of(name);
         seen.insert(kind);
         let (input, output) = (&case["input"], case.get("output"));
-        if kind == "client-info" {
-            check_client_info(input, output, name);
-        } else {
-            let actual = protocol_version(&meta_of(input)).map(Value::String);
-            assert_eq!(actual.as_ref(), output, "{name}");
+        match kind {
+            "client-info" => check_client_info(input, output, name),
+            "protocol-version" => {
+                let actual = protocol_version(&meta_of(input)).map(Value::String);
+                assert_eq!(actual.as_ref(), output, "{name}");
+            }
+            _ => check_headers(input, output, name),
         }
     }
     assert_eq!(
@@ -208,8 +230,9 @@ fn parts(uri: &str, headers: &[(&str, &[u8])]) -> Parts {
     builder.body(()).unwrap().into_parts().0
 }
 
-/// D06: every header, under its lower-case name, in the order of its first arrival; the values of
-/// a repeated header joined with ", " in arrival order.
+/// D06: `requestInfo` is `{headers, url}`, with every header of the request under its lower-case
+/// name and the values of a repeated header joined with ", " in arrival order. (The order of the
+/// names, and TS's other rules, are the "headers:" cases of `vectors_match_ts`.)
 #[test]
 fn extra_joins_repeated_headers() {
     let parts = parts(
@@ -223,13 +246,14 @@ fn extra_joins_repeated_headers() {
             ("Authorization", b"Bearer t"),
         ],
     );
-    assert_eq!(
-        serde_json::to_string(&Value::Object(request_info(&parts))).unwrap(),
-        concat!(
-            r#"{"headers":{"host":"localhost:8080","x-multi":"a, b, c, d","accept":"application/json","#,
-            r#""authorization":"Bearer t"},"url":"http://localhost:8080/mcp"}"#
-        )
-    );
+    let info = Value::Object(request_info(&parts));
+    assert_eq!(keys(&info), ["headers", "url"]);
+    let mut names = keys(&info["headers"]);
+    names.sort_unstable();
+    assert_eq!(names, ["accept", "authorization", "host", "x-multi"]);
+    assert_eq!(info["headers"]["x-multi"], "a, b, c, d");
+    assert_eq!(info["headers"]["authorization"], "Bearer t");
+    assert_eq!(info["url"], "http://localhost:8080/mcp");
 }
 
 /// D06: a header value that is not UTF-8 is read lossily (each bad byte becomes U+FFFD), also in

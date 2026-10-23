@@ -5,10 +5,10 @@
 //! `request` and `extra`.
 use std::time::SystemTime;
 
-use http::HeaderMap;
-use http::header::HOST;
+use http::header::{COOKIE, HOST, SET_COOKIE};
 use http::request::Parts;
 use http::uri::PathAndQuery;
+use http::{HeaderMap, HeaderName};
 use rmcp::RoleServer;
 use rmcp::model::{CallToolRequestParams, Implementation, JsonObject};
 use rmcp::service::RequestContext;
@@ -16,6 +16,7 @@ use serde_json::{Map, Value};
 
 use crate::constants::{META_CLIENT_INFO_KEY, META_PROTOCOL_VERSION_KEY};
 use crate::handles::HandleResolution;
+use crate::js;
 
 #[cfg(test)]
 mod tests;
@@ -160,22 +161,42 @@ fn request_info(parts: &Parts) -> Map<String, Value> {
     info
 }
 
-/// The request headers as `extra` holds them (D06): every header, `Authorization` and `Cookie`
-/// included, under its lower-case name, in the order in which each name first arrived. The values
-/// of a repeated header are joined with `", "` in arrival order; a value that is not UTF-8 is read
-/// lossily.
+/// The request headers as `extra` holds them (D06), as TS records them: `Object.fromEntries` over
+/// a WHATWG `Headers` of the request (B-081). Every header, `Authorization` and `Cookie` included,
+/// is under its lower-case name. Each value loses its leading and trailing HTTP whitespace; the
+/// values of a repeated name are joined in arrival order with `", "` (`"; "` for `cookie`), and a
+/// repeated `set-cookie` keeps its last value. The names are in byte order, except that names
+/// which are array indexes come first in numeric order (JavaScript's key order). A value that is
+/// not UTF-8 is read lossily.
 pub(crate) fn project_headers(headers: &HeaderMap) -> Map<String, Value> {
-    headers
-        .keys()
+    let mut names: Vec<&HeaderName> = headers.keys().collect();
+    names.sort_unstable_by(|a, b| a.as_str().cmp(b.as_str()));
+    let sorted: Map<String, Value> = names
+        .into_iter()
         .map(|name| {
-            let values: Vec<String> = headers
+            let mut values = headers
                 .get_all(name)
                 .iter()
-                .map(|value| lossy(value.as_bytes()))
-                .collect();
-            (name.as_str().to_owned(), Value::String(values.join(", ")))
+                .map(|value| trim_http_whitespace(&lossy(value.as_bytes())).to_owned());
+            let value = if name == SET_COOKIE {
+                values.next_back().unwrap_or_default()
+            } else {
+                let separator = if name == COOKIE { "; " } else { ", " };
+                values.collect::<Vec<_>>().join(separator)
+            };
+            (name.as_str().to_owned(), Value::String(value))
         })
+        .collect();
+    js::own_entries(&sorted)
+        .into_iter()
+        .map(|(name, value)| (name.clone(), value.clone()))
         .collect()
+}
+
+/// `text` without its leading and trailing HTTP whitespace (tab, line feed, carriage return and
+/// space), as `Headers` normalizes a value.
+fn trim_http_whitespace(text: &str) -> &str {
+    text.trim_matches(['\t', '\n', '\r', ' '])
 }
 
 /// The URL of a request: an absolute request URI (HTTP/2, a proxy request) as it is, else

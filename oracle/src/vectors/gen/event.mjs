@@ -9,6 +9,10 @@
 //                             candidate leaves out its undefined fields (oracle.clientInfo, functions.mjs)
 //   protocol-version:<label>  input: {meta?};  output: getProtocolVersion for a call whose params have
 //                             the `_meta` `meta` (absent: no `_meta`); absent when TS gives undefined
+//   headers:<label>           input: [[name, value], ...], the request headers in arrival order;
+//                             output: the headers object TS records (headers.project, functions.mjs).
+//                             Values are ASCII: a header byte above 0x7f is Latin-1 text in Node and
+//                             lossy UTF-8 in Rust, a difference these cases leave out
 //
 // No case has an `extra`: TS's v2 envelope (extra.mcpReq.envelope) has no rmcp counterpart, because
 // rmcp moves the whole `_meta`, reserved keys included, into RequestContext::meta (C28). Every
@@ -171,11 +175,52 @@ function versionCases() {
   versionCase("meta-beside-other-keys", { progressToken: 1, ...withVersion("2025-06-18") });
 }
 
+// ------------------------------------------------------------------------------------- headers
+
+/** Adds a headers case for the [name, value] pairs `pairs`, in arrival order. */
+function headersCase(name, pairs) {
+  const input = plain(pairs);
+  add(`headers:${name}`, input, functions["headers.project"](input));
+}
+
+function headersCases() {
+  headersCase("none", []);
+  headersCase("one", [["x-a", "1"]]);
+  headersCase("mixed-case", [["X-Mixed-Case", "v"], ["Content-Type", "application/json"], ["accept", "*/*"]]);
+  headersCase("repeated", [["x-multi", "a"], ["accept", "x"], ["X-Multi", "b, c"], ["x-MULTI", "d"]]);
+  headersCase("sorted-not-arrival", [
+    ["zeta", "1"],
+    ["Host", "127.0.0.1:8080"],
+    ["mcp-session-id", "s-1"],
+    ["accept", "application/json, text/event-stream"],
+    ["Authorization", "Bearer t"],
+    ["content-type", "application/json"],
+  ]);
+  headersCase("rmcp-client-post", [
+    ["content-type", "application/json"],
+    ["accept", "application/json, text/event-stream"],
+    ["mcp-protocol-version", "2025-11-25"],
+    ["mcp-session-id", "0f7c2a"],
+    ["x-agentcat-health-run", "hcrun:header-capture"],
+    ["host", "127.0.0.1:40123"],
+    ["content-length", "95"],
+  ]);
+  headersCase("punctuation-names", [["x-a_b", "1"], ["x-a.b", "2"], ["x-a-b", "3"], ["x-ab", "4"], ["x-a~b", "5"], ["x-a!b", "6"]]);
+  headersCase("set-cookie-twice", [["set-cookie", "a=1"], ["Set-Cookie", "b=2"]]);
+  headersCase("set-cookie-among-others", [["x-z", "1"], ["set-cookie", "a=1; Path=/"], ["accept", "*/*"], ["set-cookie", "b=2"], ["set-cookie", "c=3"]]);
+  headersCase("cookie-twice", [["cookie", "a=1"], ["Cookie", "b=2; c=3"]]);
+  headersCase("index-like-names", [["10", "a"], ["b", "x"], ["2", "b"], ["0", "c"], ["01", "d"], ["4294967295", "e"], ["4294967294", "f"]]);
+  headersCase("index-like-repeated", [["7", "a"], ["x", "1"], ["7", "b"]]);
+  headersCase("value-whitespace", [["x-pad", " v "], ["x-tab", "\tv\t"], ["x-pad", "w  "], ["x-inner", "a  b"]]);
+  headersCase("empty-values", [["x-empty", ""], ["x-empty", ""], ["x-one", ""], ["x-blank", "   "]]);
+}
+
 export async function generate() {
   cases.length = 0;
   tsClientCases();
   candidateCases();
   otherClientCases();
   versionCases();
+  headersCases();
   return { cases };
 }

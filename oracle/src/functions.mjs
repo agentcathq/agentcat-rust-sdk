@@ -174,6 +174,10 @@ export const functions = {
       { params: meta === undefined ? {} : { _meta: meta } },
     ),
   "session.getProtocolVersion": (...args) => session.getProtocolVersion(...args),
+  // The request headers as both TS lanes record them: Object.fromEntries over a WHATWG Headers
+  // built from the [name, value] pairs in arrival order (v1: requestInfo.headers of the web-standard
+  // transport, whose Headers hono builds from rawHeaders; v2: projectExtraForEvent's http.req.headers).
+  "headers.project": (pairs) => Object.fromEntries(new Headers(pairs).entries()),
   // handleReportMissing (src/modules/tools.ts) for a call whose `context` argument is `context`
   // (absent: undefined): {value: the result, logs}.
   "oracle.reportMissing": ({ context }) => captureLogs(core, () => core.tools.handleReportMissing({ context })),
