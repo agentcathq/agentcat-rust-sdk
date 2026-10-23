@@ -1816,11 +1816,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case hooks:tags-collide; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should validate tags from callback"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case hooks:tags-invalid:ts-bang-key; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > initialize is no longer an event > publishes no initialize event even when tag/property callbacks are set"
@@ -1833,15 +1837,21 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-tags-properties; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should normalize empty properties to omission"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-properties-empty; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should validate tags passed directly"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-invalid-tags; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > redaction bypass > should not redact tags or properties when redactSensitiveInformation is configured"
@@ -1874,7 +1884,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > logs only event metadata on successful send, never the payload"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case call:log-metadata-only; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > should handle multiple events"
@@ -1914,15 +1926,21 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case redact-event:merge-parameters; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook returns null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case redact-event:drop; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook throws"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case redact-event:throws; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should run the event hook before string redaction and compose both"
@@ -1934,7 +1952,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should leave the token fields undefined when the event has none"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case call:no-tokens; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when enableTracing is false"
@@ -1950,7 +1970,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case call:no-session; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish event with server tracking data and session info"
@@ -1958,7 +1980,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case call:tokens; checked by agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts (plan 4 task 5)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should capture stack traces for each cause"
@@ -3617,7 +3641,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle empty event data object"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:string-form-empty; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle undefined event data gracefully"
@@ -3637,19 +3663,27 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should handle all event data fields"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:string-form-all-fields; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should let eventData.sessionId take precedence over the string"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:string-form-session-precedence; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should use the session ID string verbatim as the session ID"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:string-form; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle error data correctly"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-error; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle high-level server objects"
@@ -3657,11 +3691,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish custom event with tracked server"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish with an empty session id and warn when no sessionId is provided"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-no-session; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should throw error if server is not tracked"
@@ -3827,7 +3865,9 @@ reason = "a circular value cannot be a serde_json::Value"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should apply the hook to custom events published on a tracked server"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:queue.json"
+reason = "queue.json case custom:server-form-redact-merge; checked by agentcat-sdk::custom::tests::custom_vectors_match_ts (plan 4 task 7)"
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should drop only the events the hook rejects, while the others still publish"

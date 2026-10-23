@@ -2,7 +2,11 @@
 //   node oracle/src/vectors/run.mjs               write agentcat-sdk/tests/vectors/
 //   node oracle/src/vectors/run.mjs --out <dir>   write there instead
 //   node oracle/src/vectors/run.mjs --check       regenerate to a temp dir; exit 1 on any byte difference
-// Any other argument: the usage line and exit 2. The writing itself is in write.mjs.
+// Any other argument: the usage line and exit 2. The writing itself is in write.mjs, which runs every
+// generator in gen/ (each <name>.mjs writes <name>.json). The egress guard is installed first, so no
+// generator reaches the network: they run TS code (the queue, track on an MCP server) in this process.
+import "../egress-guard.mjs";
+
 import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";

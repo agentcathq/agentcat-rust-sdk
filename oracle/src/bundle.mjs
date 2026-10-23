@@ -17,7 +17,8 @@ import { bundleDir, tsDir } from "./paths.mjs";
 // First line of every bundle. Bump BUNDLE_FORMAT when the build options change,
 // so bundles cached under an unchanged SHA are rebuilt. The clone's path is in
 // it too: bundles embed source paths, so a cache restored elsewhere rebuilds.
-// The last part names the entry, so a change to CORE_MODULES or CORE_ENGINE_MODULES rebuilds core.mjs.
+// The last part names the entry, so a change to CORE_MODULES, CORE_ENGINE_MODULES or CORE_SDK_ENTRY
+// rebuilds core.mjs.
 const BUNDLE_FORMAT = 3;
 const stamp = (entry) => `// oracle bundle ${BUNDLE_FORMAT}, esbuild ${esbuildVersion}, ${tsDir()}, ${entry}\n`;
 
@@ -32,12 +33,21 @@ const CORE_MODULES = [
   "sanitization",
   "redaction",
   "logging",
+  "internal",
+  "pendingEvent",
+  "eventQueue",
 ];
 /** The engine namespaces of loadCore: `src/engine/<name>.ts` each (the tool-list pipeline and its state). */
 const CORE_ENGINE_MODULES = ["listWrap", "registry"];
+/**
+ * The SDK's entry point, `src/index.ts`, as the `sdk` namespace of loadCore (`track`,
+ * `publishCustomEvent`), in the same bundle so it shares the queue, tracking and logging state.
+ */
+const CORE_SDK_ENTRY = "src/index.ts";
 const CORE_ENTRY = [
   ...CORE_MODULES.map((name) => `export * as ${name} from "./src/modules/${name}.ts";`),
   ...CORE_ENGINE_MODULES.map((name) => `export * as ${name} from "./src/engine/${name}.ts";`),
+  `export * as sdk from "./${CORE_SDK_ENTRY}";`,
   'export { default as KSUID } from "./src/thirdparty/ksuid/index.js";',
 ].join("\n");
 
@@ -46,9 +56,11 @@ let core;
 
 /**
  * Imports the pure modules of the pinned TS SDK as one bundle, `<bundleDir>/core.mjs`: an object
- * with one namespace per name of CORE_MODULES and CORE_ENGINE_MODULES, and `KSUID`, the default
- * export of `src/thirdparty/ksuid/index.js`. Every namespace uses the same `logging` instance, whose log
- * file isolateLogFile (logs.mjs) has moved out of the developer's home.
+ * with one namespace per name of CORE_MODULES and CORE_ENGINE_MODULES, `sdk` (CORE_SDK_ENTRY), and
+ * `KSUID`, the default export of `src/thirdparty/ksuid/index.js`. Every namespace uses the same
+ * `logging` instance, whose log file isolateLogFile (logs.mjs) has moved out of the developer's home,
+ * and the same event queue and tracking data. Importing `eventQueue` installs TS's SIGINT, SIGTERM
+ * and beforeExit handlers, which drain the (empty) TS queue and then let the process end as before.
  */
 export async function loadCore() {
   if (!core) {
@@ -63,7 +75,8 @@ export async function loadCore() {
 async function buildCore() {
   await ensureTs();
   const entry = { stdin: { contents: CORE_ENTRY, resolveDir: tsDir(), sourcefile: "oracle-core.js", loader: "js" } };
-  const mod = await bundle("core", `core: ${[...CORE_MODULES, ...CORE_ENGINE_MODULES].join(" ")} KSUID`, entry);
+  const names = [...CORE_MODULES, ...CORE_ENGINE_MODULES, `sdk=${CORE_SDK_ENTRY}`];
+  const mod = await bundle("core", `core: ${names.join(" ")} KSUID`, entry);
   isolateLogFile(mod);
   return mod;
 }
