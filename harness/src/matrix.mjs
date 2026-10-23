@@ -2,7 +2,7 @@
 // through the driver, then compares the two MCP-wire deltas (see delta.mjs).
 //
 // usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>]
-//          [--lanes <list>] [--jobs <n>] [--rulings <file>]
+//          [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...
 //   --servers     two names from ts-v1, ts-v2, rust (default ts-v2,rust). `rust` runs HARNESS_RUST_SERVER,
 //                 else target/debug/harness-ref-server; a missing binary exits 2 before any driver starts.
 //   --scenarios   names resolved as harness/scenarios/<name>.json (default: every scenario file)
@@ -10,6 +10,8 @@
 //   --lanes       default 2025-11-25,2026-07-28
 //   --jobs        drivers running at the same time (default 4)
 //   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json
+//   --env2        an environment variable for every run of the second server (untracked and tracked),
+//                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
 // Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (the
 // `rust` server tracked also gets --expect-publishes 0 until plan 4 publishes). Labels are
 // <server>-<lane>-<u|t>; when both servers have the same name the second one's labels end in -b.
@@ -36,7 +38,7 @@ const TRANSPORTS = ["stdio", "http", "http-stateless"];
 const LANES = ["2025-11-25", "2026-07-28"];
 const SERVERS = ["ts-v1", "ts-v2", "rust"];
 const USAGE =
-  "usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>]";
+  "usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...";
 
 function usage(message) {
   process.stderr.write(`matrix: ${message}\n${USAGE}\n`);
@@ -44,12 +46,17 @@ function usage(message) {
 }
 
 function parseArgs(argv) {
-  const opts = {};
+  const opts = { env2: {} };
   for (let i = 0; i < argv.length; i += 2) {
     const flag = argv[i];
-    if (!["--servers", "--scenarios", "--transports", "--lanes", "--jobs", "--rulings"].includes(flag)) usage(`unknown argument ${JSON.stringify(flag)}`);
+    if (!["--servers", "--scenarios", "--transports", "--lanes", "--jobs", "--rulings", "--env2"].includes(flag)) usage(`unknown argument ${JSON.stringify(flag)}`);
     if (i + 1 >= argv.length) usage(`${flag} needs a value`);
-    opts[flag.slice(2)] = argv[i + 1];
+    const value = argv[i + 1];
+    if (flag === "--env2") {
+      const m = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s.exec(value);
+      if (!m) usage(`--env2 needs NAME=value, got ${JSON.stringify(value)}`);
+      opts.env2[m[1]] = m[2];
+    } else opts[flag.slice(2)] = value;
   }
   return opts;
 }
@@ -75,12 +82,15 @@ function serverCommand(name) {
   return [process.execPath, "--import", GUARD, join(HERE, "servers", `${name}.mjs`)];
 }
 
-/** Runs the driver; resolves {code, tail} (the last lines of its output). */
-function runDriver({ scenarioPath, label, transport, lane, expectPublishes, tracked, command }) {
+/**
+ * Runs the driver; resolves {code, tail} (the last lines of its output). `extraEnv` goes to the driver,
+ * which passes its environment on to the server.
+ */
+function runDriver({ scenarioPath, label, transport, lane, expectPublishes, tracked, command, extraEnv }) {
   const args = [join(HERE, "driver.mjs"), scenarioPath, label, transport, "--lane", lane];
   if (expectPublishes !== undefined) args.push("--expect-publishes", String(expectPublishes));
   args.push("--", ...command);
-  const env = { ...process.env };
+  const env = { ...process.env, ...extraEnv };
   if (tracked) delete env.HARNESS_NO_TRACK;
   else env.HARNESS_NO_TRACK = "1";
   return new Promise((resolveRun) => {
@@ -156,6 +166,7 @@ async function main() {
         expectPublishes: !run.tracked || run.name === "rust" ? 0 : undefined,
         tracked: run.tracked,
         command: commands[run.server],
+        extraEnv: run.server === 1 ? opts.env2 : {},
       });
     }),
     jobs,
@@ -166,6 +177,7 @@ async function main() {
   for (const combo of combos) {
     const exitCodes = Object.fromEntries(combo.runs.map((r) => [r.label, r.result.code]));
     const entry = { scenario: combo.scenario, transport: combo.transport, lane: combo.lane, servers: names, exitCodes };
+    if (Object.keys(opts.env2).length > 0) entry.env2 = opts.env2;
     const driversOk = combo.runs.every((r) => r.result.code === 0);
     let line;
     if (!driversOk) {

@@ -7,7 +7,7 @@ import { before, test } from "node:test";
 import { loadModule } from "oracle/bundle";
 import { ensureTs } from "oracle/fetch-ts";
 
-import { normalizeRun } from "../src/normalize.mjs";
+import { SERVER_INFO_META_KEY, normalizeRun } from "../src/normalize.mjs";
 import { BASIC, HARNESS, diff, driver, expectedFor, outFile, readJson, tempDir, writeJson } from "./support.mjs";
 
 const basic = readJson(BASIC);
@@ -24,7 +24,7 @@ test("(a) two stdio runs of basic.json diff to zero", { timeout: 120_000 }, asyn
   const res = await diff(
     outFile("basic", "aa1", "stdio", "normalized"),
     outFile("basic", "aa2", "stdio", "normalized"),
-    ["--rulings", join(HARNESS, "rulings.json")],
+    ["--rulings", join(HARNESS, "rulings-ts.json")],
   );
   assert.equal(res.code, 0, res.stdout + res.stderr);
   assert.match(res.stdout, /"total":0/);
@@ -297,6 +297,31 @@ test("(g) two tool schemas that differ only in property order produce a diff ent
   const res = await diff(a, b);
   assert.equal(res.code, 1, res.stdout);
   assert.match(res.stdout, /\$\.transcript\[0\]\.result\.tools\[0\]\.inputSchema\.<properties-order>/);
+});
+
+test("server-info-meta-drop drops only the host's serverInfo key from transcript results, and a _meta it empties", async () => {
+  const serverInfo = { name: "harness-ref-server", version: "1.0.0" };
+  const call = (msg, result) => ({ session: 0, op: "callTool", request: { name: "echo", arguments: { msg } }, result });
+  const transcript = [
+    call("only", { _meta: { [SERVER_INFO_META_KEY]: serverInfo }, content: [] }),
+    call("and another key", { _meta: { [SERVER_INFO_META_KEY]: serverInfo, "example.com/other": 1 }, content: [] }),
+    call("no serverInfo", { _meta: { "example.com/other": 2 }, content: [] }),
+    { session: 0, op: "callTool", request: { name: "nope", arguments: {} }, error: { code: -32602, message: "x", _meta: { [SERVER_INFO_META_KEY]: serverInfo } } },
+  ];
+  // Event bodies are not transcript results: the rule leaves them alone.
+  const body = { event_type: "mcp:tools/call", resource_name: "echo", parameters: { request: { _meta: { [SERVER_INFO_META_KEY]: serverInfo } } } };
+  const { normalized, report } = await normalizeRun({ requests: [mockPublish(body)], transcript });
+  assert.ok(report.rules.includes("server-info-meta-drop"));
+  assert.deepEqual(
+    normalized.transcript.map((e) => e.result ?? e.error),
+    [
+      { content: [] },
+      { _meta: { "example.com/other": 1 }, content: [] },
+      { _meta: { "example.com/other": 2 }, content: [] },
+      { code: -32602, message: "x", _meta: { [SERVER_INFO_META_KEY]: serverInfo } },
+    ],
+  );
+  assert.deepEqual(normalized.events[0].body.parameters.request, body.parameters.request);
 });
 
 test("a custom event published during a tool call sorts after the call event, in the same millisecond or the next", async () => {

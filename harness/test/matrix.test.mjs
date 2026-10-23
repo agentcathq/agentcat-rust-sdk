@@ -34,6 +34,30 @@ test("an unknown scenario, transport or lane exits 2", async () => {
   assert.equal((await matrix(["--jobs", "0"])).code, 2);
 });
 
+test("--env2 needs NAME=value", async () => {
+  for (const bad of ["HARNESS_CANARY", "=1", "1X=1", "A-B=1"]) {
+    const res = await matrix(["--env2", bad]);
+    assert.equal(res.code, 2, bad);
+    assert.match(res.stderr, /--env2 needs NAME=value/, bad);
+  }
+});
+
+test("--env2 reaches the second server only: HARNESS_CANARY=1 makes a Rust A/A combination differ", { timeout: 300_000 }, async () => {
+  const one = ["--servers", "rust,rust", "--scenarios", "basic", "--transports", "stdio", "--lanes", "2025-11-25"];
+  let res = await matrix(one);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.equal(readJson(join(OUT, "matrix.json"))[0].delta.total, 0);
+
+  res = await matrix([...one, "--env2", "HARNESS_CANARY=1"]);
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  const [entry] = readJson(join(OUT, "matrix.json"));
+  assert.deepEqual(entry.env2, { HARNESS_CANARY: "1" });
+  assert.deepEqual(Object.values(entry.exitCodes), [0, 0, 0, 0]);
+  assert.ok(entry.delta.unexpected > 0, JSON.stringify(entry.delta));
+  // The canary changes the injected context description, which only the tracked listing carries.
+  assert.ok(entry.differences.every((d) => d.path.startsWith("$.delta.transcript[1].result.tools[")), res.stdout);
+});
+
 test("A/A of ts-v2 on basic, stdio, 2025-11-25 has one combination and no delta difference", { timeout: 300_000 }, async () => {
   const res = await matrix(["--servers", "ts-v2,ts-v2", "--scenarios", "basic", "--transports", "stdio", "--lanes", "2025-11-25"]);
   assert.equal(res.code, 0, res.stdout + res.stderr);

@@ -177,6 +177,58 @@ jobs:
       - run: node --test "scripts/*.test.mjs"
       - run: cargo run -q -p xtask -- parity
 
+  # L3: the MCP-wire delta of the Rust reference server against TS v2 (harness/README.md, "The L3 gate").
+  harness-l3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - run: cargo build -p harness-ref-server
+      # Every scenario, transport and lane: every delta difference ruled, every ruling used.
+      - name: Matrix against TS v2
+        run: node harness/src/matrix.mjs
+      # The Rust server against itself: no difference at all, ruled or not.
+      - name: A/A run
+        run: |
+          node harness/src/matrix.mjs --servers rust,rust --scenarios basic
+          node -e '
+            const doc = JSON.parse(require("node:fs").readFileSync("harness/out/matrix.json", "utf8"));
+            const bad = doc.filter((c) => Object.values(c.exitCodes).some((code) => code !== 0) || !c.delta || c.delta.total !== 0);
+            if (doc.length === 0 || bad.length > 0) {
+              console.error(`L3 A/A failed: ${doc.length === 0 ? "no combination ran" : bad.map((c) => `${c.scenario} ${c.transport} ${c.lane}`).join(", ")}`);
+              process.exit(1);
+            }'
+      # HARNESS_CANARY=1 perturbs the second server: the matrix must exit 1 with every driver passing and
+      # an unruled difference in every combination.
+      - name: Canary run
+        run: |
+          canary=0
+          node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 HARNESS_CANARY=1 || canary=$?
+          if [ "$canary" -ne 1 ]; then
+            echo "L3 canary failed: the matrix exited $canary, expected 1"
+            exit 1
+          fi
+          node -e '
+            const doc = JSON.parse(require("node:fs").readFileSync("harness/out/matrix.json", "utf8"));
+            const bad = doc.filter((c) => Object.values(c.exitCodes).some((code) => code !== 0) || !c.delta || c.delta.unexpected === 0);
+            if (doc.length === 0 || bad.length > 0) {
+              console.error(`L3 canary failed: ${doc.length === 0 ? "no combination ran" : bad.map((c) => `${c.scenario} ${c.transport} ${c.lane}`).join(", ")}`);
+              process.exit(1);
+            }'
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: harness-l3-out
+          path: harness/out
+          retention-days: 14
+
   rmcp-versions:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -228,7 +280,7 @@ jobs:
 
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness, rmcp-versions, rmcp]
+    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

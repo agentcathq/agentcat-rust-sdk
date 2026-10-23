@@ -106,5 +106,84 @@
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
+  },
+  {
+    "name": "own_session",
+    "description": "Declares its own session_id and returns the value it received",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "own_context",
+    "description": "Declares its own context and returns it",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "context"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "structured_own",
+    "description": "Returns structuredContent; its outputSchema declares mcp_session",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "msg"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "echoed": {
+          "type": "string"
+        },
+        "mcp_session": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "session_id"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "echoed"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
   }
 ]

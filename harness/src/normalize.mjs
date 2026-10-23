@@ -23,11 +23,18 @@ export const RULES = [
   "id-placeholders",
   "mcp-session-first",
   "property-order",
+  "server-info-meta-drop",
   "literal-derived-ids",
 ];
 
 /** The key under which property-order records the key order of `inputSchema.properties`. */
 export const PROPERTIES_ORDER_KEY = "<properties-order>";
+
+/**
+ * The `_meta` key that the TS v2 host library (`@modelcontextprotocol/server`) adds to every
+ * 2026-07-28 result; rmcp adds none. server-info-meta-drop drops it from transcript results (RD-13).
+ */
+export const SERVER_INFO_META_KEY = "io.modelcontextprotocol/serverInfo";
 
 /** The sdk_language values the backend knows. */
 export const SDK_LANGUAGES = ["TypeScript", "Rust"];
@@ -171,6 +178,18 @@ export async function normalizeRun({ requests, transcript, scenario }) {
   });
 
   const doc = { transcript: structuredClone(transcript), events, nonPublishRequests, violations: [] };
+
+  // server-info-meta-drop: host behavior, not AgentCat's (RD-13). The TS v2 host library puts
+  // _meta["io.modelcontextprotocol/serverInfo"] on every 2026-07-28 result and rmcp puts none, so
+  // a result that only the tracked run has (an intercepted get_more_tools) differs by that key
+  // alone. Only that key goes; a _meta left empty goes too. Other _meta keys stay.
+  for (const entry of doc.transcript) {
+    const meta = isObject(entry) && isObject(entry.result) ? entry.result._meta : undefined;
+    if (isObject(meta) && Object.hasOwn(meta, SERVER_INFO_META_KEY)) {
+      delete meta[SERVER_INFO_META_KEY];
+      if (Object.keys(meta).length === 0) delete entry.result._meta;
+    }
+  }
 
   walk({ transcript: doc.transcript, events: doc.events }, "$", (node, path) => {
     if (Array.isArray(node)) return;

@@ -54,7 +54,7 @@ test("2026-07-28: two HTTP runs of basic.json against ts-v2 publish the expected
   const res = await diff(
     outFile("basic", "v2lane1", "http", "normalized"),
     outFile("basic", "v2lane2", "http", "normalized"),
-    ["--rulings", join(HARNESS, "rulings.json")],
+    ["--rulings", join(HARNESS, "rulings-ts.json")],
   );
   assert.equal(res.code, 0, res.stdout + res.stderr);
   assert.match(res.stdout, /"total":0/);

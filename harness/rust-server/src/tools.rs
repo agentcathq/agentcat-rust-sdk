@@ -79,6 +79,9 @@ fn route(tool: Tool) -> Result<ToolRoute<RefServer>, String> {
         "tool_error" => ToolRoute::new(tool, tool_error),
         "big" => ToolRoute::new(tool, big),
         "emit_custom" => ToolRoute::new(tool, emit_custom),
+        "own_session" => ToolRoute::new(tool, own_session),
+        "own_context" => ToolRoute::new(tool, own_context),
+        "structured_own" => ToolRoute::new(tool, structured_own),
         other => {
             return Err(format!(
                 "the tool contract names {other:?}, which has no behavior here"
@@ -234,4 +237,38 @@ struct Custom {
 /// it publishes nothing, as the untracked TS servers do.
 fn emit_custom(Parameters(_custom): Parameters<Custom>) -> CallToolResult {
     text("published".to_owned())
+}
+
+/// The arguments of `own_session`: the tool declares its own `session_id`.
+#[derive(Debug, Deserialize)]
+struct OwnSession {
+    session_id: String,
+    #[expect(
+        dead_code,
+        reason = "declared by the contract; the behavior ignores it, as common.mjs does"
+    )]
+    x: Option<String>,
+}
+
+/// `own_session`: `session_id=<value>`, the `session_id` it received.
+fn own_session(
+    Parameters(OwnSession { session_id, .. }): Parameters<OwnSession>,
+) -> CallToolResult {
+    text(format!("session_id={session_id}"))
+}
+
+/// The arguments of `own_context`: the tool declares its own `context`.
+#[derive(Debug, Deserialize)]
+struct OwnContext {
+    context: String,
+}
+
+/// `own_context`: the `context` it received, as text.
+fn own_context(Parameters(OwnContext { context }): Parameters<OwnContext>) -> CallToolResult {
+    text(context)
+}
+
+/// `structured_own`: as [`structured`]; its output schema declares `mcp_session` itself.
+fn structured_own(params: Parameters<Msg>) -> CallToolResult {
+    structured(params)
 }

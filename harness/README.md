@@ -87,14 +87,31 @@ takes four `*.normalized.json` files. Paths look like `$.delta.transcript[4].res
 tracked-document violation is an `add` at `$.delta.violations[<rule>]@<violation path>`. Output and exit
 codes follow `diff.mjs` (`DELTA <path>: ts <x> != rust <y>`, `RULED ...`, ruling lines, a JSON summary).
 
-`node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>]`
+`node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...`
 runs, per scenario, transport and lane, both servers untracked (`HARNESS_NO_TRACK=1`) and tracked, then
 compares the two deltas. Servers: `ts-v1`, `ts-v2` (default first) and `rust` (default second;
 `HARNESS_RUST_SERVER`, else `target/debug/harness-ref-server`). Labels are `<server>-<lane>-<u|t>`; two
-equal server names (an A/A run) give the second server the suffix `-b`. It writes `harness/out/matrix.json`.
+equal server names (an A/A run) give the second server the suffix `-b`. `--env2` sets an environment
+variable for every run of the second server, untracked and tracked (repeatable; `matrix.json` records it).
+It writes `harness/out/matrix.json`.
 
 Rulings: `rulings.json` is for Rust against TS (`diff.mjs`, `delta.mjs`, the matrix); `rulings-ts.json`
 is for TS against TS (A/A runs and the nightly drift sweep, so a Rust ruling never counts as unused there).
+
+### The L3 gate
+
+`scripts/check.sh` and the CI job `harness-l3` build the Rust reference server, then run three matrices:
+
+1. `node harness/src/matrix.mjs`: TS v2 against Rust, every scenario, transport and lane. It must exit 0:
+   every driver passes, every delta difference has a ruling, and every ruling matches something.
+2. The A/A run `node harness/src/matrix.mjs --servers rust,rust --scenarios basic`: it must exit 0 with no
+   delta difference at all, ruled or not (`delta.total` is 0 in every combination of `matrix.json`).
+3. The canary run, the A/A run plus `--env2 HARNESS_CANARY=1`: the second server serves the context
+   description `"canary"`. It must exit 1, every driver must pass, and every combination must report an
+   unruled difference. A canary that passes means the delta comparison has gone blind.
+
+One full matrix (36 combinations, 144 driver runs) took 75 to 100 s at `--jobs 4` on the development
+machine; the A/A and canary runs about 12 s each.
 
 ### driver.mjs
 
@@ -172,7 +189,8 @@ Runs `ts-v2.mjs` untracked over stdio and writes its full `tools/list` result to
 `contract/tool-contract.json` (R20: v2 is the answer key). The definitions (name, description, input
 and output JSON schemas) live once in `TOOLS` in `src/servers/common.mjs`, next to `toolHandlers`;
 `ts-v2.mjs` registers from `TOOLS`, and `ts-v1.mjs` declares the same tools in zod. Adding a tool
-means `TOOLS`, `toolHandlers` and ts-v1's zod, then regenerating the file. Never edit it by hand. `--check` regenerates it into a temp
+means `TOOLS`, `toolHandlers`, ts-v1's zod and the behavior in `rust-server/src/tools.rs`, then
+regenerating the file. Never edit it by hand. `--check` regenerates it into a temp
 directory and exits 1 on any byte difference (drift between `TOOLS` and the file). A test compares
 ts-v1's `tools/list`, minus `execution`, with the file.
 
@@ -256,6 +274,9 @@ later server's thrown error loses its stack. The behaviors (in `src/servers/comm
 | `tool_error` | `{}` | Returns `isError: true`, `content: [{type: "text", text: "handled failure"}]` (no throw). |
 | `big` | `{size: integer}` | `content: [{type: "text", text: "x" repeated size times}]` |
 | `emit_custom` | `{session: string, resource: string, message?: string}` | Tracked: first awaits `publishCustomEvent(session, projectId, {resourceName: resource, message, parameters: {from: "emit_custom"}, tags: {kind: "custom"}})`. Untracked: no publish (the TS SDK's API URL is set only by `track`, so a publish would aim at production). Then returns `content: [{type: "text", text: "published"}]`. |
+| `own_session` | `{session_id: string, x?: string}` (the tool declares its own `session_id`, so the SDK treats it as foreign) | `content: [{type: "text", text: "session_id=<value received>"}]` |
+| `own_context` | `{context: string}` (the tool declares its own `context`) | `content: [{type: "text", text: context}]` |
+| `structured_own` | `{msg: string}`, output schema `{echoed: string, mcp_session?: {session_id: string, ...}}` (it declares `mcp_session` itself) | `content: [{type: "text", text: msg}]`, `structuredContent: {echoed: msg}` |
 
 ### TS v1 and v2 differences
 
@@ -324,7 +345,7 @@ Where it differs from the TS servers:
 - Argument errors carry serde's text (`failed to deserialize parameters: ...`) where ts-v2 carries
   ajv's. An unknown tool answers the JSON-RPC error `-32602` `tool not found` (ts-v2:
   `Tool <name> not found`). On 2026-07-28, rmcp adds no `_meta["io.modelcontextprotocol/serverInfo"]`
-  to results.
+  to results; the normalizer rule `server-info-meta-drop` drops that key (RD-13).
 
 ## Options profile
 
@@ -403,9 +424,22 @@ Example (`scenarios/basic.json`):
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
   in later arguments is replaced with it.
 - `listTools` takes an optional `cursor`.
+- No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
+  such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
+- `expectPublishes` is the count the tracked TS v2 server publishes, read from a TS run. The tracked Rust
+  server publishes nothing before plan 4, and the matrix runs it with `--expect-publishes 0`.
 
 The scenario files in `scenarios/` are the scenario names that `parity/manifest.toml` can reference
-as `harness:<name>`.
+as `harness:<name>`:
+
+| Scenario | Options profile | What its calls cover |
+|---|---|---|
+| `basic` | `identify`, `eventTags`, `eventProperties`, `redactSensitiveInformation` | Mint-back (minted, supplied, invalid), context, the structured mirror, a thrown error, an `isError` result, a large result, `get_more_tools`, a custom event, a second client. |
+| `schemas` | `{}` (the defaults of B-004) | The tools that declare `session_id`, `context` or an output `mcp_session` themselves, with and without our handles, before and after a listing; the unknown tool `nope`; an argument error (`echo` with `msg: 5`); the mirror on `structured`. |
+| `hook-mode` | `resolveSessionId` returns `"customer-abc"`, `enableAgentTracking` | Hook mode with agent tracking: no `session_id` injected, calls with and without `agent_id`, the mirror with `agent_id` only. |
+| `agent-tracking` | `enableAgentTracking`, `customContextDescription` | Calls with and without `agent_id` (a two-line value, a number, blanks), with minted, supplied and invalid handles; a call before any listing. |
+| `features-off` | `enableReportMissing: false`, `enableToolCallContext: false` | No `get_more_tools` and no `context` injection; a `context` argument that is not ours; a call to `get_more_tools`. |
+| `tracing-off` | `enableTracing: false` | Calls with `context`, and `own_context` with its own `context` (RD-29 on per-request TS servers); no handles, no mint-back, no mirror; `get_more_tools` answered by the SDK. |
 
 ## Normalized document
 
@@ -434,6 +468,7 @@ The normalizer rules, each listed in `report.rules` of the run report:
 | `id-placeholders` | Every `evt_`, `ses_` and `agt_` KSUID becomes `<prefix#n>` by first appearance, the same across transcript and events. |
 | `mcp-session-first` | Every `structuredContent` that has `mcp_session` must have it as its first key; a violation goes to `violations`. |
 | `property-order` | For each tool in a `tools/list` result, adds `inputSchema["<properties-order>"]`: the key order of `inputSchema.properties`. |
+| `server-info-meta-drop` | In each transcript `result`, drops `_meta["io.modelcontextprotocol/serverInfo"]`, and `_meta` when that leaves it empty. The TS v2 host library adds the key to every 2026-07-28 result and rmcp adds none: host behavior, not AgentCat's (RD-13). Other `_meta` keys, errors and event bodies stay. |
 | `literal-derived-ids` | When the profile's `resolveSessionId` returns a non-blank string, the ID `deriveSessionId(value.trim(), projectId)` (computed with the TS `handles` module) stays literal instead of becoming a placeholder. IDs in `report.literalIds`. |
 
 `<type>` is `string`, `number`, `boolean`, `object`, `array` or `null`.
@@ -461,4 +496,7 @@ alone matches nothing. A diff path looks like `$.events[3].body.resource_name` o
 `.<rule>`. Write `\$`, `\.`, `\[` and `\]` for the literal characters. `deviation` names the ruled
 divergence in the design decision log. A ruling may also carry `"pending": true` (a boolean, nothing
 else): a provisional ruling that waits for the owner's answer. It allows differences like any other.
-The list is empty until the Rust half produces differences.
+
+A delta path names the transcript entry by its index only, not by its scenario, so a delta ruling covers
+that index in every scenario, transport and lane: keep its regex to the exact paths, and name the
+scenario and the call in its reason. In plan 3, `rulings.json` holds delta rulings only.

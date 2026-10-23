@@ -70,6 +70,31 @@ function buildServer() {
     },
     handlers.emit_custom,
   );
+  server.registerTool(
+    "own_session",
+    {
+      description: "Declares its own session_id and returns the value it received",
+      inputSchema: { session_id: z.string(), x: z.string().optional() },
+    },
+    handlers.own_session,
+  );
+  server.registerTool(
+    "own_context",
+    { description: "Declares its own context and returns it", inputSchema: { context: z.string() } },
+    handlers.own_context,
+  );
+  server.registerTool(
+    "structured_own",
+    {
+      description: "Returns structuredContent; its outputSchema declares mcp_session",
+      inputSchema: { msg: z.string() },
+      outputSchema: {
+        echoed: z.string(),
+        mcp_session: z.object({ session_id: z.string() }).passthrough().optional(),
+      },
+    },
+    handlers.structured_own,
+  );
   if (tracked) agentcat.track(server, projectId, options);
   return server;
 }

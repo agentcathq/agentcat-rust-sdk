@@ -105,11 +105,13 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off-x-report-missing-on'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-mint'"
@@ -189,11 +191,13 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off-x-report-missing-on'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-mint'"
@@ -249,7 +253,8 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'strict-schema-injection'"
@@ -273,11 +278,13 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off-x-report-missing-on'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-mint'"
@@ -333,7 +340,8 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'strict-schema-injection'"
@@ -357,11 +365,13 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off-x-report-missing-on'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-mint'"
@@ -413,7 +423,8 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'report-missing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'session-continuity-stateful'"
@@ -441,11 +452,13 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off-x-report-missing-on'"
-status = "todo"
+status = "ported"
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should accept apiBaseUrl as an optional string property"
@@ -3842,15 +3855,18 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should NOT add get_more_tools when enableReportMissing is false"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should add report_missing WITHOUT context injection even when enableToolCallContext is true"
-status = "todo"
+status = "ported"
+rust = ["harness:schemas"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 1. Tool Injection Tests > should add report_missing to tools list when enableReportMissing is true"
-status = "todo"
+status = "ported"
+rust = ["harness:schemas"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully"
@@ -4026,15 +4042,18 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > steady state: supplied handles are re-echoed on every response; text block stays mint-only"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > structuredContent-only consumer discovers minted handles"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > tools/list declares mcp_session on get_stats; schema-less tools untouched"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > wire-only: published event.response never contains mcp_session"
@@ -4046,7 +4065,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > hook mode: mirrored payload carries agent_id but never session_id or status"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > mints into structuredContent on the V1 path too"
@@ -4054,7 +4074,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > no tools/list ever (no registry): mirror applies — a list-less client cannot be validating"
-status = "todo"
+status = "ported"
+rust = ["harness:schemas", "harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts an error result's content, including a throw the SDK turns into one"
@@ -5116,7 +5137,8 @@ reason = "inject.json case ts:v2/schema-edges:output-tracking-off; checked by ag
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > advertises no session_id param; agent_id stays available"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > derives a deterministic ses_ id: same hook value + project → same id across calls and instances"

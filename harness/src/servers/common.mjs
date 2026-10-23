@@ -139,7 +139,7 @@ function hook(name, spec) {
 // dump-contract.mjs writes ts-v2's tools/list to contract/tool-contract.json
 // (R20), which the Rust server embeds. ts-v1 declares the same tools in zod; a
 // test keeps the two in step. Adding a tool: TOOLS, toolHandlers, ts-v1's zod,
-// then regenerate the contract.
+// the behavior in rust-server/src/tools.rs, then regenerate the contract.
 // ---------------------------------------------------------------------------
 
 /** Tool definitions: name, description, inputSchema and (optional) outputSchema, as JSON Schema. */
@@ -251,6 +251,85 @@ export const TOOLS = [
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
+  },
+  {
+    "name": "own_session",
+    "description": "Declares its own session_id and returns the value it received",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_id": {
+          "type": "string"
+        },
+        "x": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "session_id"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "own_context",
+    "description": "Declares its own context and returns it",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "context"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "structured_own",
+    "description": "Returns structuredContent; its outputSchema declares mcp_session",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "msg"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "echoed": {
+          "type": "string"
+        },
+        "mcp_session": {
+          "type": "object",
+          "properties": {
+            "session_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "session_id"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "echoed"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
   }
 ];
 
@@ -280,6 +359,9 @@ export function toolHandlers({ tracked, projectId, agentcat }) {
       });
       return text("published");
     },
+    own_session: async ({ session_id }) => text(`session_id=${session_id}`),
+    own_context: async ({ context }) => text(context),
+    structured_own: async ({ msg }) => ({ ...text(msg), structuredContent: { echoed: msg } }),
   };
 }
 
