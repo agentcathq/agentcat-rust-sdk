@@ -9,7 +9,8 @@
 //!   delivery worker's (plan 4 task 6), not the pipeline's, so they leave the expected lines.
 //! - In a `custom:*` case, the lines `publishCustomEvent` writes before the queue takes the event
 //!   (`Published custom event ...`, `publishCustomEvent: ...` and its `Dropping invalid tag: ...`)
-//!   are the custom-event builder's (plan 4 task 7), so they leave too.
+//!   are the custom-event builder's (plan 4 task 7), so they leave too ([`full_logs`] keeps them
+//!   for `custom::tests::custom_vectors_match_ts`, which runs the builders).
 //! - One normalization (ruling P7): where TS writes a thrown `Error` after a stage's or a hook's
 //!   text, as `Error: <message>`, Rust writes the error's `Display`, `<message>`
 //!   ([`ts_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries TS's
@@ -348,6 +349,19 @@ fn js_error_message(rendered: &str) -> String {
 pub(crate) fn worker_logs(case: &Map<String, Value>) -> Vec<String> {
     queue_lines(case)
         .map(|line| ts_delivery_line_as_rust(&ts_line_as_rust(line)))
+        .collect()
+}
+
+/// Every line of `case`'s `logs`, as Rust writes it: [`ts_line_as_rust`], then
+/// [`ts_delivery_line_as_rust`], with the custom-event builder's lines kept (module docs). The
+/// runner of `custom::tests::custom_vectors_match_ts` compares these against all that the worker
+/// writes.
+pub(crate) fn full_logs(case: &Map<String, Value>) -> Vec<String> {
+    case["logs"]
+        .as_array()
+        .expect("logs")
+        .iter()
+        .map(|line| ts_delivery_line_as_rust(&ts_line_as_rust(line.as_str().expect("a line"))))
         .collect()
 }
 

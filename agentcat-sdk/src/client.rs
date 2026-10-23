@@ -4,12 +4,14 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, Mutex, PoisonError};
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 use rmcp::ServerHandler;
 
 use crate::config::Options;
+use crate::custom::{CustomEvent, publish_string};
 use crate::delivery::{Delivery, DeliveryConfig, Publisher};
+use crate::error::Error;
 use crate::registry::ToolRegistry;
 use crate::sink::{DiscardSink, Sink};
 use crate::tracked::Tracked;
@@ -156,6 +158,35 @@ impl AgentCat {
     /// clones the handle and does no other work.
     pub fn track<H: ServerHandler>(&self, handler: H) -> Tracked<H> {
         Tracked::new(handler, self.clone())
+    }
+
+    /// Publishes a custom event to the project `project_id` for the session `session_id`, as
+    /// TypeScript's `publishCustomEvent(sessionId, projectId, eventData)` does (B-009, C11). It
+    /// only queues the event, so it returns at once.
+    ///
+    /// The session is the event's own [`session_id`](CustomEvent::session_id) when it is not
+    /// empty, else `session_id` verbatim (it may be empty for none). The event has no server or
+    /// client fields and goes through no redaction hook. It is queued even while tracing is off.
+    ///
+    /// ```
+    /// use agentcat_sdk::{AgentCat, CustomEvent, Options};
+    ///
+    /// let agentcat = AgentCat::new("proj_123", Options::default());
+    /// let event = CustomEvent::new().resource_name("cache-warmed").message("40 keys");
+    /// agentcat.publish_custom_event("ses_1", "proj_123", event)?;
+    /// # Ok::<(), agentcat_sdk::Error>(())
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// [`Error::ProjectIdRequired`] when `project_id` is empty.
+    pub fn publish_custom_event(
+        &self,
+        session_id: &str,
+        project_id: &str,
+        event: CustomEvent,
+    ) -> Result<(), Error> {
+        publish_string(self, session_id, project_id, event, SystemTime::now())
     }
 
     /// What the clones of this handle share.

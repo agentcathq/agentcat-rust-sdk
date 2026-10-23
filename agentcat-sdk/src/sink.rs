@@ -26,11 +26,16 @@ pub(crate) trait Sink: Send + Sync + fmt::Debug {
     fn record(&self, record: CallRecord);
 
     /// Takes one assembled event.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "called by publish_custom_event (plan 4 task 7)")
-    )]
     fn event(&self, job: EventJob);
+
+    /// Takes one assembled event and then the log line `message`, in that order and with no line
+    /// of another caller in between: the queue's own lines about the event (a drop) come before
+    /// `message`, the lines of the event's later stages after it, as in TS, where the line follows
+    /// the synchronous `add`.
+    fn event_then_log(&self, job: EventJob, message: String) {
+        self.event(job);
+        self.log(message);
+    }
 
     /// Whether everything taken so far is delivered within `timeout`.
     fn flush(&self, _timeout: Duration) -> BoxFuture<'static, bool> {

@@ -232,6 +232,19 @@ impl Sink for Delivery {
         self.push(Job::from(job));
     }
 
+    /// Queues the job and the line under one lock, so the worker writes the line before the lines
+    /// of the event's own pipeline.
+    fn event_then_log(&self, job: EventJob, message: String) {
+        let (dropped, start) = {
+            let mut queue = self.shared.lock();
+            let dropped = queue.push_job(Job::from(job), self.shared.config.max_pending);
+            queue.push_line(message);
+            (dropped, queue.claim_start())
+        };
+        drop(dropped);
+        self.wake(start);
+    }
+
     fn flush(&self, timeout: Duration) -> BoxFuture<'static, bool> {
         self.answer(Kind::Flush, timeout)
     }

@@ -149,8 +149,8 @@ pub(crate) async fn run_call<H: ServerHandler>(
         is_error: false,
         error: None,
         server_name: server.as_ref().map(|server| server.name.clone()),
-        server_version: server.map(|server| server.version),
-        client,
+        server_version: server.as_ref().map(|server| server.version.clone()),
+        client: client.clone(),
         pending,
         runtime,
         backtrace: None,
@@ -166,11 +166,14 @@ pub(crate) async fn run_call<H: ServerHandler>(
         forwarded.arguments = forwarded
             .arguments
             .map(|arguments| strip_arguments(&arguments, schema.entry.as_ref(), &name));
-        context.extensions.insert(CallContext::new(
-            record.resolution.session_id.clone(),
-            record.resolution.agent_id.clone(),
-            tracked.agentcat().clone(),
-        ));
+        context.extensions.insert(
+            CallContext::new(
+                record.resolution.session_id.clone(),
+                record.resolution.agent_id.clone(),
+                tracked.agentcat().clone(),
+            )
+            .with_identity(client, server),
+        );
         // The handler's `call_tool` itself runs inside the future, so the scope and the panic
         // boundary also cover what a hand-written handler does before it returns its future.
         let call = async move { tracked.inner().call_tool(forwarded, context).await };
@@ -284,7 +287,7 @@ fn resource_name(name: &str) -> String {
 
 /// The `server_info` of `inner` (B-086), or none when its `get_info` panics: the panic is
 /// contained, logged with its message (C30), and the record gets no server name or version.
-fn server_info<H: ServerHandler>(shared: &Inner, inner: &H) -> Option<Implementation> {
+pub(crate) fn server_info<H: ServerHandler>(shared: &Inner, inner: &H) -> Option<Implementation> {
     match catch_unwind(AssertUnwindSafe(|| inner.get_info().server_info)) {
         Ok(server) => Some(server),
         Err(payload) => {

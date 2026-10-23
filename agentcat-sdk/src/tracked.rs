@@ -7,6 +7,7 @@ use std::any::type_name;
 use std::borrow::Cow;
 use std::fmt;
 use std::sync::{Mutex, PoisonError};
+use std::time::SystemTime;
 
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CancelTaskParams, CancelledNotificationParam,
@@ -20,9 +21,12 @@ use rmcp::model::{
 use rmcp::service::{MaybeSendFuture, NotificationContext, RequestContext, SubscriptionContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 
-use crate::call::run::run_call;
+use crate::call::run::{run_call, server_info};
 use crate::client::AgentCat;
 use crate::constants::GET_MORE_TOOLS_NAME;
+use crate::custom::{CustomEvent, publish_server};
+use crate::error::Error;
+use crate::event::ClientIdentity;
 use crate::inject::{
     InjectConfig, ToolEntry, build_injected_list, get_more_tools_tool, inject_tool,
 };
@@ -106,18 +110,62 @@ impl<H> Tracked<H> {
     }
 
     /// The client that `initialize` named on this instance, if it has run (C16).
-    #[cfg_attr(
-        not(test),
-        expect(
-            dead_code,
-            reason = "the call path reads the identity from the request context (C22); only tests read this"
-        )
-    )]
     pub(crate) fn client_identity(&self) -> Option<Implementation> {
         self.identity
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
+    }
+
+    /// Publishes a custom event with the identity of this instance, as TypeScript's
+    /// `publishCustomEvent(server, projectId, eventData)` does (B-009, C16, C47). It only queues
+    /// the event, so it returns at once. The client is the one this instance's `initialize`
+    /// named (none before it, and none on a clone, which has seen no `initialize`); the server is
+    /// what the handler's `get_info` gives now, and a panic there is logged and leaves the event
+    /// without server fields (C30).
+    ///
+    /// The event goes to the project of the handle, not to `project_id`, which only has to be
+    /// non-empty (K-03). Nothing is queued while tracing is off. The `redact_event` hook of the
+    /// options runs on the event, on the runtime of the caller; the string hook does not. The
+    /// event has no session unless the [`CustomEvent`] names one, and TypeScript takes none from
+    /// anywhere either (C47): inside a tool, pass
+    /// [`CallContext::session_id`](crate::CallContext::session_id) in the [`CustomEvent`] to
+    /// attribute the event to the call. A `duration` of zero or none is the time since the event
+    /// was built.
+    ///
+    /// ```no_run
+    /// # fn run<H: rmcp::ServerHandler>(
+    /// #     tracked: agentcat_sdk::Tracked<H>,
+    /// # ) -> Result<(), agentcat_sdk::Error> {
+    /// use agentcat_sdk::CustomEvent;
+    ///
+    /// tracked.publish_custom_event("proj_123", CustomEvent::new().resource_name("startup"))?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// # Errors
+    ///
+    /// [`Error::ProjectIdRequired`] when `project_id` is empty.
+    pub fn publish_custom_event(&self, project_id: &str, event: CustomEvent) -> Result<(), Error>
+    where
+        H: ServerHandler,
+    {
+        if project_id.is_empty() {
+            return Err(Error::ProjectIdRequired);
+        }
+        let created = SystemTime::now();
+        let client = self.client_identity().as_ref().map(ClientIdentity::from);
+        let server = server_info(self.agentcat.inner(), &self.inner);
+        publish_server(
+            &self.agentcat,
+            project_id,
+            event,
+            client.as_ref(),
+            server.as_ref(),
+            created,
+            SystemTime::now(),
+        )
     }
 }
 

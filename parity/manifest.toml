@@ -3805,7 +3805,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should always use 'agentcat:custom' as event type"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::custom_vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle empty event data object"
@@ -3815,19 +3816,24 @@ reason = "queue.json case custom:string-form-empty; checked by agentcat-sdk::cus
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle undefined event data gracefully"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::custom_vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should include timestamp"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::custom_vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > parameter validation > should throw error if first parameter is invalid"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "TS accepts any value as the first argument and checks its shape at run time; Rust has two methods with typed arguments (AgentCat::publish_custom_event takes a session &str, CallContext and Tracked take none), so the invalid shape cannot be written"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > parameter validation > should throw error if projectId is not provided"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::string_form_requires_project", "agentcat-sdk::custom::tests::server_form_uses_handle_project"]
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should handle all event data fields"
@@ -3855,7 +3861,9 @@ reason = "queue.json case custom:server-form-error; checked by agentcat-sdk::cus
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle high-level server objects"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "TS tells a high-level McpServer from a low-level Server by shape; Rust has one Tracked<H> and one CallContext for every handler, and tracked_form_uses_initialize_identity covers them"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish custom event with tracked server"
@@ -3871,11 +3879,14 @@ reason = "queue.json case custom:server-form-no-session; checked by agentcat-sdk
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should throw error if server is not tracked"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "TS checks at run time that its first argument was tracked; a Rust Tracked<H> or CallContext is tracked by construction"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should use eventData.sessionId as the session id, not any ambient server session"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::server_form_without_session_logs_ts_line", "agentcat-sdk::custom::tests::call_context_form_uses_call_identity"]
 
 [[test]]
 key = "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
@@ -5277,31 +5288,39 @@ reason = "TS patches the server in place and must not patch it twice; Rust track
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > lets eventData.sessionId take precedence over the session ID string"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::string_form_session_precedence"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > publishes without a session when a tracked server gets no sessionId"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::server_form_without_session_logs_ts_line"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > queues a custom event on a v2-tracked server with sessionId attribution"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::call_context_form_uses_call_identity", "agentcat-sdk::custom::tests::tracked_form_uses_initialize_identity"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > throws for an untracked v2 server"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "TS checks at run time that its first argument was tracked; a Rust Tracked<H> or CallContext is tracked by construction"
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > uses a session ID string verbatim as the session, carrying full event data"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::custom_vectors_match_ts"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > validates its required parameters"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::string_form_requires_project", "agentcat-sdk::custom::tests::server_form_uses_handle_project"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > validates tags and normalizes empty properties on direct custom events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::custom::tests::custom_vectors_match_ts"]
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: redactSensitiveInformation on captured events > applies the string-redaction hook to a v2-captured event"

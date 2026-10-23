@@ -20,7 +20,7 @@ mod tests;
 const TOOL_CALL_EVENT_TYPE: &str = "mcp:tools/call";
 
 /// The `sdkLanguage` of every event (D01, RD-14).
-const SDK_LANGUAGE: &str = "Rust";
+pub(crate) const SDK_LANGUAGE: &str = "Rust";
 
 /// The key rmcp gives a tool result for its result type.
 const RESULT_TYPE_KEY: &str = "resultType";
