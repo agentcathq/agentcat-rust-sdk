@@ -87,6 +87,12 @@ Plan 3 closed or moved every item carried to it. The moved items are below, mark
 - From the plan 3 final review: a second harness canary that perturbs the call path (mint-back or mirror). The
   canary proves only that the gate sees listing changes, and the reference tools ignore unknown keys, so strip
   regressions are pinned only by Rust unit tests.
+- From the plan 3 owner batch (R27): with `enableTracing: false`, strip the injected `session_id`, `agent_id` and
+  `context` before the tool runs (RD-29), learning the schema as the traced path does (`get_tool`, registry,
+  rebuild, heuristic) so that a tool's own `context` stays; record nothing. Update the RD-29 rulings' reasons if
+  the harness difference changes.
+- From the plan 3 owner batch (R27): relax `capture_error`'s bound to `E: Error + ?Sized + 'static` and say in its
+  rustdoc that a `dyn` error records the `dyn` type name.
 
 ## Plan 5 (finish)
 
