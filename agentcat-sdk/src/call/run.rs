@@ -1,15 +1,18 @@
 //! The tool-call pipeline of the TS SDK (`installCallWrap`, B-022) on [`Tracked<H>`]: the
 //! report-missing intercept, the tracing-off and degraded paths, the schema of the called tool
 //! (C03), the session handles (B-052 to B-069), the stripped call with its [`CallContext`], the
-//! mint-back and its mirror, and the [`CallRecord`] handed to the [`Sink`](crate::sink::Sink).
-//! `call/run/tests.rs` drives it over in-memory connections; `event/tests.rs` checks its records
-//! over HTTP.
+//! mint-back and its mirror, the panics and captured errors of the call (C23), and the
+//! [`CallRecord`] handed to the [`Sink`](crate::sink::Sink). `call/run/tests.rs` drives it over
+//! in-memory connections, `capture/tests.rs` its panics and captured errors; `event/tests.rs`
+//! checks its records over HTTP.
 use std::collections::HashSet;
+use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::time::{Duration, SystemTime};
 
+use futures::FutureExt;
 use rmcp::model::{
-    CallToolRequestParams, CallToolResponse, CallToolResult, PaginatedRequestParams, ServerResult,
-    Tool,
+    CallToolRequestParams, CallToolResponse, CallToolResult, Implementation,
+    PaginatedRequestParams, ServerResult, Tool,
 };
 use rmcp::service::RequestContext;
 use rmcp::{ErrorData, RoleServer, ServerHandler};
@@ -20,6 +23,7 @@ use super::{
     error_data_error, mirror_mint_back, prepend_mint_back, report_missing, result_error,
     strip_arguments,
 };
+use crate::capture::{CaptureSlot, panic_error, panic_message, scope};
 use crate::client::Inner;
 use crate::config::Options;
 use crate::constants::{AGENTCAT_TAG_MRTR, GET_MORE_TOOLS_NAME};
@@ -74,10 +78,18 @@ struct Schema {
 /// 6. The record of the call (B-077, B-083, B-096).
 /// 7. The intercept is answered with the `context` argument as the intent; any other call goes
 ///    to the handler with the injected arguments stripped (B-050, B-051) and a [`CallContext`]
-///    in its request context.
+///    in its request context. The handler's `call_tool` runs inside the call's
+///    [`scope`], so [`capture_error`](crate::capture_error) reaches this record, and under
+///    `catch_unwind`: a panic is recorded with `type: "panic"` (C23) and then resumed with its
+///    own payload, so the client gets no response, as without the SDK (design §6.4).
 /// 8. A result gets the mint-back text and its mirror and is recorded (B-056 to B-059, B-097);
 ///    an `InputRequiredResult` is tagged, not decorated (B-025).
 /// 9. A JSON-RPC error is recorded and returned unchanged (RD-05, D16).
+///
+/// For a failed call, an error captured during the call replaces the error that the result
+/// (B-097) or the JSON-RPC code name (R09) would give (C23). The other customer calls this path
+/// makes (`get_tool`, the rebuild's `list_tools`, `get_info`) are contained when they panic, and
+/// the call goes on without what they would have given.
 pub(crate) async fn run_call<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
@@ -118,7 +130,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
         &resolution,
         protocol_version(&context.meta).as_deref(),
     ));
-    let server = tracked.inner().get_info().server_info;
+    let server = server_info(tracked.inner());
     let mut record = CallRecord {
         started_at,
         duration_ms: 0,
@@ -133,12 +145,13 @@ pub(crate) async fn run_call<H: ServerHandler>(
         response: None,
         is_error: false,
         error: None,
-        server_name: Some(server.name),
-        server_version: Some(server.version),
+        server_name: server.as_ref().map(|server| server.name.clone()),
+        server_version: server.map(|server| server.version),
         client: client_identity(&context),
     };
 
     let name = request.name.to_string();
+    let slot = CaptureSlot::default();
     let outcome = if intercept {
         record.user_intent = context_argument(&request).cloned();
         Ok(answer_report_missing(shared, &request).into())
@@ -152,9 +165,22 @@ pub(crate) async fn run_call<H: ServerHandler>(
             record.resolution.agent_id.clone(),
             tracked.agentcat().clone(),
         ));
-        tracked.inner().call_tool(forwarded, context).await
+        // The handler's `call_tool` itself runs inside the future, so the scope and the panic
+        // boundary also cover what a hand-written handler does before it returns its future.
+        let call = async move { tracked.inner().call_tool(forwarded, context).await };
+        match scope(slot.clone(), AssertUnwindSafe(call).catch_unwind()).await {
+            Ok(outcome) => outcome,
+            Err(payload) => {
+                record.is_error = true;
+                record.error = Some(panic_error(&*payload));
+                record.duration_ms = elapsed_ms(started);
+                shared.sink.record(record);
+                resume_unwind(payload);
+            }
+        }
     };
 
+    let captured = slot.take();
     match outcome {
         Ok(response) => Ok(finish(
             shared,
@@ -163,10 +189,11 @@ pub(crate) async fn run_call<H: ServerHandler>(
             schema.mirror,
             started,
             response,
+            captured,
         )),
         Err(error) => {
             record.is_error = true;
-            record.error = Some(error_data_error(&error));
+            record.error = Some(captured.unwrap_or_else(|| error_data_error(&error)));
             record.duration_ms = elapsed_ms(started);
             shared.sink.record(record);
             Err(error)
@@ -214,6 +241,12 @@ fn resource_name(name: &str) -> String {
     }
 }
 
+/// The `server_info` of `inner` (B-086), or none when its `get_info` panics: the panic is
+/// contained and the record gets no server name or version.
+fn server_info<H: ServerHandler>(inner: &H) -> Option<Implementation> {
+    catch_unwind(AssertUnwindSafe(|| inner.get_info().server_info)).ok()
+}
+
 /// The intent of a call that is not intercepted (B-083, K-08): with the tool-call context on and
 /// a tool other than `get_more_tools`, the `context` argument as sent, whoever owns the parameter
 /// and whatever its type.
@@ -231,6 +264,9 @@ fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Val
 /// has an empty entry, as TS gives every listed tool one (`listWrap.ts`), so its arguments stay as
 /// sent.
 ///
+/// A `get_tool` that panics gives no schema: the panic is contained and the registry, the rebuild
+/// and the heuristic follow as for a tool `get_tool` does not know.
+///
 /// The tool is foreign when the registry's set of tools that declared their own `session_id`
 /// holds it, or when its `get_tool` schema declares one (C19). The mirror gate is the entry's
 /// `output_injected`; without an entry it is open only while no listing was ever recorded (B-069).
@@ -240,7 +276,10 @@ async fn learn_schema<H: ServerHandler>(
     context: &RequestContext<RoleServer>,
 ) -> Schema {
     let shared = tracked.agentcat().inner();
-    let looked_up = tracked.lookup_tool(name).map(|(_tool, entry)| entry);
+    let looked_up = catch_unwind(AssertUnwindSafe(|| tracked.lookup_tool(name)))
+        .ok()
+        .flatten()
+        .map(|(_tool, entry)| entry);
     let mut known = registry_view::<H>(shared, name);
     if looked_up.is_none() && known.entry.is_none() && !known.listed {
         rebuild(tracked, context).await;
@@ -281,14 +320,16 @@ fn registry_view<H: 'static>(shared: &Inner, name: &str) -> RegistryView {
 /// TS's registry rebuild on demand (B-027), across all pages (C03, RD-12): the inner handler's
 /// listing, page by page through `next_cursor`, within [`REBUILD_TIMEOUT`] in total. Each page
 /// then goes through the tool-list pipeline and into the registry, as a listing would, and the
-/// pipeline's log lines go to the sink. A failure or a timeout logs a warning and records
-/// nothing, so the next call tries again.
+/// pipeline's log lines go to the sink. A failure, a panic of the handler's `list_tools` (with
+/// the panic's message) or a timeout logs a warning and records nothing, so the next call tries
+/// again.
 async fn rebuild<H: ServerHandler>(tracked: &Tracked<H>, context: &RequestContext<RoleServer>) {
     let shared = tracked.agentcat().inner();
-    let listing = tokio::time::timeout(REBUILD_TIMEOUT, list_pages(tracked.inner(), context));
-    let pages = match listing.await {
-        Ok(Ok(pages)) => pages,
-        Ok(Err(error)) => return rebuild_failed(shared, &error.message),
+    let pages = AssertUnwindSafe(list_pages(tracked.inner(), context)).catch_unwind();
+    let pages = match tokio::time::timeout(REBUILD_TIMEOUT, pages).await {
+        Ok(Ok(Ok(pages))) => pages,
+        Ok(Ok(Err(error))) => return rebuild_failed(shared, &error.message),
+        Ok(Err(payload)) => return rebuild_failed(shared, &panic_message(&*payload)),
         Err(_elapsed) => {
             let millis = REBUILD_TIMEOUT.as_millis();
             let message = format!("tools/list did not respond within {millis}ms");
@@ -343,9 +384,10 @@ async fn list_pages<H: ServerHandler>(
 
 /// B-022 step 12 on the handler's `response`: the record gets the response as it came (B-059)
 /// and its output tokens; a complete result gets the mint-back text, the mirror when `mirror` is
-/// open, and, when it is an error result, the record's error (B-097). An `InputRequiredResult`
-/// is tagged and not decorated (B-025); any other response is not decorated. When the response
-/// cannot be written as JSON, it is returned untouched and not recorded, after a log line.
+/// open, and, when it is an error result, the record's error: the `captured` one, else the
+/// result's (B-097, C23). An `InputRequiredResult` is tagged and not decorated (B-025); any other
+/// response is not decorated. When the response cannot be written as JSON, it is returned
+/// untouched and not recorded, after a log line.
 fn finish(
     shared: &Inner,
     mut record: CallRecord,
@@ -353,6 +395,7 @@ fn finish(
     mirror: bool,
     started: Instant,
     response: CallToolResponse,
+    captured: Option<Map<String, Value>>,
 ) -> CallToolResponse {
     let original = match response_json(&response) {
         Ok(original) => original,
@@ -367,7 +410,7 @@ fn finish(
         CallToolResponse::Complete(mut result) => {
             if result.is_error == Some(true) {
                 record.is_error = true;
-                record.error = Some(result_error(&result));
+                record.error = Some(captured.unwrap_or_else(|| result_error(&result)));
             }
             if let Some(text) = build_mint_back_text(&record.resolution) {
                 prepend_mint_back(&mut result, text);

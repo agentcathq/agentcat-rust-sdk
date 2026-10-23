@@ -1569,47 +1569,69 @@ rust = ["agentcat-sdk::call::run::tests::rebuild_retries_after_a_failed_listing"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > installRegistryProxy swallows a highLevel whose _registeredTools assignment throws"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the TS proxy on _registeredTools for late registration; Rust has no registry proxy: Tracked sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > registry proxy set-trap: a tool whose executor getter throws still lands in the registry"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the TS proxy on _registeredTools for late registration; Rust has no registry proxy: Tracked sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > rewrapAllTools swallows a _registeredTools whose enumeration throws"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the inner tap sweep over the TS registry of tools; Rust has no inner tap: Tracked sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|patchSetRequestHandler on v1 > introspects Zod schema registrations for the method literal"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the TS re-arm patch of setRequestHandler; Rust has no re-arm: Tracked implements ServerHandler and sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|patchSetRequestHandler on v1 > registration still succeeds when the re-arm callback throws"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the TS re-arm patch of setRequestHandler; Rust has no re-arm: Tracked implements ServerHandler and sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > captures thrown errors onto extra.__agentcat_error and rethrows"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-17"
+reason = "TS stashes the thrown Error on extra.__agentcat_error for its stack (the inner tap, B-020); rmcp turns a tool's own error into text before the wrapper sees it, so Rust has the opt-in capture_error instead, pinned by agentcat-sdk::capture::tests::capture_error_records_type_and_chain"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > is idempotent — wrapping twice does not double-wrap"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "re-wrapping a TS tool function; Rust has no inner tap and wraps no tool function"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > preserves ctx position for v2 schema-less executors (args undefined)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the arguments of a wrapped TS executor; Rust has no inner tap and wraps no tool function"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > rewrapAllTools sweeps every registry entry"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the inner tap sweep over the TS registry of tools; Rust has no inner tap: Tracked sees every call"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > supports the v1 no-args callback arity (extra only)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the arity of a wrapped TS tool function; Rust has no inner tap and wraps no tool function"
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|wrapToolEntry > wraps v2 executor in place: strips injected args, preserves customer args"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "the inner tap strips the arguments again inside the TS tool registry; Rust has no inner tap: Tracked strips them before the handler runs (agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing)"
 
 [[test]]
 key = "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > appends get_more_tools and injects session_id + context"
@@ -1687,11 +1709,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture Error.cause chains"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "asserts the JavaScript type Error, a V8 stack and frames on the published event; the Rust error has no frames (C23), and the source() chain that capture_error records is pinned by agentcat-sdk::capture::tests::capture_error_records_type_and_chain"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture TypeError with correct type"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "asserts the JavaScript constructor name TypeError, a V8 stack and frames; a Rust error has the type path that capture_error records (agentcat-sdk::capture::tests::capture_error_records_type_and_chain) and no frames (C23)"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture errors for unknown tool names"
@@ -1699,11 +1725,15 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture non-Error thrown values"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "throws a JavaScript string, which has no type or stack; a Rust tool throws nothing: it returns a result or an ErrorData or panics, and the text payload of a panic is pinned by agentcat-sdk::capture::tests::panic_payload_kinds"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture stack traces when tool throws Error"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "asserts the JavaScript type Error, a V8 stack and frames; rmcp turns the error a Rust tool returns into an is_error result, capture_error records its type path and a stack only from a captured backtrace, and the Rust error has no frames (C23)"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should capture validation errors for invalid enum values"
@@ -1723,7 +1753,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/error-capture.test.ts|Error Capture Integration Tests > should still propagate errors to MCP client"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "v1|src/tests/esm-consumer.test.ts|ESM consumer smoke test > can import the SDK package from a real Node ESM process"
@@ -2053,271 +2084,271 @@ reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack 
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:fs/promises to node:fs"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:internal/* to node:internal"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should preserve simple node: modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs from ESM modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs in node_modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs with Windows paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should handle Windows paths with mixed separators"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should normalize Windows backslashes to forward slashes"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain abs_path field with original path"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain all other frame properties"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle AWS Lambda with layers"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle Docker deployment with node_modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle mix of user code and library code"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /app/ paths (Docker, Heroku)"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /opt/ paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /srv/ paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /var/www/ paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip AWS Lambda paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip Docker container paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle Windows-style node_modules paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle nested node_modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle scoped packages in node_modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should normalize node_modules paths consistently"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /dist/ boundary"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /lib/ boundary"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /src/ boundary"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should use the last occurrence of project markers"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle paths without common markers"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle very short paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve already-relative paths"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve special paths like native"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Linux user home directories"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Windows user home directories"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip macOS user home directories"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should NOT capture context_line for library code (in_app: false)"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should capture context_line for in_app frames"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect in_app correctly for user code"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect library code in node_modules"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle anonymous functions"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle async functions"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle missing files gracefully when extracting context_line"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle native code frames"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should limit stack frames to 50"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse line and column numbers"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse stack frames with function names"
 status = "n/a"
 category = "ruled-divergence:RD-06"
-reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
+reason = "RD-06: frames are parsed from V8 stack lines in TS; the Rust error has no frames (C23), only a stack when capture_error captured a backtrace"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > pass-through > returns non-rewritable values by identity"

@@ -18,7 +18,7 @@ pub(crate) mod run;
 mod tests;
 
 /// The `platform` of an event's `error` (RD-06).
-const PLATFORM: &str = "rust";
+pub(crate) const PLATFORM: &str = "rust";
 
 /// The message of an error result without text (B-097).
 const UNKNOWN_ERROR: &str = "Unknown error";
