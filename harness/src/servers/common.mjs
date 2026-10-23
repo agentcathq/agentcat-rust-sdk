@@ -135,8 +135,8 @@ function hook(name, spec) {
 
 // ---------------------------------------------------------------------------
 // Tool behaviors (harness/README.md, "Tools"). The schemas live with each
-// server: ts-v1 declares them in zod and generates contract/tool-contract.json;
-// ts-v2 and the Rust server load that file.
+// server: ts-v1 declares them in zod; ts-v2 and the Rust server load
+// contract/tool-contract.json, which dump-contract.mjs writes from ts-v2 (R20).
 // ---------------------------------------------------------------------------
 
 /**

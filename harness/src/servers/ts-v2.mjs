@@ -3,7 +3,7 @@
 // serves protocol 2026-07-28 (no initialize handshake; design decision C18)
 // and the 2025 era, with the tools, identity and behaviors of ts-v1.mjs. The
 // tool names, descriptions and schemas come from harness/contract/tool-contract.json
-// (generated from ts-v1), as the Rust reference server loads them.
+// (dump-contract.mjs writes it from this server, R20), as the Rust reference server loads them.
 //
 // usage: node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v2.mjs stdio
 //                                              both eras (serveStdio), one tracked server per connection
@@ -37,7 +37,7 @@ const { mode, port, tracked, projectId, options } = startup(NAME);
 
 // ---------------------------------------------------------------------------
 // The tool contract: names, descriptions and JSON schemas from the file that
-// ts-v1 generates; behaviors from common.mjs.
+// dump-contract.mjs writes from this server; behaviors from common.mjs.
 // ---------------------------------------------------------------------------
 const CONTRACT = JSON.parse(readFileSync(new URL("../../contract/tool-contract.json", import.meta.url), "utf8"));
 const agentcat = await loadAgentCat();

@@ -1,6 +1,8 @@
 // Generates harness/contract/tool-contract.json: the tools/list result of the
-// TS v1 reference server, served untracked. The Rust reference server loads
-// this file, so both servers expose the same customer schemas.
+// TS v2 reference server (R20: v2 is the answer key on both lanes), served
+// untracked. The Rust reference server loads this file, so both servers expose
+// the same customer schemas. ts-v2 itself loads this file to register its
+// tools, so the output is a fixed point of the committed file.
 //   node harness/src/dump-contract.mjs           write harness/contract/tool-contract.json
 //   node harness/src/dump-contract.mjs --check   regenerate to a temp dir; exit 1 on any byte difference
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -16,7 +18,7 @@ import { traceOverride } from "oracle/paths";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONTRACT = join(HERE, "..", "contract", "tool-contract.json");
 const GUARD = join(HERE, "egress-guard.mjs");
-const TS_V1 = join(HERE, "servers", "ts-v1.mjs");
+const TS_V2 = join(HERE, "servers", "ts-v2.mjs");
 
 /** The contract file's text: the server's full tools/list result, every page. */
 async function render() {
@@ -27,7 +29,7 @@ async function render() {
     await client.connect(
       new StdioClientTransport({
         command: process.execPath,
-        args: ["--import", pathToFileURL(GUARD).href, TS_V1, "stdio"],
+        args: ["--import", pathToFileURL(GUARD).href, TS_V2, "stdio"],
         env: {
           ...process.env,
           HOME: home,

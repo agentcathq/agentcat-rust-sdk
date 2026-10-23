@@ -11,7 +11,7 @@ import { ensureTs } from "oracle/fetch-ts";
 
 import { convert } from "../src/contract/extract-schema.mjs";
 import { contractResult, validateRequests } from "../src/contract/validate.mjs";
-import { BASIC, HARNESS, TS_SERVER_PLUS, driver, outFile, readJson, run, tempDir, writeJson } from "./support.mjs";
+import { BASIC, CONTRACT, HARNESS, TS_SERVER_PLUS, TS_V2_SERVER, driver, outFile, readJson, run, tempDir, writeJson } from "./support.mjs";
 
 const VALIDATE = join(HARNESS, "src", "contract", "validate.mjs");
 const EXTRACT = join(HARNESS, "src", "contract", "extract-schema.mjs");
@@ -290,3 +290,22 @@ test(
     assert.match(res.stdout, /up to date/);
   },
 );
+
+test("the committed tool contract is what ts-v2 lists on the 2025-11-25 lane, whole (R20)", { timeout: 120_000 }, async (t) => {
+  const path = writeJson(join(tempDir(t), "list.json"), {
+    name: "answerkey",
+    projectId: readJson(BASIC).projectId,
+    options: {},
+    expectPublishes: 0,
+    sessions: [{ steps: [{ op: "listTools" }] }],
+  });
+  const res = await driver(path, "answerkey", "stdio", [], { server: TS_V2_SERVER, env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 0, res.stderr);
+  const listed = readJson(outFile("answerkey", "answerkey", "stdio", "transcript")).find((e) => e.op === "listTools").result.tools;
+  const contract = readJson(CONTRACT);
+  assert.deepEqual(listed, contract);
+  for (const tool of contract) {
+    assert.ok(!("execution" in tool), `${tool.name}: v1's execution field is not in the contract`);
+    assert.deepEqual(Object.keys(tool.inputSchema.properties), Object.keys(listed.find((l) => l.name === tool.name).inputSchema.properties));
+  }
+});

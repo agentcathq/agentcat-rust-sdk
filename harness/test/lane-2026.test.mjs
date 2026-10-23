@@ -59,7 +59,7 @@ test("2026-07-28: two HTTP runs of basic.json against ts-v2 publish the expected
   assert.match(res.stdout, /"total":0/);
 });
 
-test("2026-07-28: untracked, ts-v2 lists the tool contract's names and input schemas and publishes nothing", { timeout: 120_000 }, async (t) => {
+test("2026-07-28: untracked, ts-v2 lists the tool contract's tools whole (R20) and publishes nothing", { timeout: 120_000 }, async (t) => {
   const scenario = writeJson(join(tempDir(t), "basic.json"), { ...basic, expectPublishes: 0 });
   const res = await driver(scenario, "v2contract", "http", ["--lane", LANE], { ...v2, env: { HARNESS_NO_TRACK: "1" } });
   assert.equal(res.code, 0, res.stderr);
@@ -67,7 +67,10 @@ test("2026-07-28: untracked, ts-v2 lists the tool contract's names and input sch
   assert.deepEqual(readJson(outFile("basic", "v2contract", "http", "raw")), []);
   const transcript = readJson(outFile("basic", "v2contract", "http", "transcript"));
   assert.deepEqual(negotiated(transcript), basic.sessions.map(() => LANE));
-  const listed = namesAndInputs(transcript.find((e) => e.op === "listTools").result.tools);
+  const tools = transcript.find((e) => e.op === "listTools").result.tools;
+  // The contract is ts-v2's own tools/list: names, descriptions, schemas, and no other field.
+  assert.deepEqual(tools, readJson(CONTRACT));
+  const listed = namesAndInputs(tools);
   const contract = namesAndInputs(readJson(CONTRACT));
   assert.deepEqual(listed, contract);
   // deepEqual ignores key order; the diff compares the order of each tool's

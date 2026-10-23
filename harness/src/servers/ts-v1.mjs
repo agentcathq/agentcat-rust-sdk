@@ -29,8 +29,9 @@ const NAME = "ts-v1";
 const { mode, port, tracked, projectId, options } = startup(NAME);
 
 // ---------------------------------------------------------------------------
-// The tool contract shared with the other reference servers: these zod
-// schemas generate contract/tool-contract.json (dump-contract.mjs).
+// The tools of the other reference servers (R20: ts-v2 is the answer key; the
+// contract file in contract/tool-contract.json is ts-v2's tools/list). These zod
+// schemas describe the same tools, minus the `execution` field v1 adds.
 // ---------------------------------------------------------------------------
 const agentcat = await loadAgentCat();
 

@@ -8,7 +8,8 @@
 // difference whose whole path matches a ruling's regex is allowed (each regex is
 // anchored as ^(?:<regex>)$). The output gives each ruling's match count. A ruling
 // may also carry "pending": true (a boolean): a provisional ruling the owner has not
-// answered yet (R17); it allows differences like any other.
+// answered yet (R17); it allows differences like any other, and its line reads
+// "RULING (pending) <RD-xx> matched <n>".
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
@@ -75,8 +76,12 @@ function walk(x, y, p) {
   const ty = kind(y);
   if (tx !== ty) return void diffs.push({ path: p, a: x, b: y });
   if (tx === "array") {
-    if (x.length !== y.length) diffs.push({ path: `${p}.length`, a: x.length, b: y.length });
-    for (let i = 0; i < Math.min(x.length, y.length); i++) walk(x[i], y[i], `${p}[${i}]`);
+    // One entry per element; the shorter side shows "<missing>".
+    for (let i = 0; i < Math.max(x.length, y.length); i++) {
+      if (i >= y.length) diffs.push({ path: `${p}[${i}]`, a: x[i], b: "<missing>" });
+      else if (i >= x.length) diffs.push({ path: `${p}[${i}]`, a: "<missing>", b: y[i] });
+      else walk(x[i], y[i], `${p}[${i}]`);
+    }
     return;
   }
   if (tx === "object") {
@@ -125,7 +130,7 @@ for (const d of diffs) {
   }
 }
 for (const r of rulings) {
-  const what = r.matched === 0 ? "UNUSED RULING" : "RULING";
+  const what = `${r.matched === 0 ? "UNUSED RULING" : "RULING"}${r.pending ? " (pending)" : ""}`;
   process.stdout.write(`${what} ${r.deviation} matched ${r.matched}: ${JSON.stringify(r.path)} (${r.reason})\n`);
 }
 const unused = rulings.filter((r) => r.matched === 0);

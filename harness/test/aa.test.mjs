@@ -44,9 +44,25 @@ test("(c) one stateless HTTP run matches the http-stateless count in basic.json"
   assert.equal(report.publishes, report.expected);
 });
 
-/** aa1's normalized file with one event's resource_name changed; returns {original, changed, i}. */
-function changedResourceName(dir) {
-  const original = outFile("basic", "aa1", "stdio", "normalized");
+const mockPublish = (body) => ({ method: "POST", path: "/v1/public/events/", query: "", status: 200, headers: {}, body });
+
+/** A normalized file built here from two synthetic publishes and two transcript entries (no driver run). */
+async function ownNormalized(dir, name = "own") {
+  const transcript = [
+    { session: 0, op: "initialize", result: { protocolVersion: "2025-11-25" } },
+    { session: 0, op: "listTools", result: { tools: [] } },
+  ];
+  const requests = [
+    mockPublish({ event_type: "mcp:tools/list", resource_name: "tools/list", timestamp: "2026-01-01T00:00:00.100Z" }),
+    mockPublish({ event_type: "mcp:tools/call", resource_name: "echo", timestamp: "2026-01-01T00:00:00.200Z", duration: 3 }),
+  ];
+  const { normalized } = await normalizeRun({ requests, transcript, scenario: basic });
+  return writeJson(join(dir, `${name}.normalized.json`), normalized);
+}
+
+/** An own normalized file with one event's resource_name changed; returns {original, changed, i}. */
+async function changedResourceName(dir) {
+  const original = await ownNormalized(dir);
   const doc = readJson(original);
   const i = doc.events.findIndex((e) => typeof e.body.resource_name === "string");
   assert.ok(i >= 0, "no event with a resource_name");
@@ -56,7 +72,7 @@ function changedResourceName(dir) {
 
 test("(d) one changed resource_name makes diff.mjs exit 1, and a ruling for it makes it exit 0", async (t) => {
   const dir = tempDir(t);
-  const { original, changed, i } = changedResourceName(dir);
+  const { original, changed, i } = await changedResourceName(dir);
 
   let res = await diff(original, changed);
   assert.equal(res.code, 1, res.stdout);
@@ -72,13 +88,18 @@ test("(d) one changed resource_name makes diff.mjs exit 1, and a ruling for it m
 
 test("a pending ruling is a ruling; a pending value other than a boolean makes diff.mjs exit 2", async (t) => {
   const dir = tempDir(t);
-  const { original, changed } = changedResourceName(dir);
+  const { original, changed } = await changedResourceName(dir);
   const ruling = { path: "\\$\\.events\\[\\d+\\]\\.body\\.resource_name", reason: "awaits the owner", deviation: "RD-01" };
 
   const pending = writeJson(join(dir, "pending.json"), [{ ...ruling, pending: true }]);
   let res = await diff(original, changed, ["--rulings", pending]);
   assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /^RULING \(pending\) RD-01 matched 1:/m);
+  // A ruling that is not pending keeps the plain marker.
+  const plain = writeJson(join(dir, "plain.json"), [ruling]);
+  res = await diff(original, changed, ["--rulings", plain]);
   assert.match(res.stdout, /^RULING RD-01 matched 1:/m);
+  assert.doesNotMatch(res.stdout, /pending/);
 
   const notBoolean = writeJson(join(dir, "not-boolean.json"), [{ ...ruling, pending: "yes" }]);
   res = await diff(original, changed, ["--rulings", notBoolean]);
@@ -90,7 +111,7 @@ test("(e) a ruling that matches nothing makes diff.mjs exit 1", async (t) => {
   const rulings = writeJson(join(tempDir(t), "rulings.json"), [
     { path: "^\\$\\.nothing\\.here$", reason: "matches nothing", deviation: "RD-98" },
   ]);
-  const a = outFile("basic", "aa1", "stdio", "normalized");
+  const a = await ownNormalized(tempDir(t));
   const res = await diff(a, a, ["--rulings", rulings]);
   assert.equal(res.code, 1, res.stdout);
   assert.match(res.stdout + res.stderr, /RD-98/);
@@ -98,7 +119,7 @@ test("(e) a ruling that matches nothing makes diff.mjs exit 1", async (t) => {
 
 test("ruling regexes match whole paths only, and the output gives each ruling's match count", async (t) => {
   const dir = tempDir(t);
-  const { original, changed, i } = changedResourceName(dir);
+  const { original, changed, i } = await changedResourceName(dir);
   const substrings = writeJson(join(dir, "substrings.json"), [
     { path: "resource_name", reason: "a bare name", deviation: "RD-97" },
     { path: "\\.body\\.resource_name", reason: "a path tail", deviation: "RD-96" },
@@ -115,6 +136,37 @@ test("ruling regexes match whole paths only, and the output gives each ruling's 
   res = await diff(original, changed, ["--rulings", whole]);
   assert.equal(res.code, 0, res.stdout);
   assert.match(res.stdout, /^RULING RD-95 matched 1:/m);
+});
+
+test("arrays of different length give one entry per element, with <missing> on the short side", async (t) => {
+  const dir = tempDir(t);
+  const long = await ownNormalized(dir, "long");
+  const doc = readJson(long);
+  const short = writeJson(join(dir, "short.normalized.json"), { ...doc, transcript: doc.transcript.slice(0, 1) });
+  const longer = writeJson(join(dir, "longer.normalized.json"), {
+    ...doc,
+    transcript: [...doc.transcript, { session: 0, op: "listTools", result: { tools: [] } }, { session: 0, op: "listTools" }],
+  });
+
+  let res = await diff(long, short);
+  assert.equal(res.code, 1, res.stdout);
+  assert.match(res.stdout, /^DIFF  \$\.transcript\[1\]: \{.*\} != "<missing>"$/m);
+  assert.doesNotMatch(res.stdout, /\.length/);
+  assert.equal(JSON.parse(res.stdout.trim().split("\n").at(-1)).total, 1);
+
+  res = await diff(long, longer);
+  assert.equal(res.code, 1, res.stdout);
+  assert.match(res.stdout, /^DIFF  \$\.transcript\[2\]: "<missing>" != \{.*\}$/m);
+  assert.match(res.stdout, /^DIFF  \$\.transcript\[3\]: "<missing>" != \{.*\}$/m);
+  assert.equal(JSON.parse(res.stdout.trim().split("\n").at(-1)).total, 2);
+
+  // A ruling can allow one missing element by its index.
+  const rulings = writeJson(join(dir, "rulings.json"), [
+    { path: "\\$\\.transcript\\[1\\]", reason: "test ruling", deviation: "RD-94" },
+  ]);
+  res = await diff(long, short, ["--rulings", rulings]);
+  assert.equal(res.code, 0, res.stdout);
+  assert.match(res.stdout, /^RULED RD-94 \$\.transcript\[1\]:/m);
 });
 
 /** aa1's raw requests and transcript, and a normalizer for variants of them. */

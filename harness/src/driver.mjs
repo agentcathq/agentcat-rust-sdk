@@ -4,11 +4,13 @@
 // a black box: the TS and Rust reference servers run under the same driver.
 //
 // usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless>
-//          [--lane 2025-11-25|2026-07-28] -- <server cmd...>
+//          [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>
 //   label      output file tag, e.g. "ts" or "rust"
 //   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
 //   --lane     the client's protocol lane: 2025-11-25 (default; the v1 client, initialize
-//              handshake) or 2026-07-28 (the v2 client, versionNegotiation "auto")
+//              handshake) or 2026-07-28 (the v2 client, versionNegotiation "auto"). A session
+//              that negotiates another version fails the run (exit 1).
+//   --expect-publishes  the publish count to expect, instead of the scenario's expectPublishes
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts.
@@ -20,7 +22,9 @@
 // Exit 0: exactly expectPublishes publishes, no other request reached the mock,
 //         and the contract holds (every publish body is valid).
 // Exit 1: the count differs, another request arrived, the contract fails, or the
-//         run failed.
+//         run failed (a negotiated version other than --lane; in a tracked run, a
+//         saveHandleAs that finds no handle or a ${NAME} with no saved value).
+//         On a run failure every connected client is closed first.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -48,7 +52,7 @@ const TRANSPORTS = ["stdio", "http", "http-stateless"];
 const LANES = ["2025-11-25", "2026-07-28"];
 const PUBLISH_PATH = "/v1/public/events/";
 const USAGE =
-  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] -- <server cmd...>";
+  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>";
 
 function usage(message) {
   process.stderr.write(`driver: ${message}\n${USAGE}\n`);
@@ -71,11 +75,23 @@ if (laneAt >= 0) {
   lane = head[laneAt + 1];
   head.splice(laneAt, 2);
 }
+let expectOverride;
+const expectAt = head.indexOf("--expect-publishes");
+if (expectAt >= 0) {
+  if (expectAt + 1 >= head.length) usage("--expect-publishes needs a value");
+  const text = head[expectAt + 1];
+  if (!/^\d+$/.test(text)) usage(`--expect-publishes needs a non-negative integer, got ${JSON.stringify(text)}`);
+  expectOverride = Number(text);
+  head.splice(expectAt, 2);
+}
 if (!LANES.includes(lane)) usage(`unsupported lane ${JSON.stringify(lane)} (supported: ${LANES.join(", ")})`);
 if (head.length !== 3) usage("expected <scenario.json> <label> <transport>");
 const [scenarioPath, label, transport] = head;
 if (!/^[A-Za-z0-9_-]+$/.test(label)) usage(`bad label ${JSON.stringify(label)} (letters, digits, _ and - only)`);
 if (!TRANSPORTS.includes(transport)) usage(`unknown transport ${JSON.stringify(transport)}`);
+
+const TOP_KEYS = ["name", "projectId", "options", "httpHeaders", "expectPublishes", "settleTimeoutMs", "quietMs", "sessions"];
+const STEP_KEYS = { listTools: ["op", "cursor"], callTool: ["op", "name", "args", "saveHandleAs"] };
 
 let scenario;
 try {
@@ -84,23 +100,45 @@ try {
   usage(`${scenarioPath}: ${err.message}`);
 }
 const expected = checkScenario(scenario);
+const tracked = process.env.HARNESS_NO_TRACK !== "1";
+const settleTimeoutMs = scenario.settleTimeoutMs ?? 10_000;
+const quietMs = scenario.quietMs ?? 500;
+
+/** A failure with a message of its own: the driver prints it without a stack and exits 1. */
+class DriverFailure extends Error {}
+
+/** Exits 2 when `obj` has a key outside `allowed`. */
+function onlyKeys(obj, allowed, where) {
+  for (const key of Object.keys(obj)) if (!allowed.includes(key)) usage(`${where}: unknown key ${JSON.stringify(key)}`);
+}
 
 /** Validates the scenario; returns the publish count expected on this transport and lane. */
 function checkScenario(s) {
-  if (!s || typeof s !== "object") usage("scenario must be a JSON object");
+  if (!s || typeof s !== "object" || Array.isArray(s)) usage("scenario must be a JSON object");
+  onlyKeys(s, TOP_KEYS, "scenario");
   if (typeof s.name !== "string" || !/^[A-Za-z0-9_-]+$/.test(s.name)) usage("scenario.name must be letters, digits, _ and -");
   if (typeof s.projectId !== "string" || s.projectId === "") usage("scenario.projectId must be a non-empty string");
   if (!Array.isArray(s.sessions) || s.sessions.length === 0) usage("scenario.sessions must be a non-empty array");
   for (const [si, session] of s.sessions.entries()) {
-    if (!Array.isArray(session?.steps)) usage(`sessions[${si}].steps must be an array`);
+    if (!session || typeof session !== "object" || Array.isArray(session)) usage(`sessions[${si}] must be an object`);
+    onlyKeys(session, ["client", "steps"], `sessions[${si}]`);
+    if (!Array.isArray(session.steps)) usage(`sessions[${si}].steps must be an array`);
     for (const [i, step] of session.steps.entries()) {
-      if (step?.op === "listTools") continue;
-      if (step?.op === "callTool" && typeof step.name === "string") continue;
-      usage(`sessions[${si}].steps[${i}]: op must be listTools, or callTool with a name`);
+      const where = `sessions[${si}].steps[${i}]`;
+      if (step?.op === "callTool" && typeof step.name !== "string") usage(`${where}: op must be listTools, or callTool with a name`);
+      if (!Object.hasOwn(STEP_KEYS, step?.op)) usage(`${where}: op must be listTools, or callTool with a name`);
+      onlyKeys(step, STEP_KEYS[step.op], where);
     }
   }
-  // A number, or an object keyed by `<transport>@<lane>` or `<transport>` (first match wins).
+  // A number, or an object keyed by `<transport>` or `<transport>@<lane>` (first match wins).
   const e = s.expectPublishes;
+  if (e !== undefined && typeof e === "object" && e !== null && !Array.isArray(e)) {
+    const known = TRANSPORTS.flatMap((tr) => [tr, ...LANES.map((l) => `${tr}@${l}`)]);
+    for (const key of Object.keys(e)) {
+      if (!known.includes(key)) usage(`expectPublishes: unknown key ${JSON.stringify(key)} (use ${TRANSPORTS.join(", ")} or <transport>@<lane> for ${LANES.join(", ")})`);
+    }
+  }
+  if (expectOverride !== undefined) return expectOverride;
   const n = typeof e === "number" ? e : e && typeof e === "object" ? (e[`${transport}@${lane}`] ?? e[transport]) : undefined;
   if (!Number.isInteger(n) || n < 0) usage(`expectPublishes has no count for ${transport}@${lane} or ${transport}`);
   return n;
@@ -142,6 +180,8 @@ const within = (promise, deadline) =>
   Promise.race([promise.then(() => true), sleep(Math.max(0, deadline - Date.now())).then(() => false)]);
 
 const children = [];
+/** Every connected client, so a failed run can close them (a stdio client ends the server it spawned). */
+const clients = [];
 function killAll() {
   for (const child of children) if (isRunning(child)) child.kill("SIGTERM");
 }
@@ -217,13 +257,19 @@ async function main() {
   }
 
   const vars = {};
-  const subst = (v) =>
+  // `${NAME}` becomes the saved handle. With no saved value a tracked run fails;
+  // an untracked run (no handles are issued) keeps the text.
+  const subst = (v, where) =>
     typeof v === "string"
-      ? v.replace(/\$\{(\w+)\}/g, (_, k) => vars[k] ?? `\${${k}}`)
+      ? v.replace(/\$\{(\w+)\}/g, (_, k) => {
+          if (vars[k] !== undefined) return vars[k];
+          if (tracked) throw new DriverFailure(`${where}: no session handle for ${k}`);
+          return `\${${k}}`;
+        })
       : Array.isArray(v)
-        ? v.map(subst)
+        ? v.map((x) => subst(x, where))
         : v && typeof v === "object"
-          ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, subst(x)]))
+          ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, subst(x, where)]))
           : v;
 
   function handleFrom(result) {
@@ -237,33 +283,49 @@ async function main() {
   }
 
   const transcript = [];
-  const clients = [];
   for (const [si, session] of scenario.sessions.entries()) {
     const negotiated = {};
     const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated);
     clients.push(client);
-    // The protocol version the server agreed to on this lane.
-    transcript.push({ session: si, op: "initialize", result: { protocolVersion: negotiated.protocolVersion ?? null } });
-    for (const step of session.steps) {
+    // "auto" can fall back to initialize: the lane must be the one that was asked for.
+    if (negotiated.protocolVersion !== lane) {
+      throw new DriverFailure(`negotiated ${negotiated.protocolVersion ?? null}, expected ${lane}`);
+    }
+    // What the server agreed to, on this lane.
+    transcript.push({
+      session: si,
+      op: "initialize",
+      result: {
+        protocolVersion: negotiated.protocolVersion,
+        serverInfo: client.getServerVersion() ?? null,
+        capabilities: client.getServerCapabilities() ?? null,
+        instructions: client.getInstructions() ?? null,
+      },
+    });
+    for (const [i, step] of session.steps.entries()) {
+      const where = `step ${i} of session ${si}`;
       const entry = { session: si, op: step.op };
       try {
         if (step.op === "listTools") {
           entry.result = await client.listTools(step.cursor ? { cursor: step.cursor } : undefined);
         } else {
-          entry.request = { name: step.name, arguments: subst(step.args ?? {}) };
+          entry.request = { name: step.name, arguments: subst(step.args ?? {}, where) };
           entry.result = await client.callTool(entry.request);
-          if (step.saveHandleAs) vars[step.saveHandleAs] = handleFrom(entry.result);
         }
       } catch (e) {
+        if (e instanceof DriverFailure) throw e;
         // Protocol errors (JSON-RPC errors) are part of the observable contract.
         entry.error = { name: e?.constructor?.name, code: e?.code, message: String(e?.message ?? e) };
+      }
+      if (step.saveHandleAs) {
+        const handle = handleFrom(entry.result);
+        if (handle === undefined && tracked) throw new DriverFailure(`${where}: no session handle for ${step.saveHandleAs}`);
+        vars[step.saveHandleAs] = handle;
       }
       transcript.push(entry);
     }
   }
 
-  const settleTimeoutMs = scenario.settleTimeoutMs ?? 10_000;
-  const quietMs = scenario.quietMs ?? 500;
   /** Polls the mock until `done(requests)` holds and no request arrived for quietMs, or the deadline. */
   async function settle(done, deadline) {
     let last = -1;
@@ -345,9 +407,11 @@ async function main() {
 
 main().then(
   (code) => process.exit(code),
-  (err) => {
+  async (err) => {
+    process.stderr.write(`driver: ${err instanceof DriverFailure ? err.message : (err?.stack ?? err)}\n`);
+    // Close every client first: closing a stdio client ends the server it spawned, which killAll cannot reach.
+    await within(Promise.all(clients.map((c) => c.close().catch(() => {}))), Date.now() + settleTimeoutMs);
     killAll();
-    process.stderr.write(`driver: ${err?.stack ?? err}\n`);
     process.exit(1);
   },
 );

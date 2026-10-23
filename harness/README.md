@@ -8,7 +8,9 @@ language-neutral document, and a diff compares two documents. Allowed difference
 This package holds the TS half: two TS reference servers, instrumented with the real TS SDK at the
 commit pinned in `oracle/oracle.lock`. `ts-v1.mjs` runs on `@modelcontextprotocol/sdk` 1.31;
 `ts-v2.mjs` runs on `@modelcontextprotocol/server` 2.0.0 and also serves protocol 2026-07-28, which
-has no `initialize` handshake (design decision C18). Both serve the same tools and share
+has no `initialize` handshake (design decision C18). Owner ruling R20: `ts-v2.mjs` is the answer key
+on both lanes; `ts-v1.mjs` stays as a second TS reference and is not what the Rust server is diffed
+against. Both serve the same tools and share
 `src/servers/common.mjs`. The Rust reference server (plan 3) follows the same server protocol and
 loads the same tool contract, and must match TS on both client lanes.
 
@@ -67,7 +69,7 @@ node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
 
 ### driver.mjs
 
-`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] -- <server cmd...>`
+`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>`
 
 - `label` tags the output files (letters, digits, `_`, `-`). The lane is not in the file name: give
   runs on different lanes different labels.
@@ -80,13 +82,23 @@ node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
     `versionNegotiation: { mode: "auto" }`, as `connectV2Client` in the TS repository's
     `src/tests/e2e-http/lanes.ts`. It probes with `server/discover` (over stdio, on a short-lived
     sibling server process) and falls back to `initialize` when the server gives no proof of the
-    2026-07-28 era. The driver does not fail on a fallback: the transcript records the negotiated
-    version, so a diff against a 2026-07-28 run shows it.
+    2026-07-28 era. A session that negotiates a version other than `--lane` fails the run: exit 1
+    with `driver: negotiated <version>, expected <lane>`.
+- `--expect-publishes <n>` (a non-negative integer) replaces the scenario's `expectPublishes` count.
 - The server gets the parent environment plus `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID`
   (the scenario's `projectId`), `HARNESS_OPTIONS` (the scenario's `options` as JSON),
   `DISABLE_DIAGNOSTICS=true`, and `HOME` and `USERPROFILE` set to
   `harness/out/home/<scenario>.<label>.<transport>/` (recreated per run). `HARNESS_NO_TRACK` passes
   through from the caller's environment.
+- In a tracked run (`HARNESS_NO_TRACK` unset), a `saveHandleAs` step whose result carries no handle,
+  and a `${NAME}` with no saved value, exit 1 with
+  `driver: step <i> of session <s>: no session handle for <NAME>`. An untracked run issues no handles
+  and keeps the `${NAME}` text literally.
+- The `initialize` transcript entry of each session holds
+  `{protocolVersion, serverInfo, capabilities, instructions}` as the client reports them, on both
+  lanes (`null` for a part the server did not send).
+- On a driver error every connected client is closed before the driver exits, so a stdio server the
+  client spawned ends too.
 - After the last step the driver:
   1. waits until the mock holds at least `expectPublishes` publish requests (POST
      `/v1/public/events/`) and no request of any kind arrived for `quietMs`, or until
@@ -112,12 +124,14 @@ node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
 
 `node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]`
 
-Object keys compare unordered; arrays compare in order. Each ordered-check violation in either
+Object keys compare unordered; arrays compare in order, and arrays of different length give one entry
+per element (`<missing>` on the shorter side). Each ordered-check violation in either
 document is a diff entry, even when both documents share it. Output lines:
 
 - `DIFF  <path>: <a> != <b>` for a difference no ruling matches;
 - `RULED <RD-xx> <path>: <a> != <b>` for a difference a ruling matches;
-- `RULING <RD-xx> matched <n>: ...` or `UNUSED RULING <RD-xx> matched 0: ...` for each ruling;
+- `RULING <RD-xx> matched <n>: ...` or `UNUSED RULING <RD-xx> matched 0: ...` for each ruling
+  (`RULING (pending) <RD-xx> matched <n>: ...` for a ruling marked `"pending": true`);
 - a JSON summary line `{"total", "ruled", "unexpected", "unusedRulings"}`.
 
 Exit 1 on any difference no ruling matches and on any ruling that matches nothing; exit 2 on bad
@@ -125,8 +139,9 @@ arguments or a malformed rulings file.
 
 ### dump-contract.mjs
 
-Runs `ts-v1.mjs` untracked over stdio and writes its full `tools/list` result to
-`contract/tool-contract.json`. Never edit that file by hand. `--check` regenerates it into a temp
+Runs `ts-v2.mjs` untracked over stdio and writes its full `tools/list` result to
+`contract/tool-contract.json` (R20: v2 is the answer key). `ts-v2.mjs` registers its tools from that
+file, so a regeneration changes nothing unless the TS SDK or the file's source changed. Never edit that file by hand. `--check` regenerates it into a temp
 directory and exits 1 on any byte difference.
 
 ## Publish contract (L4)
@@ -191,9 +206,10 @@ stderr only.
 
 ### Tools
 
-The schemas are those of `contract/tool-contract.json`: `ts-v1.mjs` declares them in zod and
-generates the file; `ts-v2.mjs` and the Rust server load it (names, descriptions, input and output
-schemas). Arguments are validated as zod objects validate them: a key the schema does not declare is
+The schemas are those of `contract/tool-contract.json`, which is the `tools/list` result of
+`ts-v2.mjs` (R20: v2 is the answer key on both lanes; the file has no `execution` field). `ts-v2.mjs`
+and the Rust server load it (names, descriptions, input and output schemas); `ts-v1.mjs` declares the
+same tools in zod. Arguments are validated as zod objects validate them: a key the schema does not declare is
 dropped before the handler runs, not rejected, although the listed schema says
 `additionalProperties: false`. Each server instance gets its own handler functions: the TS SDK marks
 every function it wraps, so a function shared by two v1 servers is wrapped only on the first, and a
@@ -213,7 +229,8 @@ later server's thrown error loses its stack. The behaviors (in `src/servers/comm
 On the 2025 lane, `ts-v1.mjs` and `ts-v2.mjs` publish the same events on each transport (observed
 with `basic.json`). Their transcripts differ where the host MCP SDK differs:
 
-- `tools/list`: v1 adds `execution: {"taskSupport": "forbidden"}` to each tool; v2 does not.
+- `tools/list`: v1 adds `execution: {"taskSupport": "forbidden"}` to each tool; v2 does not. The
+  contract follows v2.
 - Untracked: a call to an unknown tool answers an `isError` result
   (`MCP error -32602: Tool <name> not found`) on v1 and a JSON-RPC error `-32602` on v2.
 - Invalid arguments: both answer an `isError` result, with the validator's own text (v1: zod, with
@@ -293,7 +310,10 @@ Example (`scenarios/basic.json`):
 
 - `expectPublishes` is a number, or an object when the counts differ, keyed by
   `<transport>@<lane>` (for example `http@2026-07-28`) or by transport (`stdio`, `http`,
-  `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`.
+  `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`. Any other key exits 2.
+- The driver exits 2 on a key it does not know at the top level of the scenario, in a session
+  (`client`, `steps`) or in a step (`listTools`: `op`, `cursor`; `callTool`: `op`, `name`, `args`,
+  `saveHandleAs`).
 - `httpHeaders` go on every HTTP request of the client.
 - Each session is a new client connection. `saveHandleAs` stores the `ses_` handle a result issued
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
