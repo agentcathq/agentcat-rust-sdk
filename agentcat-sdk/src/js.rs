@@ -2,6 +2,9 @@
 //! properties, string lengths and cuts in UTF-16 code units, `String.prototype.trim`,
 //! `String(value)` and `typeof`. Token estimates and the event-size check count the bytes of
 //! `JSON.stringify` output, so these follow JavaScript, not Rust or `serde_json`.
+use std::time::SystemTime;
+
+use chrono::{DateTime, Utc};
 use serde_json::{Map, Number, Value};
 
 #[cfg(test)]
@@ -242,4 +245,22 @@ pub(crate) fn type_of(value: Option<&Value>) -> &'static str {
         Some(Value::String(_)) => "string",
         Some(Value::Null | Value::Array(_) | Value::Object(_)) => "object",
     }
+}
+
+/// `time.toISOString()` of JavaScript: `YYYY-MM-DDTHH:MM:SS.mmmZ` with exactly three millisecond
+/// digits, the milliseconds cut, not rounded. A time outside the years 0 to 9999 (where
+/// JavaScript writes a signed six-digit year) is written with chrono's year form; the SDK only
+/// writes the present.
+pub(crate) fn iso_millis(time: SystemTime) -> String {
+    DateTime::<Utc>::from(time)
+        .format("%Y-%m-%dT%H:%M:%S%.3fZ")
+        .to_string()
+}
+
+/// The time of an RFC 3339 text such as `iso_millis` writes, with or without a fraction of a
+/// second; `None` when `text` is not one.
+pub(crate) fn parse_iso_millis(text: &str) -> Option<SystemTime> {
+    DateTime::parse_from_rfc3339(text)
+        .ok()
+        .map(|time| SystemTime::from(time.with_timezone(&Utc)))
 }

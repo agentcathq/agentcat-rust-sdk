@@ -209,6 +209,35 @@ function valueCases() {
   return cases;
 }
 
+// Date.prototype.toISOString of epoch milliseconds, and Date.parse of the ISO texts the SDK reads back.
+function isoCases() {
+  const times = {
+    epoch: 0,
+    "7ms": 7,
+    "999ms": 999,
+    "1s": 1000,
+    "2024-02-29": Date.UTC(2024, 1, 29, 23, 59, 59, 999),
+    "year-2000": Date.UTC(2000, 0, 1, 0, 0, 0, 1),
+    "before-1970": -1,
+    "year-9999": Date.UTC(9999, 11, 31, 23, 59, 59, 999),
+  };
+  const cases = Object.entries(times).map(([label, ms]) => ({
+    name: `iso:${label}`,
+    input: ms,
+    output: new Date(ms).toISOString(),
+  }));
+  const texts = {
+    millis: "2024-01-02T03:04:05.678Z",
+    "no-fraction": "2024-01-02T03:04:05Z",
+    "one-digit-fraction": "2024-01-02T03:04:05.6Z",
+    offset: "2024-01-02T03:04:05.678+02:00",
+  };
+  for (const [label, input_text] of Object.entries(texts)) {
+    cases.push({ name: `parse-iso:${label}`, input_text, output: Date.parse(input_text) });
+  }
+  return cases;
+}
+
 export async function generate() {
   return {
     cases: [
@@ -218,6 +247,7 @@ export async function generate() {
       ...trimCases(),
       ...utf16LenCases(),
       ...valueCases(),
+      ...isoCases(),
     ],
   };
 }

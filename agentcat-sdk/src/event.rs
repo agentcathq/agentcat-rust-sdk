@@ -20,8 +20,11 @@ use crate::handles::HandleResolution;
 use crate::hooks::PendingHooks;
 use crate::js;
 
+mod public;
 #[cfg(test)]
 mod tests;
+
+pub use public::Event;
 
 /// The JSON-RPC method of a tool call.
 const CALL_TOOL_METHOD: &str = "tools/call";

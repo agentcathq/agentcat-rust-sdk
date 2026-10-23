@@ -200,6 +200,13 @@ impl Capturing {
         Err(error.to_string())
     }
 
+    #[tool(description = "Captures a boxed dyn Error, then fails with its text")]
+    async fn captured_dyn(&self) -> Result<String, String> {
+        let error: Box<dyn Error> = Box::new(RootCause);
+        capture_error(&*error);
+        Err(error.to_string())
+    }
+
     #[tool(description = "Captures a two-level error, then succeeds")]
     async fn captured_ok(&self) -> String {
         capture_error(&Wrapper(RootCause));
@@ -649,4 +656,19 @@ async fn get_info_panic_records_no_server() {
         .filter(|line| line.contains("get_info"))
         .collect();
     assert_eq!(infos, [INFO_PANICKED], "{logs:?}");
+}
+
+/// R27: `capture_error` takes an unsized `dyn Error`, such as the content of a `Box<dyn Error>`;
+/// the record has its message, and the `dyn` type's name as its type.
+#[tokio::test]
+async fn capture_error_accepts_dyn_error() {
+    let (agentcat, sink) = recording();
+    let client = connect(agentcat.track(Capturing), "dyn").await;
+    call(&client, "captured_dyn", json!({}))
+        .await
+        .expect("a result");
+    let error = only_record(&sink).error.expect("the record has an error");
+    assert_eq!(error["message"], json!("root cause"));
+    assert_eq!(error["type"], json!("dyn core::error::Error"));
+    assert_eq!(error["platform"], json!("rust"));
 }

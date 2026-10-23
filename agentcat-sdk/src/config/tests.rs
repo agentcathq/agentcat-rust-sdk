@@ -1,7 +1,11 @@
 //! `Options`: each setter changes its own getter only, and an empty custom description means the
 //! default one (B-004). B-004's default values are pinned by the harness profile `{}`, not here.
-use super::Options;
+use super::{
+    AGENTCAT_API_URL, AGENTCAT_ENABLED, DEFAULT_API_BASE_URL, Env, LogDestination, MCPCAT_API_URL,
+    MapEnv, Options, ProcessEnv, resolve_api_base_url, sdk_enabled,
+};
 use crate::constants::DEFAULT_CONTEXT_PARAMETER_DESCRIPTION;
+use crate::event::Event;
 
 /// What the crate getters of an [`Options`] return.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -169,4 +173,105 @@ async fn custom_context_description_lands_in_the_listing() {
         "Explain your reasoning"
     );
     client.cancel().await.unwrap();
+}
+
+/// B-006, C10: the option beats `AGENTCAT_API_URL`, which beats `MCPCAT_API_URL`, which beats the
+/// default; an empty value counts as unset; the value is not trimmed.
+#[test]
+fn api_base_url_precedence() {
+    let both = MapEnv::new(&[
+        (AGENTCAT_API_URL, "https://a.example/"),
+        (MCPCAT_API_URL, "https://m.example"),
+    ]);
+    let option = Options::default().api_base_url("https://o.example");
+    assert_eq!(resolve_api_base_url(&option, &both), "https://o.example");
+    assert_eq!(
+        resolve_api_base_url(&Options::default(), &both),
+        "https://a.example/"
+    );
+    let legacy = MapEnv::new(&[
+        (AGENTCAT_API_URL, ""),
+        (MCPCAT_API_URL, "https://m.example"),
+    ]);
+    assert_eq!(
+        resolve_api_base_url(&Options::default().api_base_url(""), &legacy),
+        "https://m.example"
+    );
+    let empty = MapEnv::new(&[(AGENTCAT_API_URL, ""), (MCPCAT_API_URL, "")]);
+    assert_eq!(
+        resolve_api_base_url(&Options::default(), &empty),
+        DEFAULT_API_BASE_URL
+    );
+    assert_eq!(DEFAULT_API_BASE_URL, "https://api.agentcat.com");
+    assert_eq!(Options::default().api_base_url_option(), None);
+    assert_eq!(option.api_base_url_option(), Some("https://o.example"));
+}
+
+/// D44, R10: `false`, `0`, `no` and `off` turn the SDK off, trimmed and in any case; every other
+/// value, an empty one and an unset variable leave it on.
+#[test]
+fn sdk_enabled_values() {
+    let enabled = |value: &str| sdk_enabled(&MapEnv::new(&[(AGENTCAT_ENABLED, value)]));
+    for off in ["false", " OFF ", "No", "0", "FALSE", "\toff\n"] {
+        assert!(!enabled(off), "{off:?}");
+    }
+    for on in ["true", "", "maybe", "1", "yes", "on"] {
+        assert!(enabled(on), "{on:?}");
+    }
+    assert!(sdk_enabled(&MapEnv::new(&[])));
+}
+
+/// The redaction hooks and the log destination are set by their own setters; `Debug` shows that
+/// a hook is set, never the closure; clones share the hooks.
+#[tokio::test]
+async fn redactors_are_set_and_debug_hides_them() {
+    let none = Options::default();
+    assert!(none.string_redactor().is_none() && none.event_redactor().is_none());
+    assert_eq!(none.log_to(), LogDestination::File);
+    assert!(format!("{none:?}").contains("string_redactor: None"));
+
+    let options = Options::default()
+        .redact_sensitive_information(|text: String| async move { Ok(text.to_uppercase()) })
+        .redact_event(|event: Event| async move { Ok(Some(event)) })
+        .log_destination(LogDestination::Tracing);
+    assert_eq!(options.log_to(), LogDestination::Tracing);
+    let shown = format!("{options:?}");
+    assert!(
+        shown.contains("string_redactor: Some(\"<hook>\")"),
+        "{shown}"
+    );
+    assert!(
+        shown.contains("event_redactor: Some(\"<hook>\")"),
+        "{shown}"
+    );
+
+    let cloned = options.clone();
+    let string = cloned.string_redactor().unwrap();
+    assert_eq!(string.call("abc".to_owned()).await.unwrap(), "ABC");
+    let event = Event::from_ts(&serde_json::Map::new());
+    let kept = cloned
+        .event_redactor()
+        .unwrap()
+        .call(event.clone())
+        .await
+        .unwrap();
+    assert_eq!(kept, Some(event));
+}
+
+/// `MapEnv` gives the home directory it was built with, and none by default.
+#[test]
+fn map_env_has_a_home_only_when_given() {
+    assert_eq!(MapEnv::new(&[]).home_dir(), None);
+    let home = std::path::PathBuf::from("/home/test");
+    assert_eq!(
+        MapEnv::new(&[]).with_home(home.clone()).home_dir(),
+        Some(home)
+    );
+}
+
+/// `ProcessEnv` reads the real environment: a variable that nobody sets is `None`.
+#[test]
+fn process_env_reads_the_process() {
+    assert_eq!(ProcessEnv.var("AGENTCAT_SDK_TEST_NEVER_SET"), None);
+    let _home = ProcessEnv.home_dir();
 }

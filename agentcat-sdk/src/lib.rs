@@ -14,6 +14,8 @@ mod client;
 mod config;
 mod constants;
 mod context;
+mod custom;
+mod error;
 mod event;
 mod handles;
 mod hooks;
@@ -33,7 +35,13 @@ mod tracked;
 
 pub use capture::capture_error;
 pub use client::{AgentCat, track};
-pub use config::{HookError, Options, UserIdentity};
+pub use config::{
+    AGENTCAT_API_URL, AGENTCAT_ENABLED, AGENTCAT_PROJECT_ID, HookError, LogDestination,
+    MCPCAT_API_URL, Options, UserIdentity,
+};
 pub use context::CallContext;
+pub use custom::CustomEvent;
+pub use error::Error;
+pub use event::Event;
 pub use hooks::ToolCall;
 pub use tracked::Tracked;

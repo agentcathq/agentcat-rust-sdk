@@ -44,6 +44,9 @@ const MAX_CHAINED_ERRORS: usize = 10;
 /// function more than once, the last error counts. The tool's result and error reach the client
 /// unchanged.
 ///
+/// `error` may be a `dyn Error`, for example `&*boxed`. Its recorded type is then the name of the
+/// `dyn` type (`dyn core::error::Error`), not that of the value behind it.
+///
 /// The call is found through a tokio task-local value that `AgentCat` sets while it runs the
 /// tool's future. Outside a tool call that `AgentCat` traces, this function does nothing. A task
 /// the tool spawns (`tokio::spawn`) or a thread it starts does not belong to the call, so
@@ -60,7 +63,7 @@ const MAX_CHAINED_ERRORS: usize = 10;
 /// }
 /// # let _ = read_config;
 /// ```
-pub fn capture_error<E: Error + 'static>(error: &E) {
+pub fn capture_error<E: Error + ?Sized + 'static>(error: &E) {
     // Outside a call the task-local value is not set: nothing to record.
     let _outside = SLOT.try_with(|slot| slot.put(error_shape(error, &Backtrace::capture())));
 }
@@ -115,7 +118,7 @@ pub(crate) fn panic_message(payload: &(dyn Any + Send)) -> String {
 /// platform: "rust", stack?, chained_errors?}`. `stack` is the text of `backtrace` when it was
 /// captured; `chained_errors` has one `{message}` entry per error of the `source()` chain, at
 /// most [`MAX_CHAINED_ERRORS`], and is absent for an error without a source.
-pub(crate) fn error_shape<E: Error + 'static>(
+pub(crate) fn error_shape<E: Error + ?Sized + 'static>(
     error: &E,
     backtrace: &Backtrace,
 ) -> Map<String, Value> {

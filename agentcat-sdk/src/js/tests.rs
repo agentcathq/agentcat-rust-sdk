@@ -1,11 +1,15 @@
 //! `js` against JavaScript: the TS-generated vectors of `tests/vectors/js.json`, and property
 //! tests that run the same inputs through the JS oracle.
 use std::collections::BTreeSet;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::{cut_utf16, number_to_string, stringify, to_js_string, trim, type_of, utf16_len};
+use super::{
+    cut_utf16, iso_millis, number_to_string, parse_iso_millis, stringify, to_js_string, trim,
+    type_of, utf16_len,
+};
 use crate::test_support::strategies::{js_string, json_value, object_key};
 use crate::test_support::{assert_js_eq, config, oracle, vectors};
 
@@ -73,9 +77,80 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
     kind
 }
 
+/// Whether `name` is an `iso:` or `parse-iso:` case, which the two time tests check.
+fn is_time_case(name: &str) -> bool {
+    name.starts_with("iso:") || name.starts_with("parse-iso:")
+}
+
+/// The time `ms` milliseconds after the epoch (before it when negative).
+fn at_millis(ms: i64) -> SystemTime {
+    let magnitude = Duration::from_millis(ms.unsigned_abs());
+    if ms < 0 {
+        UNIX_EPOCH - magnitude
+    } else {
+        UNIX_EPOCH + magnitude
+    }
+}
+
+/// `iso_millis` writes what `Date.prototype.toISOString` writes, for epoch 0, 7 ms, 999 ms and
+/// the other `iso:` cases of `js.json`.
+#[test]
+fn iso_millis_matches_to_iso_string() {
+    let mut seen = 0;
+    for case in vectors::cases("js") {
+        let name = vectors::name(&case);
+        if !name.starts_with("iso:") {
+            continue;
+        }
+        let ms = case["input"].as_i64().unwrap();
+        assert_eq!(iso_millis(at_millis(ms)), text(&case, "output"), "{name}");
+        seen += 1;
+    }
+    assert!(seen >= 3, "js.json must have iso: cases");
+    // Sub-millisecond parts are cut, not rounded.
+    assert_eq!(
+        iso_millis(UNIX_EPOCH + Duration::new(1, 999_999_999)),
+        "1970-01-01T00:00:01.999Z"
+    );
+}
+
+/// `parse_iso_millis` reads the `parse-iso:` texts of `js.json` to the instant `Date.parse`
+/// gives, and the `iso:` outputs back to their instants; text that is not a date gives `None`.
+#[test]
+fn parse_iso_millis_reads_both_forms() {
+    let mut seen = 0;
+    for case in vectors::cases("js") {
+        let name = vectors::name(&case);
+        if name.starts_with("parse-iso:") {
+            let ms = case["output"].as_i64().unwrap();
+            assert_eq!(
+                parse_iso_millis(text(&case, "input_text")),
+                Some(at_millis(ms)),
+                "{name}"
+            );
+            seen += 1;
+        } else if name.starts_with("iso:") {
+            let ms = case["input"].as_i64().unwrap();
+            assert_eq!(
+                parse_iso_millis(text(&case, "output")),
+                Some(at_millis(ms)),
+                "{name}"
+            );
+            seen += 1;
+        }
+    }
+    assert!(seen >= 8, "js.json must have iso: and parse-iso: cases");
+    assert_eq!(parse_iso_millis("yesterday"), None);
+    assert_eq!(parse_iso_millis(""), None);
+}
+
 #[test]
 fn vectors_match_ts() {
-    let seen: BTreeSet<&str> = vectors::cases("js").iter().map(check_case).collect();
+    let seen: BTreeSet<&str> = vectors::cases("js")
+        .iter()
+        .filter(|case| !is_time_case(vectors::name(case)))
+        .map(check_case)
+        .collect();
     assert_eq!(
         seen,
         BTreeSet::from(KINDS),

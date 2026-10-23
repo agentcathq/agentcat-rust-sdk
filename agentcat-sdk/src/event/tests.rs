@@ -3,7 +3,7 @@
 //! `parameters.extra` (D34, D06), of the stateless HTTP identity (C22), of the records a tracked
 //! server makes over HTTP, and of the [`RecordingSink`]'s records. The context tests run over an
 //! in-memory connection and over streamable HTTP on a loopback port.
-use std::collections::{BTreeSet, HashMap};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
@@ -27,6 +27,7 @@ use crate::config::Options;
 use crate::constants::META_CLIENT_INFO_KEY;
 use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
+use crate::js;
 use crate::sink::Sink;
 use crate::test_support::rmcp::{
     CREDENTIAL_HEADERS, ContextEcho, RecordingSink, Sample, assert_credentials_hidden,
@@ -587,4 +588,100 @@ async fn call_record_debug_hides_credentials() {
     for (name, value) in CREDENTIAL_HEADERS {
         assert_eq!(headers[name], value, "D06: the data keeps {name}");
     }
+}
+
+/// The keys of the `tool_call` event of `event_order.json`, in the order TS writes them, without
+/// `ipAddress`, which `Event` has no field for.
+fn tool_call_keys() -> Vec<String> {
+    let cases = vectors::cases("event_order");
+    let case = cases
+        .iter()
+        .find(|case| vectors::name(case) == "tool_call")
+        .expect("event_order.json has the tool_call case");
+    case["event"]
+        .as_array()
+        .expect("event is a list")
+        .iter()
+        .map(|entry| entry["key"].as_str().expect("a key").to_owned())
+        .filter(|key| key != "ipAddress")
+        .collect()
+}
+
+/// A value for each key of a tool-call event.
+fn sample_value(key: &str) -> Value {
+    match key {
+        "id" => json!("evt_1"),
+        "sessionId" => json!("ses_1"),
+        "projectId" => json!("proj_1"),
+        "eventType" => json!("mcp:tools/call"),
+        "timestamp" => json!("2024-02-29T23:59:59.999Z"),
+        "duration" => json!(12),
+        "inputTokens" => json!(3),
+        "outputTokens" => json!(4),
+        "sdkLanguage" => json!("rust"),
+        "agentcatVersion" => json!("1.0.0"),
+        "serverName"
+        | "serverVersion"
+        | "clientName"
+        | "clientVersion"
+        | "resourceName"
+        | "identifyActorGivenId"
+        | "identifyActorName" => json!(format!("<{key}>")),
+        "identifyActorData" | "properties" => json!({"10": 1, "a": [true]}),
+        "parameters" | "response" | "error" => json!({"k": {"n": null}}),
+        "userIntent" => json!("why"),
+        "isError" => json!(true),
+        "tags" => json!({"a": "1", "b": "2"}),
+        other => panic!("no sample value for {other:?}"),
+    }
+}
+
+fn key_list(event: &Map<String, Value>) -> Vec<&str> {
+    event.keys().map(String::as_str).collect()
+}
+
+/// C39: an event with every field goes through `from_ts` and `into_ts` unchanged, its keys in the
+/// order of TS's tool-call event (`event_order.json`).
+#[test]
+fn event_round_trips_in_ts_key_order() {
+    let keys = tool_call_keys();
+    let ts: Map<String, Value> = keys
+        .iter()
+        .map(|key| (key.clone(), sample_value(key)))
+        .collect();
+    let event = super::Event::from_ts(&ts);
+    assert_eq!(
+        event.timestamp,
+        js::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap()
+    );
+    assert_eq!(event.duration, Some(Duration::from_millis(12)));
+    assert_eq!(event.tags.as_ref().map(BTreeMap::len), Some(2));
+    let back = event.into_ts();
+    assert_eq!(back, ts);
+    assert_eq!(
+        key_list(&back),
+        keys.iter().map(String::as_str).collect::<Vec<_>>()
+    );
+}
+
+/// C39, RD-24: keys that events do not have, `__proto__` among them, are absent after the round
+/// trip; an absent field stays absent, and no session becomes `""`.
+#[test]
+fn event_has_no_unknown_keys() {
+    let mut ts: Map<String, Value> = Map::new();
+    for key in ["id", "projectId", "eventType", "timestamp"] {
+        ts.insert(key.to_owned(), sample_value(key));
+    }
+    ts.insert("extra".to_owned(), json!(1));
+    ts.insert("__proto__".to_owned(), json!({"polluted": true}));
+    ts.insert("ipAddress".to_owned(), json!("10.0.0.1"));
+    let back = super::Event::from_ts(&ts).into_ts();
+    assert_eq!(
+        key_list(&back),
+        ["id", "sessionId", "projectId", "eventType", "timestamp"]
+    );
+    assert_eq!(back["sessionId"], json!(""));
+
+    ts.insert("sessionId".to_owned(), json!(""));
+    assert_eq!(super::Event::from_ts(&ts).session_id, None);
 }
