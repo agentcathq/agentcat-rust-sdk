@@ -40,7 +40,6 @@ const BINARY_RESOURCE_NOTE: &str = "[binary resource content redacted - not supp
 /// Sanitizes `event`, as the `sanitizeEvent` of TS does (module docs).
 pub(crate) fn sanitize_event(event: &TsEvent) -> TsEvent {
     js::own_entries(event)
-        .into_iter()
         .map(|(key, value)| {
             let value = match key.as_str() {
                 "response" if !value.is_null() => sanitize_response(value),
@@ -60,7 +59,6 @@ fn sanitize_response(response: &Value) -> Value {
     };
     Value::Object(
         js::own_entries(map)
-            .into_iter()
             .map(|(key, value)| {
                 let value = match (key.as_str(), value) {
                     ("content", Value::Array(blocks)) => {
@@ -124,7 +122,6 @@ fn sanitize_parameters(value: &Value) -> Value {
         Value::Array(items) => Value::Array(items.iter().map(sanitize_parameters).collect()),
         Value::Object(map) => Value::Object(
             js::own_entries(map)
-                .into_iter()
                 .map(|(key, item)| (key.clone(), sanitize_parameters(item)))
                 .collect(),
         ),

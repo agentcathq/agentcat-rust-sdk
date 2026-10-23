@@ -127,6 +127,9 @@ impl Drop for Exit<'_> {
 /// The body of the worker thread: the loop on a current-thread runtime with the time and IO drivers (reqwest needs the IO driver).
 fn run_thread(shared: &Arc<Shared>) {
     let _exit = Exit(shared);
+    for feature in json_features() {
+        shared.write(&feature_warning(feature));
+    }
     let Ok(runtime) = Builder::new_current_thread()
         .enable_time()
         .enable_io()
@@ -328,5 +331,32 @@ fn success_line(event: &TsEvent) -> String {
         field("sessionId"),
         field("projectId"),
         field("duration"),
+    )
+}
+
+/// The `serde_json` features a customer build unified on that change the SDK's JSON (R22), found
+/// at run time by parsing a probe: `arbitrary_precision` lets a `Number` read `1e400`;
+/// `float_roundtrip` makes `f64` parsing exact, where the default parser rounds
+/// `9007199254740993.0`, `0.9999999999999999` and `7.038531e-26` to a neighbor.
+pub(super) fn json_features() -> Vec<&'static str> {
+    const ROUNDTRIP_PROBES: [&str; 3] =
+        ["9007199254740993.0", "0.9999999999999999", "7.038531e-26"];
+    let mut features = Vec::new();
+    if "1e400".parse::<serde_json::Number>().is_ok() {
+        features.push("arbitrary_precision");
+    }
+    if ROUNDTRIP_PROBES
+        .iter()
+        .all(|text| serde_json::from_str::<f64>(text).ok() == text.parse::<f64>().ok())
+    {
+        features.push("float_roundtrip");
+    }
+    features
+}
+
+/// The log line for a unified `serde_json` `feature` (R22).
+pub(super) fn feature_warning(feature: &str) -> String {
+    format!(
+        "Warning: serde_json feature \"{feature}\" is enabled in this build; AgentCat token estimates and size checks may differ from the TypeScript SDK"
     )
 }

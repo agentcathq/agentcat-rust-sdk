@@ -2,6 +2,7 @@
 //! properties, string lengths and cuts in UTF-16 code units, `String.prototype.trim`,
 //! `String(value)` and `typeof`. Token estimates and the event-size check count the bytes of
 //! `JSON.stringify` output, so these follow JavaScript, not Rust or `serde_json`.
+use std::fmt;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use chrono::{DateTime, Utc};
@@ -14,37 +15,44 @@ mod tests;
 /// [`number_to_string`] writes them, and strings escaped as JSON.stringify escapes them.
 pub(crate) fn stringify(value: &Value) -> String {
     let mut out = String::new();
-    push_json(&mut out, value);
+    // Writing to a `String` never fails.
+    let _ = write_stringify(value, &mut out);
     out
 }
 
-fn push_json(out: &mut String, value: &Value) {
+/// Writes the [`stringify()`] text of `value` to `out`, so a caller can count the bytes (or send
+/// them on) without building the text.
+///
+/// # Errors
+///
+/// Only what `out` returns.
+pub(crate) fn write_stringify(value: &Value, out: &mut impl fmt::Write) -> fmt::Result {
     match value {
-        Value::Null => out.push_str("null"),
-        Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
-        Value::Number(n) => push_number(out, n),
-        Value::String(s) => push_quoted(out, s),
+        Value::Null => out.write_str("null"),
+        Value::Bool(b) => out.write_str(if *b { "true" } else { "false" }),
+        Value::Number(n) => write_number(out, n),
+        Value::String(s) => write_quoted(out, s),
         Value::Array(items) => {
-            out.push('[');
+            out.write_char('[')?;
             for (i, item) in items.iter().enumerate() {
                 if i > 0 {
-                    out.push(',');
+                    out.write_char(',')?;
                 }
-                push_json(out, item);
+                write_stringify(item, out)?;
             }
-            out.push(']');
+            out.write_char(']')
         }
         Value::Object(object) => {
-            out.push('{');
-            for (i, (key, item)) in own_entries(object).into_iter().enumerate() {
+            out.write_char('{')?;
+            for (i, (key, item)) in own_entries(object).enumerate() {
                 if i > 0 {
-                    out.push(',');
+                    out.write_char(',')?;
                 }
-                push_quoted(out, key);
-                out.push(':');
-                push_json(out, item);
+                write_quoted(out, key)?;
+                out.write_char(':')?;
+                write_stringify(item, out)?;
             }
-            out.push('}');
+            out.write_char('}')
         }
     }
 }
@@ -54,10 +62,9 @@ fn push_json(out: &mut String, value: &Value) {
 /// `\b`, `\t`, `\n`, `\f` and `\r`, the other characters below U+0020 get `\u00xx` with
 /// lowercase hex digits, and every other character stays as it is (U+007F, U+2028 and U+2029
 /// too). A `str` holds no lone surrogate, the one other character JavaScript escapes.
-fn push_quoted(out: &mut String, text: &str) {
+pub(crate) fn write_quoted(out: &mut impl fmt::Write, text: &str) -> fmt::Result {
     const HEX: &[u8; 16] = b"0123456789abcdef";
-    out.reserve(text.len() + 2);
-    out.push('"');
+    out.write_char('"')?;
     // Every byte to escape is ASCII, so `copied` and `at` are always on character boundaries.
     let mut copied = 0;
     for (at, byte) in text.bytes().enumerate() {
@@ -72,16 +79,16 @@ fn push_quoted(out: &mut String, text: &str) {
             0x00..=0x1F => "\\u00",
             _ => continue,
         };
-        out.push_str(&text[copied..at]);
-        out.push_str(escape);
+        out.write_str(&text[copied..at])?;
+        out.write_str(escape)?;
         if escape == "\\u00" {
-            out.push(char::from(HEX[usize::from(byte >> 4)]));
-            out.push(char::from(HEX[usize::from(byte & 0x0F)]));
+            out.write_char(char::from(HEX[usize::from(byte >> 4)]))?;
+            out.write_char(char::from(HEX[usize::from(byte & 0x0F)]))?;
         }
         copied = at + 1;
     }
-    out.push_str(&text[copied..]);
-    out.push('"');
+    out.write_str(&text[copied..])?;
+    out.write_char('"')
 }
 
 /// `value` as TS sends it (C40): its [`stringify()`] text read back with `serde_json`, so that
@@ -104,16 +111,17 @@ pub(crate) fn to_js_value(value: &Value) -> Value {
 )]
 pub(crate) fn number_to_string(number: &Number) -> String {
     let mut out = String::new();
-    push_number(&mut out, number);
+    // Writing to a `String` never fails.
+    let _ = write_number(&mut out, number);
     out
 }
 
-fn push_number(out: &mut String, number: &Number) {
+fn write_number(out: &mut impl fmt::Write, number: &Number) -> fmt::Result {
     // `as_f64` is `None` only with serde_json's `arbitrary_precision` feature, which this crate
     // does not turn on; the number's own text is the closest fallback.
     match number.as_f64() {
-        Some(f) => out.push_str(ryu_js::Buffer::new().format(f)),
-        None => out.push_str(&number.to_string()),
+        Some(f) => out.write_str(ryu_js::Buffer::new().format(f)),
+        None => write!(out, "{number}"),
     }
 }
 
@@ -121,7 +129,12 @@ fn push_number(out: &mut String, number: &Number) {
 /// the keys that are array indices (the canonical decimal text of an integer from 0 to
 /// 4 294 967 294, so not `"01"`, `"-1"` or `"4294967295"`) in ascending numeric order, then the
 /// other keys in insertion order. `serde_json`'s `preserve_order` map keeps insertion order.
-pub(crate) fn own_entries(object: &Map<String, Value>) -> Vec<(&String, &Value)> {
+pub(crate) fn own_entries(object: &Map<String, Value>) -> OwnEntries<'_> {
+    // The common case, an object without an index-like key, is its map's own iterator: no
+    // allocation.
+    if !object.keys().any(|key| array_index(key).is_some()) {
+        return OwnEntries::Insertion(object.iter());
+    }
     let mut indices = Vec::new();
     let mut others = Vec::with_capacity(object.len());
     for entry in object {
@@ -130,17 +143,43 @@ pub(crate) fn own_entries(object: &Map<String, Value>) -> Vec<(&String, &Value)>
             None => others.push(entry),
         }
     }
-    if indices.is_empty() {
-        return others;
-    }
     // Keys are unique, so no two entries have the same index.
     indices.sort_unstable_by_key(|&(index, _)| index);
-    indices
+    let ordered: Vec<(&String, &Value)> = indices
         .into_iter()
         .map(|(_, entry)| entry)
         .chain(others)
-        .collect()
+        .collect();
+    OwnEntries::Reordered(ordered.into_iter())
 }
+
+/// The entries [`own_entries`] gives, in JavaScript's order.
+pub(crate) enum OwnEntries<'a> {
+    /// An object without index-like keys: its own iterator.
+    Insertion(serde_json::map::Iter<'a>),
+    /// An object with index-like keys, reordered.
+    Reordered(std::vec::IntoIter<(&'a String, &'a Value)>),
+}
+
+impl<'a> Iterator for OwnEntries<'a> {
+    type Item = (&'a String, &'a Value);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::Insertion(entries) => entries.next(),
+            Self::Reordered(entries) => entries.next(),
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        match self {
+            Self::Insertion(entries) => entries.size_hint(),
+            Self::Reordered(entries) => entries.size_hint(),
+        }
+    }
+}
+
+impl ExactSizeIterator for OwnEntries<'_> {}
 
 /// The array index `key` is: `Some` for the canonical decimal text of an integer from 0 to
 /// 2^32 - 2 (no sign, no leading zero), `None` for any other key.
@@ -229,7 +268,10 @@ fn push_js_string(out: &mut String, value: &Value) {
     match value {
         Value::Null => out.push_str("null"),
         Value::Bool(b) => out.push_str(if *b { "true" } else { "false" }),
-        Value::Number(n) => push_number(out, n),
+        Value::Number(n) => {
+            // Writing to a `String` never fails.
+            let _ = write_number(out, n);
+        }
         Value::String(s) => out.push_str(s),
         Value::Array(items) => {
             for (i, item) in items.iter().enumerate() {

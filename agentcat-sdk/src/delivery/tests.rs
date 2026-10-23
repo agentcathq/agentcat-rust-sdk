@@ -859,3 +859,19 @@ async fn log_lines_are_written_by_the_worker() {
     assert!(text.lines().any(|line| line.ends_with(&expected)), "{text}");
     let _ = std::fs::remove_dir_all(&home);
 }
+
+/// Task 11 (R22): the workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so
+/// the self-check finds nothing and the worker writes no warning.
+#[test]
+fn json_features_empty_in_this_build() {
+    assert_eq!(super::worker::json_features(), Vec::<&str>::new());
+}
+
+/// The self-check line names the feature, with the text the plan fixes (R22).
+#[test]
+fn feature_warning_has_the_fixed_text() {
+    assert_eq!(
+        super::worker::feature_warning("float_roundtrip"),
+        "Warning: serde_json feature \"float_roundtrip\" is enabled in this build; AgentCat token estimates and size checks may differ from the TypeScript SDK"
+    );
+}

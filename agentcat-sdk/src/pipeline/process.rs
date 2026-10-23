@@ -116,13 +116,13 @@ pub(crate) async fn process(
 
     let sanitized = sanitize_event(&event);
     assign(&mut event, sanitized);
-    match truncate_event(&event) {
-        Ok(truncated) => assign(&mut event, truncated),
+    event = match truncate_event(event) {
+        Ok(truncated) => truncated,
         Err(error) => {
             log.push(format!("Failed to truncate event: {error}"));
             return None;
         }
-    }
+    };
 
     let has_id = event
         .get("id")

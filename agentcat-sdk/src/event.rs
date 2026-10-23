@@ -251,7 +251,6 @@ pub(crate) fn project_headers(headers: &HeaderMap) -> Map<String, Value> {
         })
         .collect();
     js::own_entries(&sorted)
-        .into_iter()
         .map(|(name, value)| (name.clone(), value.clone()))
         .collect()
 }

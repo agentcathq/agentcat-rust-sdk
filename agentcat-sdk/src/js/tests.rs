@@ -7,8 +7,8 @@ use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{
-    cut_utf16, iso_millis, number_to_string, parse_iso_millis, stringify, to_js_string,
-    to_js_value, trim, type_of, utf16_len,
+    cut_utf16, iso_millis, number_to_string, own_entries, parse_iso_millis, stringify,
+    to_js_string, to_js_value, trim, type_of, utf16_len, write_stringify,
 };
 use crate::test_support::strategies::{js_string, json_value, object_key};
 use crate::test_support::{assert_js_eq, config, oracle, vectors};
@@ -374,4 +374,46 @@ proptest! {
         let js = oracle::call("oracle.typeof", &[value_arg(value.as_ref())]).unwrap();
         prop_assert_eq!(Some(json!(type_of(value.as_ref()))), js);
     }
+}
+
+/// `write_stringify` writes the text `stringify` returns, for every `stringify` case of
+/// `js.json` (the TS text) and every `stringify-text` case.
+#[test]
+fn write_stringify_equals_stringify() {
+    let mut seen = 0;
+    for case in vectors::cases("js") {
+        let name = vectors::name(&case);
+        let value: Value = if name.starts_with("stringify-text:") {
+            serde_json::from_str(text(&case, "input_text")).unwrap()
+        } else if name.starts_with("stringify:") {
+            case["input"].clone()
+        } else {
+            continue;
+        };
+        let mut written = String::new();
+        write_stringify(&value, &mut written).unwrap();
+        assert_eq!(written, stringify(&value), "{name}");
+        assert_eq!(written, text(&case, "output"), "{name}");
+        seen += 1;
+    }
+    assert!(seen >= 10, "js.json must have stringify cases");
+}
+
+/// The fast path of `own_entries` (no index-like key) keeps insertion order, and the index path
+/// still puts the indices first in ascending order, then the other keys in insertion order.
+#[test]
+fn own_entries_fast_path_keeps_order() {
+    let plain: Value =
+        serde_json::from_str(r#"{"b":1,"a":2,"01":3,"-1":4,"4294967295":5}"#).unwrap();
+    let keys: Vec<&str> = own_entries(plain.as_object().unwrap())
+        .map(|(key, _)| key.as_str())
+        .collect();
+    assert_eq!(keys, ["b", "a", "01", "-1", "4294967295"]);
+    let mixed: Value =
+        serde_json::from_str(r#"{"b":1,"10":2,"a":3,"2":4,"4294967294":5}"#).unwrap();
+    let keys: Vec<&str> = own_entries(mixed.as_object().unwrap())
+        .map(|(key, _)| key.as_str())
+        .collect();
+    assert_eq!(keys, ["2", "10", "4294967294", "b", "a"]);
+    assert_eq!(own_entries(&Map::new()).count(), 0);
 }

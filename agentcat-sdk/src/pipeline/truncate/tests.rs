@@ -84,7 +84,7 @@ fn reply_of(case: &Map<String, Value>, context: &str) -> Value {
 }
 
 #[test]
-fn vectors_match_ts() {
+fn truncate_event_by_value_matches_vectors() {
     for set in SETS {
         let cases = vectors::cases(set);
         assert!(cases.len() >= 10, "{set}.json has its cases");
@@ -92,7 +92,7 @@ fn vectors_match_ts() {
             let name = vectors::name(case);
             let context = format!("{set}.json {name}");
             let input = &input_of(case, &context);
-            let actual = truncate_event(input);
+            let actual = truncate_event(input.clone());
             let expected = &reply_of(case, &context);
             match case.get("deviation").and_then(Value::as_str) {
                 None => assert_matches_ts(&actual, expected, &context),
@@ -257,7 +257,7 @@ fn twin_of<'a>(
 
 /// Runs `event` through Rust and through TS (the oracle) and compares the results.
 fn compare(event: &TsEvent) {
-    let actual = truncate_event(event);
+    let actual = truncate_event(event.clone());
     let ts = oracle::call("oracle.truncateEvent", &[Value::Object(event.clone())])
         .unwrap()
         .expect("a reply");

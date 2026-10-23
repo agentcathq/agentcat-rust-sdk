@@ -75,7 +75,6 @@ pub(crate) fn mirror_mint_back(structured: &mut Option<Value>, mint: Map<String,
     spread.insert(MCP_SESSION_KEY.to_owned(), Value::Object(mint));
     spread.append(body);
     let order: Vec<String> = js::own_entries(&spread)
-        .into_iter()
         .map(|(key, _)| key.clone())
         .collect();
     for key in order {

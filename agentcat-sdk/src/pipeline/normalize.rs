@@ -64,15 +64,14 @@ pub(crate) fn normalize(
             if depth == 0 {
                 return Value::String("[Object]".to_owned());
             }
-            let entries = js::own_entries(map);
             let mut result = Map::new();
-            for (count, (key, item)) in entries.iter().enumerate() {
+            for (count, (key, item)) in js::own_entries(map).enumerate() {
                 if count >= max_breadth {
                     result.insert("...".to_owned(), Value::String(MAX_PROPERTIES.to_owned()));
                     break;
                 }
                 let kept = normalize(item, depth - 1, max_breadth, max_string_length);
-                result.insert((*key).clone(), kept);
+                result.insert(key.clone(), kept);
             }
             Value::Object(result)
         }

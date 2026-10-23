@@ -114,8 +114,9 @@ impl fmt::Display for TruncateError {
 ///
 /// TS's error, with its text, when a limited field or `error.frames` holds a value TS cannot
 /// slice (see [`limit_string`] and [`limit_frames`]).
-pub(crate) fn truncate_event(event: &TsEvent) -> Result<TsEvent, TruncateError> {
-    let limited = limit_fields(event)?;
+pub(crate) fn truncate_event(mut event: TsEvent) -> Result<TsEvent, TruncateError> {
+    limit_fields(&mut event)?;
+    let limited = event;
     let mut depth = MAX_DEPTH;
     loop {
         let candidate = normalize_fields(&limited, depth);
@@ -129,21 +130,21 @@ pub(crate) fn truncate_event(event: &TsEvent) -> Result<TsEvent, TruncateError> 
     }
 }
 
-/// `event` with the length limits of [`LIMITED_FIELDS`] and of `error.message`, and with
-/// `error.frames` cut, in TS's order: the first error wins.
-fn limit_fields(event: &TsEvent) -> Result<TsEvent, TruncateError> {
-    let mut result = event.clone();
+/// Applies the length limits of [`LIMITED_FIELDS`] and of `error.message` to `event` in place,
+/// and cuts `error.frames`, in TS's order: the first error wins (and leaves earlier limits
+/// applied, which the caller drops with the event).
+fn limit_fields(event: &mut TsEvent) -> Result<(), TruncateError> {
     for (key, limit) in LIMITED_FIELDS {
-        if let Some(value) = result.get_mut(key)
+        if let Some(value) = event.get_mut(key)
             && let Some(limited) = limit_string(value, limit)?
         {
             *value = limited;
         }
     }
-    if let Some(error) = result.get_mut("error") {
+    if let Some(error) = event.get_mut("error") {
         limit_error(error)?;
     }
-    Ok(result)
+    Ok(())
 }
 
 /// TS's `truncateString(value, limit)`: `None` when `value` stays. `null` stays; a string longer
@@ -279,17 +280,30 @@ fn normalize_fields(event: &TsEvent, depth: usize) -> TsEvent {
         .collect()
 }
 
-/// The UTF-8 size of `JSON.stringify(event)`: what TS's `jsonByteSize` measures.
+/// A `fmt::Write` sink that counts the UTF-8 bytes written and keeps none of them.
+#[derive(Debug, Default)]
+struct ByteCounter(usize);
+
+impl fmt::Write for ByteCounter {
+    fn write_str(&mut self, text: &str) -> fmt::Result {
+        self.0 += text.len();
+        Ok(())
+    }
+}
+
+/// The UTF-8 size of `JSON.stringify(event)`: what TS's `jsonByteSize` measures. It counts the
+/// bytes [`js::write_stringify`] writes; no text is built.
 fn byte_size(event: &TsEvent) -> usize {
     // `{`, `}`, a `,` between two entries, and `"key":value` for each entry; the order of the
     // entries does not change the size.
-    let entries: usize = event
-        .iter()
-        .map(|(key, value)| {
-            js::stringify(&Value::String(key.clone())).len() + 1 + js::stringify(value).len()
-        })
-        .sum();
-    2 + entries + event.len().saturating_sub(1)
+    let mut counter = ByteCounter::default();
+    for (key, value) in event {
+        // A `ByteCounter` never fails.
+        let _ = js::write_quoted(&mut counter, key);
+        let _ = js::write_stringify(value, &mut counter);
+    }
+    // One `:` per entry, and one `,` fewer than entries.
+    2 + counter.0 + event.len() + event.len().saturating_sub(1)
 }
 
 /// One step of a path from the event to a string in it.
