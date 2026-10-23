@@ -13,7 +13,7 @@
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
-import { readFileSync } from "node:fs";
+import { clip, loadRulings, matchRulings, readJson, rulingLines } from "./rulings.mjs";
 
 function usage(message) {
   if (message) process.stderr.write(`diff: ${message}\n`);
@@ -30,41 +30,9 @@ if (rest.length > 0) {
   rulingsPath = rest[1];
 }
 
-function readJson(path) {
-  try {
-    return JSON.parse(readFileSync(path, "utf8"));
-  } catch (err) {
-    return usage(`${path}: ${err.message}`);
-  }
-}
-
-function loadRulings(path) {
-  if (path === undefined) return [];
-  const list = readJson(path);
-  if (!Array.isArray(list)) usage(`${path}: must be a JSON array`);
-  return list.map((r, i) => {
-    const where = `${path}[${i}]`;
-    if (r === null || typeof r !== "object" || Array.isArray(r)) usage(`${where}: must be an object`);
-    const extra = Object.keys(r).filter((k) => !["path", "reason", "deviation", "pending"].includes(k));
-    if (extra.length > 0) usage(`${where}: unknown key ${JSON.stringify(extra[0])}`);
-    if (Object.hasOwn(r, "pending") && typeof r.pending !== "boolean") usage(`${where}: "pending" must be a boolean`);
-    if (typeof r.path !== "string" || r.path === "") usage(`${where}: "path" must be a non-empty regex string`);
-    if (typeof r.reason !== "string" || r.reason.trim() === "") usage(`${where}: "reason" must be a non-empty string`);
-    if (typeof r.deviation !== "string" || !/^RD-\d+$/.test(r.deviation)) usage(`${where}: "deviation" must look like RD-<n>`);
-    let re;
-    try {
-      new RegExp(r.path); // the pattern must be valid on its own, not only once wrapped
-      re = new RegExp(`^(?:${r.path})$`);
-    } catch (err) {
-      usage(`${where}: bad regex: ${err.message}`);
-    }
-    return { ...r, re, matched: 0 };
-  });
-}
-
-const a = readJson(aPath);
-const b = readJson(bPath);
-const rulings = loadRulings(rulingsPath);
+const a = readJson(aPath, usage);
+const b = readJson(bPath, usage);
+const rulings = loadRulings(rulingsPath, usage);
 
 const diffs = [];
 const kind = (v) => (Array.isArray(v) ? "array" : v === null ? "null" : typeof v);
@@ -112,15 +80,10 @@ for (const [side, doc] of [["a", a], ["b", b]]) {
 }
 diffs.push(...violations.values());
 
-const clip = (v) => {
-  const text = JSON.stringify(v) ?? "undefined";
-  return text.length > 120 ? `${text.slice(0, 117)}...` : text;
-};
 let unexpected = 0;
 let ruled = 0;
 for (const d of diffs) {
-  const hits = rulings.filter((r) => r.re.test(d.path));
-  for (const r of hits) r.matched += 1;
+  const hits = matchRulings(rulings, d.path);
   if (hits.length > 0) {
     ruled += 1;
     process.stdout.write(`RULED ${hits.map((r) => r.deviation).join(",")} ${d.path}: ${clip(d.a)} != ${clip(d.b)}\n`);
@@ -129,10 +92,7 @@ for (const d of diffs) {
     process.stdout.write(`DIFF  ${d.path}: ${clip(d.a)} != ${clip(d.b)}\n`);
   }
 }
-for (const r of rulings) {
-  const what = `${r.matched === 0 ? "UNUSED RULING" : "RULING"}${r.pending ? " (pending)" : ""}`;
-  process.stdout.write(`${what} ${r.deviation} matched ${r.matched}: ${JSON.stringify(r.path)} (${r.reason})\n`);
-}
+for (const line of rulingLines(rulings)) process.stdout.write(line);
 const unused = rulings.filter((r) => r.matched === 0);
 process.stdout.write(`${JSON.stringify({ total: diffs.length, ruled, unexpected, unusedRulings: unused.length })}\n`);
 process.exit(unexpected > 0 || unused.length > 0 ? 1 : 0);

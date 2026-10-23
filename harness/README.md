@@ -67,6 +67,26 @@ node harness/src/contract/extract-schema.mjs ~/agentcat-server origin/main
 node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
 ```
 
+### delta.mjs and matrix.mjs (the MCP-wire delta)
+
+The MCP-wire delta is what tracking changes on the wire: the ops (`add`, `remove`, `change`) that turn
+an untracked run's transcript into the tracked run's, for one server. `delta.mjs` compares the delta of
+TS with the delta of Rust. Owner ruling R20: TS v2 is the answer key.
+
+`node harness/src/delta.mjs <ts-untracked> <ts-tracked> <rust-untracked> <rust-tracked> [--rulings <file>]`
+takes four `*.normalized.json` files. Paths look like `$.delta.transcript[4].result.content[0]`; a
+tracked-document violation is an `add` at `$.delta.violations[<rule>]@<violation path>`. Output and exit
+codes follow `diff.mjs` (`DELTA <path>: ts <x> != rust <y>`, `RULED ...`, ruling lines, a JSON summary).
+
+`node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>]`
+runs, per scenario, transport and lane, both servers untracked (`HARNESS_NO_TRACK=1`) and tracked, then
+compares the two deltas. Servers: `ts-v1`, `ts-v2` (default first) and `rust` (default second;
+`HARNESS_RUST_SERVER`, else `target/debug/harness-ref-server`). Labels are `<server>-<lane>-<u|t>`; two
+equal server names (an A/A run) give the second server the suffix `-b`. It writes `harness/out/matrix.json`.
+
+Rulings: `rulings.json` is for Rust against TS (`diff.mjs`, `delta.mjs`, the matrix); `rulings-ts.json`
+is for TS against TS (A/A runs and the nightly drift sweep, so a Rust ruling never counts as unused there).
+
 ### driver.mjs
 
 `node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>`
