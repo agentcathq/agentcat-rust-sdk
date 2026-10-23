@@ -28,6 +28,9 @@ mod registry;
 mod sink;
 #[cfg(test)]
 mod test_support;
+#[cfg(feature = "test-util")]
+#[cfg_attr(docsrs, doc(cfg(feature = "test-util")))]
+pub mod testing;
 mod tokens;
 mod tracked;
 

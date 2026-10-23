@@ -14,6 +14,8 @@ use crate::config::{AGENTCAT_PROJECT_ID, Env, Options, sdk_enabled};
 #[cfg(not(test))]
 use crate::config::{ProcessEnv, resolve_api_base_url};
 use crate::custom::{CustomEvent, publish_string};
+#[cfg(feature = "test-util")]
+use crate::delivery::Observer;
 #[cfg(not(test))]
 use crate::delivery::http::ApiPublisher;
 use crate::delivery::{Delivery, DeliveryConfig, LineWriter, Publisher};
@@ -142,12 +144,12 @@ impl Transport {
     }
 }
 
-/// A publisher that accepts every event and sends none (P15).
-#[cfg(test)]
+/// A publisher that accepts every event and sends none (P15; also the test fake's, C43).
+#[cfg(any(test, feature = "test-util"))]
 #[derive(Debug)]
 struct OfflinePublisher;
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-util"))]
 impl Publisher for OfflinePublisher {
     fn publish(
         &self,
@@ -309,6 +311,32 @@ impl AgentCat {
     ) -> Self {
         let sink = delivery_sink(project_id, &options, publisher, config);
         Self::with_sink(project_id, options, sink)
+    }
+
+    /// A handle for the test fake (C43, P18): always enabled, whatever `AGENTCAT_ENABLED` says;
+    /// it never configures the process logger; its publisher never sends; `observer` is told
+    /// about every event that finishes the pipeline. Built here, not through [`Transport`],
+    /// because a customer's tests compile the library without `cfg(test)`.
+    #[cfg(feature = "test-util")]
+    pub(crate) fn offline_observed(
+        project_id: String,
+        options: Options,
+        observer: Arc<dyn Observer>,
+    ) -> Self {
+        let delivery = Delivery::new(
+            project_id.clone(),
+            &options,
+            Arc::new(OfflinePublisher),
+            Some(observer),
+            DeliveryConfig::default(),
+        );
+        Self::from_inner(Inner {
+            project_id,
+            options,
+            enabled: true,
+            sink: Arc::new(delivery),
+            registries: Mutex::default(),
+        })
     }
 
     /// A handle like [`AgentCat::new`] that hands its log lines to `sink`.

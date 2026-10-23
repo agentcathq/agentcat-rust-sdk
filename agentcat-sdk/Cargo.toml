@@ -39,8 +39,12 @@ default = ["rustls"]
 # C44: exactly one TLS stack is the usual choice; both together pull both.
 rustls = ["agentcat-api/rustls"]
 native-tls = ["agentcat-api/native-tls"]
-# The test fake (plan 4 task 10).
+# `agentcat_sdk::testing::Fake`: handles whose events stay in the process, for a customer's tests (C43).
 test-util = []
+
+[[test]]
+name = "fake"
+required-features = ["test-util"]
 
 [lints]
 workspace = true
