@@ -70,7 +70,19 @@ impl ApiPublisher {
             .connect_timeout(CONNECT_TIMEOUT)
             .timeout(attempt_timeout)
             .user_agent(user_agent.clone())
-            .build();
+            .build()
+            .map_err(|error| error.to_string());
+        Self::from_client(base_url, user_agent, client, log)
+    }
+
+    /// The publisher over `client`, or, when it is an `Err`, one that cannot send (one line to
+    /// `log`).
+    fn from_client(
+        base_url: String,
+        user_agent: String,
+        client: Result<reqwest::Client, String>,
+        log: &mut Vec<String>,
+    ) -> Self {
         let configuration = match client {
             Ok(client) => Some(Arc::new(Configuration {
                 base_path: base_url,
@@ -93,6 +105,10 @@ impl ApiPublisher {
 }
 
 impl Publisher for ApiPublisher {
+    fn unusable(&self) -> Option<String> {
+        self.configuration.is_none().then(|| NO_CLIENT.to_owned())
+    }
+
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>> {
         let Some(configuration) = self.configuration.clone() else {
             return Box::pin(ready(Err(NO_CLIENT.to_owned())));

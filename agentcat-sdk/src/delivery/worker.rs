@@ -280,12 +280,16 @@ async fn run_job(shared: Arc<Shared>, job: Job, _slot: Slot) {
 }
 
 /// Posts `event` as TS's `sendEvent` does (B-102): up to 4 attempts with one request, the same
-/// `evt_` ID each time. After each failure `Failed to send event <id>, retrying... [Error:
+/// `evt_` ID each time (none when the publisher is `unusable`: only the final line). After each failure `Failed to send event <id>, retrying... [Error:
 /// <text>]`, then the next of `retry_delays`; after the fourth `Failed to deliver AgentCat event
 /// after retries: <text>`; on success TS's metadata line ([`success_line`]).
 async fn post(shared: &Shared, event: &TsEvent) {
     let request = publish_request(event);
     let id = js::to_js_string(event.get("id"));
+    if let Some(reason) = shared.publisher.unusable() {
+        shared.write(&format!("{DELIVERY_FAILED}{reason}"));
+        return;
+    }
     let mut delays = shared.config.retry_delays.iter();
     loop {
         match shared.publisher.publish(request.clone()).await {

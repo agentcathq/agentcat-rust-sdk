@@ -286,6 +286,50 @@ fn retries_three_times_then_logs_failure() {
     }
 }
 
+/// A publisher that can never send (C44, a client that failed to build).
+#[derive(Debug)]
+struct Unusable(Arc<std::sync::atomic::AtomicUsize>);
+
+impl Publisher for Unusable {
+    fn publish(&self, _request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Box::pin(std::future::ready(Ok(())))
+    }
+
+    fn unusable(&self) -> Option<String> {
+        Some("the HTTP client could not be built".to_owned())
+    }
+}
+
+/// C44: an unusable publisher gets no attempt and no retry. The final failure line is logged at
+/// once, well under one retry delay, and `flush` returns `true`.
+#[test]
+fn unusable_publisher_drops_the_event_at_once() {
+    let attempts = Arc::new(std::sync::atomic::AtomicUsize::new(0));
+    let lines = CapturedLines::default();
+    let delivery = Delivery::with_writer(
+        PROJECT.to_owned(),
+        &Options::default(),
+        Arc::new(Unusable(Arc::clone(&attempts))),
+        None,
+        DeliveryConfig {
+            retry_delays: [ms(1_000), ms(2_000), ms(4_000)],
+            ..fast()
+        },
+        lines.writer(),
+    );
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), Arc::new(delivery));
+    push(&agentcat, job(PROJECT, "unsendable"));
+    let started = Instant::now();
+    assert!(agentcat.flush_blocking(WAIT));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(attempts.load(Ordering::SeqCst), 0);
+    assert_eq!(
+        lines.lines(),
+        ["Failed to deliver AgentCat event after retries: the HTTP client could not be built"]
+    );
+}
+
 /// TS sets an event's ID once, before `sendEvent`, so every attempt sends the same `evt_` ID and
 /// every line names it. `queue.json` masks the IDs as `<evt>`, so only this test pins it.
 #[test]

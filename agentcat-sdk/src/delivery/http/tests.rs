@@ -14,6 +14,7 @@ use super::ApiPublisher;
 use crate::client::AgentCat;
 use crate::config::{MapEnv, Options, resolve_api_base_url};
 use crate::delivery::DeliveryConfig;
+use crate::delivery::Publisher;
 use crate::test_support::rmcp::{Sample, connect};
 
 const PROJECT: &str = "proj_http";
@@ -150,7 +151,7 @@ struct CountingPublisher {
     attempts: Arc<std::sync::atomic::AtomicUsize>,
 }
 
-impl crate::delivery::Publisher for CountingPublisher {
+impl Publisher for CountingPublisher {
     fn publish(
         &self,
         request: agentcat_api::models::PublishEventRequest,
@@ -229,4 +230,22 @@ fn https_without_tls_feature_warns_once() {
     let mut log = Vec::new();
     let _ = ApiPublisher::new("http://127.0.0.1:9".to_owned(), &mut log);
     assert!(log.is_empty(), "{log:?}");
+}
+
+/// C44: a client that failed to build gives one log line and a publisher that reports itself
+/// `unusable`. reqwest has no natural build failure here, so the test hands `from_client` an `Err`.
+#[test]
+fn failed_client_build_is_unusable() {
+    let mut log = Vec::new();
+    let publisher = ApiPublisher::from_client(
+        "http://127.0.0.1:9".to_owned(),
+        "agentcat-rust/test".to_owned(),
+        Err("no TLS backend".to_owned()),
+        &mut log,
+    );
+    assert_eq!(log.len(), 1, "{log:?}");
+    assert!(log[0].contains("no TLS backend"), "{log:?}");
+    assert_eq!(publisher.unusable().as_deref(), Some(super::NO_CLIENT));
+    let working = ApiPublisher::new("http://127.0.0.1:9".to_owned(), &mut Vec::new());
+    assert_eq!(working.unusable(), None);
 }

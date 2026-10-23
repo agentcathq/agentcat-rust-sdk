@@ -59,6 +59,12 @@ const ANSWER_GRACE: Duration = Duration::from_millis(100);
 pub(crate) trait Publisher: Send + Sync + fmt::Debug + 'static {
     /// Posts `request` once: `Err` holds the text of the failure for TS's log lines.
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>>;
+
+    /// `Some(text)` when this publisher can never send (its HTTP client could not be built, C44):
+    /// the worker then makes no attempt and logs TS's final failure line with `text` at once.
+    fn unusable(&self) -> Option<String> {
+        None
+    }
 }
 
 /// Told about each event that finishes the pipeline, telemetry-only events included (the test
