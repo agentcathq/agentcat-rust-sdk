@@ -7,9 +7,10 @@ rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "README.md"
+build = "build.rs"
 keywords = ["mcp", "rmcp", "analytics", "telemetry", "agentcat"]
 categories = ["development-tools::debugging", "api-bindings"]
-include = ["src/**", "README.md", "CHANGELOG.md", "LICENSE"]
+include = ["src/**", "build.rs", "README.md", "CHANGELOG.md", "LICENSE"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -28,6 +29,7 @@ tokio = { workspace = true, features = ["rt", "time"] }
 futures = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 chrono = { workspace = true, features = ["std"] }
+tracing = { workspace = true, features = ["std"] }
 
 [lints]
 workspace = true

@@ -23,6 +23,7 @@ agentcat-sdk = { path = "agentcat-sdk" }
 axum = { version = "0.8", default-features = false }
 thiserror = { version = "2.0.0", default-features = false }
 chrono = { version = "0.4.39", default-features = false }
+tracing = { version = "0.1.23", default-features = false, features = ["std"] }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

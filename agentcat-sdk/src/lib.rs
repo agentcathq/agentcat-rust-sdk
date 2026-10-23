@@ -21,6 +21,7 @@ mod handles;
 mod hooks;
 mod inject;
 mod js;
+mod logging;
 #[cfg_attr(
     not(test),
     expect(dead_code, reason = "read by the delivery pipeline (plan 4)")

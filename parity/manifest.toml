@@ -1129,175 +1129,261 @@ reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a t
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > falls back to a stable install_id when projectId is absent"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > includes sdk language, sdk version, and os/runtime metadata"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > reports the installed v1 SDK version despite the exports stub"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > reports the installed v2 SDK version despite sealed exports"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-attributes.test.ts|diagnostics static attributes > uses projectId verbatim when present"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > honors a custom DIAGNOSTICS_TOKEN override"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > omits the Authorization header when token is explicitly empty"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-auth.test.ts|diagnostics auth header > sends the default bearer token by default"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > POSTs buffered entries as OTLP logs JSON to /v1/logs"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > does nothing when disabled"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-export.test.ts|diagnostics export > resolves even when fetch rejects (fire-and-forget isolation)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-integration.test.ts|diagnostics integration with track() > captures and ships diagnostics when track() runs on an invalid server"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-integration.test.ts|diagnostics integration with track() > ships nothing when disabled via option"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > emits start + complete setup beacons (metadata only) on track()"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > report-missing log carries only the context length, not the text"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-no-payload.test.ts|diagnostics sink never receives event payloads > resolved identity is stamped on the event but never reaches the sink"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when JEST_WORKER_ID=1 (test environment)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when NODE_ENV=test (test environment)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled by default when VITEST=true (test environment)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled via the env var"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled via the option"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=1"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=TRUE"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=on"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=true"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is disabled when DISABLE_DIAGNOSTICS=yes"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > is enabled by default outside test environments"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=0"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=FALSE"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=false"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=no"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > stays enabled when DISABLE_DIAGNOSTICS=off"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-optout.test.ts|diagnostics opt-out > treats a whitespace-only value as unset (default behavior applies)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > attaches sdk, node, and mcp versions as record attributes"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > carries the raw message as the body, verbatim"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > infers severity from message content"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > prioritizes fail/error over the Warning prefix"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-record.test.ts|diagnostics record building > sets a nanosecond timestamp string"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > forwards every log entry to a registered sink"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > never throws when the sink throws"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-sink.test.ts|logging diagnostics sink > stops forwarding after the sink is cleared"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-test-env.test.ts|diagnostics are disabled in test environments > DISABLE_DIAGNOSTICS=false force-enables diagnostics even under vitest"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/diagnostics-test-env.test.ts|diagnostics are disabled in test environments > track() without options does not enable diagnostics under vitest"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/e2e-sanitization.test.ts|E2E Sanitization - real MCP tool calls > should preserve normal todo tool calls while sanitizing problematic ones"
@@ -3439,39 +3525,50 @@ reason = "ksuid.json case from-parts:ts-test:time-100 and from-parts:ts-test:tim
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent when os.homedir is not implemented at all"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::no_home_is_silent"]
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent — never console — when homedir resolves falsy on Node"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::no_home_is_silent"]
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > goes silent — never console — when homedir throws on Node"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::no_home_is_silent"]
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > targets console only when the runtime lacks fs/os modules (edge isolates)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-15"
+reason = "TS falls back to console on edge isolates; Rust has no such runtime and offers the tracing destination instead (RD-15)."
 
 [[test]]
 key = "v1|src/tests/logging-target.test.ts|resolveLogTarget > targets the home log file on a healthy Node runtime"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
 
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > caches the prefix so repeated logging stays consistent"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
 
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > prefixes sink entries with sdk, node, and mcp versions"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
 
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > skips MCP package resolution on Cloudflare Workers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-15"
+reason = "Workers detection and Node module resolution do not exist in Rust; the prefix is built from compile-time versions (RD-15)."
 
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > writes the prefixed entry to the log file"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
 
 [[test]]
 key = "v1|src/tests/mcp-version-compatibility.test.ts|MCP Version Compatibility > should be compatible with currently installed MCP version"
