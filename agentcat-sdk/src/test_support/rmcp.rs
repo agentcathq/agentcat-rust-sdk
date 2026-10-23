@@ -1,23 +1,24 @@
 //! rmcp helpers for the crate's tests: in-memory and streamable HTTP client connections, a bare
-//! request context, the [`Probe`] server, whose answers are sentinels, the [`Paged`], [`Sample`]
-//! and [`ContextEcho`] servers and the [`RecordingSink`].
+//! request context, the [`Probe`] server, whose answers are sentinels, the [`Paged`],
+//! [`SilentPaged`], [`Sample`], [`ContextEcho`] and [`Mrtr`] servers and the [`RecordingSink`].
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::future::ready;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use http::{HeaderName, HeaderValue};
+use rmcp::handler::server::common::Extension;
 use rmcp::handler::server::wrapper::{Json, Parameters};
 use rmcp::model::{
     CallToolRequestParams, CallToolResponse, CallToolResult, CancelTaskParams, ClientCapabilities,
-    CompleteRequestParams, CompleteResult, CompletionInfo, CustomRequest, CustomResult,
-    DiscoverResult, GetPromptRequestParams, GetPromptResponse, GetPromptResult, GetTaskParams,
-    GetTaskResult, Implementation, InitializeRequestParams, InitializeResult, ListPromptsResult,
-    ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, MetaObject,
-    PaginatedRequestParams, Prompt, ProtocolVersion, ReadResourceRequestParams,
-    ReadResourceResponse, ReadResourceResult, RequestId, Resource, ResourceContents,
-    ResourceTemplate, ServerCapabilities, SubscribeRequestParams, SubscriptionFilter, Tool,
-    UnsubscribeRequestParams, UpdateTaskParams,
+    CompleteRequestParams, CompleteResult, CompletionInfo, ContentBlock, CustomRequest,
+    CustomResult, DiscoverResult, GetPromptRequestParams, GetPromptResponse, GetPromptResult,
+    GetTaskParams, GetTaskResult, Implementation, InitializeRequestParams, InitializeResult,
+    InputRequiredResult, JsonObject, ListPromptsResult, ListResourceTemplatesResult,
+    ListResourcesResult, ListToolsResult, MetaObject, PaginatedRequestParams, Prompt,
+    ProtocolVersion, ReadResourceRequestParams, ReadResourceResponse, ReadResourceResult,
+    RequestId, Resource, ResourceContents, ResourceTemplate, ServerCapabilities,
+    SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
 };
 use rmcp::service::{
     MaybeSendFuture, RequestContext, RoleClient, RunningService, SubscriptionContext,
@@ -32,6 +33,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 
+use crate::context::CallContext;
 use crate::event::{CallRecord, ClientIdentity, client_identity, extra_value, request_value};
 use crate::sink::Sink;
 
@@ -354,13 +356,49 @@ impl ServerHandler for Probe {
     }
 }
 
-/// A hand-written server with two tool pages and no `get_tool`: page 1 lists `alpha` with the
-/// cursor `p2` and a `meta` value, page 2 (the request cursor `p2`) lists `beta`.
+/// A hand-written server with two tool pages and no `get_tool`: page 1 lists `alpha {x}` with the
+/// cursor `p2` and a `meta` value, page 2 (the request cursor `p2`) lists `beta {x, context}`,
+/// whose `context` is its own. Both tools are strict: a call with an argument the tool does not
+/// declare fails with `-32602`; otherwise the tool answers with the arguments it received, as
+/// structured content (and its JSON text).
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Paged;
 
 /// The cursor of the second page of [`Paged`].
 pub(crate) const PAGED_CURSOR: &str = "p2";
+
+/// The properties of the [`Paged`] tool `name`.
+fn paged_properties(name: &str) -> Option<&'static [&'static str]> {
+    match name {
+        "alpha" => Some(&["x"]),
+        "beta" => Some(&["x", "context"]),
+        _ => None,
+    }
+}
+
+/// The input schema of the [`Paged`] tool `name`: a string property for each of its properties.
+fn paged_schema(name: &str) -> JsonObject {
+    let properties: Map<String, Value> = paged_properties(name)
+        .unwrap_or_default()
+        .iter()
+        .map(|property| ((*property).to_owned(), json!({"type": "string"})))
+        .collect();
+    let schema = json!({"type": "object", "properties": properties});
+    schema.as_object().cloned().unwrap_or_default()
+}
+
+/// The answer of the strict [`Paged`] tools to `request`.
+fn paged_call(request: CallToolRequestParams) -> Result<CallToolResponse, ErrorData> {
+    let Some(own) = paged_properties(&request.name) else {
+        return Err(ErrorData::invalid_params("tool not found", None));
+    };
+    let arguments = request.arguments.unwrap_or_default();
+    if let Some(unknown) = arguments.keys().find(|key| !own.contains(&key.as_str())) {
+        let message = format!("unknown field `{unknown}`");
+        return Err(ErrorData::invalid_params(message, None));
+    }
+    Ok(CallToolResult::structured(Value::Object(arguments)).into())
+}
 
 impl ServerHandler for Paged {
     fn list_tools(
@@ -368,16 +406,13 @@ impl ServerHandler for Paged {
         request: Option<PaginatedRequestParams>,
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
-        let schema = || {
-            let schema = json!({"type": "object", "properties": {"x": {"type": "string"}}});
-            schema.as_object().cloned().unwrap_or_default()
-        };
         let second = request.and_then(|r| r.cursor).as_deref() == Some(PAGED_CURSOR);
         let result = if second {
-            ListToolsResult::with_all_items(vec![Tool::new("beta", "page 2", schema())])
+            let beta = Tool::new("beta", "page 2", paged_schema("beta"));
+            ListToolsResult::with_all_items(vec![beta])
         } else {
-            let mut result =
-                ListToolsResult::with_all_items(vec![Tool::new("alpha", "page 1", schema())]);
+            let alpha = Tool::new("alpha", "page 1", paged_schema("alpha"));
+            let mut result = ListToolsResult::with_all_items(vec![alpha]);
             result.next_cursor = Some(PAGED_CURSOR.to_owned());
             let mut meta = MetaObject::default();
             meta.0.insert("note".to_owned(), json!("paged page 1"));
@@ -387,8 +422,42 @@ impl ServerHandler for Paged {
         ready(Ok(result))
     }
 
+    fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        ready(paged_call(request))
+    }
+
     fn get_info(&self) -> InitializeResult {
         InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// [`Paged`] whose listing never answers; its tool calls answer as [`Paged`]'s.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct SilentPaged;
+
+impl ServerHandler for SilentPaged {
+    fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
+        std::future::pending()
+    }
+
+    fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        ready(paged_call(request))
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        Paged.get_info()
     }
 }
 
@@ -430,7 +499,8 @@ pub(crate) struct Structured {
 
 /// A `#[tool_router]` server: `echo {msg}`, `strict {text}` (unknown fields refused),
 /// `structured {msg}` (output schema), `own_context {context}`, `own_session {session_id}`,
-/// `fail` (returns `Err`) and `explode` (panics).
+/// `fail` (returns `Err`), `explode` (panics) and `whoami`, which answers the session and the
+/// agent of its [`CallContext`] as the JSON text `{"session_id", "agent_id"}`.
 #[derive(Debug, Clone, Copy, Default)]
 pub(crate) struct Sample;
 
@@ -470,6 +540,11 @@ impl Sample {
     async fn explode(&self) -> String {
         panic!("explode")
     }
+
+    #[tool(description = "Answers the session and agent of the call")]
+    async fn whoami(&self, Extension(call): Extension<CallContext>) -> String {
+        json!({"session_id": call.session_id(), "agent_id": call.agent_id()}).to_string()
+    }
 }
 
 #[expect(
@@ -503,6 +578,45 @@ impl ServerHandler for ContextEcho {
             "peer": identity_json(peer.as_ref()),
         });
         ready(Ok(CallToolResult::structured(echo).into()))
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// The request state of the [`Mrtr`] server's first round.
+pub(crate) const MRTR_STATE: &str = "mrtr-state";
+
+/// A hand-written server with one multi-round-trip tool (MRTR, SEP-2322), `ask {}`: a call
+/// without `input_responses` answers an `InputRequiredResult` with the request state
+/// [`MRTR_STATE`]; a call with them (the continuation round) answers the text `answered`. rmcp
+/// lets an `InputRequiredResult` reach only a request of protocol version 2026-07-28 or newer.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct Mrtr;
+
+impl ServerHandler for Mrtr {
+    fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
+        let schema = json!({"type": "object"}).as_object().cloned();
+        let ask = Tool::new("ask", "Asks the client", schema.unwrap_or_default());
+        ready(Ok(ListToolsResult::with_all_items(vec![ask])))
+    }
+
+    fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        let response = if request.input_responses.is_some() {
+            CallToolResult::success(vec![ContentBlock::text("answered")]).into()
+        } else {
+            InputRequiredResult::from_request_state(MRTR_STATE).into()
+        };
+        ready(Ok(response))
     }
 
     fn get_info(&self) -> InitializeResult {

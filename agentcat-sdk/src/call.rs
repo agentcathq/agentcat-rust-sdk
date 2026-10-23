@@ -2,6 +2,7 @@
 //! customer's handler runs (B-050, B-051), the mint-back text and its structured mirror (B-056,
 //! B-058), the `get_more_tools` call (B-046) and the shapes of the `error` of an event (B-097,
 //! RD-05, RD-06). `call/tests.rs` checks them against `tests/vectors/call.json` and the JS oracle.
+//! [`run`] puts them together into the pipeline that `Tracked::call_tool` runs (B-022).
 use rmcp::model::{CallToolResult, ContentBlock, ErrorCode, ErrorData, JsonObject};
 use serde_json::{Map, Value};
 
@@ -12,6 +13,7 @@ use crate::constants::{
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
 use crate::js;
 
+pub(crate) mod run;
 #[cfg(test)]
 mod tests;
 

@@ -46,7 +46,51 @@ const AGENT_SOURCE_SUPPLIED: &str = "supplied";
 /// A new random session ID (`ses_` and a KSUID of the current time); `None` when the clock is
 /// outside the KSUID range or the system has no randomness, where TS throws.
 pub(crate) fn new_session_id() -> Option<String> {
+    if minting_fails() {
+        return None;
+    }
     ksuid::random(SESSION_PREFIX)
+}
+
+#[cfg(test)]
+thread_local! {
+    /// Whether [`new_session_id`] fails on this thread: the switch of [`SessionIdFailure`].
+    static MINTING_FAILS: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
+
+/// Whether a test made [`new_session_id`] fail on this thread.
+#[cfg(test)]
+fn minting_fails() -> bool {
+    MINTING_FAILS.get()
+}
+
+/// Minting never fails on purpose outside the tests.
+#[cfg(not(test))]
+const fn minting_fails() -> bool {
+    false
+}
+
+/// A test switch: while a value of it lives, [`new_session_id`] returns `None` on the thread that
+/// made it, as when the clock or the randomness fails. A test that serves and calls a tool on one
+/// current-thread runtime reaches the SDK's degraded path with it.
+#[cfg(test)]
+#[derive(Debug)]
+pub(crate) struct SessionIdFailure(());
+
+#[cfg(test)]
+impl SessionIdFailure {
+    /// Turns the switch on for this thread.
+    pub(crate) fn start() -> Self {
+        MINTING_FAILS.set(true);
+        Self(())
+    }
+}
+
+#[cfg(test)]
+impl Drop for SessionIdFailure {
+    fn drop(&mut self) {
+        MINTING_FAILS.set(false);
+    }
 }
 
 /// A new random event ID (`evt_` and a KSUID of the current time); `None` as for

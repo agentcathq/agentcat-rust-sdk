@@ -493,27 +493,38 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to access server info from regular Server instance"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "reads the private _serverInfo field of a TS Server; nothing of the SDK runs (Rust reads ServerHandler::get_info, pinned by agentcat-sdk::call::run::tests::record_fields_follow_b077)"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to access server info with McpServer if available"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "imports the TS McpServer if the installed MCP SDK has it and reads its private _serverInfo field; nothing of the SDK runs"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to call tools without tracking"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "calls a tool of the TS test server without track(); nothing of the SDK runs"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should handle tools defined BEFORE track() with shorthand Zod schema"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should handle tools with shorthand Zod schema syntax (reproduces context injection issue)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "registers the tool after track() (late registration); a Rust handler lists whatever it serves at listing time, so the listed context and the call are those of agentcat-sdk::call::run::tests::listing_follows_the_handle_options and strict_tool_gets_stripped_arguments_after_listing"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should properly trace tools added after track() is called"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "registers the tool after track() (late registration); a Rust handler lists whatever it serves at listing time, so the listed context and the call are those of agentcat-sdk::call::run::tests::listing_follows_the_handle_options and strict_tool_gets_stripped_arguments_after_listing"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should publish events only once (no duplicates)"
@@ -521,7 +532,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should verify that server info is used by isCompatibleServerType"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS server-shape compatibility checks and their errors do not exist in Rust: rmcp is typed."
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|buildSessionInfo > null identity yields anonymous info"
@@ -1025,11 +1038,13 @@ reason = "inject.json case ts:context-parameters:owns-context; checked by agentc
 
 [[test]]
 key = "v1|src/tests/context-preservation.test.ts|Context Parameter Preservation > should add context parameter when it doesn't exist"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v1|src/tests/context-preservation.test.ts|Context Parameter Preservation > should preserve existing context parameter with custom description"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should apply custom description to all tools when listing"
@@ -1434,11 +1449,14 @@ reason = "The test covers the Workers, edge or process environment of TS, which 
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|MRTR helpers > isInputRequiredShape matches only resultType === 'input_required'"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "isInputRequiredShape tells an untyped JS result apart by resultType; rmcp hands the SDK a typed CallToolResponse whose InputRequired variant is that shape, handled in agentcat-sdk::call::run::tests::input_required_is_tagged_not_decorated"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|MRTR helpers > mrtrContinuationTags fires only when inputResponses ride the request"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::continuation_is_tagged", "agentcat-sdk::call::run::tests::record_fields_follow_b077"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a hanging identify hook does not delay the tool call"
@@ -1466,31 +1484,42 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|extra projection on captured events > publishes v1-shaped extra with headers verbatim and url as a string"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "the TS test projects a JS handler context (v1 headers and a URL object) into extra; Rust builds extra from the RequestContext in the D34 shape (event::extra_value), pinned by agentcat-sdk::event::tests::tracked_stateful_http_record_has_session_and_client"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|extra projection on captured events > publishes v2-shaped extra with the web Request as plain { method, url, headers }"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-07"
+reason = "the TS test projects a JS handler context (a v2 web Request) into extra; Rust builds extra from the RequestContext in the D34 shape (event::extra_value), pinned by agentcat-sdk::event::tests::tracked_stateful_http_record_has_session_and_client"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|finish() fault containment > returns the customer's isError result when a content entry is null"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "a JS low-level handler can return a content array with a null hole; rmcp's CallToolResult holds typed content blocks only, so such a result cannot reach the SDK"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|finish() fault containment > returns the raw customer result when post-handler decoration throws"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the TS test makes decoration throw with a content array whose iterator throws; Rust decorates typed values, and its one failure (serializing the result for the record) cannot be provoked; call::run returns the result untouched and logs the TS post-handler line on that path"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept on the degraded path when enableReportMissing is false"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::customer_get_more_tools_is_shadowed"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept on the tracing-off path when enableReportMissing is false"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::customer_get_more_tools_is_shadowed"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|get_more_tools gating > does not intercept when enableReportMissing is false — the customer's own tool runs"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::customer_get_more_tools_is_shadowed"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > answers get_more_tools directly and publishes its event"
@@ -1498,11 +1527,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > answers get_more_tools directly on the degraded path, without publishing"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::session_id_failure_takes_degraded_path"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > degrades to the original handler with the UNSTRIPPED request when tracing setup fails"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::session_id_failure_takes_degraded_path"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > publishes an error event and rethrows when the original handler throws"
@@ -1510,7 +1541,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > publishes an error event with __agentcat_error stack when present"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-17"
+reason = "TS reads the Error a handler stashes on extra.__agentcat_error (the inner tap, B-020); Rust has no stash: rmcp turns a tool's own error into text before the wrapper sees it, and the opt-in capture_error helper takes its place"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|installCallWrap (synthetic seam) > strips registry-scoped args before the original handler, keeps raw on the event"
@@ -1526,11 +1559,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|registry rebuild bounding > bounds the rebuild: a hanging tools/list handler cannot hang tools/call"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::rebuild_times_out_after_5s"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|registry rebuild bounding > keeps serving calls when the list handler fails every time"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::rebuild_retries_after_a_failed_listing"]
 
 [[test]]
 key = "v1|src/tests/engine-innertap.test.ts|inner-tap fault containment > installRegistryProxy swallows a highLevel whose _registeredTools assignment throws"
@@ -2573,7 +2608,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > enableTracing:false — get_more_tools still answers, no mint-back, no event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > get_more_tools carries handles and the mint-back"
@@ -2605,7 +2641,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > declares mcp_session in a listed plain-object outputSchema"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > echoed handles are reused verbatim with no mint-back"
@@ -2617,11 +2654,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableReportMissing:false — handles still inject, no get_more_tools"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableTracing:false — no handle params injected, no mint-back, no events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source"
@@ -2633,11 +2672,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > injects required handles into listed tool schemas"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > prepends the mint-back on isError results too"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > publishes no tools/list or initialize events"
@@ -4610,7 +4651,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > advertises both handles as required on every tool including get_more_tools"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > echoes a self-chosen agent_id verbatim with source tag supplied"
@@ -4692,7 +4734,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > advertises the tool with required bespoke context, handles, and honest annotations"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > answers with the canned text and publishes an event carrying userIntent"
@@ -4850,7 +4893,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > injects required handles into listed tool schemas in canonical order"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > minting call: block on the wire, absent from event.response"
@@ -4858,7 +4902,9 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > prefers the v2 envelope for clientInfo and protocol version"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the v2 envelope (ctx.mcpReq.envelope) is a host object of the TS MCP SDK v2; rmcp keeps the reserved io.modelcontextprotocol/* keys in _meta and moves the whole _meta into RequestContext::meta, so Rust reads one place (C28) and has no envelope-over-_meta precedence; the _meta reads are event.json cases client-info:* and protocol-version:*, checked by agentcat-sdk::event::tests::vectors_match_ts"
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > publishes no tools/list or initialize events"
@@ -5052,7 +5098,9 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/smoke.test.ts|v2 harness smoke > round-trips a tool call through a real v2 server"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "checks the TS v2 test harness (connectClient on an untracked McpServer); nothing of the SDK runs"
 
 [[test]]
 key = "v2|src/tests/v2/track-highlevel.test.ts|track() on v2 McpServer > captures events, strips injected args (loose schema), prepends mint-back, mirrors structuredContent"

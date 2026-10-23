@@ -20,6 +20,7 @@ use rmcp::model::{
 use rmcp::service::{MaybeSendFuture, NotificationContext, RequestContext, SubscriptionContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 
+use crate::call::run::run_call;
 use crate::client::AgentCat;
 use crate::constants::GET_MORE_TOOLS_NAME;
 use crate::inject::{
@@ -258,12 +259,14 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         self.inner.unsubscribe(request, context)
     }
 
+    /// The TS tool-call pipeline (B-022) around the handler's `call_tool`: interception,
+    /// stripping, mint-back and the record of the call.
     fn call_tool(
         &self,
         request: CallToolRequestParams,
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
-        self.inner.call_tool(request, context)
+        run_call(self, request, context)
     }
 
     #[expect(

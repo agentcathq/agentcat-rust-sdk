@@ -17,6 +17,7 @@ mod call;
 mod client;
 mod config;
 mod constants;
+mod context;
 mod event;
 mod handles;
 mod inject;
@@ -31,4 +32,5 @@ mod tracked;
 
 pub use client::{AgentCat, track};
 pub use config::Options;
+pub use context::CallContext;
 pub use tracked::Tracked;

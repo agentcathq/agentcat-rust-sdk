@@ -1,9 +1,10 @@
 //! `event` against the TS SDK: the cases of `tests/vectors/event.json` (the client identity ladder
 //! and the protocol version), and Rust-only tests of the shapes of `parameters.request` (B-082) and
-//! `parameters.extra` (D34, D06), of the stateless HTTP identity (C22), and of the
-//! [`RecordingSink`]'s records. The context tests run over an in-memory connection and over
-//! streamable HTTP on a loopback port.
+//! `parameters.extra` (D34, D06), of the stateless HTTP identity (C22), of the records a tracked
+//! server makes over HTTP, and of the [`RecordingSink`]'s records. The context tests run over an
+//! in-memory connection and over streamable HTTP on a loopback port.
 use std::collections::{BTreeSet, HashMap};
+use std::sync::Arc;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use http::request::Parts;
@@ -21,11 +22,14 @@ use super::{
     CallRecord, ClientIdentity, client_identity, project_headers, protocol_version, request_info,
     request_url, request_value,
 };
+use crate::client::AgentCat;
+use crate::config::Options;
 use crate::constants::META_CLIENT_INFO_KEY;
 use crate::handles::{HandleResolution, SessionSource};
 use crate::sink::Sink;
 use crate::test_support::rmcp::{
-    ContextEcho, RecordingSink, bare_context, connect, connect_http, identity_json, serve_http,
+    ContextEcho, RecordingSink, Sample, bare_context, connect, connect_http, identity_json,
+    serve_http,
 };
 use crate::test_support::vectors;
 
@@ -409,6 +413,72 @@ async fn stateless_identity_is_unknown() {
     assert_eq!(headers[SENTINEL.0], SENTINEL.1);
     assert_eq!(echo["peer"]["name"], "rmcp", "rmcp's fabricated peer info");
     assert_eq!(echo["client"], Value::Null);
+    client.cancel().await.unwrap();
+}
+
+/// A tracked [`Sample`] on a handle whose records go to the returned [`RecordingSink`], served
+/// over streamable HTTP with `config`; returns the URL too.
+async fn serve_tracked_sample(config: StreamableHttpServerConfig) -> (String, Arc<RecordingSink>) {
+    let sink = Arc::new(RecordingSink::default());
+    let agentcat = AgentCat::with_sink("", Options::default(), sink.clone());
+    let url = serve_http(agentcat.track(Sample), config).await;
+    (url, sink)
+}
+
+/// Calls the tool `echo` of a [`Sample`] with [`raw_arguments`] and returns the one record the
+/// call left in `sink`.
+async fn record_of_echo(
+    client: &RunningService<RoleClient, InitializeRequestParams>,
+    sink: &RecordingSink,
+) -> CallRecord {
+    let params = CallToolRequestParams::new("echo").with_arguments(raw_arguments());
+    client.call_tool(params).await.expect("the call succeeds");
+    let mut records = sink.take_records();
+    assert_eq!(records.len(), 1, "one record: {records:?}");
+    records.remove(0)
+}
+
+/// The record-level twin of [`stateful_http_record_has_session_and_client`]: the record of a
+/// tracked call over legacy stateful HTTP has the D34 `extra` with the session header, the client's
+/// headers and URL, and the session's `initialize` client (B-085).
+#[tokio::test]
+async fn tracked_stateful_http_record_has_session_and_client() {
+    let config = StreamableHttpServerConfig::default().with_json_response(true);
+    let (url, sink) = serve_tracked_sample(config).await;
+    let client = connect_http(&url, "http-client", sentinel()).await;
+    let record = record_of_echo(&client, &sink).await;
+    let extra = &record.extra;
+    assert_eq!(
+        keys(extra),
+        ["sessionId", "requestId", "_meta", "requestInfo"]
+    );
+    let info = &extra["requestInfo"];
+    let session = info["headers"]["mcp-session-id"].as_str().unwrap();
+    assert_ne!(session, "");
+    assert_eq!(extra["sessionId"], session);
+    assert_eq!(info["headers"][SENTINEL.0], SENTINEL.1);
+    assert_eq!(info["url"], url.as_str());
+    let expected = json!({"name": "http-client", "version": "1.0.0"});
+    assert_eq!(identity_json(record.client.as_ref()), expected);
+    client.cancel().await.unwrap();
+}
+
+/// The record-level twin of [`stateless_identity_is_unknown`] (C22): the record of a tracked call
+/// over stateless HTTP from a legacy client has no `sessionId` and no client.
+#[tokio::test]
+async fn tracked_stateless_record_has_no_client() {
+    let config = StreamableHttpServerConfig::default()
+        .with_legacy_session_mode(false)
+        .with_json_response(true);
+    let (url, sink) = serve_tracked_sample(config).await;
+    let client = connect_http(&url, "http-client", sentinel()).await;
+    let record = record_of_echo(&client, &sink).await;
+    let extra = &record.extra;
+    assert_eq!(keys(extra), ["requestId", "_meta", "requestInfo"]);
+    let headers = &extra["requestInfo"]["headers"];
+    assert_eq!(headers.get("mcp-session-id"), None);
+    assert_eq!(headers[SENTINEL.0], SENTINEL.1);
+    assert_eq!(record.client, None);
     client.cancel().await.unwrap();
 }
 
