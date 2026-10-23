@@ -1,0 +1,27 @@
+[package]
+name = "harness-ref-server"
+version = "0.0.0"
+description = "The Rust reference server of the differential harness: the tool contract, tracked with agentcat-sdk"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+agentcat-sdk = { workspace = true }
+# Serves rmcp's StreamableHttpService on 127.0.0.1.
+axum = { workspace = true, features = ["http1", "tokio"] }
+rmcp = { workspace = true, features = ["transport-io", "transport-streamable-http-server"] }
+serde = { workspace = true, features = ["derive", "std"] }
+# The tool contract's schemas keep their key order (property-order rule of the harness).
+serde_json = { workspace = true, features = ["preserve_order"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "signal", "time"] }
+# Not used here: rmcp's streamable HTTP server uses it. This entry sets its floor for
+# `cargo minimal-versions check --direct`, which holds tokio at the SDK's floor (1.37) and would
+# otherwise take tokio-stream 0.1.18, which asks for tokio 1.15 but calls an API of tokio 1.38. rmcp
+# asks for "0.1"; 0.1.1 is the first release with the `wrappers` module that rmcp imports.
+tokio-stream = { version = "0.1.1", default-features = false }
+
+[lints]
+workspace = true

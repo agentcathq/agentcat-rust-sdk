@@ -1,5 +1,5 @@
 [workspace]
-members = ["agentcat-sdk", "xtask"]
+members = ["agentcat-sdk", "xtask", "harness/rust-server"]
 resolver = "3"
 
 [workspace.package]
@@ -19,6 +19,8 @@ rmcp = { version = "3.0.0", default-features = false, features = ["server"] }
 http = { version = "1", default-features = false }
 tokio = { version = "1.37", default-features = false }
 futures = { version = "0.3", default-features = false }
+agentcat-sdk = { path = "agentcat-sdk" }
+axum = { version = "0.8", default-features = false }
 
 [workspace.lints.rust]
 unsafe_code = "forbid"

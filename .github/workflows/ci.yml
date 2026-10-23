@@ -164,6 +164,8 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: ./.github/actions/node-oracle
+      # The harness tests run the Rust reference server.
+      - run: cargo build -p harness-ref-server
       # One package at a time: oracle/test/fetch.test.mjs dirties the shared TS clone on purpose (R-17).
       - run: corepack pnpm -r --workspace-concurrency=1 test
       - run: node oracle/src/vectors/run.mjs --check

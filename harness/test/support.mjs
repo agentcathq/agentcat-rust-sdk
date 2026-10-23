@@ -22,6 +22,12 @@ export const TS_SERVER = [process.execPath, "--import", pathToFileURL(GUARD).hre
 /** The TS v2 reference server command (@modelcontextprotocol/server 2.x), egress guard preloaded. */
 export const TS_V2_SERVER = [process.execPath, "--import", pathToFileURL(GUARD).href, TS_V2];
 
+/**
+ * The Rust reference server command (`cargo build -p harness-ref-server`): `HARNESS_RUST_SERVER`,
+ * else target/debug/harness-ref-server, as in matrix.mjs.
+ */
+export const RUST_SERVER = [process.env.HARNESS_RUST_SERVER || join(HARNESS, "..", "target", "debug", "harness-ref-server")];
+
 /** ts-v1 plus an env-selected misbehavior (test/fixtures/ts-v1-plus.mjs), guard preloaded. */
 export const TS_SERVER_PLUS = [
   process.execPath,

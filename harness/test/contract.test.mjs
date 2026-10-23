@@ -11,7 +11,21 @@ import { ensureTs } from "oracle/fetch-ts";
 
 import { convert } from "../src/contract/extract-schema.mjs";
 import { contractResult, validateRequests } from "../src/contract/validate.mjs";
-import { BASIC, CONTRACT, HARNESS, TS_SERVER, TS_SERVER_PLUS, TS_V2_SERVER, driver, outFile, readJson, run, tempDir, writeJson } from "./support.mjs";
+import {
+  BASIC,
+  CONTRACT,
+  HARNESS,
+  RUST_SERVER,
+  TS_SERVER,
+  TS_SERVER_PLUS,
+  TS_V2_SERVER,
+  driver,
+  outFile,
+  readJson,
+  run,
+  tempDir,
+  writeJson,
+} from "./support.mjs";
 
 const VALIDATE = join(HARNESS, "src", "contract", "validate.mjs");
 const EXTRACT = join(HARNESS, "src", "contract", "extract-schema.mjs");
@@ -323,4 +337,71 @@ test("ts-v1's tools/list, minus execution, equals the contract file (v1 and v2 s
   const listed = readJson(outFile("v1list", "v1list", "stdio", "transcript")).find((e) => e.op === "listTools").result.tools;
   assert.ok(listed.every((tool) => tool.execution !== undefined), "v1 adds execution");
   assert.deepEqual(listed.map(({ execution, ...tool }) => tool), readJson(CONTRACT));
+});
+
+// The Rust reference server (harness/rust-server) embeds the contract file and must list it whole.
+test("untracked, the Rust server lists the tool contract whole on stdio at 2025-11-25 and on HTTP at 2026-07-28", { timeout: 120_000 }, async (t) => {
+  const path = writeJson(join(tempDir(t), "list.json"), {
+    name: "rustlist",
+    projectId: readJson(BASIC).projectId,
+    options: {},
+    expectPublishes: 0,
+    sessions: [{ steps: [{ op: "listTools" }] }],
+  });
+  const contract = readJson(CONTRACT);
+  // deepEqual ignores key order; the diff compares the order of each tool's inputSchema.properties
+  // (normalizer rule property-order), so check it too.
+  const propertyOrder = (tools) => tools.map((tool) => [tool.name, Object.keys(tool.inputSchema.properties)]);
+  for (const [transport, lane] of [["stdio", "2025-11-25"], ["http", "2026-07-28"]]) {
+    const label = `rustlist-${lane}`;
+    const res = await driver(path, label, transport, ["--lane", lane], { server: RUST_SERVER, env: { HARNESS_NO_TRACK: "1" } });
+    assert.equal(res.code, 0, `${transport} ${lane}: ${res.stderr}`);
+    const transcript = readJson(outFile("rustlist", label, transport, "transcript"));
+    assert.deepEqual(transcript.filter((e) => e.op === "initialize").map((e) => e.result.protocolVersion), [lane]);
+    const listed = transcript.find((e) => e.op === "listTools").result.tools;
+    assert.deepEqual(listed, contract, `${transport} ${lane}`);
+    assert.deepEqual(propertyOrder(listed), propertyOrder(contract), `${transport} ${lane}`);
+  }
+});
+
+/** The Rust server's environment for a run that must stop before serving. */
+function rustEnv(t, extra) {
+  const env = { ...process.env, DISABLE_DIAGNOSTICS: "true", HOME: tempDir(t), HARNESS_PROJECT_ID: readJson(BASIC).projectId };
+  delete env.HARNESS_NO_TRACK;
+  delete env.HARNESS_OPTIONS;
+  for (const [key, value] of Object.entries(extra)) {
+    if (value === undefined) delete env[key];
+    else env[key] = value;
+  }
+  return env;
+}
+
+test("the Rust server refuses a non-local AGENTCAT_API_URL with exit 2", async (t) => {
+  const [cmd, ...args] = RUST_SERVER;
+  // The third URL's host is api.agentcat.com (127.0.0.1 is its user name); the last case leaves it unset.
+  const urls = ["https://api.agentcat.com", "http://localhost.example.com", "http://127.0.0.1@api.agentcat.com", undefined];
+  for (const mode of [["stdio"], ["http", "0"], ["http-stateless", "0"]]) {
+    for (const url of urls) {
+      const res = await run(cmd, [...args, ...mode], { env: rustEnv(t, { AGENTCAT_API_URL: url }) });
+      assert.equal(res.code, 2, `${mode[0]} ${url}: ${res.stderr}`);
+      assert.match(res.stderr, /refusing to start/);
+      assert.equal(res.stdout, "");
+    }
+  }
+});
+
+test("the Rust server exits 2 on an unknown profile key or a malformed behavior", async (t) => {
+  const [cmd, ...args] = RUST_SERVER;
+  const cases = [
+    [{ nope: true }, /HARNESS_OPTIONS: unknown key "nope"/],
+    [{ identify: { returns: null, throws: "x" } }, /HARNESS_OPTIONS: identify: needs exactly one of returns, throws/],
+    [{ eventTags: { returns: {}, sleepMs: -1 } }, /HARNESS_OPTIONS: eventTags: "sleepMs" must be a non-negative integer/],
+  ];
+  for (const [options, message] of cases) {
+    const env = rustEnv(t, { AGENTCAT_API_URL: "http://127.0.0.1:9", HARNESS_OPTIONS: JSON.stringify(options) });
+    const res = await run(cmd, [...args, "stdio"], { env });
+    assert.equal(res.code, 2, `${JSON.stringify(options)}: ${res.stderr}`);
+    assert.match(res.stderr, message);
+    assert.equal(res.stdout, "");
+  }
 });

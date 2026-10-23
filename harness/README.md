@@ -5,14 +5,15 @@ server, a local mock API records every event the server publishes, a normalizer 
 language-neutral document, and a diff compares two documents. Allowed differences are listed in
 `rulings.json`.
 
-This package holds the TS half: two TS reference servers, instrumented with the real TS SDK at the
-commit pinned in `oracle/oracle.lock`. `ts-v1.mjs` runs on `@modelcontextprotocol/sdk` 1.31;
+This package holds two TS reference servers, instrumented with the real TS SDK at the commit pinned
+in `oracle/oracle.lock`, and the Rust reference server (`rust-server/`, see "The Rust reference
+server" below), instrumented with `agentcat-sdk`. `ts-v1.mjs` runs on `@modelcontextprotocol/sdk` 1.31;
 `ts-v2.mjs` runs on `@modelcontextprotocol/server` 2.0.0 and also serves protocol 2026-07-28, which
 has no `initialize` handshake (design decision C18). Owner ruling R20: `ts-v2.mjs` is the answer key
 on both lanes; `ts-v1.mjs` stays as a second TS reference and is not what the Rust server is diffed
 against. Both serve the same tools and share
-`src/servers/common.mjs`. The Rust reference server (plan 3) follows the same server protocol and
-loads the same tool contract, and must match TS on both client lanes.
+`src/servers/common.mjs`. The Rust reference server follows the same server protocol and loads the
+same tool contract, and must match TS on both client lanes.
 
 Run the tests with `corepack pnpm --filter harness test`. The test files run one at a time, and must
 not run at the same time as `oracle/test/fetch.test.mjs`, which dirties the shared TS clone on purpose.
@@ -37,6 +38,9 @@ Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` o
   `~/agentcat.log` there). The TS servers also pass `disableDiagnostics: true`.
 - Untracked (`HARNESS_NO_TRACK=1`), the TS servers never publish: `emit_custom` answers without
   calling `publishCustomEvent`.
+- The Rust reference server runs no egress guard. It refuses to start the same way (exit 2,
+  `refusing to start`), with a stricter check of `AGENTCAT_API_URL`, and publishes nothing: the SDK
+  has no delivery before plan 4.
 
 ## Commands
 
@@ -44,6 +48,11 @@ Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` o
 # One run: writes harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 node harness/src/driver.mjs harness/scenarios/basic.json ts stdio \
   -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v1.mjs
+
+# The Rust reference server (build it first); it publishes nothing before plan 4
+cargo build -p harness-ref-server
+node harness/src/driver.mjs harness/scenarios/basic.json rust stdio --expect-publishes 0 \
+  -- target/debug/harness-ref-server
 
 # The 2026-07-28 lane against the TS v2 server
 node harness/src/driver.mjs harness/scenarios/basic.json ts2 http --lane 2026-07-28 \
@@ -200,7 +209,7 @@ Every body a reference server publishes must be one the AgentCat backend accepts
 
 ## Server protocol
 
-Every reference server (TS now, Rust in plan 3) follows it. A Rust twin must match each item.
+Every reference server (TS and Rust) follows it. The Rust twin matches each item.
 
 ### Command line, environment and output
 
@@ -264,6 +273,50 @@ On the 2026-07-28 lane, the transcript and events also differ from the 2025 lane
 `_meta["io.modelcontextprotocol/serverInfo"]`, `tools/list` adds `ttlMs` and `cacheScope`, the
 `mcp-protocol-version` header is `2026-07-28`, and the TS SDK adds the event tag
 `agentcat_protocol_version: "2026-07-28"`.
+
+### The Rust reference server
+
+`rust-server/` is the Cargo package `harness-ref-server` (a workspace member, `publish = false`).
+Build it with `cargo build -p harness-ref-server`. The harness tests and `matrix.mjs` run
+`target/debug/harness-ref-server` (`HARNESS_RUST_SERVER` overrides the path); `scripts/check.sh` and
+the CI job `oracle-harness` build it before the harness tests.
+
+- `src/main.rs`: the command line, the environment and the modes. `stdio` serves one tracked server
+  (`AgentCat::track`) for the connection. `http` serves rmcp's `StreamableHttpService` with a
+  `LocalSessionManager` and `legacy_session_mode(true)`, `http-stateless` with
+  `legacy_session_mode(false)`, both with `json_response(true)`. Each MCP session or request gets a
+  fresh tracked server from one shared `AgentCat` handle. rmcp serves 2026-07-28 requests and
+  `server/discover` itself in every mode (over HTTP, a fresh server per 2026-07-28 request).
+- `src/tools.rs`: the tools. Names, descriptions and schemas come only from
+  `contract/tool-contract.json`, embedded with `include_str!`; the behaviors follow `toolHandlers`
+  in `common.mjs`. rmcp's `ToolRouter` does the dispatch, `get_tool`, the argument errors and the
+  conversion of a tool's `Err` into an `isError` result. `tools/list` keeps the contract's order
+  (rmcp's router sorts by name) and, on 2026-07-28, adds `ttlMs: 0` and `cacheScope: "private"` as
+  ts-v2 does. `boom` records its error with `capture_error`. `emit_custom` answers `published` and
+  publishes nothing (the SDK has no custom events before plan 4).
+- `src/profile.rs`: the options profile.
+
+Where it differs from the TS servers:
+
+- `AGENTCAT_API_URL`: the check is stricter than the WHATWG parse of `common.mjs`: no user info,
+  backslash, whitespace or control character; the host spelled `127.0.0.1`, `localhost` (any case)
+  or `[::1]`; a port, when given, of 1 to 5 digits below 65536. The value is checked and kept: the
+  SDK has no API URL option and publishes nothing yet (plan 4), so the matrix runs the tracked Rust
+  server with `--expect-publishes 0`.
+- The profile: a flag must be a boolean (`customContextDescription` a string), where `common.mjs`
+  copies any value. A `returns` value must fit the hook's SDK type: `resolveSessionId` a string or
+  `null`; `identify` `null` or `{"userId": string, "userName"?: string, "userData"?: object}`;
+  `eventTags` and `eventProperties` an object or `null`; `redactSensitiveInformation` a string.
+  Anything else exits 2. `redactSensitiveInformation` is checked and kept: the SDK has no redaction
+  yet (plan 4). Every hook is async; `sleepMs` sleeps on the tokio timer.
+- `HARNESS_CANARY=1` sets the context description to `"canary"`, whatever the profile says: the
+  perturbed configuration that the L3 canary run must catch.
+- `big` with a negative `size`, or one above V8's longest string, fails with JavaScript's
+  `RangeError` text (`Invalid count value: <n>`, `Invalid string length`) instead of allocating.
+- Argument errors carry serde's text (`failed to deserialize parameters: ...`) where ts-v2 carries
+  ajv's. An unknown tool answers the JSON-RPC error `-32602` `tool not found` (ts-v2:
+  `Tool <name> not found`). On 2026-07-28, rmcp adds no `_meta["io.modelcontextprotocol/serverInfo"]`
+  to results.
 
 ## Options profile
 

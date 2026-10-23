@@ -36,6 +36,8 @@ cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
 # oracle-harness (the parity check runs after the tests below)
 corepack pnpm install --frozen-lockfile
+# the harness tests run the Rust reference server
+cargo build -p harness-ref-server
 corepack pnpm -r --workspace-concurrency=1 test
 node oracle/src/vectors/run.mjs --check
 node oracle/src/parity/list-tests.mjs --check
