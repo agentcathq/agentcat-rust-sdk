@@ -107,3 +107,66 @@ fn empty_custom_description_uses_the_default() {
         DEFAULT_CONTEXT_PARAMETER_DESCRIPTION
     );
 }
+
+/// A set hook shows as `"<hook>"`, never as its closure; the options stay `Clone` (D19, C14).
+#[test]
+fn debug_hides_hooks() {
+    let none = format!("{:?}", Options::default());
+    for name in [
+        "resolve_session_id",
+        "identify",
+        "event_tags",
+        "event_properties",
+    ] {
+        assert!(none.contains(&format!("{name}: None")), "{none}");
+    }
+    assert!(!none.contains("<hook>"));
+
+    let options = Options::default()
+        .resolve_session_id(|_call| async { Ok(None) })
+        .identify(|_call| async { Ok(None) })
+        .event_tags(|_call| async { Ok(None) })
+        .event_properties(|_call| async { Ok(None) });
+    let set = format!("{options:?}");
+    for name in [
+        "resolve_session_id",
+        "identify",
+        "event_tags",
+        "event_properties",
+    ] {
+        assert!(set.contains(&format!("{name}: Some(\"<hook>\")")), "{set}");
+    }
+    assert_eq!(format!("{:?}", options.clone()), set);
+    assert!(options.hook_mode());
+    assert!(
+        !Options::default()
+            .identify(|_call| async { Ok(None) })
+            .hook_mode()
+    );
+}
+
+/// B-004, B-031: the custom `context` description reaches the listing of the tools that get the
+/// parameter, and `get_more_tools` keeps its own.
+#[tokio::test]
+async fn custom_context_description_lands_in_the_listing() {
+    use std::sync::Arc;
+
+    use crate::client::AgentCat;
+    use crate::constants::GET_MORE_TOOLS_NAME;
+    use crate::test_support::rmcp::{RecordingSink, Sample, connect};
+
+    let options = Options::default().custom_context_description("Explain your reasoning");
+    let agentcat = AgentCat::with_sink("", options, Arc::new(RecordingSink::default()));
+    let client = connect(agentcat.track(Sample), "custom").await;
+    let tools = client.list_all_tools().await.unwrap();
+    let description_of = |name: &str| {
+        let tool = tools.iter().find(|tool| tool.name == name).unwrap();
+        tool.input_schema["properties"]["context"]["description"].clone()
+    };
+    assert_eq!(description_of("echo"), "Explain your reasoning");
+    assert_ne!(
+        description_of(GET_MORE_TOOLS_NAME),
+        "Explain your reasoning"
+    );
+    client.cancel().await.unwrap();
+}

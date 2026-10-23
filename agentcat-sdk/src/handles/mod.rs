@@ -23,6 +23,17 @@ mod tests;
 const SESSION_PREFIX: &str = "ses";
 
 /// The prefix of an event ID.
+#[cfg_attr(
+    not(test),
+    allow(
+        dead_code,
+        reason = "read by the delivery pipeline (plan 4); rustc 1.88 counts a use inside another dead item as a use"
+    ),
+    expect(
+        clippy::allow_attributes,
+        reason = "fires on newer rustc only, where dead code is found transitively"
+    )
+)]
 const EVENT_PREFIX: &str = "evt";
 
 /// The number of base62 characters after `ses_` in a session ID.
@@ -95,6 +106,10 @@ impl Drop for SessionIdFailure {
 
 /// A new random event ID (`evt_` and a KSUID of the current time); `None` as for
 /// [`new_session_id`].
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 pub(crate) fn new_event_id() -> Option<String> {
     ksuid::random(EVENT_PREFIX)
 }
@@ -105,6 +120,17 @@ pub(crate) fn new_event_id() -> Option<String> {
 /// [`DERIVE_EPOCH_MS`] plus the first 4 hash bytes as a big-endian `u32` in milliseconds, and its
 /// payload is hash bytes 4 to 19. TS takes that `u32` modulo the milliseconds of 365 days, which
 /// is more than any `u32`, so the modulo changes nothing. `id` is hashed as it is, untrimmed.
+#[cfg_attr(
+    not(test),
+    allow(
+        dead_code,
+        reason = "read by the delivery pipeline (plan 4); rustc 1.88 counts a use inside another dead item as a use"
+    ),
+    expect(
+        clippy::allow_attributes,
+        reason = "fires on newer rustc only, where dead code is found transitively"
+    )
+)]
 pub(crate) fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
     let hash = match project_id.filter(|project| !project.is_empty()) {
         Some(project) => Sha256::digest(format!("{id}:{project}")),
@@ -315,6 +341,10 @@ pub(crate) fn build_handle_tags(
 /// value that is not empty after [`js::trim`] gives [`derive_session_id`] of the trimmed value
 /// (source `Hook`); no value or an empty one gives a new random ID (source `Minted`), which the
 /// agent never learns. `None` only when minting fails.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 pub(crate) fn session_from_hook_value(
     hook_value: Option<&str>,
     project_id: Option<&str>,

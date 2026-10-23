@@ -13,6 +13,10 @@ mod tests;
 pub(crate) const DEFAULT_CONTEXT_PARAMETER_DESCRIPTION: &str = "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\"";
 
 /// Event type of custom events; the dashboard keys on it.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 pub(crate) const AGENTCAT_CUSTOM_EVENT_TYPE: &str = "agentcat:custom";
 
 /// Description of the `session_id` tool parameter; agents read it in the tool schema.
@@ -131,6 +135,13 @@ pub(crate) fn get_more_tools_descriptor() -> Value {
 }
 
 /// The result of the report-missing tool, as `handleReportMissing` returns it; agents read it.
+#[cfg_attr(
+    not(test),
+    expect(
+        dead_code,
+        reason = "the call path answers through call::report_missing; only the TS vector test reads this"
+    )
+)]
 pub(crate) fn get_more_tools_result() -> Value {
     json!({
         "content": [{

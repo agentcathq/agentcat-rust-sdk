@@ -16,6 +16,7 @@ use serde_json::{Map, Value};
 
 use crate::constants::{META_CLIENT_INFO_KEY, META_PROTOCOL_VERSION_KEY};
 use crate::handles::HandleResolution;
+use crate::hooks::PendingHooks;
 use crate::js;
 
 #[cfg(test)]
@@ -54,6 +55,10 @@ impl From<&Implementation> for ClientIdentity {
 /// One tool call as the SDK records it (B-077). The call path builds it and hands it to the
 /// [`Sink`](crate::sink::Sink); plan 4 assembles the published event from it.
 #[derive(Debug)]
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 pub(crate) struct CallRecord {
     /// When the call started: the event's `timestamp`.
     pub(crate) started_at: SystemTime,
@@ -87,6 +92,8 @@ pub(crate) struct CallRecord {
     pub(crate) server_version: Option<String>,
     /// The client of the call: [`client_identity`].
     pub(crate) client: Option<ClientIdentity>,
+    /// The customer hooks started for the call (B-022 step 7).
+    pub(crate) pending: PendingHooks,
 }
 
 /// `parameters.request` of a `tools/call` request, the raw JSON-RPC request TS records (B-082):
@@ -131,11 +138,8 @@ pub(crate) fn request_value(
 pub(crate) fn extra_value(context: &RequestContext<RoleServer>) -> Value {
     let parts = context.extensions.get::<Parts>();
     let mut extra = Map::new();
-    if let Some(session) = parts.and_then(|parts| parts.headers.get(SESSION_ID_HEADER)) {
-        extra.insert(
-            "sessionId".to_owned(),
-            Value::String(lossy(session.as_bytes())),
-        );
+    if let Some(session) = transport_session_id(context) {
+        extra.insert("sessionId".to_owned(), Value::String(session));
     }
     extra.insert("requestId".to_owned(), context.id.clone().into_json_value());
     if let Some(meta) = request_meta(context) {
@@ -145,6 +149,13 @@ pub(crate) fn extra_value(context: &RequestContext<RoleServer>) -> Value {
         extra.insert("requestInfo".to_owned(), Value::Object(request_info(parts)));
     }
     Value::Object(extra)
+}
+
+/// The `mcp-session-id` header of a stateful HTTP request, as lossy text: `extra.sessionId`.
+pub(crate) fn transport_session_id(context: &RequestContext<RoleServer>) -> Option<String> {
+    let parts = context.extensions.get::<Parts>()?;
+    let session = parts.headers.get(SESSION_ID_HEADER)?;
+    Some(lossy(session.as_bytes()))
 }
 
 /// The `requestInfo` of `extra`: `{headers, url}`, the [`project_headers`] of the request and its

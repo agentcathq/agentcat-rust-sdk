@@ -28,10 +28,14 @@ use crate::client::Inner;
 use crate::config::Options;
 use crate::constants::{AGENTCAT_TAG_MRTR, GET_MORE_TOOLS_NAME};
 use crate::context::CallContext;
-use crate::event::{CallRecord, client_identity, extra_value, protocol_version, request_value};
-use crate::handles::{
-    build_handle_tags, build_mint_back_text, build_structured_mint_back, resolve_handles,
+use crate::event::{
+    CallRecord, ClientIdentity, client_identity, extra_value, protocol_version, request_value,
 };
+use crate::handles::{
+    HandleResolution, build_handle_tags, build_mint_back_text, build_structured_mint_back,
+    resolve_handles,
+};
+use crate::hooks::{PendingHooks, ToolCall, fire};
 use crate::inject::{CONTEXT_PARAM, InjectConfig, ToolEntry, build_injected_list};
 use crate::tokens::{estimate_input_tokens, estimate_output_tokens};
 use crate::tracked::Tracked;
@@ -120,16 +124,12 @@ pub(crate) async fn run_call<H: ServerHandler>(
         return untraced(tracked, request, context, intercept).await;
     };
 
+    let client = client_identity(&context);
+    let pending = start_hooks(shared, &request, &context, client.as_ref()).await;
+
     let request_json = request_value(&request, &context);
     let input_tokens = estimate_input_tokens(request_json.pointer("/params/arguments"));
-    let mut tags = Map::new();
-    if request.input_responses.is_some() {
-        tags.insert(AGENTCAT_TAG_MRTR.to_owned(), MRTR_CONTINUATION.into());
-    }
-    tags.extend(build_handle_tags(
-        &resolution,
-        protocol_version(&context.meta).as_deref(),
-    ));
+    let tags = call_tags(&request, &resolution, &context);
     let server = server_info(tracked.inner());
     let mut record = CallRecord {
         started_at,
@@ -147,7 +147,8 @@ pub(crate) async fn run_call<H: ServerHandler>(
         error: None,
         server_name: server.as_ref().map(|server| server.name.clone()),
         server_version: server.map(|server| server.version),
-        client: client_identity(&context),
+        client,
+        pending,
     };
 
     let name = request.name.to_string();
@@ -199,6 +200,42 @@ pub(crate) async fn run_call<H: ServerHandler>(
             Err(error)
         }
     }
+}
+
+/// The SDK's tags for a call (B-025, B-096): the MRTR continuation, then the handle tags.
+fn call_tags(
+    request: &CallToolRequestParams,
+    resolution: &HandleResolution,
+    context: &RequestContext<RoleServer>,
+) -> Map<String, Value> {
+    let mut tags = Map::new();
+    if request.input_responses.is_some() {
+        tags.insert(AGENTCAT_TAG_MRTR.to_owned(), MRTR_CONTINUATION.into());
+    }
+    tags.extend(build_handle_tags(
+        resolution,
+        protocol_version(&context.meta).as_deref(),
+    ));
+    tags
+}
+
+/// B-022 step 7: starts the customer's hooks, before the tool runs, and never awaits them (B-026).
+/// The task yields once when a hook started, so that each hook has made its first poll before the
+/// tool runs, as TS calls them first. The hooks see the request as sent, before the
+/// [`CallContext`] joins the context.
+async fn start_hooks(
+    shared: &Inner,
+    request: &CallToolRequestParams,
+    context: &RequestContext<RoleServer>,
+    client: Option<&ClientIdentity>,
+) -> PendingHooks {
+    let options = &shared.options;
+    let call = ToolCall::new(request, context, client);
+    let pending = fire(options, &call, options.hook_mode(), shared.sink.as_ref());
+    if pending.any() {
+        tokio::task::yield_now().await;
+    }
+    pending
 }
 
 /// A call that is not traced (tracing off, or the degraded path): the intercept is answered, and

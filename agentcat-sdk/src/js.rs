@@ -85,6 +85,10 @@ fn push_quoted(out: &mut String, text: &str) {
 /// reads back as the same `f64`, with an exponent from 1e21 up and below 1e-6 (`1e+21`, `1e-7`),
 /// and `"0"` for `-0`. An integer beyond 2^53 is first rounded to the nearest `f64`, as
 /// `JSON.parse` rounds it (`18446744073709551615` gives `"18446744073709552000"`).
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 pub(crate) fn number_to_string(number: &Number) -> String {
     let mut out = String::new();
     push_number(&mut out, number);

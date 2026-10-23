@@ -106,6 +106,13 @@ impl<H> Tracked<H> {
     }
 
     /// The client that `initialize` named on this instance, if it has run (C16).
+    #[cfg_attr(
+        not(test),
+        expect(
+            dead_code,
+            reason = "the call path reads the identity from the request context (C22); only tests read this"
+        )
+    )]
     pub(crate) fn client_identity(&self) -> Option<Implementation> {
         self.identity
             .lock()

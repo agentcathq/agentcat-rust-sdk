@@ -39,6 +39,10 @@ pub struct AgentCat {
 #[derive(Debug)]
 pub(crate) struct Inner {
     /// The project that receives the events; `""` means telemetry only (B-003).
+    #[cfg_attr(
+        not(test),
+        expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+    )]
     pub(crate) project_id: String,
     pub(crate) options: Options,
     /// Where the SDK hands its own log lines.

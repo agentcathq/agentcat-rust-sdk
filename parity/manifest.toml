@@ -1768,11 +1768,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventProperties callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventTags callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should attach properties to tool call events"
@@ -1784,7 +1786,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should not block tool calls when callback throws"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agentcat-sdk::hooks::tests::hook_panic_does_not_reach_the_call", "agentcat-sdk::hooks::tests::hooks_never_delay_the_call"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should attach tags to tool call events"
@@ -1808,7 +1811,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > initialize is no longer an event > publishes no initialize event even when tag/property callbacks are set"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > no callbacks configured > should not add tags or properties when not configured"
@@ -1832,7 +1836,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > tools/list is no longer an event > publishes no tools/list event even when tag/property callbacks are set"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should be able to add events directly"
@@ -3249,7 +3254,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > tools/list no longer identifies or publishes > should not run identify or publish an event for a tools/list request"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v1|src/tests/ksuid.test.ts|KSUID > Basic functionality > should create KSUIDs with different timestamps"
@@ -4786,7 +4792,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: (request, extra) arguments carry the v2 ServerContext > passes the raw request and the v2 ServerContext to every hook"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments", "agentcat-sdk::hooks::tests::hooks_fire_in_ts_order"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > adds neither tags nor properties when no callbacks are configured"
@@ -4802,7 +4809,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > does not block tool calls when the callback throws"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agentcat-sdk::hooks::tests::hook_panic_does_not_reach_the_call", "agentcat-sdk::hooks::tests::hooks_never_delay_the_call"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > omits properties when the callback returns null"
@@ -4834,7 +4842,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > does not run identify or publish an event for tools/list"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > handles identify returning invalid data by leaving actor fields empty"
@@ -4959,15 +4968,18 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > lands the custom text in the advertised context param description"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::custom_context_description_lands_in_the_listing"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > uses the default description when customContextDescription is not provided"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableReportMissing false > omits get_more_tools; handle injection is unaffected"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableToolCallContext false > injects no context param; events carry no userIntent"
@@ -4975,23 +4987,30 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > injects no handle params into the listing"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > passes tool calls through unwrapped-behavior: no event, no mint-back"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > still answers get_more_tools directly, publishing nothing"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: track() edge paths > returns an incompatible object untouched instead of throwing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS inspects the object passed to track() and returns an incompatible one untouched; Rust takes a ServerHandler by value, so a wrong type does not compile (RD-19)."
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: track() edge paths > second track() on the same server is a no-op: no double wrap, one event per call"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS patches the server in place and must not patch it twice; Rust track() moves the handler into a new Tracked<H> and has no in-place install to repeat (RD-19)."
 
 [[test]]
 key = "v2|src/tests/v2/pipeline.test.ts|v2 pipeline: publishCustomEvent > lets eventData.sessionId take precedence over the session ID string"

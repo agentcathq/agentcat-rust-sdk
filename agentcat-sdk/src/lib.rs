@@ -7,13 +7,6 @@
 //! the cause chain of an error the tool is about to return.
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![cfg_attr(
-    not(test),
-    expect(
-        dead_code,
-        reason = "the pure core is wired into the public API from plan 3 on"
-    )
-)]
 
 mod call;
 mod capture;
@@ -23,8 +16,13 @@ mod constants;
 mod context;
 mod event;
 mod handles;
+mod hooks;
 mod inject;
 mod js;
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+)]
 mod pipeline;
 mod registry;
 mod sink;
@@ -35,6 +33,7 @@ mod tracked;
 
 pub use capture::capture_error;
 pub use client::{AgentCat, track};
-pub use config::Options;
+pub use config::{HookError, Options, UserIdentity};
 pub use context::CallContext;
+pub use hooks::ToolCall;
 pub use tracked::Tracked;

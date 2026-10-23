@@ -26,6 +26,7 @@ use crate::client::AgentCat;
 use crate::config::Options;
 use crate::constants::META_CLIENT_INFO_KEY;
 use crate::handles::{HandleResolution, SessionSource};
+use crate::hooks::PendingHooks;
 use crate::sink::Sink;
 use crate::test_support::rmcp::{
     ContextEcho, RecordingSink, Sample, bare_context, connect, connect_http, identity_json,
@@ -509,6 +510,7 @@ fn record(n: u64) -> CallRecord {
             name: Some(format!("client_{n}")),
             version: None,
         }),
+        pending: PendingHooks::default(),
     }
 }
 
@@ -531,6 +533,7 @@ fn fields(record: CallRecord) -> Value {
         server_name,
         server_version,
         client,
+        pending: _,
     } = record;
     let started_ms = started_at.duration_since(SystemTime::UNIX_EPOCH).unwrap();
     json!({
