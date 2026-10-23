@@ -3,6 +3,7 @@
 //! and the protocol version of the handle tags (B-067, C28). `event/tests.rs` checks the client
 //! identity and the protocol version against `tests/vectors/event.json`, and the shapes of
 //! `request` and `extra`.
+use std::backtrace::Backtrace;
 use std::fmt;
 use std::time::SystemTime;
 
@@ -14,12 +15,14 @@ use rmcp::RoleServer;
 use rmcp::model::{CallToolRequestParams, Implementation, JsonObject};
 use rmcp::service::RequestContext;
 use serde_json::{Map, Value};
+use tokio::runtime::Handle;
 
 use crate::constants::{META_CLIENT_INFO_KEY, META_PROTOCOL_VERSION_KEY};
 use crate::handles::HandleResolution;
 use crate::hooks::PendingHooks;
 use crate::js;
 
+pub(crate) mod assemble;
 mod public;
 #[cfg(test)]
 mod tests;
@@ -106,6 +109,13 @@ pub(crate) struct CallRecord {
     pub(crate) client: Option<ClientIdentity>,
     /// The customer hooks started for the call (B-022 step 7).
     pub(crate) pending: PendingHooks,
+    /// The runtime the call ran on (`Handle::try_current()` at its start), where the customer's
+    /// redaction hooks run (C38).
+    pub(crate) runtime: Option<Handle>,
+    /// The backtrace of the error [`capture_error`](crate::capture_error) recorded, when that
+    /// error is the record's and a backtrace was captured; the delivery pipeline renders it as
+    /// `error.stack` ([`render_backtrace`](assemble::render_backtrace)).
+    pub(crate) backtrace: Option<Backtrace>,
 }
 
 impl fmt::Debug for CallRecord {
@@ -128,15 +138,20 @@ impl fmt::Debug for CallRecord {
             .field("server_version", &self.server_version)
             .field("client", &self.client)
             .field("pending", &self.pending)
+            .field("runtime", &self.runtime.is_some())
+            .field("backtrace", &self.backtrace.as_ref().map(Backtrace::status))
             .finish()
     }
 }
 
 /// `parameters.request` of a `tools/call` request, the raw JSON-RPC request TS records (B-082):
 /// `method`, `params`, `jsonrpc` and `id`, in that order. `params` is `params` as rmcp serializes
-/// it, with the raw arguments (the injected parameters included), and the request's `_meta` last
-/// when it sent one. rmcp moves that `_meta` out of the params into `context.meta`, so a `_meta`
-/// key the params still hold is dropped.
+/// it (`name`, `arguments`, ...), with the raw arguments (the injected parameters included), and
+/// the request's `_meta` last when it sent one. rmcp moves that `_meta` out of the params into
+/// `context.meta`, so a `_meta` key the params still hold is dropped.
+///
+/// TS echoes the client's key order; Rust writes this fixed order, the order of TS's own v1
+/// client (`event_order.json`), whatever order the client sent (part of RD-07).
 pub(crate) fn request_value(
     params: &CallToolRequestParams,
     context: &RequestContext<RoleServer>,
@@ -166,21 +181,22 @@ pub(crate) fn request_value(
     Value::Object(request)
 }
 
-/// `parameters.extra` of a request (D34), with the keys in this order: `sessionId`, the
-/// `mcp-session-id` header of a stateful HTTP request; `requestId`, the JSON-RPC id as sent;
-/// `_meta`, when the request sent one; and `requestInfo`, when rmcp's streamable HTTP server put
-/// the HTTP request parts in the context ([`request_info`]). On stdio it has no `sessionId` and no
-/// `requestInfo`.
+/// `parameters.extra` of a request (D34), with the keys in the order of TS's v1 handler context
+/// (`event_order.json`): `sessionId`, the `mcp-session-id` header of a stateful HTTP request;
+/// `_meta`, when the request sent one; `requestId`, the JSON-RPC id as sent; and `requestInfo`,
+/// when rmcp's streamable HTTP server put the HTTP request parts in the context
+/// ([`request_info`]). On stdio it has no `sessionId` and no `requestInfo`. TS's other keys hold
+/// functions, which JSON drops, or what RD-07 leaves out.
 pub(crate) fn extra_value(context: &RequestContext<RoleServer>) -> Value {
     let parts = context.extensions.get::<Parts>();
     let mut extra = Map::new();
     if let Some(session) = transport_session_id(context) {
         extra.insert("sessionId".to_owned(), Value::String(session));
     }
-    extra.insert("requestId".to_owned(), context.id.clone().into_json_value());
     if let Some(meta) = request_meta(context) {
         extra.insert(META_KEY.to_owned(), meta);
     }
+    extra.insert("requestId".to_owned(), context.id.clone().into_json_value());
     if let Some(parts) = parts {
         extra.insert("requestInfo".to_owned(), Value::Object(request_info(parts)));
     }
@@ -262,7 +278,7 @@ pub(crate) fn redact_headers(headers: &Map<String, Value>) -> Map<String, Value>
 
 /// `extra`, an [`extra_value`], for `Debug` output: its `requestInfo.headers` through
 /// [`redact_headers`].
-fn redact_extra(extra: &Value) -> Value {
+pub(crate) fn redact_extra(extra: &Value) -> Value {
     let mut extra = extra.clone();
     if let Some(Value::Object(headers)) = extra.pointer_mut("/requestInfo/headers") {
         *headers = redact_headers(headers);

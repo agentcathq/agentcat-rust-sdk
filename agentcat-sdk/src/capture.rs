@@ -34,7 +34,7 @@ const MAX_CHAINED_ERRORS: usize = 10;
 /// the call: its `Display` text, its type path (`std::any::type_name`), the text of each error
 /// of its `source()` chain (at most 10), and a backtrace of this call site when the environment
 /// turns backtraces on (`RUST_BACKTRACE` or `RUST_LIB_BACKTRACE`, see
-/// [`Backtrace::capture`]).
+/// [`Backtrace::capture`]). The backtrace is turned into text later, off the tool's task.
 ///
 /// rmcp turns the error a tool returns into the text of an `is_error` result before `AgentCat`
 /// sees it, so the type and the chain are lost. Call this before the tool returns the error:
@@ -65,24 +65,37 @@ const MAX_CHAINED_ERRORS: usize = 10;
 /// ```
 pub fn capture_error<E: Error + ?Sized + 'static>(error: &E) {
     // Outside a call the task-local value is not set: nothing to record.
-    let _outside = SLOT.try_with(|slot| slot.put(error_shape(error, &Backtrace::capture())));
+    let _outside = SLOT.try_with(|slot| {
+        slot.put((error_shape(error), captured_backtrace(Backtrace::capture())));
+    });
 }
+
+/// An error that [`capture_error`] recorded: its [`error_shape`], and the backtrace of the call
+/// site when one was captured, which the delivery pipeline renders as the error's `stack`
+/// ([`render_backtrace`](crate::event::assemble::render_backtrace)).
+pub(crate) type Captured = (Map<String, Value>, Option<Backtrace>);
 
 /// Where [`capture_error`] leaves the error of one tool call. Clones share it: the call path
 /// keeps one and hands another to [`scope`].
 #[derive(Debug, Clone, Default)]
-pub(crate) struct CaptureSlot(Arc<Mutex<Option<Map<String, Value>>>>);
+pub(crate) struct CaptureSlot(Arc<Mutex<Option<Captured>>>);
 
 impl CaptureSlot {
     /// The captured error, which leaves the slot empty.
-    pub(crate) fn take(&self) -> Option<Map<String, Value>> {
+    pub(crate) fn take(&self) -> Option<Captured> {
         self.0.lock().unwrap_or_else(PoisonError::into_inner).take()
     }
 
-    /// Puts `error` in the slot, in place of any earlier one.
-    fn put(&self, error: Map<String, Value>) {
-        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = Some(error);
+    /// Puts `captured` in the slot, in place of any earlier one.
+    fn put(&self, captured: Captured) {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = Some(captured);
     }
+}
+
+/// `backtrace` when it was captured; `None` when the environment turns backtraces off. Nothing
+/// here turns it into text: that resolves symbols, which the tool's task must not wait for.
+pub(crate) fn captured_backtrace(backtrace: Backtrace) -> Option<Backtrace> {
+    (backtrace.status() == BacktraceStatus::Captured).then_some(backtrace)
 }
 
 /// Runs `future` with `slot` as the slot of the current tool call, so that [`capture_error`]
@@ -115,13 +128,11 @@ pub(crate) fn panic_message(payload: &(dyn Any + Send)) -> String {
 }
 
 /// The `error` that [`capture_error`] records for `error` (R09, RD-06): `{message, type,
-/// platform: "rust", stack?, chained_errors?}`. `stack` is the text of `backtrace` when it was
-/// captured; `chained_errors` has one `{message}` entry per error of the `source()` chain, at
-/// most [`MAX_CHAINED_ERRORS`], and is absent for an error without a source.
-pub(crate) fn error_shape<E: Error + ?Sized + 'static>(
-    error: &E,
-    backtrace: &Backtrace,
-) -> Map<String, Value> {
+/// platform: "rust", chained_errors?}`. `chained_errors` has one `{message}` entry per error of
+/// the `source()` chain, at most [`MAX_CHAINED_ERRORS`], and is absent for an error without a
+/// source. The `stack` of a captured backtrace joins it in the delivery pipeline, after
+/// `platform`.
+pub(crate) fn error_shape<E: Error + ?Sized + 'static>(error: &E) -> Map<String, Value> {
     let mut shape = Map::new();
     shape.insert("message".to_owned(), Value::String(error.to_string()));
     shape.insert(
@@ -129,9 +140,6 @@ pub(crate) fn error_shape<E: Error + ?Sized + 'static>(
         Value::String(type_name::<E>().to_owned()),
     );
     shape.insert("platform".to_owned(), Value::String(PLATFORM.to_owned()));
-    if backtrace.status() == BacktraceStatus::Captured {
-        shape.insert("stack".to_owned(), Value::String(backtrace.to_string()));
-    }
     let chain: Vec<Value> = std::iter::successors(error.source(), |&cause| cause.source())
         .take(MAX_CHAINED_ERRORS)
         .map(|cause| {

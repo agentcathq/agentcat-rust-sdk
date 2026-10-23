@@ -551,11 +551,13 @@ reason = "TS server-shape compatibility checks and their errors do not exist in 
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|buildSessionInfo > null identity yields anonymous info"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::assemble::tests::absent_fields_are_absent_keys"]
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|buildSessionInfo > stamps server, client, and identity without touching tracking data"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::assemble::tests::event_takes_the_record_fields", "agentcat-sdk::pipeline::settle::tests::settled_hooks_apply_in_ts_order"]
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
@@ -625,15 +627,18 @@ reason = "event.json case protocol-version:ts:reads-meta; checked by agentcat-sd
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|resolveIdentity > identify throwing -> null, never throws"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_throws", "agentcat-sdk::pipeline::settle::tests::panicking_hook_logs_and_publishes_without_it"]
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|resolveIdentity > no identify configured -> null"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|resolveIdentity > returns the identify result"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/client-identity.test.ts|resolveIdentity > runs on every call — no caching between calls"
@@ -1559,11 +1564,13 @@ rust = ["agentcat-sdk::call::run::tests::continuation_is_tagged", "agentcat-sdk:
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a hanging identify hook does not delay the tool call"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a synchronously-throwing hook is contained and the event still publishes"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::panicking_hook_logs_and_publishes_without_it"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > error-path events carry hook results resolved after the throw"
@@ -1571,7 +1578,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > hanging resolveSessionId/eventTags/eventProperties do not delay the tool call"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_all_hang"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > redactEvent sees resolved hook state, and pending never reaches it or the processed event"
@@ -1579,7 +1587,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > the handler starts before a slow hook settles"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|extra projection on captured events > publishes v1-shaped extra with headers verbatim and url as a string"
@@ -1863,7 +1872,8 @@ reason = "The test imports the package from a Node ESM process."
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > both callbacks configured > should attach both tags and properties to the same event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::settled_hooks_apply_in_ts_order"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > callback receives correct arguments > should pass request and extra to eventProperties callback"
@@ -1877,11 +1887,13 @@ rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should attach properties to tool call events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_properties"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should handle null return from callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventProperties callback > should not block tool calls when callback throws"
@@ -1890,15 +1902,18 @@ rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agent
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should attach tags to tool call events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should handle null return from callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should not block tool calls when callback throws"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_tags_throws"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name"
@@ -1919,7 +1934,8 @@ rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > no callbacks configured > should not add tags or properties when not configured"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::assemble::tests::event_takes_the_record_fields", "agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly"
@@ -3074,19 +3090,23 @@ reason = "handles.json case structured:ts:invalid; checked by agentcat-sdk::hand
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invokeSessionHook > contains a rejection"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_throws"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invokeSessionHook > contains a synchronous throw"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::panicking_hook_logs_and_publishes_without_it"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invokeSessionHook > resolves null when the hook returns nullish"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|invokeSessionHook > resolves the hook value and forwards request/extra verbatim"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|isValidSessionId > accepts an ID this SDK actually mints"
@@ -3333,15 +3353,19 @@ reason = "handles.json cases hook-value:ts:padded-corr-1, derive:corr-1+proj_1; 
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle async operations in identify function"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle errors in identify function gracefully"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_throws"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Async Identity Resolution > should handle identify function that returns invalid data"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "returns an object without userId from identify; the Rust hook returns a typed UserIdentity (D19), which always has a user_id, so an identity without one cannot reach the SDK; no identity (Ok(None)) leaves the actor fields empty, pinned by agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_null"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on every tool call and stamp every event, with no dedup"
@@ -3349,15 +3373,19 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on the tool call and stamp the identity onto that event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_fire_in_ts_order_without_hook_mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should properly identify when calling tools added after track()"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "registers the tool after track() (late registration); a Rust handler serves whatever tools it has, and every call goes through the wrapper, so identify fires for it as for any tool (agentcat-sdk::hooks::tests::hooks_fire_in_ts_order_without_hook_mode) and its identity lands as agentcat-sdk::pipeline::settle::tests::queue_hooks_identify pins"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Identity Data on Published Events > should populate actorGivenId, actorName, and actorData on the event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Identity Data on Published Events > should re-resolve identity per request so a changed identity lands on the next event"
@@ -3365,7 +3393,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Null/Undefined Identity Handling > should handle when identify function returns null"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_null"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Null/Undefined Identity Handling > should work without identify function (anonymous sessions)"
@@ -4221,11 +4250,13 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts the raw arguments and the content text"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts the structured content when the content list is empty"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::tokens::tests::output_tokens_match_ts", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > keeps the raw counts when redaction rewrites the payloads"
@@ -4956,15 +4987,18 @@ rust = ["agentcat-sdk::hooks::tests::hooks_receive_raw_arguments", "agentcat-sdk
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > adds neither tags nor properties when no callbacks are configured"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::assemble::tests::event_takes_the_record_fields", "agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > attaches both tags and properties to the same event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::settled_hooks_apply_in_ts_order"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > attaches properties to tool call events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_properties"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > does not block tool calls when the callback throws"
@@ -4973,31 +5007,38 @@ rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agent
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventProperties > omits properties when the callback returns null"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > SDK tag wins when a customer tag collides with an SDK tag name"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions", "agentcat-sdk::pipeline::settle::tests::queue_hooks_tags_collide"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > attaches customer tags; SDK handle tags ride alongside"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > does not block tool calls when the callback throws; only SDK tags remain"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_tags_throws"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > handles null return from the callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: eventTags > validates tags from the callback, dropping invalid keys"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::invalid_tags_are_dropped_with_ts_logs", "agentcat-sdk::pipeline::settle::tests::queue_hooks_tags_invalid_ts_bang_key"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > degrades to anonymous when identify throws; the tool call still succeeds"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hook_error_does_not_reach_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_throws"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > does not run identify or publish an event for tools/list"
@@ -5006,11 +5047,14 @@ rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > handles identify returning invalid data by leaving actor fields empty"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "returns an object without userId from identify; the Rust hook returns a typed UserIdentity (D19), which always has a user_id, so an identity without one cannot reach the SDK; no identity (Ok(None)) leaves the actor fields empty, pinned by agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_null"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > publishes anonymously when identify returns null"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_null"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > re-resolves identity per request so a changed identity lands on the next event"
@@ -5018,7 +5062,8 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > returns the call while async identify is still in flight; identity lands in the background"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on every tool call and stamps every event, with no dedup"
@@ -5026,11 +5071,13 @@ status = "todo"
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on the tool call and stamps the identity onto that event"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::hooks::tests::hooks_fire_in_ts_order_without_hook_mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 real-wire client identity > stamps the connecting client's own identity onto captured events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::tests::tracked_stateful_http_record_has_session_and_client", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v2|src/tests/v2/http-context-capture.test.ts|v2: HTTP request context lands in published event parameters > captures headers, method, and url from the web Request"

@@ -8,7 +8,7 @@
 //! outputs. Each panic prints its message through the default panic hook into the test's captured
 //! output, which the test runner shows only for a failing test.
 use std::any::type_name;
-use std::backtrace::Backtrace;
+use std::backtrace::{Backtrace, BacktraceStatus};
 use std::error::Error;
 use std::fmt;
 use std::future::ready;
@@ -26,7 +26,7 @@ use rmcp::service::{MaybeSendFuture, RequestContext, RoleClient, RunningService,
 use rmcp::{ErrorData, RoleServer, ServerHandler, tool, tool_handler, tool_router};
 use serde_json::{Map, Value, json};
 
-use super::{capture_error, error_shape, panic_error};
+use super::{CaptureSlot, capture_error, captured_backtrace, error_shape, panic_error, scope};
 use crate::call::result_error;
 use crate::client::AgentCat;
 use crate::config::Options;
@@ -173,15 +173,15 @@ fn wrapper_shape() -> Value {
     })
 }
 
-/// `error` without its optional `stack`, which is there only when the environment turns
-/// backtraces on (`RUST_BACKTRACE`, `RUST_LIB_BACKTRACE`); a `stack` must be a non-empty text.
-fn without_stack(mut error: Map<String, Value>) -> Value {
-    if let Some(stack) = error.shift_remove("stack") {
-        assert!(
-            stack.as_str().is_some_and(|text| !text.is_empty()),
-            "a stack is the backtrace text: {stack}"
-        );
+/// The error of `record`, a captured one. It has no `stack`: the record keeps the backtrace for
+/// the delivery pipeline, which renders it there, and keeps one only when the environment turns
+/// backtraces on (`RUST_BACKTRACE`, `RUST_LIB_BACKTRACE`).
+fn captured_error(record: CallRecord) -> Value {
+    if let Some(backtrace) = &record.backtrace {
+        assert_eq!(backtrace.status(), BacktraceStatus::Captured);
     }
+    let error = record.error.expect("the record has an error");
+    assert!(!error.contains_key("stack"), "{error:?}");
     Value::Object(error)
 }
 
@@ -447,40 +447,52 @@ async fn capture_error_records_type_and_chain() {
 
     let record = only_record(&sink);
     assert!(record.is_error);
-    let error = record.error.expect("the record has an error");
-    let mut order = vec!["message", "type", "platform"];
-    if error.contains_key("stack") {
-        order.push("stack");
-    }
-    order.push("chained_errors");
-    assert_eq!(keys(&error), order);
-    assert_eq!(without_stack(error), wrapper_shape());
+    assert!(
+        record.runtime.is_some(),
+        "the record keeps the call's runtime"
+    );
+    let error = captured_error(record);
+    let order = ["message", "type", "platform", "chained_errors"];
+    assert_eq!(keys(error.as_object().expect("an object")), order);
+    assert_eq!(error, wrapper_shape());
     assert!(
         type_name::<Wrapper>().ends_with("capture::tests::Wrapper"),
         "the type path"
     );
 }
 
-/// The `stack` of a captured error is the text of its backtrace when one was captured, and is
-/// absent otherwise; `chained_errors` holds at most 10 entries and is absent for an error without
-/// a source.
-#[test]
-fn captured_backtrace_is_the_stack() {
-    let captured = Backtrace::force_capture();
-    let with_stack = error_shape(&Wrapper(RootCause), &captured);
-    assert_eq!(
-        keys(&with_stack),
-        ["message", "type", "platform", "stack", "chained_errors"]
-    );
-    assert_eq!(with_stack["stack"], json!(captured.to_string()));
-    assert_eq!(without_stack(with_stack), wrapper_shape());
+/// `capture_error` keeps the backtrace of its call site, unrendered, when one was captured, and
+/// nothing otherwise; the delivery pipeline renders it as `error.stack` (`render_backtrace`), so
+/// the error itself has no `stack`. `chained_errors` holds at most 10 entries and is absent for an
+/// error without a source.
+#[tokio::test]
+async fn capture_keeps_the_backtrace() {
+    let kept = captured_backtrace(Backtrace::force_capture()).expect("a captured backtrace");
+    assert_eq!(kept.status(), BacktraceStatus::Captured);
+    assert!(captured_backtrace(Backtrace::disabled()).is_none());
 
-    let without = error_shape(&RootCause, &Backtrace::disabled());
+    let slot = CaptureSlot::default();
+    scope(slot.clone(), async { capture_error(&Wrapper(RootCause)) }).await;
+    let (error, backtrace) = slot.take().expect("the slot holds the error");
+    assert_eq!(Value::Object(error), wrapper_shape());
+    assert!(
+        backtrace.is_none_or(|backtrace| backtrace.status() == BacktraceStatus::Captured),
+        "only a captured backtrace is kept"
+    );
+    assert!(slot.take().is_none(), "take empties the slot");
+
+    let with_chain = error_shape(&Wrapper(RootCause));
+    assert_eq!(
+        keys(&with_chain),
+        ["message", "type", "platform", "chained_errors"]
+    );
+
+    let without = error_shape(&RootCause);
     let expected =
         json!({"message": "root cause", "type": type_name::<RootCause>(), "platform": "rust"});
     assert_eq!(Value::Object(without), expected);
 
-    let looping = error_shape(&Looping, &Backtrace::disabled());
+    let looping = error_shape(&Looping);
     let chain = looping["chained_errors"].as_array().expect("a chain");
     assert_eq!(chain.len(), 10, "at most 10 entries");
     assert!(
@@ -522,10 +534,7 @@ async fn capture_error_outside_a_call_does_nothing() {
     call(&client, "captured", json!({}))
         .await
         .expect("a result");
-    assert_eq!(
-        without_stack(only_record(&sink).error.expect("an error")),
-        wrapper_shape()
-    );
+    assert_eq!(captured_error(only_record(&sink)), wrapper_shape());
 
     let result = call(&client, "spawned", json!({})).await.expect("a result");
     assert_eq!(result.is_error, Some(true));
@@ -570,12 +579,15 @@ async fn captured_error_wins_over_error_data() {
     let record = only_record(&sink);
     assert!(record.is_error);
     assert_eq!(record.response, None);
-    let error = record.error.expect("an error");
-    assert_eq!(without_stack(error), wrapper_shape(), "not InternalError");
+    assert_eq!(captured_error(record), wrapper_shape(), "not InternalError");
 
     unanswered(&client, "capture_then_panic").await;
     let record = only_record(&sink);
     assert_eq!(record.error, Some(panic_shape("call_tool exploded")));
+    assert!(
+        record.backtrace.is_none(),
+        "a panic keeps no captured backtrace"
+    );
 }
 
 /// Controller ruling (Task 8): a `list_tools` that panics in the registry rebuild is a failed

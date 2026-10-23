@@ -341,10 +341,6 @@ pub(crate) fn build_handle_tags(
 /// value that is not empty after [`js::trim`] gives [`derive_session_id`] of the trimmed value
 /// (source `Hook`); no value or an empty one gives a new random ID (source `Minted`), which the
 /// agent never learns. `None` only when minting fails.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
-)]
 pub(crate) fn session_from_hook_value(
     hook_value: Option<&str>,
     project_id: Option<&str>,

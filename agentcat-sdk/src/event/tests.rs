@@ -204,14 +204,14 @@ async fn request_value_has_the_b082_keys() {
     client.cancel().await.unwrap();
 }
 
-/// D34: on stdio (no HTTP request parts) `extra` is `{requestId, _meta}`: no `sessionId` and no
+/// D34: on stdio (no HTTP request parts) `extra` is `{_meta, requestId}`: no `sessionId` and no
 /// `requestInfo`.
 #[tokio::test]
 async fn extra_stdio_has_no_request_info() {
     let client = connect(ContextEcho, "stdio-client").await;
     let echo = call_echo(&client).await;
     let extra = &echo["extra"];
-    assert_eq!(keys(extra), ["requestId", "_meta"]);
+    assert_eq!(keys(extra), ["_meta", "requestId"]);
     assert_eq!(extra["requestId"], echo["request"]["id"]);
     assert_eq!(extra["_meta"], echo["request"]["params"]["_meta"]);
     client.cancel().await.unwrap();
@@ -373,7 +373,7 @@ fn sentinel() -> HashMap<HeaderName, HeaderValue> {
     )])
 }
 
-/// D34 over legacy stateful HTTP: `extra` is `{sessionId, requestId, _meta, requestInfo}`;
+/// D34 over legacy stateful HTTP: `extra` is `{sessionId, _meta, requestId, requestInfo}`;
 /// `sessionId` is the `mcp-session-id` header; `requestInfo` has the headers the client sent and
 /// the URL it called. The client is the client of the session's `initialize` (B-085).
 #[tokio::test]
@@ -385,7 +385,7 @@ async fn stateful_http_record_has_session_and_client() {
     let extra = &echo["extra"];
     assert_eq!(
         keys(extra),
-        ["sessionId", "requestId", "_meta", "requestInfo"]
+        ["sessionId", "_meta", "requestId", "requestInfo"]
     );
     let info = &extra["requestInfo"];
     let session = info["headers"]["mcp-session-id"].as_str().unwrap();
@@ -409,7 +409,7 @@ async fn stateless_identity_is_unknown() {
     let client = connect_http(&url, "http-client", sentinel()).await;
     let echo = call_echo(&client).await;
     let extra = &echo["extra"];
-    assert_eq!(keys(extra), ["requestId", "_meta", "requestInfo"]);
+    assert_eq!(keys(extra), ["_meta", "requestId", "requestInfo"]);
     let headers = &extra["requestInfo"]["headers"];
     assert_eq!(headers.get("mcp-session-id"), None);
     assert_eq!(headers[SENTINEL.0], SENTINEL.1);
@@ -452,7 +452,7 @@ async fn tracked_stateful_http_record_has_session_and_client() {
     let extra = &record.extra;
     assert_eq!(
         keys(extra),
-        ["sessionId", "requestId", "_meta", "requestInfo"]
+        ["sessionId", "_meta", "requestId", "requestInfo"]
     );
     let info = &extra["requestInfo"];
     let session = info["headers"]["mcp-session-id"].as_str().unwrap();
@@ -476,11 +476,51 @@ async fn tracked_stateless_record_has_no_client() {
     let client = connect_http(&url, "http-client", sentinel()).await;
     let record = record_of_echo(&client, &sink).await;
     let extra = &record.extra;
-    assert_eq!(keys(extra), ["requestId", "_meta", "requestInfo"]);
+    assert_eq!(keys(extra), ["_meta", "requestId", "requestInfo"]);
     let headers = &extra["requestInfo"]["headers"];
     assert_eq!(headers.get("mcp-session-id"), None);
     assert_eq!(headers[SENTINEL.0], SENTINEL.1);
     assert_eq!(record.client, None);
+    client.cancel().await.unwrap();
+}
+
+/// The keys of TS's v1 `extra` (`event_order.json`, `tool_call.extra`) that reach JSON and that
+/// Rust keeps (D34). TS's other keys hold functions (`sendNotification`, `sendRequest`,
+/// `closeSSEStream`, `closeStandaloneSSEStream`), which JSON drops, or what RD-07 leaves out
+/// (`signal`, `authInfo`, `taskId`, `taskStore`, `taskRequestedTtl`).
+const JSON_EXTRA_KEYS: [&str; 4] = ["sessionId", "_meta", "requestId", "requestInfo"];
+
+/// The strings of the list `field` of the `tool_call` case of `event_order.json`.
+fn ts_order(field: &str) -> Vec<String> {
+    tool_call_case()[field]
+        .as_array()
+        .unwrap_or_else(|| panic!("tool_call.{field} is a list"))
+        .iter()
+        .map(|key| key.as_str().expect("a key").to_owned())
+        .collect()
+}
+
+/// B-082, D34, ruling P5: the record of a tracked call over stateful HTTP whose request has a
+/// `_meta` (rmcp's client sends its progress token) has TS's key orders: `parameters.request` is
+/// `method, params, jsonrpc, id`, `params` is `name, arguments, _meta`, and `extra` has the keys
+/// Rust keeps in TS's v1 order, `sessionId, _meta, requestId, requestInfo`.
+#[tokio::test]
+async fn request_and_extra_follow_ts_key_order() {
+    let config = StreamableHttpServerConfig::default().with_json_response(true);
+    let (url, sink) = serve_tracked_sample(config).await;
+    let client = connect_http(&url, "http-client", sentinel()).await;
+    let record = record_of_echo(&client, &sink).await;
+    assert_eq!(keys(&record.request), ts_order("request"));
+    assert_eq!(keys(&record.request["params"]), ts_order("params"));
+    let extra: Vec<String> = ts_order("extra")
+        .into_iter()
+        .filter(|key| JSON_EXTRA_KEYS.contains(&key.as_str()))
+        .collect();
+    assert_eq!(
+        extra, JSON_EXTRA_KEYS,
+        "TS's v1 extra has each key Rust keeps"
+    );
+    assert_eq!(keys(&record.extra), extra);
     client.cancel().await.unwrap();
 }
 
@@ -512,6 +552,8 @@ fn record(n: u64) -> CallRecord {
             version: None,
         }),
         pending: PendingHooks::default(),
+        runtime: None,
+        backtrace: None,
     }
 }
 
@@ -535,6 +577,8 @@ fn fields(record: CallRecord) -> Value {
         server_version,
         client,
         pending: _,
+        runtime,
+        backtrace,
     } = record;
     let started_ms = started_at.duration_since(SystemTime::UNIX_EPOCH).unwrap();
     json!({
@@ -554,6 +598,8 @@ fn fields(record: CallRecord) -> Value {
         "server_name": server_name,
         "server_version": server_version,
         "client": identity_json(client.as_ref()),
+        "runtime": runtime.is_some(),
+        "backtrace": backtrace.is_some(),
     })
 }
 
@@ -590,14 +636,18 @@ async fn call_record_debug_hides_credentials() {
     }
 }
 
+/// The `tool_call` case of `event_order.json`.
+fn tool_call_case() -> Map<String, Value> {
+    vectors::cases("event_order")
+        .into_iter()
+        .find(|case| vectors::name(case) == "tool_call")
+        .expect("event_order.json has the tool_call case")
+}
+
 /// The keys of the `tool_call` event of `event_order.json`, in the order TS writes them, without
 /// `ipAddress`, which `Event` has no field for.
 fn tool_call_keys() -> Vec<String> {
-    let cases = vectors::cases("event_order");
-    let case = cases
-        .iter()
-        .find(|case| vectors::name(case) == "tool_call")
-        .expect("event_order.json has the tool_call case");
+    let case = tool_call_case();
     case["event"]
         .as_array()
         .expect("event is a list")

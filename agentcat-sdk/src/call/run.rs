@@ -17,13 +17,14 @@ use rmcp::model::{
 use rmcp::service::RequestContext;
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 use serde_json::{Map, Value};
+use tokio::runtime::Handle;
 use tokio::time::Instant;
 
 use super::{
     error_data_error, mirror_mint_back, prepend_mint_back, report_missing, result_error,
     strip_arguments,
 };
-use crate::capture::{CaptureSlot, panic_error, panic_message, scope};
+use crate::capture::{CaptureSlot, Captured, panic_error, panic_message, scope};
 use crate::client::Inner;
 use crate::config::Options;
 use crate::constants::{AGENTCAT_TAG_MRTR, GET_MORE_TOOLS_NAME};
@@ -109,6 +110,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
 
     let started_at = SystemTime::now();
     let started = Instant::now();
+    let runtime = Handle::try_current().ok();
 
     let schema = learn_schema(tracked, &request.name, &context).await;
 
@@ -150,6 +152,8 @@ pub(crate) async fn run_call<H: ServerHandler>(
         server_version: server.map(|server| server.version),
         client,
         pending,
+        runtime,
+        backtrace: None,
     };
 
     let name = request.name.to_string();
@@ -194,8 +198,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
             captured,
         )),
         Err(error) => {
-            record.is_error = true;
-            record.error = Some(captured.unwrap_or_else(|| error_data_error(&error)));
+            set_error(&mut record, captured, || error_data_error(&error));
             record.duration_ms = elapsed_ms(started);
             shared.sink.record(record);
             Err(error)
@@ -449,7 +452,7 @@ fn finish(
     mirror: bool,
     started: Instant,
     response: CallToolResponse,
-    captured: Option<Map<String, Value>>,
+    captured: Option<Captured>,
 ) -> CallToolResponse {
     let original = match response_json(&response) {
         Ok(original) => original,
@@ -463,8 +466,7 @@ fn finish(
     let response = match response {
         CallToolResponse::Complete(mut result) => {
             if result.is_error == Some(true) {
-                record.is_error = true;
-                record.error = Some(captured.unwrap_or_else(|| result_error(&result)));
+                set_error(&mut record, captured, || result_error(&result));
             }
             if let Some(text) = build_mint_back_text(&record.resolution) {
                 prepend_mint_back(&mut result, text);
@@ -487,6 +489,24 @@ fn finish(
     record.duration_ms = elapsed_ms(started);
     shared.sink.record(record);
     response
+}
+
+/// Marks `record` as failed with the `captured` error and its backtrace, else the error of
+/// `fallback` (C23).
+fn set_error(
+    record: &mut CallRecord,
+    captured: Option<Captured>,
+    fallback: impl FnOnce() -> Map<String, Value>,
+) {
+    record.is_error = true;
+    let error = match captured {
+        Some((error, backtrace)) => {
+            record.backtrace = backtrace;
+            error
+        }
+        None => fallback(),
+    };
+    record.error = Some(error);
 }
 
 /// `response` as JSON, as the client would receive it before any decoration.
