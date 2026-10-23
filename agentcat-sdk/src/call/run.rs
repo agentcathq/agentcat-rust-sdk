@@ -1,10 +1,11 @@
 //! The tool-call pipeline of the TS SDK (`installCallWrap`, B-022) on [`Tracked<H>`]: the
-//! report-missing intercept, the tracing-off and degraded paths, the schema of the called tool
-//! (C03), the session handles (B-052 to B-069), the stripped call with its [`CallContext`], the
-//! mint-back and its mirror, the panics and captured errors of the call (C23), and the
-//! [`CallRecord`] handed to the [`Sink`](crate::sink::Sink). `call/run/tests.rs` drives it over
-//! in-memory connections, `capture/tests.rs` its panics and captured errors; `event/tests.rs`
-//! checks its records over HTTP.
+//! pass-through of a handle that is off (C45), the report-missing intercept, the tracing-off and
+//! degraded paths, the schema of the called tool (C03), the session handles (B-052 to B-069), the
+//! stripped call with its [`CallContext`], the mint-back and its mirror, the panics and captured
+//! errors of the call (C23), and the [`CallRecord`] handed to the [`Sink`], also for a call whose
+//! future is dropped (C41). `call/run/tests.rs` drives it over in-memory connections,
+//! `capture/tests.rs` its panics and captured errors; `event/tests.rs` checks its records over
+//! HTTP.
 use std::collections::HashSet;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::time::{Duration, SystemTime};
@@ -21,8 +22,8 @@ use tokio::runtime::Handle;
 use tokio::time::Instant;
 
 use super::{
-    error_data_error, mirror_mint_back, prepend_mint_back, report_missing, result_error,
-    strip_arguments,
+    cancelled_error, error_data_error, mirror_mint_back, prepend_mint_back, report_missing,
+    result_error, strip_arguments,
 };
 use crate::capture::{CaptureSlot, Captured, panic_error, panic_message, scope};
 use crate::client::Inner;
@@ -38,6 +39,7 @@ use crate::handles::{
 };
 use crate::hooks::{PendingHooks, ToolCall, fire};
 use crate::inject::{CONTEXT_PARAM, InjectConfig, ToolEntry, build_injected_list};
+use crate::sink::Sink;
 use crate::tokens::{estimate_input_tokens, estimate_output_tokens};
 use crate::tracked::Tracked;
 
@@ -72,24 +74,29 @@ struct Schema {
 
 /// TS's `tools/call` wrapper (B-022) around the inner handler's `call_tool`, in TS's order:
 ///
-/// 1. `get_more_tools` is intercepted when report-missing is on.
-/// 2. With tracing off, the intercept is answered, and any other call goes to the handler with
-///    its raw arguments and a [`CallContext`] without a session; nothing is recorded (B-023,
-///    K-05).
-/// 3. The call starts (`started_at`).
-/// 4. The tool's schema ([`learn_schema`]).
-/// 5. The session handles. When minting fails, the call takes the degraded path: it is answered
-///    as in step 2, after a log line.
-/// 6. The record of the call (B-077, B-083, B-096).
-/// 7. The intercept is answered with the `context` argument as the intent; any other call goes
+/// 1. A handle that `AGENTCAT_ENABLED` turned off hands the call to the handler untouched, with a
+///    [`CallContext`] without a session or an agent (C45, C29).
+/// 2. `get_more_tools` is intercepted when report-missing is on.
+/// 3. With tracing off, the intercept is answered, and any other call learns the tool's schema as
+///    in step 5 and goes to the handler with the injected arguments stripped as in step 8 (R27,
+///    RD-29) and a [`CallContext`] without a session; nothing is recorded (B-023).
+/// 4. The call starts (`started_at`).
+/// 5. The tool's schema ([`learn_schema`]).
+/// 6. The session handles. When minting fails, the call takes the degraded path: after a log
+///    line, the intercept is answered, and any other call goes to the handler with its raw
+///    arguments (TS, K-05) and a [`CallContext`] without a session; nothing is recorded.
+/// 7. The record of the call (B-077, B-083, B-096), in a [`RecordGuard`] until it is sent: when
+///    the call future is dropped before that (C41, RD-34), the record goes to the sink as
+///    cancelled.
+/// 8. The intercept is answered with the `context` argument as the intent; any other call goes
 ///    to the handler with the injected arguments stripped (B-050, B-051) and a [`CallContext`]
 ///    in its request context. The handler's `call_tool` runs inside the call's
 ///    [`scope`], so [`capture_error`](crate::capture_error) reaches this record, and under
 ///    `catch_unwind`: a panic is recorded with `type: "panic"` (C23) and then resumed with its
 ///    own payload, so the client gets no response, as without the SDK (design §6.4).
-/// 8. A result gets the mint-back text and its mirror and is recorded (B-056 to B-059, B-097);
+/// 9. A result gets the mint-back text and its mirror and is recorded (B-056 to B-059, B-097);
 ///    an `InputRequiredResult` is tagged, not decorated (B-025).
-/// 9. A JSON-RPC error is recorded and returned unchanged (RD-05, D16).
+/// 10. A JSON-RPC error is recorded and returned unchanged (RD-05, D16).
 ///
 /// For a failed call, an error captured during the call replaces the error that the result
 /// (B-097) or the JSON-RPC code name (R09) would give (C23). The other customer calls this path
@@ -102,6 +109,9 @@ pub(crate) async fn run_call<H: ServerHandler>(
     mut context: RequestContext<RoleServer>,
 ) -> Result<CallToolResponse, ErrorData> {
     let shared = tracked.agentcat().inner();
+    if !shared.enabled {
+        return forward(tracked, request, context).await;
+    }
     let options = &shared.options;
     let intercept = options.report_missing() && request.name == GET_MORE_TOOLS_NAME;
     if !options.tracing() {
@@ -124,7 +134,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
             "Warning: AgentCat tracing failed for tool {}, falling back to original handler - Error: could not generate a session ID",
             request.name
         ));
-        return untraced(tracked, request, context, intercept).await;
+        return degraded(tracked, request, context, intercept).await;
     };
 
     let client = client_identity(&context);
@@ -134,7 +144,18 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let input_tokens = estimate_input_tokens(request_json.pointer("/params/arguments"));
     let tags = call_tags(&request, &resolution, &context);
     let server = server_info(shared, tracked.inner());
-    let mut record = CallRecord {
+    let mint_back = MintBack::new(&resolution, schema.mirror);
+    let call_context = CallContext::new(
+        resolution.session_id.clone(),
+        resolution.agent_id.clone(),
+        tracked.agentcat().clone(),
+    );
+    let intent = if intercept {
+        context_argument(&request).cloned()
+    } else {
+        user_intent(options, &request)
+    };
+    let record = CallRecord {
         started_at,
         duration_ms: 0,
         resolution,
@@ -144,7 +165,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
         input_tokens,
         output_tokens: None,
         tags,
-        user_intent: user_intent(options, &request),
+        user_intent: intent,
         response: None,
         is_error: false,
         error: None,
@@ -155,56 +176,111 @@ pub(crate) async fn run_call<H: ServerHandler>(
         runtime,
         backtrace: None,
     };
+    let guard = RecordGuard::new(record, shared.sink.as_ref(), started);
 
     let name = request.name.to_string();
+    if intercept {
+        let answer = answer_report_missing(shared, &request);
+        return Ok(finish(guard, &name, mint_back, answer.into(), None));
+    }
+    let forwarded = stripped(request, schema.entry.as_ref());
+    context
+        .extensions
+        .insert(call_context.with_identity(client, server));
+    // The handler's `call_tool` itself runs inside the future, so the scope and the panic
+    // boundary also cover what a hand-written handler does before it returns its future.
     let slot = CaptureSlot::default();
-    let outcome = if intercept {
-        record.user_intent = context_argument(&request).cloned();
-        Ok(answer_report_missing(shared, &request).into())
-    } else {
-        let mut forwarded = request;
-        forwarded.arguments = forwarded
-            .arguments
-            .map(|arguments| strip_arguments(&arguments, schema.entry.as_ref(), &name));
-        context.extensions.insert(
-            CallContext::new(
-                record.resolution.session_id.clone(),
-                record.resolution.agent_id.clone(),
-                tracked.agentcat().clone(),
-            )
-            .with_identity(client, server),
-        );
-        // The handler's `call_tool` itself runs inside the future, so the scope and the panic
-        // boundary also cover what a hand-written handler does before it returns its future.
-        let call = async move { tracked.inner().call_tool(forwarded, context).await };
-        match scope(slot.clone(), AssertUnwindSafe(call).catch_unwind()).await {
-            Ok(outcome) => outcome,
-            Err(payload) => {
+    let call = async move { tracked.inner().call_tool(forwarded, context).await };
+    let outcome = match scope(slot.clone(), AssertUnwindSafe(call).catch_unwind()).await {
+        Ok(outcome) => outcome,
+        Err(payload) => {
+            guard.send(|record| {
                 record.is_error = true;
                 record.error = Some(panic_error(&*payload));
-                record.duration_ms = elapsed_ms(started);
-                shared.sink.record(record);
-                resume_unwind(payload);
-            }
+            });
+            resume_unwind(payload);
         }
     };
 
     let captured = slot.take();
     match outcome {
-        Ok(response) => Ok(finish(
-            shared,
-            record,
-            &name,
-            schema.mirror,
-            started,
-            response,
-            captured,
-        )),
+        Ok(response) => Ok(finish(guard, &name, mint_back, response, captured)),
         Err(error) => {
-            set_error(&mut record, captured, || error_data_error(&error));
-            record.duration_ms = elapsed_ms(started);
-            shared.sink.record(record);
+            guard.send(|record| set_error(record, captured, || error_data_error(&error)));
             Err(error)
+        }
+    }
+}
+
+/// The record of a traced call from its creation until it goes to the sink (C41, RD-34). The
+/// call's own outcomes send it with [`send`](Self::send) or drop it with
+/// [`discard`](Self::discard). When the call future is dropped before that (a customer timeout, a
+/// `select!`, a server that stops), the guard's drop sends the record as cancelled: no response,
+/// `is_error`, the [`cancelled_error`], and the duration until the drop. So each record goes to
+/// the sink at most once.
+struct RecordGuard<'a> {
+    /// The record; `None` once it was sent or discarded.
+    record: Option<CallRecord>,
+    sink: &'a dyn Sink,
+    /// When the call started, for the duration.
+    started: Instant,
+}
+
+impl<'a> RecordGuard<'a> {
+    /// Holds `record` until it goes to `sink`.
+    fn new(record: CallRecord, sink: &'a dyn Sink, started: Instant) -> Self {
+        Self {
+            record: Some(record),
+            sink,
+            started,
+        }
+    }
+
+    /// Completes the record with `complete` and the duration of the call, and sends it.
+    fn send(mut self, complete: impl FnOnce(&mut CallRecord)) {
+        if let Some(mut record) = self.record.take() {
+            complete(&mut record);
+            record.duration_ms = elapsed_ms(self.started);
+            self.sink.record(record);
+        }
+    }
+
+    /// Drops the record without sending it, after the log line `line`.
+    fn discard(mut self, line: String) {
+        self.record = None;
+        self.sink.log(line);
+    }
+}
+
+impl Drop for RecordGuard<'_> {
+    fn drop(&mut self) {
+        if let Some(mut record) = self.record.take() {
+            record.response = None;
+            record.output_tokens = None;
+            record.is_error = true;
+            record.error = Some(cancelled_error());
+            record.duration_ms = elapsed_ms(self.started);
+            self.sink.record(record);
+        }
+    }
+}
+
+/// What a complete result gets before it reaches the client (B-056, B-058): the mint-back text,
+/// and the structured mirror when the gate of [`learn_schema`] is open. It is built from the
+/// handles before the handler runs, while the record waits in its [`RecordGuard`].
+struct MintBack {
+    text: Option<String>,
+    mirror: Option<Map<String, Value>>,
+}
+
+impl MintBack {
+    /// The mint-back of `resolution`, with the mirror when `mirror` is open.
+    fn new(resolution: &HandleResolution, mirror: bool) -> Self {
+        Self {
+            text: build_mint_back_text(resolution),
+            mirror: mirror
+                .then(|| build_structured_mint_back(resolution))
+                .flatten(),
         }
     }
 }
@@ -229,7 +305,7 @@ fn call_tags(
 /// B-022 step 7: starts the customer's hooks, before the tool runs, and never awaits them (B-026).
 /// The task yields once when a hook started, so that each hook has made its first poll before the
 /// tool runs, as TS calls them first. The hooks see the request as sent, before the
-/// [`CallContext`] joins the context.
+/// [`CallContext`] joins the context; that snapshot is built only when a hook starts.
 async fn start_hooks(
     shared: &Inner,
     request: &CallToolRequestParams,
@@ -237,30 +313,75 @@ async fn start_hooks(
     client: Option<&ClientIdentity>,
 ) -> PendingHooks {
     let options = &shared.options;
-    let call = ToolCall::new(request, context, client);
-    let pending = fire(options, &call, options.hook_mode(), shared.sink.as_ref());
+    let pending = fire(options, options.hook_mode(), shared.sink.as_ref(), || {
+        ToolCall::new(request, context, client)
+    });
     if pending.any() {
         tokio::task::yield_now().await;
     }
     pending
 }
 
-/// A call that is not traced (tracing off, or the degraded path): the intercept is answered, and
-/// any other call goes to the handler with its raw arguments (B-022 steps 2 and 9) and a
-/// [`CallContext`] without a session or an agent, so a tool that reads one keeps working.
+/// A call with tracing off (B-022 step 2, R27, RD-29): the intercept is answered; any other call
+/// learns the tool's schema as a traced call does ([`learn_schema`]: `get_tool`, the registry, a
+/// rebuild, else TS's heuristic) and goes to the handler without the injected arguments, so a
+/// tool's own `context` stays, and with a [`CallContext`] without a session or an agent. Nothing
+/// is recorded.
 async fn untraced<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
-    mut context: RequestContext<RoleServer>,
+    context: RequestContext<RoleServer>,
     intercept: bool,
 ) -> Result<CallToolResponse, ErrorData> {
     if intercept {
         let shared = tracked.agentcat().inner();
         return Ok(answer_report_missing(shared, &request).into());
     }
+    let schema = learn_schema(tracked, &request.name, &context).await;
+    let request = stripped(request, schema.entry.as_ref());
+    forward(tracked, request, context).await
+}
+
+/// The degraded path, when no session ID could be issued (B-022 step 9): the intercept is
+/// answered, and any other call goes to the handler with its raw arguments, as in TS (K-05), and a
+/// [`CallContext`] without a session or an agent. Nothing is recorded.
+async fn degraded<H: ServerHandler>(
+    tracked: &Tracked<H>,
+    request: CallToolRequestParams,
+    context: RequestContext<RoleServer>,
+    intercept: bool,
+) -> Result<CallToolResponse, ErrorData> {
+    if intercept {
+        let shared = tracked.agentcat().inner();
+        return Ok(answer_report_missing(shared, &request).into());
+    }
+    forward(tracked, request, context).await
+}
+
+/// Hands `request` to the handler as it is, with a [`CallContext`] without a session or an agent
+/// in its context, so a tool that reads one keeps working on a call the SDK does not trace (C29).
+async fn forward<H: ServerHandler>(
+    tracked: &Tracked<H>,
+    request: CallToolRequestParams,
+    mut context: RequestContext<RoleServer>,
+) -> Result<CallToolResponse, ErrorData> {
     let call = CallContext::new(String::new(), None, tracked.agentcat().clone());
     context.extensions.insert(call);
     tracked.inner().call_tool(request, context).await
+}
+
+/// `request` without the arguments the SDK injected into its tool ([`strip_arguments`]), by the
+/// tool's registry `entry`, else by TS's heuristic.
+fn stripped(
+    mut request: CallToolRequestParams,
+    entry: Option<&ToolEntry>,
+) -> CallToolRequestParams {
+    let arguments = request
+        .arguments
+        .take()
+        .map(|arguments| strip_arguments(&arguments, entry, &request.name));
+    request.arguments = arguments;
+    request
 }
 
 /// The answer to a `get_more_tools` call, after its log line goes to the sink (B-046). TS logs it
@@ -443,54 +564,60 @@ async fn list_pages<H: ServerHandler>(
 }
 
 /// B-022 step 12 on the handler's `response`: the record gets the response as it came (B-059)
-/// and its output tokens; a complete result gets the mint-back text, the mirror when `mirror` is
-/// open, and, when it is an error result, the record's error: the `captured` one, else the
-/// result's (B-097, C23). An `InputRequiredResult` is tagged and not decorated (B-025); any other
-/// response is not decorated. When the response cannot be written as JSON, it is returned
-/// untouched and not recorded, after a log line.
+/// and its output tokens; a complete result gets the [`MintBack`] and, when it is an error result,
+/// the record gets its error: the `captured` one, else the result's (B-097, C23). An
+/// `InputRequiredResult` is tagged and not decorated (B-025); any other response is not decorated.
+/// Then the guard sends the record. When the response cannot be written as JSON, it is returned
+/// untouched and the record is discarded, after a log line.
 fn finish(
-    shared: &Inner,
-    mut record: CallRecord,
+    guard: RecordGuard<'_>,
     name: &str,
-    mirror: bool,
-    started: Instant,
+    mint_back: MintBack,
     response: CallToolResponse,
     captured: Option<Captured>,
 ) -> CallToolResponse {
     let original = match response_json(&response) {
         Ok(original) => original,
         Err(error) => {
-            shared.sink.log(format!(
+            guard.discard(format!(
                 "Warning: AgentCat post-handler processing failed for tool {name}; returning the customer's result untouched - {error}"
             ));
             return response;
         }
     };
+    let mut result_failure = None;
+    let mut input_required = false;
     let response = match response {
         CallToolResponse::Complete(mut result) => {
             if result.is_error == Some(true) {
-                set_error(&mut record, captured, || result_error(&result));
+                result_failure = Some(result_error(&result));
             }
-            if let Some(text) = build_mint_back_text(&record.resolution) {
+            if let Some(text) = mint_back.text {
                 prepend_mint_back(&mut result, text);
             }
-            if mirror && let Some(mint) = build_structured_mint_back(&record.resolution) {
+            if let Some(mint) = mint_back.mirror {
                 mirror_mint_back(&mut result.structured_content, mint);
             }
             CallToolResponse::Complete(result)
         }
         CallToolResponse::InputRequired(result) => {
-            record
-                .tags
-                .insert(AGENTCAT_TAG_MRTR.to_owned(), MRTR_INPUT_REQUIRED.into());
+            input_required = true;
             CallToolResponse::InputRequired(result)
         }
         other => other,
     };
-    record.output_tokens = estimate_output_tokens(Some(&original));
-    record.response = Some(original);
-    record.duration_ms = elapsed_ms(started);
-    shared.sink.record(record);
+    guard.send(|record| {
+        if let Some(failure) = result_failure {
+            set_error(record, captured, || failure);
+        }
+        if input_required {
+            record
+                .tags
+                .insert(AGENTCAT_TAG_MRTR.to_owned(), MRTR_INPUT_REQUIRED.into());
+        }
+        record.output_tokens = estimate_output_tokens(Some(&original));
+        record.response = Some(original);
+    });
     response
 }
 

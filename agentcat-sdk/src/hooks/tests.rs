@@ -224,11 +224,15 @@ async fn hooks_fire_before_the_tool_runs() {
     client.cancel().await.unwrap();
 }
 
+/// B-026: the call returns while all four hooks hang, in hook mode (`resolve_session_id` set), so
+/// a hanging `resolve_session_id`, `identify`, `event_tags` or `event_properties` never delays it.
 #[tokio::test(flavor = "current_thread")]
 async fn hooks_never_delay_the_call() {
     let options = Options::default()
+        .resolve_session_id(|_call| pending::<Result<Option<String>, HookError>>())
         .identify(|_call| pending::<Result<Option<crate::UserIdentity>, HookError>>())
-        .event_tags(|_call| pending::<Result<Option<Map<String, Value>>, HookError>>());
+        .event_tags(|_call| pending::<Result<Option<Map<String, Value>>, HookError>>())
+        .event_properties(|_call| pending::<Result<Option<Map<String, Value>>, HookError>>());
     let (client, sink) = serve(options).await;
     let result = tokio::time::timeout(
         Duration::from_secs(5),
@@ -240,12 +244,20 @@ async fn hooks_never_delay_the_call() {
     assert_eq!(texts(&result).last(), Some(&"hi"));
 
     let record = only_record(&sink);
-    let identify = record.pending.identify.as_ref().expect("identify started");
-    let tags = record.pending.event_tags.as_ref().expect("tags started");
-    assert!(!identify.is_finished() && !tags.is_finished());
-    assert!(record.pending.event_properties.is_none());
-    identify.abort();
-    tags.abort();
+    assert!(record.resolution.hook_mode);
+    let pending = &record.pending;
+    let session = pending
+        .resolve_session_id
+        .as_ref()
+        .expect("session started");
+    let identify = pending.identify.as_ref().expect("identify started");
+    let tags = pending.event_tags.as_ref().expect("tags started");
+    let properties = pending
+        .event_properties
+        .as_ref()
+        .expect("properties started");
+    assert!(!session.is_finished() && !identify.is_finished());
+    assert!(!tags.is_finished() && !properties.is_finished());
     client.cancel().await.unwrap();
 }
 
@@ -293,23 +305,18 @@ async fn no_hooks_no_tasks() {
     client.cancel().await.unwrap();
 }
 
-/// C14: without a runtime a hook does not start, and the sink says so.
+/// C14: without a runtime a hook does not start, and the sink says so; no snapshot is built.
 #[test]
 fn no_runtime_no_start() {
-    let runtime = tokio::runtime::Builder::new_current_thread()
-        .build()
-        .unwrap();
-    let call = runtime.block_on(async {
-        let context = bare_context(None);
-        ToolCall::new(&params("echo", json!({})), &context, None)
-    });
     let options = Options::default()
         .resolve_session_id(|_call| ready(Ok(Some("s".to_owned()))))
         .identify(|_call| ready(Ok(None)))
         .event_tags(|_call| ready(Ok(None)))
         .event_properties(|_call| ready(Ok(None)));
     let sink = RecordingSink::default();
-    let pending = fire(&options, &call, true, &sink as &dyn Sink);
+    let pending = fire(&options, true, &sink as &dyn Sink, || {
+        panic!("no hook starts, so no snapshot is built")
+    });
     assert!(!pending.any());
     assert_eq!(
         sink.logs(),

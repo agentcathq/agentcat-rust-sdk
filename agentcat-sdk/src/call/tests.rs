@@ -1,6 +1,6 @@
 //! `call` against the TS SDK: the cases of `tests/vectors/call.json`, property tests that run
 //! random arguments and structured content through the JS oracle, and Rust-only tests of the
-//! error shapes (RD-05, RD-06, C24).
+//! error shapes (RD-05, RD-06, C24, C41).
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
@@ -8,8 +8,8 @@ use rmcp::model::{CallToolResult, ErrorCode, ErrorData};
 use serde_json::{Map, Value, json};
 
 use super::{
-    code_name, error_data_error, mirror_mint_back, prepend_mint_back, report_missing, result_error,
-    strip_arguments,
+    cancelled_error, code_name, error_data_error, mirror_mint_back, prepend_mint_back,
+    report_missing, result_error, strip_arguments,
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, report_missing_log_line};
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
@@ -234,6 +234,17 @@ fn error_data_error_has_the_rd06_shape() {
     assert_eq!(
         Value::Object(error_data_error(&odd)),
         json!({"message": "", "type": "JsonRpcError(-32050)", "platform": "rust"})
+    );
+}
+
+/// C41, RD-34, RD-06: the error of a call whose future was dropped before it completed is
+/// `{message, type: "cancelled", platform: "rust"}`, in that key order.
+#[test]
+fn cancelled_error_has_the_c41_shape() {
+    let shape = Value::Object(cancelled_error());
+    assert_eq!(
+        serde_json::to_string(&shape).unwrap(),
+        r#"{"message":"tool call cancelled before it completed","type":"cancelled","platform":"rust"}"#
     );
 }
 

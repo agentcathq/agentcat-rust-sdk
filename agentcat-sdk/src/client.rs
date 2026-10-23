@@ -8,14 +8,16 @@ use std::time::{Duration, SystemTime};
 
 use rmcp::ServerHandler;
 
-use crate::config::Options;
 #[cfg(not(test))]
-use crate::config::{Env, ProcessEnv, resolve_api_base_url};
+use crate::config::resolve_api_base_url;
+use crate::config::{AGENTCAT_PROJECT_ID, Env, Options, ProcessEnv, sdk_enabled};
 use crate::custom::{CustomEvent, publish_string};
 #[cfg(not(test))]
 use crate::delivery::http::ApiPublisher;
 use crate::delivery::{Delivery, DeliveryConfig, LineWriter, Publisher};
 use crate::error::Error;
+use crate::event::CallRecord;
+use crate::event::assemble::EventJob;
 #[cfg(not(test))]
 use crate::logging;
 use crate::registry::ToolRegistry;
@@ -59,7 +61,10 @@ pub(crate) struct Inner {
     /// The project that receives the events; `""` means telemetry only (B-003).
     pub(crate) project_id: String,
     pub(crate) options: Options,
-    /// Where the SDK hands its own log lines.
+    /// Whether the SDK is on for this handle (C45). `AGENTCAT_ENABLED` turns it off: then the
+    /// [`Tracked`] servers forward every method untouched and the sink drops everything.
+    pub(crate) enabled: bool,
+    /// Where the SDK hands its own log lines, its records and its events.
     pub(crate) sink: Arc<dyn Sink>,
     /// What the listings taught the SDK, one registry per inner handler type (C19).
     registries: Mutex<HashMap<TypeId, ToolRegistry>>,
@@ -106,15 +111,13 @@ struct Transport {
 
 impl Transport {
     /// The real transport: the process logger is set to the destination of `options` (the first
-    /// handle wins, D38) and events go to the API (C44).
+    /// handle wins, D38) and events go to the API (C44), with the home directory and the API URL
+    /// of `env`.
     #[cfg(not(test))]
-    fn process(options: &Options) -> Self {
-        logging::configure(options.log_to(), ProcessEnv.home_dir());
+    fn process(options: &Options, env: &dyn Env) -> Self {
+        logging::configure(options.log_to(), env.home_dir());
         let mut startup_lines = Vec::new();
-        let publisher = ApiPublisher::new(
-            resolve_api_base_url(options, &ProcessEnv),
-            &mut startup_lines,
-        );
+        let publisher = ApiPublisher::new(resolve_api_base_url(options, env), &mut startup_lines);
         Self {
             publisher: Arc::new(publisher),
             startup_lines,
@@ -127,8 +130,8 @@ impl Transport {
     /// (unset, so the real home directory is not written to). A test that needs the real
     /// publisher builds it itself, against a loopback server.
     #[cfg(test)]
-    fn process(options: &Options) -> Self {
-        let _ = options;
+    fn process(options: &Options, env: &dyn Env) -> Self {
+        let _ = (options, env);
         Self {
             publisher: Arc::new(OfflinePublisher),
             startup_lines: Vec::new(),
@@ -150,6 +153,19 @@ impl Publisher for OfflinePublisher {
     ) -> crate::sink::BoxFuture<'static, Result<(), String>> {
         Box::pin(std::future::ready(Ok(())))
     }
+}
+
+/// The sink of a handle that `AGENTCAT_ENABLED` turned off (C45): it drops every line, record and
+/// event, so nothing starts a thread, and it answers `flush` and `shutdown` with `true`.
+#[derive(Debug)]
+struct DisabledSink;
+
+impl Sink for DisabledSink {
+    fn log(&self, _message: String) {}
+
+    fn record(&self, _record: CallRecord) {}
+
+    fn event(&self, _job: EventJob) {}
 }
 
 /// The sink of a handle that publishes: a [`Delivery`] for `project_id` with the redaction hooks
@@ -179,14 +195,58 @@ impl AgentCat {
     /// A handle for `project_id`. Building one cannot fail and starts no thread until the first
     /// event or log line. An empty `project_id` means telemetry only: events are built but never
     /// sent to `AgentCat`.
+    ///
+    /// The environment variable [`AGENTCAT_ENABLED`](crate::AGENTCAT_ENABLED) set to `false`, `0`,
+    /// `no` or `off` (any case, surrounding white space ignored) turns the handle off: it never
+    /// starts a thread, its [`Tracked`] servers forward every method to the wrapped handler
+    /// untouched (a tool still gets its [`CallContext`](crate::CallContext), with no session and
+    /// no agent), custom events publish nothing, and the lifecycle methods return `true`. The same
+    /// holds for [`track`] and [`AgentCat::from_env`].
     pub fn new(project_id: impl Into<String>, options: Options) -> Self {
-        let transport = Transport::process(&options);
-        Self::assemble(
-            project_id.into(),
-            options,
-            transport,
-            DeliveryConfig::default(),
-        )
+        Self::build(project_id.into(), options, &ProcessEnv)
+    }
+
+    /// A handle like [`AgentCat::new`] for the project that the environment variable
+    /// [`AGENTCAT_PROJECT_ID`] names. When it is unset or empty, the handle is telemetry only, as
+    /// `AgentCat::new` with an empty project ID.
+    ///
+    /// ```no_run
+    /// use agentcat_sdk::{AgentCat, Options};
+    ///
+    /// // AGENTCAT_PROJECT_ID=proj_123 in the environment.
+    /// let agentcat = AgentCat::from_env(Options::default());
+    /// # let _ = agentcat;
+    /// ```
+    pub fn from_env(options: Options) -> Self {
+        Self::from_env_in(options, &ProcessEnv)
+    }
+
+    /// [`AgentCat::from_env`] in the environment `env` (D36).
+    fn from_env_in(options: Options, env: &dyn Env) -> Self {
+        let project_id = env.var(AGENTCAT_PROJECT_ID).unwrap_or_default();
+        Self::build(project_id, options, env)
+    }
+
+    /// A handle like [`AgentCat::new`] in the environment `env`.
+    #[cfg(test)]
+    pub(crate) fn with_env(project_id: &str, options: Options, env: &dyn Env) -> Self {
+        Self::build(project_id.to_owned(), options, env)
+    }
+
+    /// [`AgentCat::new`] in the environment `env`: a handle that is off when `env` turns the SDK
+    /// off (C45, D44), else one that publishes through the process transport.
+    fn build(project_id: String, options: Options, env: &dyn Env) -> Self {
+        if !sdk_enabled(env) {
+            return Self::from_inner(Inner {
+                project_id,
+                options,
+                enabled: false,
+                sink: Arc::new(DisabledSink),
+                registries: Mutex::default(),
+            });
+        }
+        let transport = Transport::process(&options, env);
+        Self::assemble(project_id, options, transport, DeliveryConfig::default())
     }
 
     /// A handle whose events go through a [`Delivery`] over `transport`. An empty `project_id`
@@ -214,6 +274,7 @@ impl AgentCat {
         Self::from_inner(Inner {
             project_id,
             options,
+            enabled: true,
             sink: Arc::new(delivery),
             registries: Mutex::default(),
         })
@@ -238,6 +299,24 @@ impl AgentCat {
         Self::from_inner(Inner {
             project_id: project_id.to_owned(),
             options,
+            enabled: true,
+            sink,
+            registries: Mutex::default(),
+        })
+    }
+
+    /// A handle that `AGENTCAT_ENABLED` turned off (C45), whose sink is `sink`, so a test sees
+    /// that nothing reaches it.
+    #[cfg(test)]
+    pub(crate) fn disabled_with_sink(
+        project_id: &str,
+        options: Options,
+        sink: Arc<dyn Sink>,
+    ) -> Self {
+        Self::from_inner(Inner {
+            project_id: project_id.to_owned(),
+            options,
+            enabled: false,
             sink,
             registries: Mutex::default(),
         })
@@ -261,7 +340,8 @@ impl AgentCat {
     ///
     /// The session is the event's own [`session_id`](CustomEvent::session_id) when it is not
     /// empty, else `session_id` verbatim (it may be empty for none). The event has no server or
-    /// client fields and goes through no redaction hook. It is queued even while tracing is off.
+    /// client fields and goes through no redaction hook. It is queued even while tracing is off,
+    /// and dropped by a handle that `AGENTCAT_ENABLED` turned off.
     ///
     /// ```no_run
     /// use agentcat_sdk::{AgentCat, CustomEvent, Options};
@@ -332,7 +412,8 @@ impl AgentCat {
 }
 
 /// Wraps `handler` with a new [`AgentCat`] handle for `project_id`: the one-line setup for a
-/// server with one handler, such as a stdio server.
+/// server with one handler, such as a stdio server. The handle is [`AgentCat::new`]'s, so
+/// `AGENTCAT_ENABLED` turns it off in the same way.
 ///
 /// ```no_run
 /// use agentcat_sdk::{Options, track};

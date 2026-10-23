@@ -12,8 +12,8 @@ use crate::event::ClientIdentity;
 /// The tracked call a tool is running in. The SDK puts one into the request context of every tool
 /// call it passes to the handler, so a tool can take it as an `Extension<CallContext>` (rmcp's
 /// `rmcp::handler::server::common::Extension`) next to its parameters. A call the SDK does not
-/// trace (tracing off, or no session ID could be issued) gets one too, with no session and no
-/// agent.
+/// trace (tracing off, no session ID could be issued, or `AGENTCAT_ENABLED` turned the SDK off)
+/// gets one too, with no session and no agent.
 ///
 /// ```no_run
 /// use agentcat_sdk::CallContext;
@@ -92,8 +92,8 @@ impl CallContext {
     ///
     /// The event goes to the project of the handle ([`AgentCat::new`](crate::AgentCat::new)), not
     /// to `project_id`, which only has to be non-empty (K-03). Nothing is queued while tracing is
-    /// off. The `redact_event` hook of the options runs on the event, on the runtime of the
-    /// caller; the string hook does not. The event has no session unless the [`CustomEvent`]
+    /// off, or by a handle that `AGENTCAT_ENABLED` turned off. The `redact_event` hook of the
+    /// options runs on the event, on the runtime of the caller; the string hook does not. The event has no session unless the [`CustomEvent`]
     /// names one, and TypeScript takes none from the call either (C47): pass
     /// [`session_id()`](Self::session_id) in the [`CustomEvent`] to attribute the event to the
     /// call's session. A `duration` of zero or none is the time since the event was built.

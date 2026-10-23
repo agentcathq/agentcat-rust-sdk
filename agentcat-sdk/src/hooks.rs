@@ -24,6 +24,20 @@ use crate::sink::Sink;
 #[cfg(test)]
 mod tests;
 
+#[cfg(test)]
+thread_local! {
+    /// How many [`ToolCall`] snapshots this thread has built.
+    static SNAPSHOTS: std::cell::Cell<usize> = const { std::cell::Cell::new(0) };
+}
+
+/// How many [`ToolCall`] snapshots this thread has built. A test that serves and calls a tool on
+/// one current-thread runtime counts the snapshots of its calls with it (the snapshot is built
+/// only when a hook starts, [`fire`]).
+#[cfg(test)]
+pub(crate) fn snapshots_built() -> usize {
+    SNAPSHOTS.get()
+}
+
 /// One tool call as a hook sees it (D35): the request as the client sent it, with the injected
 /// arguments (`session_id`, `agent_id`, `context`) still in it, and what the SDK knows about the
 /// client and the transport. Clones are independent copies.
@@ -61,6 +75,8 @@ impl ToolCall {
         context: &RequestContext<RoleServer>,
         client: Option<&ClientIdentity>,
     ) -> Self {
+        #[cfg(test)]
+        SNAPSHOTS.set(SNAPSHOTS.get() + 1);
         let meta: &JsonObject = &context.meta;
         Self {
             tool_name: request.name.to_string(),
@@ -243,55 +259,55 @@ impl<T> Drop for AbortOnDrop<T> {
     }
 }
 
-/// Starts the hooks of `options` for `call`, in TS's order: `resolve_session_id` (in hook mode
+/// Starts the hooks of `options` for one call, in TS's order: `resolve_session_id` (in hook mode
 /// only), `identify`, `event_tags`, `event_properties` (B-022 step 7). Each hook runs as a task on
 /// the current tokio runtime (C14), and none is awaited (B-026). A panic in a hook stays in its
 /// task. Without a runtime no hook starts, and `sink` gets one log line for each hook that would
 /// have.
+///
+/// `snapshot` builds the [`ToolCall`] the hooks receive. It runs once, and only when at least one
+/// hook starts, so a call without hooks copies nothing.
 pub(crate) fn fire(
     options: &Options,
-    call: &ToolCall,
     hook_mode: bool,
     sink: &dyn Sink,
+    snapshot: impl FnOnce() -> ToolCall,
 ) -> PendingHooks {
-    let handle = Handle::try_current().ok();
-    let start = Start {
-        handle: handle.as_ref(),
-        call,
-        sink,
-    };
-    PendingHooks {
-        resolve_session_id: start.hook(
-            "resolveSessionId",
-            options.resolve_session_id_hook().filter(|_| hook_mode),
-        ),
-        identify: start.hook("identify", options.identify_hook()),
-        event_tags: start.hook("eventTags", options.event_tags_hook()),
-        event_properties: start.hook("eventProperties", options.event_properties_hook()),
+    let resolve_session_id = options.resolve_session_id_hook().filter(|_| hook_mode);
+    let identify = options.identify_hook();
+    let event_tags = options.event_tags_hook();
+    let event_properties = options.event_properties_hook();
+    let set = [
+        ("resolveSessionId", resolve_session_id.is_some()),
+        ("identify", identify.is_some()),
+        ("eventTags", event_tags.is_some()),
+        ("eventProperties", event_properties.is_some()),
+    ];
+    if !set.iter().any(|&(_, is_set)| is_set) {
+        return PendingHooks::default();
     }
-}
-
-/// What starting one hook needs.
-struct Start<'a> {
-    handle: Option<&'a Handle>,
-    call: &'a ToolCall,
-    sink: &'a dyn Sink,
-}
-
-impl Start<'_> {
-    /// Spawns `hook`, if it is set, on the runtime; without a runtime, logs that it did not start.
-    fn hook<T: Send + 'static>(
-        &self,
-        label: &str,
-        hook: Option<&Hook<T>>,
-    ) -> Option<JoinHandle<Settled<T>>> {
-        let hook = hook?;
-        let Some(handle) = self.handle else {
-            self.sink.log(format!(
+    let Ok(handle) = Handle::try_current() else {
+        for (label, _) in set.into_iter().filter(|&(_, is_set)| is_set) {
+            sink.log(format!(
                 "Warning: {label} hook not started - no tokio runtime"
             ));
-            return None;
-        };
-        Some(handle.spawn(hook.call(self.call.clone())))
+        }
+        return PendingHooks::default();
+    };
+    let call = snapshot();
+    PendingHooks {
+        resolve_session_id: resolve_session_id.map(|hook| spawn(&handle, hook, &call)),
+        identify: identify.map(|hook| spawn(&handle, hook, &call)),
+        event_tags: event_tags.map(|hook| spawn(&handle, hook, &call)),
+        event_properties: event_properties.map(|hook| spawn(&handle, hook, &call)),
     }
+}
+
+/// Spawns `hook` on `call` on the runtime of `handle`.
+fn spawn<T: Send + 'static>(
+    handle: &Handle,
+    hook: &Hook<T>,
+    call: &ToolCall,
+) -> JoinHandle<Settled<T>> {
+    handle.spawn(hook.call(call.clone()))
 }

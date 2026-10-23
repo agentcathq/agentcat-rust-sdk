@@ -1,13 +1,15 @@
-//! `AgentCat`: clones share one handle, `track` wraps a handler with a handle, and `Debug` prints
-//! the project ID and the options only.
+//! `AgentCat`: clones share one handle, `track` wraps a handler with a handle, `Debug` prints the
+//! project ID and the options only, `from_env` reads the project ID (D36), `AGENTCAT_ENABLED`
+//! turns a handle off (C45), and the lifecycle methods.
 use std::sync::Arc;
 use std::time::Duration;
 
 use rmcp::ServerHandler;
 
 use super::{AgentCat, NO_PROJECT_WARNING, Transport, track};
-use crate::config::Options;
+use crate::config::{AGENTCAT_ENABLED, AGENTCAT_PROJECT_ID, MapEnv, Options};
 use crate::context::CallContext;
+use crate::custom::CustomEvent;
 use crate::delivery::DeliveryConfig;
 use crate::test_support::queue::CapturedLines;
 use crate::test_support::rmcp::{Probe, RecordingSink, Sample, connect};
@@ -230,4 +232,60 @@ fn shutdown_blocking_settles_pending_events() {
     let agentcat = handle_after_one_call();
     assert!(agentcat.shutdown_blocking(Duration::from_secs(2)));
     assert!(agentcat.shutdown_blocking(Duration::from_secs(2)));
+}
+
+/// D36: `from_env` takes the project ID from `AGENTCAT_PROJECT_ID`, and the handle is on.
+#[test]
+fn from_env_reads_project_id() {
+    let env = MapEnv::new(&[(AGENTCAT_PROJECT_ID, "proj_from_env")]);
+    let agentcat = AgentCat::from_env_in(Options::default(), &env);
+    assert_eq!(agentcat.inner().project_id, "proj_from_env");
+    assert!(agentcat.inner().enabled);
+}
+
+/// D36: without `AGENTCAT_PROJECT_ID`, or with it empty, `from_env` gives a telemetry-only handle
+/// (project `""`, B-003); `AGENTCAT_ENABLED` turns it off as it does `new` (C45).
+#[test]
+fn from_env_without_project_is_telemetry_only() {
+    for env in [MapEnv::new(&[]), MapEnv::new(&[(AGENTCAT_PROJECT_ID, "")])] {
+        let agentcat = AgentCat::from_env_in(Options::default(), &env);
+        assert_eq!(agentcat.inner().project_id, "", "{env:?}");
+        assert!(agentcat.inner().enabled, "{env:?}");
+    }
+    let off = MapEnv::new(&[(AGENTCAT_PROJECT_ID, "proj_1"), (AGENTCAT_ENABLED, " Off ")]);
+    let agentcat = AgentCat::from_env_in(Options::default(), &off);
+    assert_eq!(agentcat.inner().project_id, "proj_1");
+    assert!(!agentcat.inner().enabled);
+}
+
+/// C45: a handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool
+/// call, a custom event (which returns `Ok(())`) or the lifecycle methods, which return `true`.
+#[cfg(target_os = "linux")]
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn disabled_handle_starts_no_thread() {
+    let env = MapEnv::new(&[(AGENTCAT_ENABLED, "false")]);
+    let agentcat = AgentCat::with_env("", Options::default(), &env);
+    assert!(!agentcat.inner().enabled);
+    let client = connect(agentcat.track(Sample), "disabled-client").await;
+    client.list_all_tools().await.unwrap();
+    let params = rmcp::model::CallToolRequestParams::new("echo").with_arguments(
+        serde_json::json!({"msg": "hi"})
+            .as_object()
+            .cloned()
+            .unwrap(),
+    );
+    client.call_tool(params).await.unwrap();
+    let event = CustomEvent::new().resource_name("disabled");
+    assert!(
+        agentcat
+            .publish_custom_event("ses_1", "proj_1", event)
+            .is_ok()
+    );
+    assert!(agentcat.flush(Duration::from_secs(1)).await);
+    assert!(agentcat.flush_blocking(Duration::from_secs(1)));
+    assert_eq!(delivery_threads(), 0);
+    assert!(agentcat.shutdown(Duration::from_secs(1)).await);
+    assert!(agentcat.shutdown_blocking(Duration::from_secs(1)));
+    assert_eq!(delivery_threads(), 0);
+    client.cancel().await.unwrap();
 }

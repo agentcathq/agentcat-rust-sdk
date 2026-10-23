@@ -1,6 +1,7 @@
 //! `Tracked<H>` forwards: each `ServerHandler` method that a client can reach answers through the
 //! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only
-//! the streamable HTTP transport calls it) are forwarded too; a client cannot call them.
+//! the streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle
+//! that `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes (C45).
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -25,7 +26,7 @@ use crate::config::Options;
 use crate::constants::GET_MORE_TOOLS_NAME;
 use crate::inject::{InjectConfig, InjectState, build_injected_list, inject_tool};
 use crate::test_support::rmcp::{
-    PAGED_CURSOR, PROBE_VERSIONS, Paged, Probe, RecordingSink, Sample, connect,
+    ContextEcho, PAGED_CURSOR, PROBE_VERSIONS, Paged, Probe, RecordingSink, Sample, connect,
 };
 
 /// How long one request may take: a `listen` that is not forwarded waits for cancellation, and
@@ -473,4 +474,74 @@ async fn get_tool_leaves_the_listing_logs_intact() {
     assert!(sink.logs().is_empty(), "a lookup logs nothing");
     all_tools(&connect(tracked, "later").await).await;
     assert_eq!(sink.logs(), expected);
+}
+
+/// The request for the tool `name` with the arguments `arguments`, an object.
+fn call_params(name: &str, arguments: Value) -> CallToolRequestParams {
+    let Value::Object(arguments) = arguments else {
+        panic!("{arguments} is not an object");
+    };
+    CallToolRequestParams::new(name.to_owned()).with_arguments(arguments)
+}
+
+/// What `client` receives for a call of `name` with `arguments`, as JSON (see [`answer`]).
+async fn call_answer(
+    client: &RunningService<RoleClient, InitializeRequestParams>,
+    name: &str,
+    arguments: Value,
+) -> Value {
+    let request = CallToolRequest::new(call_params(name, arguments));
+    answer(client, ClientRequest::CallToolRequest(request)).await
+}
+
+/// C45, C29: a handle that `AGENTCAT_ENABLED` turned off forwards untouched. The listing is the
+/// handler's own (no `get_more_tools`, no injected parameters), `get_tool` is the handler's, a
+/// call reaches the handler with its raw arguments and a `CallContext` without session or agent,
+/// `get_more_tools` is the handler's to answer, `initialize` keeps no client identity, and nothing
+/// reaches the sink: no record, no log line.
+#[tokio::test]
+async fn disabled_handle_forwards_untouched() {
+    let options = || Options::default().enable_agent_tracking(true);
+    let sink = Arc::new(RecordingSink::default());
+    let agentcat = AgentCat::disabled_with_sink("proj_1", options(), sink.clone());
+
+    let tracked = Arc::new(agentcat.track(Sample));
+    assert_eq!(tracked.get_tool("echo"), Sample.get_tool("echo"));
+    assert_eq!(tracked.get_tool(GET_MORE_TOOLS_NAME), None);
+    let plain = connect(Sample, "plain").await;
+    let client = connect(tracked.clone(), "disabled").await;
+    assert_eq!(all_tools(&client).await, all_tools(&plain).await);
+    assert_eq!(tracked.client_identity(), None);
+
+    let raw = json!({"text": "hi", "session_id": "start", "context": "Sent as is."});
+    let refused = call_answer(&client, "strict", raw.clone()).await;
+    assert_eq!(refused, call_answer(&plain, "strict", raw).await);
+    assert!(refused.to_string().contains("unknown field"), "{refused}");
+    let whoami = call_answer(&client, "whoami", json!({"session_id": "start"})).await;
+    let text = whoami
+        .pointer("/result/content/0/text")
+        .and_then(Value::as_str);
+    let expected = json!({"session_id": null, "agent_id": null}).to_string();
+    assert_eq!(text, Some(expected.as_str()), "{whoami}");
+    let more = json!({"context": "Looking for more tools."});
+    let answered = call_answer(&client, GET_MORE_TOOLS_NAME, more.clone()).await;
+    assert_eq!(
+        answered,
+        call_answer(&plain, GET_MORE_TOOLS_NAME, more).await
+    );
+
+    let echo = connect(agentcat.track(ContextEcho), "disabled-echo").await;
+    let raw =
+        json!({"msg": "hi", "session_id": "start", "agent_id": "opus|t|a1", "context": "why"});
+    let echoed = call_answer(&echo, "echo", raw.clone()).await;
+    assert_eq!(
+        echoed.pointer("/result/structuredContent/request/params/arguments"),
+        Some(&raw)
+    );
+
+    assert!(sink.logs().is_empty(), "{:?}", sink.logs());
+    assert!(sink.take_records().is_empty());
+    plain.cancel().await.unwrap();
+    client.cancel().await.unwrap();
+    echo.cancel().await.unwrap();
 }

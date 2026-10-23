@@ -1,8 +1,8 @@
 //! The pure parts of a tool call in the TS SDK: stripping the injected arguments before the
 //! customer's handler runs (B-050, B-051), the mint-back text and its structured mirror (B-056,
 //! B-058), the `get_more_tools` call (B-046) and the shapes of the `error` of an event (B-097,
-//! RD-05, RD-06). `call/tests.rs` checks them against `tests/vectors/call.json` and the JS oracle.
-//! [`run`] puts them together into the pipeline that `Tracked::call_tool` runs (B-022).
+//! RD-05, RD-06, C41). `call/tests.rs` checks them against `tests/vectors/call.json` and the JS
+//! oracle. [`run`] puts them together into the pipeline that `Tracked::call_tool` runs (B-022).
 use rmcp::model::{CallToolResult, ContentBlock, ErrorCode, ErrorData, JsonObject};
 use serde_json::{Map, Value};
 
@@ -22,6 +22,12 @@ pub(crate) const PLATFORM: &str = "rust";
 
 /// The message of an error result without text (B-097).
 const UNKNOWN_ERROR: &str = "Unknown error";
+
+/// The message of the `error` of a cancelled call (C41).
+const CANCELLED_MESSAGE: &str = "tool call cancelled before it completed";
+
+/// The `type` of the `error` of a cancelled call (C41).
+const CANCELLED_TYPE: &str = "cancelled";
 
 /// The arguments the customer's handler receives: `arguments` without the parameters the SDK
 /// injected into the tool. With a registry `entry` those are exactly the parameters it recorded
@@ -112,6 +118,20 @@ pub(crate) fn error_data_error(error: &ErrorData) -> Map<String, Value> {
         Value::String(error.message.to_string()),
     );
     shape.insert("type".to_owned(), Value::String(code_name(error.code)));
+    shape.insert("platform".to_owned(), Value::String(PLATFORM.to_owned()));
+    shape
+}
+
+/// The `error` of a call whose future was dropped before it completed (C41, RD-34): the message
+/// [`CANCELLED_MESSAGE`], the type [`CANCELLED_TYPE`] and the `rust` platform, in the key order of
+/// [`error_data_error`] (RD-06).
+pub(crate) fn cancelled_error() -> Map<String, Value> {
+    let mut shape = Map::new();
+    shape.insert(
+        "message".to_owned(),
+        Value::String(CANCELLED_MESSAGE.to_owned()),
+    );
+    shape.insert("type".to_owned(), Value::String(CANCELLED_TYPE.to_owned()));
     shape.insert("platform".to_owned(), Value::String(PLATFORM.to_owned()));
     shape
 }

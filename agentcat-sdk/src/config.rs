@@ -254,10 +254,6 @@ pub(crate) fn resolve_api_base_url(options: &Options, env: &dyn Env) -> String {
 
 /// Whether the SDK is on (D44, R10): off when `AGENTCAT_ENABLED`, trimmed and lower-cased, is
 /// `false`, `0`, `no` or `off`; on otherwise, also when unset.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the handle constructor (plan 4 task 9)")
-)]
 pub(crate) fn sdk_enabled(env: &dyn Env) -> bool {
     let Some(value) = env.var(AGENTCAT_ENABLED) else {
         return true;
@@ -425,9 +421,10 @@ impl Options {
     }
 
     /// Whether tool calls are recorded and tools get the `session_id` parameter. With tracing
-    /// off, tools get neither `session_id` nor `agent_id` (also with agent tracking on), each call
-    /// goes to the tool with its arguments as the agent sent them, and nothing is recorded; tools
-    /// still get the `context` parameter and `get_more_tools`.
+    /// off, tools get neither `session_id` nor `agent_id` (also with agent tracking on), and
+    /// nothing is recorded; tools still get the `context` parameter and `get_more_tools`. Each
+    /// call goes to the tool without the parameters the SDK added to it, as with tracing on, so a
+    /// tool that declares its own `context` keeps it.
     #[must_use]
     pub fn enable_tracing(mut self, on: bool) -> Self {
         self.tracing = on;

@@ -1,7 +1,10 @@
 //! [`Tracked<H>`]: a `ServerHandler` that wraps the customer's handler and forwards every method
 //! of rmcp's trait to it, in the order and with the signatures of rmcp 3.0's own wrapper impls
 //! (`impl_server_handler_for_wrapper!`). `negotiate_initialize` (rmcp 3.3) is not forwarded
-//! (C25): only rmcp's default `initialize` calls it, and `initialize` is forwarded.
+//! (C25): only rmcp's default `initialize` calls it, and `initialize` is forwarded. The four
+//! methods the SDK changes (`initialize`, `list_tools`, `get_tool`, `call_tool`) forward untouched
+//! when `AGENTCAT_ENABLED` turned the handle off (C45); `call_tool` then still adds a
+//! [`CallContext`](crate::CallContext) without session or agent (C29).
 
 use std::any::type_name;
 use std::borrow::Cow;
@@ -35,7 +38,9 @@ use crate::inject::{
 mod tests;
 
 /// A server handler wrapped by [`AgentCat::track`] or [`track`](crate::track). It implements
-/// rmcp's `ServerHandler`, so it is served like the handler it wraps.
+/// rmcp's `ServerHandler`, so it is served like the handler it wraps. When `AGENTCAT_ENABLED`
+/// turned the handle off, it forwards every method to the wrapped handler untouched, and a tool
+/// still gets a [`CallContext`](crate::CallContext), with no session and no agent.
 pub struct Tracked<H> {
     inner: H,
     agentcat: AgentCat,
@@ -125,13 +130,13 @@ impl<H> Tracked<H> {
     /// without server fields (C30).
     ///
     /// The event goes to the project of the handle, not to `project_id`, which only has to be
-    /// non-empty (K-03). Nothing is queued while tracing is off. The `redact_event` hook of the
-    /// options runs on the event, on the runtime of the caller; the string hook does not. The
-    /// event has no session unless the [`CustomEvent`] names one, and TypeScript takes none from
-    /// anywhere either (C47): inside a tool, pass
-    /// [`CallContext::session_id`](crate::CallContext::session_id) in the [`CustomEvent`] to
-    /// attribute the event to the call. A `duration` of zero or none is the time since the event
-    /// was built.
+    /// non-empty (K-03). Nothing is queued while tracing is off, or by a handle that
+    /// `AGENTCAT_ENABLED` turned off. The `redact_event` hook of the options runs on the event, on
+    /// the runtime of the caller; the string hook does not. The event has no session unless the
+    /// [`CustomEvent`] names one, and TypeScript takes none from anywhere either (C47): inside a
+    /// tool, pass [`CallContext::session_id`](crate::CallContext::session_id) in the
+    /// [`CustomEvent`] to attribute the event to the call. A `duration` of zero or none is the
+    /// time since the event was built.
     ///
     /// ```no_run
     /// # fn run<H: rmcp::ServerHandler>(
@@ -197,6 +202,9 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<InitializeResult, ErrorData>> + MaybeSendFuture + '_ {
         async move {
+            if !self.agentcat.inner().enabled {
+                return self.inner.initialize(request, context).await;
+            }
             let client = request.client_info.clone();
             let result = self.inner.initialize(request, context).await?;
             *self.identity.lock().unwrap_or_else(PoisonError::into_inner) = Some(client);
@@ -315,7 +323,8 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
     }
 
     /// The TS tool-call pipeline (B-022) around the handler's `call_tool`: interception,
-    /// stripping, mint-back and the record of the call.
+    /// stripping, mint-back and the record of the call; on a handle that is off, the handler's
+    /// `call_tool` with a [`CallContext`](crate::CallContext) without session or agent (C45).
     fn call_tool(
         &self,
         request: CallToolRequestParams,
@@ -334,8 +343,11 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
         async move {
-            let mut result = self.inner.list_tools(request, context).await?;
             let shared = self.agentcat.inner();
+            if !shared.enabled {
+                return self.inner.list_tools(request, context).await;
+            }
+            let mut result = self.inner.list_tools(request, context).await?;
             if result.tools.is_empty() {
                 shared.sink.log(EMPTY_LISTING_WARNING.to_owned());
                 return Ok(result);
@@ -357,9 +369,12 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
 
     /// C02: the injected descriptor of `get_more_tools`, or the handler's tool through the
     /// pipeline, so the call path sees what the listing showed. The pipeline's log lines are
-    /// dropped: the listing logs them once.
+    /// dropped: the listing logs them once. On a handle that is off, the handler's tool (C45).
     fn get_tool(&self, name: &str) -> Option<Tool> {
         let shared = self.agentcat.inner();
+        if !shared.enabled {
+            return self.inner.get_tool(name);
+        }
         if shared.options.report_missing() && name == GET_MORE_TOOLS_NAME {
             return Some(get_more_tools_tool());
         }

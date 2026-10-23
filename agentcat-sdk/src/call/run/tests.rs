@@ -1,13 +1,17 @@
 //! The tool-call pipeline (B-022) over in-memory connections: the schema of the called tool and
 //! the stripped arguments (C03, B-050, B-051, RD-12), foreign tools (B-060), the mint-back and its
-//! mirror (B-056 to B-059, B-069), `get_more_tools` (B-028, B-046), tracing off (K-05), errors
-//! (RD-05, D16, C24), MRTR (B-025), the degraded path, the [`CallContext`], the record's fields
-//! (B-077, B-083, B-096) and concurrent calls. The texts the agent reads come from the functions
-//! the TS vectors pin (`build_mint_back_text`, `report_missing`, ...); the log lines are the TS
-//! texts of `src/engine/callWrap.ts`.
+//! mirror (B-056 to B-059, B-069), `get_more_tools` (B-028, B-046), tracing off (R27, RD-29),
+//! errors (RD-05, D16, C24), MRTR (B-025), the degraded path (K-05), the hooks' snapshot, the
+//! [`CallContext`], the record's fields (B-077, B-083, B-096), concurrent calls and cancelled
+//! calls (C41, RD-34). The texts the agent reads come from the functions the TS vectors pin
+//! (`build_mint_back_text`, `report_missing`, ...); the log lines are the TS texts of
+//! `src/engine/callWrap.ts`.
 use std::future::ready;
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
 use std::time::Duration;
+
+use futures::FutureExt;
 
 use rmcp::model::{
     CallToolRequest, CallToolRequestParams, CallToolResponse, CallToolResult, ClientCapabilities,
@@ -33,10 +37,11 @@ use crate::handles::{
     HandleResolution, SessionIdFailure, SessionSource, build_mint_back_text,
     build_structured_mint_back,
 };
+use crate::hooks::snapshots_built;
 use crate::inject::{InjectConfig, InjectState, build_injected_list};
 use crate::test_support::rmcp::{
     ContextEcho, MRTR_STATE, Mrtr, PAGED_CURSOR, Paged, Probe, RecordingSink, Sample, SilentPaged,
-    connect,
+    bare_context, connect,
 };
 use crate::tokens::{estimate_input_tokens, estimate_output_tokens};
 
@@ -619,8 +624,8 @@ impl ServerHandler for Outputs {
 
 /// B-058, B-069, C21: the mirror goes first into the structured content of a tool whose output
 /// schema got `mcp_session` (a hand-written listing, and the macro's `structured` through
-/// `get_tool`); a tool whose output schema was skipped or that has none gets no mirror; a
-/// customer's own `mcp_session` stays.
+/// `get_tool`); a tool whose output schema was skipped or that has none gets no mirror, but still
+/// the mint-back text first (B-056); a customer's own `mcp_session` stays.
 #[tokio::test]
 async fn mirror_gate_follows_registry() {
     let (agentcat, sink) = recording(Options::default());
@@ -643,6 +648,12 @@ async fn mirror_gate_follows_registry() {
             result.structured_content,
             Some(json!({"msg": "hi"})),
             "{name}"
+        );
+        let record = only_record(&sink);
+        assert_eq!(
+            texts(&result)[0],
+            mint_back(&record),
+            "{name}: the text block"
         );
     }
     let owned = call(&client, "owned", start()).await;
@@ -694,8 +705,8 @@ async fn record_keeps_the_original_result() {
 // --- get_more_tools -------------------------------------------------------------------------
 
 /// B-046: `get_more_tools` is answered by the SDK with the canned text after the mint-back, logged
-/// with the context length, and recorded with the context as the intent and the canned result as
-/// the response.
+/// with the context length, and recorded with its session, the arguments as sent, the context as
+/// the intent and the canned result as the response.
 #[tokio::test]
 async fn get_more_tools_answered_and_recorded() {
     let (agentcat, sink) = recording(Options::default());
@@ -704,7 +715,7 @@ async fn get_more_tools_answered_and_recorded() {
     let before = sink.logs().len();
     let context = json!("Needs a tool that books meeting rooms.");
     let arguments = json!({"context": context, "session_id": "start"});
-    let result = call(&client, GET_MORE_TOOLS_NAME, arguments).await;
+    let result = call(&client, GET_MORE_TOOLS_NAME, arguments.clone()).await;
     let (answer, line) = report_missing(Some(&context));
     let record = only_record(&sink);
     assert_eq!(
@@ -712,6 +723,9 @@ async fn get_more_tools_answered_and_recorded() {
         [mint_back(&record).as_str(), GET_MORE_TOOLS_RESULT_TEXT]
     );
     assert_eq!(record.resource_name, GET_MORE_TOOLS_NAME);
+    assert_eq!(record.request["params"]["name"], GET_MORE_TOOLS_NAME);
+    assert_eq!(record.request["params"]["arguments"], arguments);
+    assert!(record.resolution.session_id.starts_with("ses_"), "minted");
     assert_eq!(record.user_intent, Some(context));
     assert_eq!(
         record.response,
@@ -797,26 +811,156 @@ async fn customer_get_more_tools_is_shadowed() {
 
 // --- tracing off, errors, MRTR, the degraded path ---------------------------------------------
 
-/// K-05, B-023: with tracing off, a call reaches the handler with its raw arguments, nothing is
-/// recorded, and `get_more_tools` is still answered (and logged).
-#[tokio::test]
-async fn tracing_off_forwards_raw_arguments() {
-    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
-    let client = connect(agentcat.track(ContextEcho), "off").await;
-    let raw = with_handles(json!({"msg": "hi"}));
-    let echo = call(&client, "echo", raw.clone()).await;
-    let echo = echo
+/// The arguments that [`ContextEcho`] received, from its answer.
+fn echoed_arguments(result: &CallToolResult) -> Value {
+    let echo = result
         .structured_content
+        .as_ref()
         .expect("ContextEcho answers structured content");
-    assert_eq!(echo["request"]["params"]["arguments"], raw);
-    assert!(echo.get(MCP_SESSION_KEY).is_none());
+    echo["request"]["params"]["arguments"].clone()
+}
+
+/// R27, RD-29, C03: with tracing off, the SDK still strips what it injected before the handler
+/// runs. A `deny_unknown_fields` tool receives its own field only, after a listing (the
+/// registry) and before one (`get_tool`), and gets no mint-back; a tool the SDK has no schema
+/// for (a handler without `get_tool` whose listing is empty) gets TS's heuristic strip of
+/// `session_id`, `agent_id` and `context` (B-051).
+#[tokio::test]
+async fn tracing_off_strips_injected_arguments() {
+    let arguments = json!({"text": "hi", "context": "Tracing is off; the SDK still strips this."});
+    for listed in [true, false] {
+        let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+        let client = connect(agentcat.track(Sample), "strict").await;
+        if listed {
+            client.list_all_tools().await.expect("the listing works");
+        }
+        let result = call(&client, "strict", arguments.clone()).await;
+        assert_ne!(result.is_error, Some(true), "listed: {listed}: {result:?}");
+        assert_eq!(texts(&result), ["hi"], "listed: {listed}: no mint-back");
+        assert!(sink.take_records().is_empty());
+    }
+
+    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+    let client = connect(agentcat.track(ContextEcho), "heuristic").await;
+    let result = call(&client, "echo", with_handles(json!({"msg": "hi"}))).await;
+    assert_eq!(echoed_arguments(&result), json!({"msg": "hi"}));
+    assert!(
+        result
+            .structured_content
+            .unwrap()
+            .get(MCP_SESSION_KEY)
+            .is_none()
+    );
+    assert!(sink.take_records().is_empty());
+}
+
+/// R27, RD-29, K-08: with tracing off, a tool that declares its own `context` receives it, before
+/// any listing (its `get_tool` schema) and after one (the registry); TS's heuristic would strip
+/// it.
+#[tokio::test]
+async fn tracing_off_keeps_own_context() {
+    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+    let client = connect(agentcat.track(Sample), "own-context").await;
+    for listed in [false, true] {
+        if listed {
+            client.list_all_tools().await.expect("the listing works");
+        }
+        let arguments = json!({"context": "The tool's own context."});
+        let result = call(&client, "own_context", arguments).await;
+        assert_eq!(
+            texts(&result),
+            ["The tool's own context."],
+            "listed: {listed}"
+        );
+    }
+    assert!(
+        !sink.logs().iter().any(|line| line == REBUILT),
+        "get_tool knew the tool"
+    );
+    assert!(sink.take_records().is_empty());
+}
+
+/// K-05, B-023: with tracing off nothing is recorded: not a result, an `is_error` result, a
+/// JSON-RPC error or a panic; `get_more_tools` is still answered (and logged), with no mint-back.
+/// After a listing, the only log line is the intercept's.
+#[tokio::test]
+async fn tracing_off_records_nothing() {
+    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+    let client = connect(agentcat.track(Sample), "off").await;
+    client.list_all_tools().await.expect("the listing works");
+    let listed = sink.logs().len();
+    call(&client, "echo", json!({"msg": "hi", "session_id": "start"})).await;
+    let failed = call(&client, "fail", json!({})).await;
+    assert_eq!(failed.is_error, Some(true));
+    call_error(&client, "nope", json!({})).await;
 
     let context = json!("Looking for more tools.");
     let arguments = json!({"context": context, "session_id": "start"});
     let result = call(&client, GET_MORE_TOOLS_NAME, arguments).await;
     assert_eq!(texts(&result), [GET_MORE_TOOLS_RESULT_TEXT], "no mint-back");
-    assert_eq!(sink.logs(), [report_missing(Some(&context)).1]);
+    assert_eq!(sink.logs()[listed..], [report_missing(Some(&context)).1]);
+
+    let tracked = agentcat.track(Sample);
+    let exploded =
+        AssertUnwindSafe(tracked.call_tool(params("explode", json!({})), bare_context(None)))
+            .catch_unwind()
+            .await;
+    assert!(exploded.is_err(), "the panic reaches the caller");
     assert!(sink.take_records().is_empty(), "nothing is recorded");
+}
+
+/// TS, K-05: the degraded path (no session ID could be issued) keeps the raw arguments, also
+/// after a listing: the handler receives `session_id`, `agent_id` and `context` as sent, and
+/// nothing is recorded.
+#[tokio::test]
+async fn degraded_path_keeps_raw_arguments() {
+    let (agentcat, sink) = recording(tracking());
+    let client = connect(agentcat.track(ContextEcho), "degraded").await;
+    client.list_all_tools().await.expect("the listing works");
+    let _failure = SessionIdFailure::start();
+    let raw = with_handles(json!({"msg": "hi"}));
+    let result = call(&client, "echo", raw.clone()).await;
+    assert_eq!(echoed_arguments(&result), raw);
+    assert!(sink.take_records().is_empty());
+}
+
+/// Carry-forward (plan 4 Task 9): the call path builds the hooks' [`ToolCall`] snapshot only when
+/// a hook starts: never without hooks, once for a call with a hook; in hook mode the session hook
+/// alone counts.
+///
+/// [`ToolCall`]: crate::ToolCall
+#[tokio::test]
+async fn snapshot_built_only_with_hooks() {
+    let cases = [
+        ("no hooks", Options::default(), 0),
+        (
+            "event_tags",
+            Options::default().event_tags(|_call| ready(Ok(None))),
+            1,
+        ),
+        (
+            "hook mode",
+            Options::default().resolve_session_id(|_call| ready(Ok(None))),
+            1,
+        ),
+        (
+            "every hook",
+            Options::default()
+                .resolve_session_id(|_call| ready(Ok(None)))
+                .identify(|_call| ready(Ok(None)))
+                .event_tags(|_call| ready(Ok(None)))
+                .event_properties(|_call| ready(Ok(None))),
+            1,
+        ),
+    ];
+    for (label, options, expected) in cases {
+        let (agentcat, sink) = recording(options);
+        let client = connect(agentcat.track(Sample), label).await;
+        let before = snapshots_built();
+        call(&client, "echo", json!({"msg": "hi"})).await;
+        assert_eq!(snapshots_built() - before, expected, "{label}");
+        assert_eq!(sink.take_records().len(), 1, "{label}");
+    }
 }
 
 /// Design §7.4, RD-05, C24: an `Err(ErrorData)` reaches the client exactly as without the SDK; the
@@ -1140,6 +1284,43 @@ async fn record_fields_follow_b077() {
     );
 }
 
+/// TS's `custom-context-description.test.ts` end to end: with a custom `context` description,
+/// every listed tool shows it, and each call records its own `context` as the intent.
+#[tokio::test]
+async fn custom_description_listing_and_intents() {
+    let description = "Explain your intent for this operation";
+    let options = Options::default().custom_context_description(description);
+    let (agentcat, sink) = recording(options);
+    let client = connect(agentcat.track(Sample), "custom").await;
+    let tools = client.list_all_tools().await.expect("the listing works");
+    for name in ["echo", "strict", "structured"] {
+        let context = &listed(&tools, name)["inputSchema"]["properties"]["context"];
+        assert_eq!(context["description"], description, "{name}");
+    }
+    let calls = [
+        (
+            "echo",
+            json!({"msg": "a", "context": "Setting up my first task"}),
+        ),
+        (
+            "strict",
+            json!({"text": "b", "context": "Finishing the first task"}),
+        ),
+        (
+            "structured",
+            json!({"msg": "c", "context": "Checking my progress"}),
+        ),
+    ];
+    for (name, arguments) in calls {
+        let intent = arguments["context"].clone();
+        let result = call(&client, name, arguments).await;
+        assert_ne!(result.is_error, Some(true), "{name}: {result:?}");
+        let record = only_record(&sink);
+        assert_eq!(record.resource_name, name);
+        assert_eq!(record.user_intent, Some(intent), "{name}");
+    }
+}
+
 /// B-029: concurrent calls, each with its own agent, each get their own minted session, in the
 /// mint-back, in the call context and in the record.
 #[tokio::test]
@@ -1187,6 +1368,93 @@ async fn concurrent_calls_are_independent() {
         assert_eq!(
             whoami(result)["session_id"],
             json!(record.resolution.session_id)
+        );
+    }
+}
+
+// --- cancelled calls (C41, RD-34) --------------------------------------------------------------
+
+/// How long the tool of [`Slow`] takes.
+const SLOW_TOOL: Duration = Duration::from_secs(60);
+
+/// A hand-written server whose every tool call answers after [`SLOW_TOOL`].
+#[derive(Debug, Clone, Copy)]
+struct Slow;
+
+impl ServerHandler for Slow {
+    #[expect(
+        clippy::manual_async_fn,
+        reason = "the signature of rmcp's trait method: a returned future with MaybeSendFuture"
+    )]
+    fn call_tool(
+        &self,
+        _request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        async {
+            tokio::time::sleep(SLOW_TOOL).await;
+            Ok(CallToolResult::success(vec![]).into())
+        }
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// C41, RD-34: a call future dropped before the tool answers (here by the customer's timeout)
+/// publishes its record with no response, `is_error`, the cancelled error in the RD-06 key order,
+/// and the duration until the drop.
+#[tokio::test]
+async fn cancelled_call_publishes_record() {
+    tokio::time::pause();
+    let (agentcat, sink) = recording(Options::default());
+    let tracked = agentcat.track(Slow);
+    let arguments = json!({"session_id": "start", "context": "Takes too long."});
+    let call = tracked.call_tool(params("slow", arguments), bare_context(None));
+    let outcome = tokio::time::timeout(Duration::from_secs(1), call).await;
+    assert!(outcome.is_err(), "the timeout drops the call");
+
+    let record = only_record(&sink);
+    assert_eq!(record.resource_name, "slow");
+    assert!(record.is_error);
+    assert_eq!(record.response, None);
+    assert_eq!(record.output_tokens, None);
+    assert_eq!(record.user_intent, Some(json!("Takes too long.")));
+    let error = Value::Object(record.error.expect("the cancelled error"));
+    assert_eq!(
+        serde_json::to_string(&error).unwrap(),
+        r#"{"message":"tool call cancelled before it completed","type":"cancelled","platform":"rust"}"#
+    );
+    assert!(
+        (1000..SLOW_TOOL.as_millis()).contains(&u128::from(record.duration_ms)),
+        "{}",
+        record.duration_ms
+    );
+}
+
+/// C41: a call that completes goes to the sink exactly once, never as cancelled: a result, an
+/// `is_error` result, a JSON-RPC error, the `get_more_tools` intercept and a panic.
+#[tokio::test]
+async fn completed_call_is_recorded_once() {
+    let (agentcat, sink) = recording(Options::default());
+    let tracked = agentcat.track(Sample);
+    let cases = [
+        ("echo", json!({"msg": "hi"}), None),
+        ("fail", json!({}), None),
+        ("nope", json!({}), Some("InvalidParams")),
+        (GET_MORE_TOOLS_NAME, json!({"context": "why"}), None),
+        ("explode", json!({}), Some("panic")),
+    ];
+    for (name, arguments, error_type) in cases {
+        let call = tracked.call_tool(params(name, arguments), bare_context(None));
+        let _outcome = AssertUnwindSafe(call).catch_unwind().await;
+        let record = only_record(&sink);
+        let recorded_type = record.error.as_ref().and_then(|error| error.get("type"));
+        assert_eq!(
+            recorded_type,
+            error_type.map(Value::from).as_ref(),
+            "{name}"
         );
     }
 }

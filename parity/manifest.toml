@@ -106,12 +106,12 @@ status = "todo"
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off-x-report-missing-on'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-mint'"
@@ -192,12 +192,12 @@ status = "todo"
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off-x-report-missing-on'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-mint'"
@@ -279,12 +279,12 @@ status = "todo"
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off-x-report-missing-on'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-mint'"
@@ -366,12 +366,12 @@ status = "todo"
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off-x-report-missing-on'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-mint'"
@@ -453,12 +453,12 @@ status = "todo"
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off-x-report-missing-on'"
 status = "ported"
-rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should accept apiBaseUrl as an optional string property"
@@ -1017,11 +1017,13 @@ reason = "inject.json case ts:context-parameters-edge-cases:warns-with-name; che
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should capture context parameter when tools are called after tracking"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should capture userIntent only when context is provided"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077"]
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should inject context into tool schemas when listing tools"
@@ -1031,7 +1033,8 @@ reason = "inject.json case ts:todo-server:default-description; checked by agentc
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should remove context parameter before calling tool callback"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_before_listing"]
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should use default context description when no custom description is provided"
@@ -1041,7 +1044,8 @@ reason = "inject.json case ts:todo-server:default-description; checked by agentc
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should work with tools that have context parameter"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools with existing inputSchema"
@@ -1085,7 +1089,8 @@ reason = "inject.json case ts:todo-server:custom-all-tools; checked by agentcat-
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should capture tool calls with custom description configured"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::custom_description_listing_and_intents", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description even with long descriptions"
@@ -1119,7 +1124,8 @@ reason = "inject.json case ts:todo-server:default-description; checked by agentc
 
 [[test]]
 key = "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should work end-to-end with custom description and multiple tool calls"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "v1|src/tests/debug-tool-schema.test.ts|Debug Tool Schema Structure > should show the structure of tools registered with description and schema"
@@ -1591,7 +1597,7 @@ rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call"]
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > a synchronously-throwing hook is contained and the event still publishes"
 status = "ported"
-rust = ["agentcat-sdk::pipeline::settle::tests::panicking_hook_logs_and_publishes_without_it"]
+rust = ["agentcat-sdk::hooks::tests::hook_panic_does_not_reach_the_call", "agentcat-sdk::pipeline::settle::tests::panicking_hook_logs_and_publishes_without_it"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > error-path events carry hook results resolved after the throw"
@@ -2111,7 +2117,7 @@ reason = "queue.json case call:no-tokens; checked by agentcat-sdk::pipeline::pro
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when enableTracing is false"
 status = "ported"
-rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when server tracking data is missing"
@@ -2774,11 +2780,13 @@ reason = "inject.json cases ts:handle-injection:output-hook-mode, ts:handle-inje
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > clones the request with stripped arguments, leaving the original intact"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing", "agentcat-sdk::call::run::tests::record_fields_follow_b077"]
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > stores per server object"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::tracked::tests::registries_are_per_inner_type"]
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > fallback never strips get_more_tools' own context"
@@ -2839,7 +2847,7 @@ status = "todo"
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > enableTracing:false — get_more_tools still answers, no mint-back, no event"
 status = "ported"
-rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|high-level server: explicit handles > get_more_tools carries handles and the mint-back"
@@ -2890,7 +2898,7 @@ rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > enableTracing:false — no handle params injected, no mint-back, no events"
 status = "ported"
-rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options", "agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source"
@@ -4115,15 +4123,18 @@ reason = "call.json case report-missing:ts:missing-description; checked by agent
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with description and optional context"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with only context"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 3. Event Tracking Tests > should track report_missing events with proper structure"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 4. Integration Tests > should maintain task continuity when calling report_missing between other tools"
@@ -4305,11 +4316,13 @@ rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > wire-only: published event.response never contains mcp_session"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > composed outputSchema: schema untouched, no mirror, text block still delivers"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::mirror_gate_follows_registry", "agentcat-sdk::inject::tests::vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > hook mode: mirrored payload carries agent_id but never session_id or status"
@@ -4318,7 +4331,8 @@ rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > mints into structuredContent on the V1 path too"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::mirror_gate_follows_registry", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: low-level (V1) path > no tools/list ever (no registry): mirror applies — a list-less client cannot be validating"
@@ -4587,11 +4601,14 @@ reason = "tokens.json case utf8:\"😀\"; checked by agentcat-sdk::tokens::tests
 
 [[test]]
 key = "v1|src/tests/tracing-initialization.test.ts|Tracing Initialization Tests > should not create duplicate events when track() is called multiple times"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "TS patches the server in place and must not patch it twice; Rust track() moves the handler into a new Tracked<H> and has no in-place install to repeat (RD-19)."
 
 [[test]]
 key = "v1|src/tests/tracing-initialization.test.ts|Tracing Initialization Tests > should publish events for successful tool calls with handler-level architecture"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::call_outcomes_publish_one_event_each", "agentcat-sdk::call::run::tests::record_fields_follow_b077", "agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|normalize - breadth limiting > should leave objects within breadth limit unchanged"
@@ -5280,12 +5297,12 @@ rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > passes tool calls through unwrapped-behavior: no event, no mint-back"
 status = "ported"
-rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: enableTracing false > still answers get_more_tools directly, publishing nothing"
 status = "ported"
-rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
+rust = ["agentcat-sdk::call::run::tests::tracing_off_records_nothing"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: track() edge paths > returns an incompatible object untouched instead of throwing"
