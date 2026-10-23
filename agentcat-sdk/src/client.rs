@@ -8,9 +8,11 @@ use std::time::{Duration, SystemTime};
 
 use rmcp::ServerHandler;
 
+#[cfg(test)]
+use crate::config::MapEnv;
+use crate::config::{AGENTCAT_PROJECT_ID, Env, Options, sdk_enabled};
 #[cfg(not(test))]
-use crate::config::resolve_api_base_url;
-use crate::config::{AGENTCAT_PROJECT_ID, Env, Options, ProcessEnv, sdk_enabled};
+use crate::config::{ProcessEnv, resolve_api_base_url};
 use crate::custom::{CustomEvent, publish_string};
 #[cfg(not(test))]
 use crate::delivery::http::ApiPublisher;
@@ -155,6 +157,21 @@ impl Publisher for OfflinePublisher {
     }
 }
 
+/// The environment that [`AgentCat::new`] and [`AgentCat::from_env`] read: the process's.
+#[cfg(not(test))]
+fn default_env() -> ProcessEnv {
+    ProcessEnv
+}
+
+/// The environment that [`AgentCat::new`] and [`AgentCat::from_env`] read in unit tests: an empty
+/// one, so an `AGENTCAT_ENABLED` or `AGENTCAT_PROJECT_ID` in the developer's shell cannot change
+/// the handles of tests (P17), as [`Transport::process`] keeps them off the network and the log
+/// file. A test that needs a variable builds its handle with [`AgentCat::with_env`].
+#[cfg(test)]
+fn default_env() -> MapEnv {
+    MapEnv::new(&[])
+}
+
 /// The sink of a handle that `AGENTCAT_ENABLED` turned off (C45): it drops every line, record and
 /// event, so nothing starts a thread, and it answers `flush` and `shutdown` with `true`.
 #[derive(Debug)]
@@ -200,10 +217,11 @@ impl AgentCat {
     /// `no` or `off` (any case, surrounding white space ignored) turns the handle off: it never
     /// starts a thread, its [`Tracked`] servers forward every method to the wrapped handler
     /// untouched (a tool still gets its [`CallContext`](crate::CallContext), with no session and
-    /// no agent), custom events publish nothing, and the lifecycle methods return `true`. The same
-    /// holds for [`track`] and [`AgentCat::from_env`].
+    /// no agent), custom events return `Ok(())` at once and publish nothing (also for an empty
+    /// project ID), and the lifecycle methods return `true`. The same holds for [`track`] and
+    /// [`AgentCat::from_env`].
     pub fn new(project_id: impl Into<String>, options: Options) -> Self {
-        Self::build(project_id.into(), options, &ProcessEnv)
+        Self::build(project_id.into(), options, &default_env())
     }
 
     /// A handle like [`AgentCat::new`] for the project that the environment variable
@@ -218,7 +236,7 @@ impl AgentCat {
     /// # let _ = agentcat;
     /// ```
     pub fn from_env(options: Options) -> Self {
-        Self::from_env_in(options, &ProcessEnv)
+        Self::from_env_in(options, &default_env())
     }
 
     /// [`AgentCat::from_env`] in the environment `env` (D36).
@@ -340,8 +358,8 @@ impl AgentCat {
     ///
     /// The session is the event's own [`session_id`](CustomEvent::session_id) when it is not
     /// empty, else `session_id` verbatim (it may be empty for none). The event has no server or
-    /// client fields and goes through no redaction hook. It is queued even while tracing is off,
-    /// and dropped by a handle that `AGENTCAT_ENABLED` turned off.
+    /// client fields and goes through no redaction hook. It is queued even while tracing is off.
+    /// A handle that `AGENTCAT_ENABLED` turned off returns `Ok(())` at once and publishes nothing.
     ///
     /// ```no_run
     /// use agentcat_sdk::{AgentCat, CustomEvent, Options};
@@ -354,7 +372,8 @@ impl AgentCat {
     ///
     /// # Errors
     ///
-    /// [`Error::ProjectIdRequired`] when `project_id` is empty.
+    /// [`Error::ProjectIdRequired`] when `project_id` is empty, except on a handle that
+    /// `AGENTCAT_ENABLED` turned off, which returns `Ok(())` and does nothing.
     pub fn publish_custom_event(
         &self,
         session_id: &str,

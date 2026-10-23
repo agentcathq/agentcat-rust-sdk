@@ -72,14 +72,36 @@ struct Schema {
     mirror: bool,
 }
 
+/// Whether learning a tool's schema ([`learn_schema`]) writes its log lines: the lookup panic, the
+/// rebuild's pipeline lines, the rebuild line and a failed rebuild's line.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SchemaLogs {
+    /// A traced call writes them to the sink.
+    Written,
+    /// A call with tracing off writes none of them, as TS's tracing-off branch returns before
+    /// `ensureRegistries` and logs nothing (`callWrap.ts:159-165`, P16). So a tracing-off handle
+    /// starts no delivery thread and writes no log file on this path.
+    Silent,
+}
+
+impl SchemaLogs {
+    /// Hands the line that `line` builds to the sink of `shared` when the lines are written.
+    fn log(self, shared: &Inner, line: impl FnOnce() -> String) {
+        if self == Self::Written {
+            shared.sink.log(line());
+        }
+    }
+}
+
 /// TS's `tools/call` wrapper (B-022) around the inner handler's `call_tool`, in TS's order:
 ///
 /// 1. A handle that `AGENTCAT_ENABLED` turned off hands the call to the handler untouched, with a
 ///    [`CallContext`] without a session or an agent (C45, C29).
 /// 2. `get_more_tools` is intercepted when report-missing is on.
 /// 3. With tracing off, the intercept is answered, and any other call learns the tool's schema as
-///    in step 5 and goes to the handler with the injected arguments stripped as in step 8 (R27,
-///    RD-29) and a [`CallContext`] without a session; nothing is recorded (B-023).
+///    in step 5, without its log lines (P16), and goes to the handler with the injected arguments
+///    stripped as in step 8 (R27, RD-29) and a [`CallContext`] without a session; nothing is
+///    recorded (B-023).
 /// 4. The call starts (`started_at`).
 /// 5. The tool's schema ([`learn_schema`]).
 /// 6. The session handles. When minting fails, the call takes the degraded path: after a log
@@ -122,7 +144,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let started = Instant::now();
     let runtime = Handle::try_current().ok();
 
-    let schema = learn_schema(tracked, &request.name, &context).await;
+    let schema = learn_schema(tracked, &request.name, &context, SchemaLogs::Written).await;
 
     let Some(resolution) = resolve_handles(
         request.arguments.as_ref(),
@@ -326,7 +348,7 @@ async fn start_hooks(
 /// learns the tool's schema as a traced call does ([`learn_schema`]: `get_tool`, the registry, a
 /// rebuild, else TS's heuristic) and goes to the handler without the injected arguments, so a
 /// tool's own `context` stays, and with a [`CallContext`] without a session or an agent. Nothing
-/// is recorded.
+/// is recorded, and learning the schema writes no log line ([`SchemaLogs::Silent`], P16).
 async fn untraced<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
@@ -337,7 +359,7 @@ async fn untraced<H: ServerHandler>(
         let shared = tracked.agentcat().inner();
         return Ok(answer_report_missing(shared, &request).into());
     }
-    let schema = learn_schema(tracked, &request.name, &context).await;
+    let schema = learn_schema(tracked, &request.name, &context, SchemaLogs::Silent).await;
     let request = stripped(request, schema.entry.as_ref());
     forward(tracked, request, context).await
 }
@@ -440,7 +462,7 @@ fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Val
 ///
 /// A `get_tool` that panics gives no schema: the panic is contained and logged with its message
 /// (C30), and the registry, the rebuild and the heuristic follow as for a tool `get_tool` does not
-/// know.
+/// know. With [`SchemaLogs::Silent`] none of these steps writes a log line.
 ///
 /// The tool is foreign when the registry's set of tools that declared their own `session_id`
 /// holds it, or when its `get_tool` schema declares one (C19). The mirror gate is the entry's
@@ -449,21 +471,22 @@ async fn learn_schema<H: ServerHandler>(
     tracked: &Tracked<H>,
     name: &str,
     context: &RequestContext<RoleServer>,
+    logs: SchemaLogs,
 ) -> Schema {
     let shared = tracked.agentcat().inner();
     let looked_up = match catch_unwind(AssertUnwindSafe(|| tracked.lookup_tool(name))) {
         Ok(found) => found.map(|(_tool, entry)| entry),
         Err(payload) => {
             let message = panic_message(&*payload);
-            shared.sink.log(format!(
-                "Warning: Tool lookup for {name} panicked: {message}"
-            ));
+            logs.log(shared, || {
+                format!("Warning: Tool lookup for {name} panicked: {message}")
+            });
             None
         }
     };
     let mut known = registry_view::<H>(shared, name);
     if looked_up.is_none() && known.entry.is_none() && !known.listed {
-        rebuild(tracked, context).await;
+        rebuild(tracked, context, logs).await;
         known = registry_view::<H>(shared, name);
     }
     let foreign = known.declares_session
@@ -503,41 +526,46 @@ fn registry_view<H: 'static>(shared: &Inner, name: &str) -> RegistryView {
 /// then goes through the tool-list pipeline and into the registry, as a listing would, and the
 /// pipeline's log lines go to the sink. A failure, a panic of the handler's `list_tools` (with
 /// the panic's message) or a timeout logs a warning and records nothing, so the next call tries
-/// again.
-async fn rebuild<H: ServerHandler>(tracked: &Tracked<H>, context: &RequestContext<RoleServer>) {
+/// again. With [`SchemaLogs::Silent`] the rebuild is the same but writes no log line.
+async fn rebuild<H: ServerHandler>(
+    tracked: &Tracked<H>,
+    context: &RequestContext<RoleServer>,
+    logs: SchemaLogs,
+) {
     let shared = tracked.agentcat().inner();
     let pages = AssertUnwindSafe(list_pages(tracked.inner(), context)).catch_unwind();
-    let pages = match tokio::time::timeout(REBUILD_TIMEOUT, pages).await {
-        Ok(Ok(Ok(pages))) => pages,
-        Ok(Ok(Err(error))) => return rebuild_failed(shared, &error.message),
-        Ok(Err(payload)) => return rebuild_failed(shared, &panic_message(&*payload)),
+    let failure = match tokio::time::timeout(REBUILD_TIMEOUT, pages).await {
+        Ok(Ok(Ok(pages))) => return record_pages::<H>(shared, pages, logs),
+        Ok(Ok(Err(error))) => error.message.into_owned(),
+        Ok(Err(payload)) => panic_message(&*payload),
         Err(_elapsed) => {
             let millis = REBUILD_TIMEOUT.as_millis();
-            let message = format!("tools/list did not respond within {millis}ms");
-            return rebuild_failed(shared, &message);
+            format!("tools/list did not respond within {millis}ms")
         }
     };
+    logs.log(shared, || {
+        format!("Warning: registry rebuild-on-demand failed - Error: {failure}")
+    });
+}
+
+/// The pages of a rebuild that worked, through the tool-list pipeline into the registry of the
+/// handler type `H` (B-027); the pipeline's lines, then the rebuild line, go to the sink when
+/// `logs` writes them.
+fn record_pages<H: 'static>(shared: &Inner, pages: Vec<Vec<Tool>>, logs: SchemaLogs) {
     let config = InjectConfig::from_options(&shared.options);
-    let logs = shared.with_registry::<H, _>(|registry| {
-        let mut logs = Vec::new();
+    let lines = shared.with_registry::<H, _>(|registry| {
+        let mut lines = Vec::new();
         for tools in pages {
             let list = build_injected_list(&config, tools, registry.state_mut());
             registry.record(&list);
-            logs.extend(list.logs);
+            lines.extend(list.logs);
         }
-        logs
+        lines
     });
-    for line in logs {
-        shared.sink.log(line);
+    for line in lines {
+        logs.log(shared, || line);
     }
-    shared.sink.log(REBUILT.to_owned());
-}
-
-/// The log line of a rebuild that failed with `message` (B-027).
-fn rebuild_failed(shared: &Inner, message: &str) {
-    shared.sink.log(format!(
-        "Warning: registry rebuild-on-demand failed - Error: {message}"
-    ));
+    logs.log(shared, || REBUILT.to_owned());
 }
 
 /// The tools of every listing page of `inner`, from the first page (TS's `params: {}`) through

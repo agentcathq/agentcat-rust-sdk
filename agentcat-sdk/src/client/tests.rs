@@ -259,7 +259,8 @@ fn from_env_without_project_is_telemetry_only() {
 }
 
 /// C45: a handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool
-/// call, a custom event (which returns `Ok(())`) or the lifecycle methods, which return `true`.
+/// call, a custom event in any of its three forms (which returns `Ok(())`, also for an empty
+/// project ID) or the lifecycle methods, which return `true`.
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn disabled_handle_starts_no_thread() {
@@ -275,12 +276,26 @@ async fn disabled_handle_starts_no_thread() {
             .unwrap(),
     );
     client.call_tool(params).await.unwrap();
-    let event = CustomEvent::new().resource_name("disabled");
-    assert!(
-        agentcat
-            .publish_custom_event("ses_1", "proj_1", event)
-            .is_ok()
-    );
+    let tracked = agentcat.track(Sample);
+    let call = CallContext::new(String::new(), None, agentcat.clone());
+    let event = || CustomEvent::new().resource_name("disabled");
+    for project in ["", "proj_1"] {
+        let string = agentcat.publish_custom_event("ses_1", project, event());
+        assert!(
+            string.is_ok(),
+            "string form, project {project:?}: {string:?}"
+        );
+        let context = call.publish_custom_event(project, event());
+        assert!(
+            context.is_ok(),
+            "CallContext form, project {project:?}: {context:?}"
+        );
+        let server = tracked.publish_custom_event(project, event());
+        assert!(
+            server.is_ok(),
+            "Tracked form, project {project:?}: {server:?}"
+        );
+    }
     assert!(agentcat.flush(Duration::from_secs(1)).await);
     assert!(agentcat.flush_blocking(Duration::from_secs(1)));
     assert_eq!(delivery_threads(), 0);
@@ -288,4 +303,35 @@ async fn disabled_handle_starts_no_thread() {
     assert!(agentcat.shutdown_blocking(Duration::from_secs(1)));
     assert_eq!(delivery_threads(), 0);
     client.cancel().await.unwrap();
+}
+
+/// P17: under `cfg(test)`, `AgentCat::new` and `track` build their handle in an empty environment,
+/// so an `AGENTCAT_ENABLED=false` in the developer's shell cannot turn the handles of unit tests
+/// off. The test runs [`new_handle_is_on`] in a child process of this test binary with that
+/// variable set, as `forbid(unsafe_code)` rules out `std::env::set_var`.
+#[test]
+fn new_ignores_the_process_environment() {
+    let binary = std::env::current_exe().unwrap();
+    let output = std::process::Command::new(binary)
+        .args([
+            "--exact",
+            "client::tests::new_handle_is_on",
+            "--test-threads=1",
+        ])
+        .env(AGENTCAT_ENABLED, "false")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stdout}{stderr}");
+    assert!(stdout.contains("1 passed"), "the test ran: {stdout}");
+}
+
+/// The handles of `AgentCat::new` and `track` are on; [`new_ignores_the_process_environment`]
+/// runs this with `AGENTCAT_ENABLED=false` in the process environment.
+#[test]
+fn new_handle_is_on() {
+    assert!(AgentCat::new("", Options::default()).inner().enabled);
+    let tracked = track(Named("on"), "", Options::default());
+    assert!(tracked.agentcat().inner().enabled);
 }

@@ -648,6 +648,32 @@ async fn get_tool_panic_is_no_schema() {
     );
 }
 
+/// Controller ruling P16: with tracing off, learning the schema writes no log line. A `get_tool`
+/// that panics and a rebuild whose `list_tools` panics stay silent, and the calls still go out
+/// stripped: `beta` keeps its own `context` (the registry after the rebuild), and a tool that the
+/// failed rebuild taught nothing gets TS's heuristic strip (B-051).
+#[tokio::test]
+async fn tracing_off_lookup_panics_log_nothing() {
+    let sink = Arc::new(RecordingSink::default());
+    let options = Options::default().enable_tracing(false);
+    let agentcat = AgentCat::with_sink("", options, sink.clone());
+    let client = connect(agentcat.track(PanickingGetTool), "get-tool-off").await;
+    let arguments = json!({"x": "1", "context": "mine"});
+    let result = call(&client, "beta", arguments.clone())
+        .await
+        .expect("a result");
+    assert_eq!(received(&result), arguments);
+
+    let client = connect(agentcat.track(PanickingList), "rebuild-off").await;
+    let arguments = json!({"x": "1", "context": "why", "session_id": "start"});
+    let result = call(&client, "anything", arguments)
+        .await
+        .expect("a result");
+    assert_eq!(received(&result), json!({"x": "1"}), "B-051");
+    assert!(sink.logs().is_empty(), "{:?}", sink.logs());
+    assert!(sink.take_records().is_empty());
+}
+
 /// Controller ruling (Task 8): a `get_info` that panics leaves the record without a server name
 /// and version (B-086), and the panic is logged with its message (C30); the call goes on.
 #[tokio::test]

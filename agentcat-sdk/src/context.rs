@@ -93,10 +93,11 @@ impl CallContext {
     /// The event goes to the project of the handle ([`AgentCat::new`](crate::AgentCat::new)), not
     /// to `project_id`, which only has to be non-empty (K-03). Nothing is queued while tracing is
     /// off, or by a handle that `AGENTCAT_ENABLED` turned off. The `redact_event` hook of the
-    /// options runs on the event, on the runtime of the caller; the string hook does not. The event has no session unless the [`CustomEvent`]
-    /// names one, and TypeScript takes none from the call either (C47): pass
-    /// [`session_id()`](Self::session_id) in the [`CustomEvent`] to attribute the event to the
-    /// call's session. A `duration` of zero or none is the time since the event was built.
+    /// options runs on the event, on the runtime of the caller; the string hook does not. The
+    /// event has no session unless the [`CustomEvent`] names one, and TypeScript takes none from
+    /// the call either (C47): pass [`session_id()`](Self::session_id) in the [`CustomEvent`] to
+    /// attribute the event to the call's session. A `duration` of zero or none is the time since
+    /// the event was built.
     ///
     /// ```no_run
     /// # fn run(call: agentcat_sdk::CallContext) -> Result<(), agentcat_sdk::Error> {
@@ -113,7 +114,8 @@ impl CallContext {
     ///
     /// # Errors
     ///
-    /// [`Error::ProjectIdRequired`] when `project_id` is empty.
+    /// [`Error::ProjectIdRequired`] when `project_id` is empty, except on a handle that
+    /// `AGENTCAT_ENABLED` turned off, which returns `Ok(())` and does nothing.
     pub fn publish_custom_event(&self, project_id: &str, event: CustomEvent) -> Result<(), Error> {
         let created = SystemTime::now();
         publish_server(

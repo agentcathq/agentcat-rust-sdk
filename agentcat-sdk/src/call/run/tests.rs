@@ -909,6 +909,38 @@ async fn tracing_off_records_nothing() {
     assert!(sink.take_records().is_empty(), "nothing is recorded");
 }
 
+/// Controller ruling P16 (TS returns before `ensureRegistries` with tracing off,
+/// `callWrap.ts:159-165`): with tracing off, a call to a handler without `get_tool` that never
+/// listed still rebuilds the registry to learn the schema (R27), but writes none of the rebuild's
+/// log lines: not the pipeline's, not the rebuild line, not a failed rebuild's. `alpha` loses the
+/// injected `context`; `beta`, rebuilt from page 2, keeps its own, which TS's heuristic would drop.
+#[tokio::test]
+async fn tracing_off_rebuild_logs_nothing() {
+    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+    let client = connect(agentcat.track(Paged), "paged-off").await;
+    let arguments = json!({"x": "1", "context": "Tracing is off."});
+    let alpha = call(&client, "alpha", arguments.clone()).await;
+    assert_eq!(
+        paged_arguments(&alpha),
+        json!({"x": "1"}),
+        "the injected context"
+    );
+    let beta = call(&client, "beta", arguments.clone()).await;
+    assert_eq!(paged_arguments(&beta), arguments, "beta's own context");
+    let listed = agentcat
+        .inner()
+        .with_registry::<Paged, _>(|registry| registry.listed());
+    assert!(listed, "the rebuild recorded the listing");
+    assert!(sink.logs().is_empty(), "{:?}", sink.logs());
+
+    let (agentcat, sink) = recording(Options::default().enable_tracing(false));
+    let client = connect(agentcat.track(FailingList), "failing-off").await;
+    let result = call(&client, "echo", json!({"msg": "hi"})).await;
+    assert!(texts(&result).contains(&FAILING_LIST_ANSWER), "{result:?}");
+    assert!(sink.logs().is_empty(), "{:?}", sink.logs());
+    assert!(sink.take_records().is_empty());
+}
+
 /// TS, K-05: the degraded path (no session ID could be issued) keeps the raw arguments, also
 /// after a listing: the handler receives `session_id`, `agent_id` and `context` as sent, and
 /// nothing is recorded.

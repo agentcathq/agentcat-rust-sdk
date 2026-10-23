@@ -3,6 +3,7 @@
 //! the streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle
 //! that `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes (C45).
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use rmcp::ServerHandler;
@@ -17,13 +18,17 @@ use rmcp::model::{
     SubscriptionsListenRequest, SubscriptionsListenRequestParams, UnsubscribeRequestParams,
     UpdateTaskParams, UpdateTaskRequest,
 };
-use rmcp::model::{ListToolsResult, PaginatedRequestParams, Tool};
+use rmcp::model::{
+    InitializeResult, ListToolsResult, PaginatedRequestParams, ServerCapabilities, Tool,
+};
 use rmcp::service::{RoleClient, RunningService, ServiceError};
 use serde_json::{Value, json};
 
 use crate::client::{AgentCat, track};
 use crate::config::Options;
 use crate::constants::GET_MORE_TOOLS_NAME;
+use crate::context::CallContext;
+use crate::custom::CustomEvent;
 use crate::inject::{InjectConfig, InjectState, build_injected_list, inject_tool};
 use crate::test_support::rmcp::{
     ContextEcho, PAGED_CURSOR, PROBE_VERSIONS, Paged, Probe, RecordingSink, Sample, connect,
@@ -544,4 +549,51 @@ async fn disabled_handle_forwards_untouched() {
     plain.cancel().await.unwrap();
     client.cancel().await.unwrap();
     echo.cancel().await.unwrap();
+}
+
+/// A handler that counts the calls of its `get_info`.
+#[derive(Debug, Default)]
+struct CountedInfo(AtomicUsize);
+
+impl ServerHandler for CountedInfo {
+    fn get_info(&self) -> InitializeResult {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// C45: on a handle that `AGENTCAT_ENABLED` turned off, each form of custom event returns
+/// `Ok(())` before it does any work, an empty project ID included: the string form, the
+/// `CallContext` form, and the `Tracked` form, which does not call the handler's `get_info`.
+/// Nothing reaches the sink, not even the "Published custom event" line.
+#[tokio::test]
+async fn disabled_handle_custom_events_do_nothing() {
+    let sink = Arc::new(RecordingSink::default());
+    let agentcat = AgentCat::disabled_with_sink("proj_1", Options::default(), sink.clone());
+    let tracked = agentcat.track(CountedInfo::default());
+    let call = CallContext::new(String::new(), None, agentcat.clone());
+    let event = || {
+        CustomEvent::new()
+            .resource_name("disabled")
+            .session_id("ses_1")
+    };
+    for project in ["", "proj_1"] {
+        let string = agentcat.publish_custom_event("ses_1", project, event());
+        assert!(
+            string.is_ok(),
+            "string form, project {project:?}: {string:?}"
+        );
+        let context = call.publish_custom_event(project, event());
+        assert!(
+            context.is_ok(),
+            "CallContext form, project {project:?}: {context:?}"
+        );
+        let server = tracked.publish_custom_event(project, event());
+        assert!(
+            server.is_ok(),
+            "Tracked form, project {project:?}: {server:?}"
+        );
+    }
+    assert_eq!(tracked.inner().0.load(Ordering::SeqCst), 0, "get_info");
+    assert!(sink.logs().is_empty(), "{:?}", sink.logs());
 }

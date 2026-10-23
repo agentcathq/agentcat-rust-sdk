@@ -197,10 +197,11 @@ fn hand_over(agentcat: &AgentCat, log: Vec<String>, job: Option<EventJob>, sessi
 /// The session-string form (B-009, C11): the event goes to the handle's queue with the project
 /// `project_id` as given, the session of the event's own `session_id` or else `session_id`
 /// verbatim, no redaction hook and no server or client fields. `now` is the event's timestamp.
+/// A handle that `AGENTCAT_ENABLED` turned off returns `Ok(())` at once and builds nothing (C45).
 ///
 /// # Errors
 ///
-/// [`Error::ProjectIdRequired`] for an empty `project_id`.
+/// [`Error::ProjectIdRequired`] for an empty `project_id` on a handle that is on.
 pub(crate) fn publish_string(
     agentcat: &AgentCat,
     session_id: &str,
@@ -208,6 +209,9 @@ pub(crate) fn publish_string(
     event: CustomEvent,
     now: SystemTime,
 ) -> Result<(), Error> {
+    if !agentcat.inner().enabled {
+        return Ok(());
+    }
     if project_id.is_empty() {
         return Err(Error::ProjectIdRequired);
     }
@@ -257,11 +261,12 @@ pub(crate) fn publish_string(
 /// client and server, the event hook of the options (never the string hook) on the runtime of the
 /// caller, and nothing queued while tracing is off. `created` is the event's timestamp and
 /// `published` the moment of `publishEvent`: a missing or zero `duration` becomes the
-/// milliseconds between them (TS's `duration || elapsed`).
+/// milliseconds between them (TS's `duration || elapsed`). A handle that `AGENTCAT_ENABLED`
+/// turned off returns `Ok(())` at once and builds nothing (C45).
 ///
 /// # Errors
 ///
-/// [`Error::ProjectIdRequired`] for an empty `project_id`.
+/// [`Error::ProjectIdRequired`] for an empty `project_id` on a handle that is on.
 pub(crate) fn publish_server(
     agentcat: &AgentCat,
     project_id: &str,
@@ -271,6 +276,9 @@ pub(crate) fn publish_server(
     created: SystemTime,
     published: SystemTime,
 ) -> Result<(), Error> {
+    if !agentcat.inner().enabled {
+        return Ok(());
+    }
     if project_id.is_empty() {
         return Err(Error::ProjectIdRequired);
     }

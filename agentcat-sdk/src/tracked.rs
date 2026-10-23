@@ -151,11 +151,16 @@ impl<H> Tracked<H> {
     ///
     /// # Errors
     ///
-    /// [`Error::ProjectIdRequired`] when `project_id` is empty.
+    /// [`Error::ProjectIdRequired`] when `project_id` is empty, except on a handle that
+    /// `AGENTCAT_ENABLED` turned off, which returns `Ok(())` and does nothing, not even call the
+    /// handler's `get_info`.
     pub fn publish_custom_event(&self, project_id: &str, event: CustomEvent) -> Result<(), Error>
     where
         H: ServerHandler,
     {
+        if !self.agentcat.inner().enabled {
+            return Ok(());
+        }
         if project_id.is_empty() {
             return Err(Error::ProjectIdRequired);
         }
