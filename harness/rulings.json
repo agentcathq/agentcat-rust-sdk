@@ -1,6 +1,7 @@
 [
   {
     "path": "\\$\\.delta\\.transcript\\[5\\]\\.(?:result|error)",
+    "scenario": "tracing-off",
     "reason": "tracing-off.json, the own_context call with enableTracing false: on a per-request TS server (http-stateless; HTTP on 2026-07-28) the inner tap strips context by the heuristic, so the tool loses its own context and the client rejects the result; Rust has no inner tap and passes the raw arguments (K-05)",
     "deviation": "RD-29",
     "pending": true

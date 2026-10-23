@@ -4038,7 +4038,8 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > content-only tools are unaffected: block leads content, no structuredContent conjured"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > steady state: supplied handles are re-echoed on every response; text block stays mint-only"

@@ -16,7 +16,8 @@
 // usage: node harness/src/delta.mjs <ts-untracked> <ts-tracked> <rust-untracked> <rust-tracked> [--rulings <file>]
 //   the four files are normalized documents (driver output *.normalized.json). Output: `DELTA <path>: ts <x> != rust <y>`
 //   per unruled difference, `RULED RD-xx ...` per ruled one, the ruling lines of diff.mjs, a JSON summary.
-//   rulings: as in diff.mjs (harness/rulings.json for Rust against TS, harness/rulings-ts.json for TS against TS).
+//   rulings: as in diff.mjs (harness/rulings.json for Rust against TS, harness/rulings-ts.json for TS against TS);
+//   as there, a ruling's "scenario" is ignored here (matrix.mjs scopes by it).
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.

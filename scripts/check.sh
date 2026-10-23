@@ -48,28 +48,17 @@ node --test "scripts/*.test.mjs"
 # harness-l3 (the Rust reference server is built above): the MCP-wire delta against TS v2 on every
 # scenario, transport and lane; an A/A run of the Rust server, which must show no difference at all,
 # ruled or not; and the canary run, whose perturbed second server must be caught on every combination.
-l3_expect() { # l3_expect none|caught: every driver of the last matrix run passed, and every delta is as named
-  node -e '
-    const want = process.argv[1];
-    const doc = JSON.parse(require("node:fs").readFileSync("harness/out/matrix.json", "utf8"));
-    const bad = doc.filter((c) => Object.values(c.exitCodes).some((code) => code !== 0) || !c.delta ||
-      (want === "none" ? c.delta.total !== 0 : c.delta.unexpected === 0));
-    if (doc.length === 0 || bad.length > 0) {
-      const which = doc.length === 0 ? "no combination ran" : bad.map((c) => `${c.scenario} ${c.transport} ${c.lane}`).join(", ");
-      console.error(`L3 ${want === "none" ? "A/A" : "canary"} failed: ${which}`);
-      process.exit(1);
-    }' "$1"
-}
+# harness/src/l3-expect.mjs checks harness/out/matrix.json after each of the last two.
 node harness/src/matrix.mjs
 node harness/src/matrix.mjs --servers rust,rust --scenarios basic
-l3_expect none
+node harness/src/l3-expect.mjs none
 canary=0
 node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 HARNESS_CANARY=1 || canary=$?
 if [ "$canary" -ne 1 ]; then
   echo "L3 canary failed: the matrix exited $canary, expected 1"
   exit 1
 fi
-l3_expect caught
+node harness/src/l3-expect.mjs caught
 
 # test (R07 in a build of the SDK alone: another workspace member could turn the feature on)
 cargo nextest run --workspace --all-features

@@ -9,7 +9,10 @@
 //   --transports  default stdio,http,http-stateless
 //   --lanes       default 2025-11-25,2026-07-28
 //   --jobs        drivers running at the same time (default 4)
-//   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json
+//   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json. A
+//                 ruling with "scenario" applies only to that scenario's combinations; one whose scenario is
+//                 not in this run is neither reported nor counted as unused. A "scenario" that names no
+//                 scenario file exits 2.
 //   --env2        an environment variable for every run of the second server (untracked and tracked),
 //                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
 // Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (the
@@ -27,7 +30,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { compareDeltas, documentDelta, printEntries } from "./delta.mjs";
-import { loadRulings, readJson, rulingLines } from "./rulings.mjs";
+import { loadRulings, readJson, rulingLines, rulingsForScenario } from "./rulings.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HARNESS = join(HERE, "..");
@@ -135,6 +138,13 @@ async function main() {
   const bothTs = names.every((n) => n.startsWith("ts-"));
   const rulingsPath = opts.rulings ? resolve(opts.rulings) : join(HARNESS, bothTs ? "rulings-ts.json" : "rulings.json");
   const rulings = loadRulings(rulingsPath, usage);
+  for (const r of rulings) {
+    if (r.scenario !== undefined && !existsSync(join(scenarioDir, `${r.scenario}.json`))) {
+      usage(`${rulingsPath}: the ruling ${r.deviation} names the scenario ${JSON.stringify(r.scenario)}: no ${join(scenarioDir, `${r.scenario}.json`)}`);
+    }
+  }
+  // A ruling scoped to a scenario that this run leaves out can match nothing here: not reported, not counted.
+  const active = rulings.filter((r) => r.scenario === undefined || scenarios.includes(r.scenario));
   const commands = names.map(serverCommand);
   const whole = !opts.scenarios && !opts.transports && !opts.lanes;
 
@@ -187,7 +197,7 @@ async function main() {
     } else {
       const doc = (r) => readJson(join(OUT, `${combo.scenario}.${r.label}.${combo.transport}.normalized.json`), usage);
       const [aU, aT, bU, bT] = combo.runs.map(doc);
-      const entries = compareDeltas(documentDelta(aU, aT), documentDelta(bU, bT), rulings);
+      const entries = compareDeltas(documentDelta(aU, aT), documentDelta(bU, bT), rulingsForScenario(active, combo.scenario));
       const lines = [];
       const { ruled, unexpected } = printEntries(entries, (l) => lines.push(l));
       entry.delta = { total: entries.length, ruled, unexpected };
@@ -202,8 +212,8 @@ async function main() {
     process.stdout.write(`${line}\n`);
   }
   writeFileSync(join(OUT, "matrix.json"), `${JSON.stringify(summary, null, 2)}\n`);
-  for (const l of rulingLines(rulings)) process.stdout.write(l);
-  if (whole && rulings.some((r) => r.matched === 0)) failed = true;
+  for (const l of rulingLines(active)) process.stdout.write(l);
+  if (whole && active.some((r) => r.matched === 0)) failed = true;
   process.exit(failed ? 1 : 0);
 }
 

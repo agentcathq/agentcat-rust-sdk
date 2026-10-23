@@ -9,7 +9,8 @@
 // anchored as ^(?:<regex>)$). The output gives each ruling's match count. A ruling
 // may also carry "pending": true (a boolean): a provisional ruling the owner has not
 // answered yet (R17); it allows differences like any other, and its line reads
-// "RULING (pending) <RD-xx> matched <n>".
+// "RULING (pending) <RD-xx> matched <n>". A ruling's "scenario" (matrix.mjs scopes by it) is
+// ignored here: a document carries no scenario name, so every ruling matches by path alone.
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.

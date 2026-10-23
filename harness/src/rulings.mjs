@@ -1,7 +1,13 @@
-// Rulings shared by diff.mjs and delta.mjs: the file format, the matching and the report lines.
-// A rulings file is a JSON array of {"path": "<regex>", "reason", "deviation": "RD-xx", "pending"?: true};
-// each regex is anchored as ^(?:<regex>)$. `fail(message)` reports a bad file and must not return.
+// Rulings shared by diff.mjs, delta.mjs and matrix.mjs: the file format, the matching and the report lines.
+// A rulings file is a JSON array of
+// {"path": "<regex>", "reason", "deviation": "RD-xx", "pending"?: true, "scenario"?: "<scenario name>"};
+// each regex is anchored as ^(?:<regex>)$. `scenario` scopes a delta ruling to that scenario's combinations
+// in matrix.mjs (see rulingsForScenario); diff.mjs and delta.mjs know no scenario and match by path alone.
+// `fail(message)` reports a bad file and must not return.
 import { readFileSync } from "node:fs";
+
+/** The form of a scenario name: harness/scenarios/<name>.json. */
+export const SCENARIO_NAME = /^[A-Za-z0-9_-]+$/;
 
 export function readJson(path, fail) {
   try {
@@ -18,9 +24,12 @@ export function loadRulings(path, fail) {
   return list.map((r, i) => {
     const where = `${path}[${i}]`;
     if (r === null || typeof r !== "object" || Array.isArray(r)) fail(`${where}: must be an object`);
-    const extra = Object.keys(r).filter((k) => !["path", "reason", "deviation", "pending"].includes(k));
+    const extra = Object.keys(r).filter((k) => !["path", "reason", "deviation", "pending", "scenario"].includes(k));
     if (extra.length > 0) fail(`${where}: unknown key ${JSON.stringify(extra[0])}`);
     if (Object.hasOwn(r, "pending") && typeof r.pending !== "boolean") fail(`${where}: "pending" must be a boolean`);
+    if (Object.hasOwn(r, "scenario") && (typeof r.scenario !== "string" || !SCENARIO_NAME.test(r.scenario))) {
+      fail(`${where}: "scenario" must be a scenario name (letters, digits, _ and -)`);
+    }
     if (typeof r.path !== "string" || r.path === "") fail(`${where}: "path" must be a non-empty regex string`);
     if (typeof r.reason !== "string" || r.reason.trim() === "") fail(`${where}: "reason" must be a non-empty string`);
     if (typeof r.deviation !== "string" || !/^RD-\d+$/.test(r.deviation)) fail(`${where}: "deviation" must look like RD-<n>`);
@@ -42,11 +51,23 @@ export function matchRulings(rulings, path) {
   return hits;
 }
 
-/** One line per ruling: RULING / RULING (pending) / UNUSED RULING, with the match count. */
+/**
+ * The rulings that apply to one scenario's combinations: the unscoped ones and the ones scoped to it.
+ * The same objects, so a match still counts in the ruling's `matched`.
+ */
+export function rulingsForScenario(rulings, scenario) {
+  return rulings.filter((r) => r.scenario === undefined || r.scenario === scenario);
+}
+
+/**
+ * One line per ruling: RULING / RULING (pending) / UNUSED RULING, with the match count and, for a
+ * scenario-scoped ruling, `in <scenario>`.
+ */
 export function rulingLines(rulings) {
   return rulings.map((r) => {
     const what = `${r.matched === 0 ? "UNUSED RULING" : "RULING"}${r.pending ? " (pending)" : ""}`;
-    return `${what} ${r.deviation} matched ${r.matched}: ${JSON.stringify(r.path)} (${r.reason})\n`;
+    const scope = r.scenario === undefined ? "" : ` in ${r.scenario}`;
+    return `${what} ${r.deviation} matched ${r.matched}${scope}: ${JSON.stringify(r.path)} (${r.reason})\n`;
   });
 }
 

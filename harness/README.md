@@ -3,7 +3,7 @@
 The differential harness. One scripted MCP client (the driver) runs a scenario against a reference
 server, a local mock API records every event the server publishes, a normalizer turns the run into a
 language-neutral document, and a diff compares two documents. Allowed differences are listed in
-`rulings.json`.
+`rulings.json` (Rust against TS) and `rulings-ts.json` (TS against TS).
 
 This package holds two TS reference servers, instrumented with the real TS SDK at the commit pinned
 in `oracle/oracle.lock`, and the Rust reference server (`rust-server/`, see "The Rust reference
@@ -58,9 +58,13 @@ node harness/src/driver.mjs harness/scenarios/basic.json rust stdio --expect-pub
 node harness/src/driver.mjs harness/scenarios/basic.json ts2 http --lane 2026-07-28 \
   -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v2.mjs
 
-# Compare two runs
+# Compare two runs: here two TS runs, the second with the label ts-b (a TS-vs-Rust document diff
+# compares events, which the Rust server publishes from plan 4)
 node harness/src/diff.mjs harness/out/basic.ts.stdio.normalized.json \
-  harness/out/basic.rust.stdio.normalized.json --rulings harness/rulings.json
+  harness/out/basic.ts-b.stdio.normalized.json --rulings harness/rulings-ts.json
+
+# The MCP-wire delta of TS v2 against Rust on every scenario, transport and lane (the L3 gate's first run)
+node harness/src/matrix.mjs
 
 # Regenerate the tool contract, or check that it is current
 node harness/src/dump-contract.mjs
@@ -95,8 +99,10 @@ equal server names (an A/A run) give the second server the suffix `-b`. `--env2`
 variable for every run of the second server, untracked and tracked (repeatable; `matrix.json` records it).
 It writes `harness/out/matrix.json`.
 
-Rulings: `rulings.json` is for Rust against TS (`diff.mjs`, `delta.mjs`, the matrix); `rulings-ts.json`
-is for TS against TS (A/A runs and the nightly drift sweep, so a Rust ruling never counts as unused there).
+Rulings: `rulings.json` holds the delta rulings for Rust against TS (`delta.mjs`, the matrix). A TS-vs-Rust
+document diff with `diff.mjs` compares events, which wait for plan 4, so in plan 3 the file holds delta
+rulings only. `rulings-ts.json` is for TS against TS (A/A runs and the nightly drift sweep, so a Rust
+ruling never counts as unused there).
 
 ### The L3 gate
 
@@ -105,10 +111,16 @@ is for TS against TS (A/A runs and the nightly drift sweep, so a Rust ruling nev
 1. `node harness/src/matrix.mjs`: TS v2 against Rust, every scenario, transport and lane. It must exit 0:
    every driver passes, every delta difference has a ruling, and every ruling matches something.
 2. The A/A run `node harness/src/matrix.mjs --servers rust,rust --scenarios basic`: it must exit 0 with no
-   delta difference at all, ruled or not (`delta.total` is 0 in every combination of `matrix.json`).
+   delta difference at all, ruled or not. `node harness/src/l3-expect.mjs none` checks that
+   `delta.total` is 0 in every combination of `matrix.json`.
 3. The canary run, the A/A run plus `--env2 HARNESS_CANARY=1`: the second server serves the context
-   description `"canary"`. It must exit 1, every driver must pass, and every combination must report an
-   unruled difference. A canary that passes means the delta comparison has gone blind.
+   description `"canary"`. It must exit 1. `node harness/src/l3-expect.mjs caught` checks that every
+   driver passed and that every combination reports an unruled difference, each under
+   `$.delta.transcript[1].result.tools[` (basic.json's tracked listing). A canary that passes means the
+   delta comparison has gone blind; one caught elsewhere is a different failure.
+
+`l3-expect.mjs <none|caught> [matrix.json]` reads `harness/out/matrix.json` by default; exit 0 as expected,
+1 not (one line per bad combination), 2 on bad arguments.
 
 One full matrix (36 combinations, 144 driver runs) took 75 to 100 s at `--jobs 4` on the development
 machine; the A/A and canary runs about 12 s each.
@@ -497,6 +509,13 @@ alone matches nothing. A diff path looks like `$.events[3].body.resource_name` o
 divergence in the design decision log. A ruling may also carry `"pending": true` (a boolean, nothing
 else): a provisional ruling that waits for the owner's answer. It allows differences like any other.
 
-A delta path names the transcript entry by its index only, not by its scenario, so a delta ruling covers
-that index in every scenario, transport and lane: keep its regex to the exact paths, and name the
-scenario and the call in its reason. In plan 3, `rulings.json` holds delta rulings only.
+A delta ruling may also carry `"scenario": "<name>"`, a scenario name (`scenarios/<name>.json`). A delta
+path names the transcript entry by its index only, so a ruling for one call of one scenario needs it:
+`matrix.mjs` then applies the ruling only to that scenario's combinations, and a run that leaves the
+scenario out neither reports the ruling nor counts it as unused. Without `scenario`, a delta ruling
+covers its index in every scenario, transport and lane. A `scenario` that is not a string of letters,
+digits, `_` and `-` makes the rulings file malformed (exit 2); one that names no scenario file makes
+`matrix.mjs` exit 2. `diff.mjs` and `delta.mjs` compare documents that carry no scenario name: they
+ignore `scenario` and match by path alone. The ruling line of a scoped ruling ends its count with
+`in <scenario>` (`RULING (pending) RD-29 matched 6 in tracing-off: ...`). Keep a delta ruling's regex
+to the exact paths. In plan 3, `rulings.json` holds delta rulings only.

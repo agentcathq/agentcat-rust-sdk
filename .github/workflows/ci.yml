@@ -198,15 +198,9 @@ jobs:
       - name: A/A run
         run: |
           node harness/src/matrix.mjs --servers rust,rust --scenarios basic
-          node -e '
-            const doc = JSON.parse(require("node:fs").readFileSync("harness/out/matrix.json", "utf8"));
-            const bad = doc.filter((c) => Object.values(c.exitCodes).some((code) => code !== 0) || !c.delta || c.delta.total !== 0);
-            if (doc.length === 0 || bad.length > 0) {
-              console.error(`L3 A/A failed: ${doc.length === 0 ? "no combination ran" : bad.map((c) => `${c.scenario} ${c.transport} ${c.lane}`).join(", ")}`);
-              process.exit(1);
-            }'
+          node harness/src/l3-expect.mjs none
       # HARNESS_CANARY=1 perturbs the second server: the matrix must exit 1 with every driver passing and
-      # an unruled difference in every combination.
+      # an unruled difference in every combination, at the canary's paths only.
       - name: Canary run
         run: |
           canary=0
@@ -215,13 +209,7 @@ jobs:
             echo "L3 canary failed: the matrix exited $canary, expected 1"
             exit 1
           fi
-          node -e '
-            const doc = JSON.parse(require("node:fs").readFileSync("harness/out/matrix.json", "utf8"));
-            const bad = doc.filter((c) => Object.values(c.exitCodes).some((code) => code !== 0) || !c.delta || c.delta.unexpected === 0);
-            if (doc.length === 0 || bad.length > 0) {
-              console.error(`L3 canary failed: ${doc.length === 0 ? "no combination ran" : bad.map((c) => `${c.scenario} ${c.transport} ${c.lane}`).join(", ")}`);
-              process.exit(1);
-            }'
+          node harness/src/l3-expect.mjs caught
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

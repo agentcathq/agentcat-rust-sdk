@@ -97,6 +97,21 @@ test("a ruling for it gives exit 0 and a RULED line", async (t) => {
   assert.match(res.stdout, /^RULING RD-99 matched 1: /m);
 });
 
+test("delta.mjs knows no scenario: a scenario-scoped ruling matches by path alone; a non-string scenario exits 2", async (t) => {
+  const paths = different(t);
+  const ruling = { path: "\\$\\.delta\\.transcript\\[0\\]\\.result\\.note", reason: "test", deviation: "RD-99" };
+  const scoped = writeJson(join(tempDir(t), "r.json"), [{ ...ruling, scenario: "tracing-off" }]);
+  let res = await cli(paths, ["--rulings", scoped]);
+  assert.equal(res.code, 0, res.stdout);
+  assert.match(res.stdout, /^RULED RD-99 \$\.delta\.transcript\[0\]\.result\.note: /m);
+  assert.match(res.stdout, /^RULING RD-99 matched 1 in tracing-off: /m);
+
+  const bad = writeJson(join(tempDir(t), "bad.json"), [{ ...ruling, scenario: ["tracing-off"] }]);
+  res = await cli(paths, ["--rulings", bad]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /\[0\]: "scenario" must be a scenario name/);
+});
+
 test("an unused ruling exits 1", async (t) => {
   const paths = files(t, doc({ content: [] }), doc({ content: [] }), doc({ content: [] }), doc({ content: [] }));
   const rulings = writeJson(join(tempDir(t), "r.json"), [{ path: "nothing", reason: "test", deviation: "RD-98", pending: true }]);
