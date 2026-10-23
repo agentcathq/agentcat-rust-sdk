@@ -10,9 +10,10 @@
 //   --lanes       default 2025-11-25,2026-07-28
 //   --jobs        drivers running at the same time (default 4)
 //   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json. A
-//                 ruling with "scenario" applies only to that scenario's combinations; one whose scenario is
-//                 not in this run is neither reported nor counted as unused. A "scenario" that names no
-//                 scenario file exits 2.
+//                 ruling with "scenario", "transports" or "lanes" applies only to the combinations they name;
+//                 one whose scenario, transports or lanes are not in this run is neither reported nor counted
+//                 as unused. A "scenario" that names no scenario file exits 2, and so does an unknown
+//                 transport or lane name (rulings.mjs).
 //   --env2        an environment variable for every run of the second server (untracked and tracked),
 //                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
 // Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (the
@@ -30,15 +31,13 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { compareDeltas, documentDelta, printEntries } from "./delta.mjs";
-import { loadRulings, readJson, rulingLines, rulingsForScenario } from "./rulings.mjs";
+import { LANES, TRANSPORTS, loadRulings, readJson, rulingInRun, rulingLines, rulingsFor } from "./rulings.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const HARNESS = join(HERE, "..");
 const REPO = join(HARNESS, "..");
 const OUT = join(HARNESS, "out");
 const GUARD = pathToFileURL(join(HERE, "egress-guard.mjs")).href;
-const TRANSPORTS = ["stdio", "http", "http-stateless"];
-const LANES = ["2025-11-25", "2026-07-28"];
 const SERVERS = ["ts-v1", "ts-v2", "rust"];
 const USAGE =
   "usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...";
@@ -143,8 +142,9 @@ async function main() {
       usage(`${rulingsPath}: the ruling ${r.deviation} names the scenario ${JSON.stringify(r.scenario)}: no ${join(scenarioDir, `${r.scenario}.json`)}`);
     }
   }
-  // A ruling scoped to a scenario that this run leaves out can match nothing here: not reported, not counted.
-  const active = rulings.filter((r) => r.scenario === undefined || scenarios.includes(r.scenario));
+  // A ruling scoped to a scenario, transports or lanes that this run leaves out can match nothing here: not
+  // reported, not counted.
+  const active = rulings.filter((r) => rulingInRun(r, { scenarios, transports, lanes }));
   const commands = names.map(serverCommand);
   const whole = !opts.scenarios && !opts.transports && !opts.lanes;
 
@@ -197,7 +197,7 @@ async function main() {
     } else {
       const doc = (r) => readJson(join(OUT, `${combo.scenario}.${r.label}.${combo.transport}.normalized.json`), usage);
       const [aU, aT, bU, bT] = combo.runs.map(doc);
-      const entries = compareDeltas(documentDelta(aU, aT), documentDelta(bU, bT), rulingsForScenario(active, combo.scenario));
+      const entries = compareDeltas(documentDelta(aU, aT), documentDelta(bU, bT), rulingsFor(active, combo));
       const lines = [];
       const { ruled, unexpected } = printEntries(entries, (l) => lines.push(l));
       entry.delta = { total: entries.length, ruled, unexpected };

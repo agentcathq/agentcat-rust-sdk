@@ -515,7 +515,20 @@ path names the transcript entry by its index only, so a ruling for one call of o
 scenario out neither reports the ruling nor counts it as unused. Without `scenario`, a delta ruling
 covers its index in every scenario, transport and lane. A `scenario` that is not a string of letters,
 digits, `_` and `-` makes the rulings file malformed (exit 2); one that names no scenario file makes
-`matrix.mjs` exit 2. `diff.mjs` and `delta.mjs` compare documents that carry no scenario name: they
-ignore `scenario` and match by path alone. The ruling line of a scoped ruling ends its count with
-`in <scenario>` (`RULING (pending) RD-29 matched 6 in tracing-off: ...`). Keep a delta ruling's regex
-to the exact paths. In plan 3, `rulings.json` holds delta rulings only.
+`matrix.mjs` exit 2.
+
+A delta ruling may also carry `"transports"` and `"lanes"`: each a non-empty array of names, transports
+from `stdio`, `http` and `http-stateless`, lanes from `2025-11-25` and `2026-07-28`. `matrix.mjs` then
+applies the ruling only to the combinations whose transport is in `transports` and whose lane is in
+`lanes` (an absent field means every one), so a difference that TS shows on some transports or lanes
+only is ruled there and nowhere else. A run that leaves out the ruling's scenario, all its transports or
+all its lanes neither reports the ruling nor counts it as unused. A field that is not such an array, or
+an unknown transport or lane name, makes the rulings file malformed (exit 2). `harness/rulings.json`
+rules RD-29 this way: one ruling for `http-stateless` (both lanes) and one for `http` with
+`"lanes": ["2026-07-28"]`, because TS and Rust agree on stdio and on stateful HTTP at 2025-11-25.
+
+`diff.mjs` and `delta.mjs` compare documents that carry no scenario, transport or lane: they ignore
+`scenario`, `transports` and `lanes` and match by path alone. The ruling line of a scoped ruling ends
+its count with its scope, `in <scenario>`, `on <transport>,...` and `at <lane>,...`
+(`RULING (pending) RD-29 matched 2 in tracing-off on http at 2026-07-28: ...`). Keep a delta ruling's
+regex to the exact paths. In plan 3, `rulings.json` holds delta rulings only.

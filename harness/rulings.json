@@ -2,7 +2,17 @@
   {
     "path": "\\$\\.delta\\.transcript\\[5\\]\\.(?:result|error)",
     "scenario": "tracing-off",
-    "reason": "tracing-off.json, the own_context call with enableTracing false: on a per-request TS server (http-stateless; HTTP on 2026-07-28) the inner tap strips context by the heuristic, so the tool loses its own context and the client rejects the result; Rust has no inner tap and passes the raw arguments (K-05)",
+    "transports": ["http-stateless"],
+    "reason": "tracing-off.json, the own_context call with enableTracing false: on a per-request TS server (stateless HTTP, both lanes) the inner tap strips context by the heuristic, so the tool loses its own context and the client rejects the result; Rust has no inner tap and passes the raw arguments (K-05)",
+    "deviation": "RD-29",
+    "pending": true
+  },
+  {
+    "path": "\\$\\.delta\\.transcript\\[5\\]\\.(?:result|error)",
+    "scenario": "tracing-off",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "reason": "tracing-off.json, the own_context call with enableTracing false: TS's 2026-07-28 HTTP handler serves each request on a fresh server, whose inner tap strips context by the heuristic, so the tool loses its own context and the client rejects the result; Rust has no inner tap and passes the raw arguments (K-05)",
     "deviation": "RD-29",
     "pending": true
   }

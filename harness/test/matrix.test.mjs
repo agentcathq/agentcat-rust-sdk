@@ -95,6 +95,53 @@ test("a scenario-scoped ruling matches its own scenario's differences only; one 
   assert.doesNotMatch(res.stdout, /RD-91/);
 });
 
+test("a ruling whose transports or lanes are malformed or name an unknown transport or lane exits 2", async (t) => {
+  const dir = tempDir(t);
+  const ruling = { path: "\\$\\.delta\\.nothing", reason: "test", deviation: "RD-90" };
+  for (const [scope, why] of [
+    [{ transports: "http" }, /\[0\]: "transports" must be a non-empty array of transport names/],
+    [{ transports: [] }, /\[0\]: "transports" must be a non-empty array of transport names/],
+    [{ transports: [1] }, /\[0\]: "transports" must be a non-empty array of transport names/],
+    [{ transports: ["stdio", "carrier-pigeon"] }, /\[0\]: "transports" names an unknown transport "carrier-pigeon"/],
+    [{ lanes: "2026-07-28" }, /\[0\]: "lanes" must be a non-empty array of lane names/],
+    [{ lanes: [null] }, /\[0\]: "lanes" must be a non-empty array of lane names/],
+    [{ lanes: ["1999-01-01"] }, /\[0\]: "lanes" names an unknown lane "1999-01-01"/],
+  ]) {
+    const rulings = writeJson(join(dir, "rulings.json"), [{ ...ruling, ...scope }]);
+    const res = await matrix(["--servers", "rust,rust", "--rulings", rulings]);
+    assert.equal(res.code, 2, `${JSON.stringify(scope)}: ${res.stdout}${res.stderr}`);
+    assert.match(res.stderr, why);
+  }
+});
+
+test("a ruling scoped to transports and lanes matches on its own transport and lane only; one whose transport did not run is not reported", { timeout: 300_000 }, async (t) => {
+  const tools = "\\$\\.delta\\.transcript\\[\\d+\\]\\.result\\.tools\\[\\d+\\].*";
+  const rulings = writeJson(join(tempDir(t), "rulings.json"), [
+    { path: tools, transports: ["stdio"], lanes: ["2026-07-28"], reason: "the canary, on stdio at 2026-07-28 only", deviation: "RD-90" },
+    { path: tools, transports: ["http-stateless"], reason: "a transport this run leaves out", deviation: "RD-91" },
+  ]);
+  const res = await matrix([
+    ...["--servers", "rust,rust", "--scenarios", "basic", "--transports", "stdio,http", "--lanes", "2025-11-25,2026-07-28"],
+    ...["--env2", "HARNESS_CANARY=1", "--rulings", rulings],
+  ]);
+  // The same canary differences in every combination: ruled on stdio at 2026-07-28 only.
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  const doc = readJson(join(OUT, "matrix.json"));
+  assert.equal(doc.length, 4);
+  const at = (transport, lane) => doc.find((e) => e.transport === transport && e.lane === lane).delta;
+  const own = at("stdio", "2026-07-28");
+  assert.ok(own.total > 0 && own.ruled === own.total, JSON.stringify(own));
+  for (const [transport, lane] of [["stdio", "2025-11-25"], ["http", "2026-07-28"], ["http", "2025-11-25"]]) {
+    const other = at(transport, lane);
+    assert.ok(other.unexpected > 0 && other.ruled === 0, `${transport} ${lane}: ${JSON.stringify(other)}`);
+  }
+  assert.match(res.stdout, new RegExp(`^RULING RD-90 matched ${own.ruled} on stdio at 2026-07-28: `, "m"));
+  assert.match(res.stdout, /^ok basic stdio 2026-07-28: /m);
+  assert.match(res.stdout, /^FAIL basic stdio 2025-11-25: /m);
+  assert.match(res.stdout, /^FAIL basic http 2026-07-28: /m);
+  assert.doesNotMatch(res.stdout, /RD-91/);
+});
+
 test("A/A of ts-v2 on basic, stdio, 2025-11-25 has one combination and no delta difference", { timeout: 300_000 }, async () => {
   const res = await matrix(["--servers", "ts-v2,ts-v2", "--scenarios", "basic", "--transports", "stdio", "--lanes", "2025-11-25"]);
   assert.equal(res.code, 0, res.stdout + res.stderr);

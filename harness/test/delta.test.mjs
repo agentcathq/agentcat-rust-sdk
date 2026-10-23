@@ -112,6 +112,21 @@ test("delta.mjs knows no scenario: a scenario-scoped ruling matches by path alon
   assert.match(res.stderr, /\[0\]: "scenario" must be a scenario name/);
 });
 
+test("delta.mjs knows no transport or lane: a ruling scoped to them matches by path alone; an unknown lane exits 2", async (t) => {
+  const paths = different(t);
+  const ruling = { path: "\\$\\.delta\\.transcript\\[0\\]\\.result\\.note", reason: "test", deviation: "RD-99" };
+  const scoped = writeJson(join(tempDir(t), "r.json"), [{ ...ruling, transports: ["http"], lanes: ["2026-07-28"] }]);
+  let res = await cli(paths, ["--rulings", scoped]);
+  assert.equal(res.code, 0, res.stdout);
+  assert.match(res.stdout, /^RULED RD-99 \$\.delta\.transcript\[0\]\.result\.note: /m);
+  assert.match(res.stdout, /^RULING RD-99 matched 1 on http at 2026-07-28: /m);
+
+  const bad = writeJson(join(tempDir(t), "bad.json"), [{ ...ruling, lanes: ["2099-01-01"] }]);
+  res = await cli(paths, ["--rulings", bad]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /\[0\]: "lanes" names an unknown lane "2099-01-01"/);
+});
+
 test("an unused ruling exits 1", async (t) => {
   const paths = files(t, doc({ content: [] }), doc({ content: [] }), doc({ content: [] }), doc({ content: [] }));
   const rulings = writeJson(join(tempDir(t), "r.json"), [{ path: "nothing", reason: "test", deviation: "RD-98", pending: true }]);
