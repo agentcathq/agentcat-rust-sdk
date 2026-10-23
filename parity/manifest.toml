@@ -1854,275 +1854,411 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should capture stack traces for each cause"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should detect circular cause references"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should handle non-Error causes"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should limit cause chain to 10"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should unwrap multiple causes"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > Error.cause chain > should unwrap single cause"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: chained_errors come from Error::source() in Rust, not from a JavaScript Error.cause chain"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should always set platform to 'javascript'"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: the error of a Rust event has platform rust; call::tests::code_names_follow_c24 and error_data_error_has_the_rd06_shape pin its shape"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture Error with message and type"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture ReferenceError with correct type"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture TypeError with correct type"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should capture custom error class"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > basic error capture > should set platform to 'javascript' for non-Error objects"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: the error of a Rust event has platform rust; call::tests::code_names_follow_c24 and error_data_error_has_the_rd06_shape pin its shape"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors with empty messages"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors with only whitespace in stack"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle errors without stack traces"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > edge cases > should handle malformed stack traces gracefully"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle boolean errors"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle null"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle number errors"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle object errors"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle objects with circular references"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle string errors"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > non-Error objects > should handle undefined"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "builds a JavaScript Error, a thrown non-Error value or an Error.stack string; Rust errors have no such host values (RD-06)"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:fs/promises to node:fs"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should normalize node:internal/* to node:internal"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Node.js internal module normalization > should preserve simple node: modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs from ESM modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs in node_modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > URL scheme normalization > should handle file:// URLs with Windows paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should handle Windows paths with mixed separators"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > Windows path handling > should normalize Windows backslashes to forward slashes"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain abs_path field with original path"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > backwards compatibility > should maintain all other frame properties"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle AWS Lambda with layers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle Docker deployment with node_modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > complex real-world scenarios > should handle mix of user code and library code"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /app/ paths (Docker, Heroku)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /opt/ paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /srv/ paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip /var/www/ paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip AWS Lambda paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > deployment path stripping > should strip Docker container paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle Windows-style node_modules paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle nested node_modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should handle scoped packages in node_modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > node_modules normalization > should normalize node_modules paths consistently"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /dist/ boundary"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /lib/ boundary"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should find /src/ boundary"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > project boundary detection > should use the last occurrence of project markers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle paths without common markers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should handle very short paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve already-relative paths"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > special cases and edge cases > should preserve special paths like native"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Linux user home directories"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip Windows user home directories"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > path normalization > user home directory stripping > should strip macOS user home directories"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should NOT capture context_line for library code (in_app: false)"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should capture context_line for in_app frames"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect in_app correctly for user code"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should detect library code in node_modules"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle anonymous functions"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle async functions"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle missing files gracefully when extracting context_line"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should handle native code frames"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should limit stack frames to 50"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse line and column numbers"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/exceptions.test.ts|captureException > stack trace parsing > should parse stack frames with function names"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-06"
+reason = "RD-06: frames are V8 stack lines in TS; Rust has frames only from a captured backtrace"
 
 [[test]]
 key = "v1|src/tests/extra-projection.test.ts|projectExtraForEvent > pass-through > returns non-rewritable values by identity"
@@ -2341,23 +2477,33 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > fallback never strips get_more_tools' own context"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case strip:ts:get-more-tools; checked by agentcat-sdk::call::tests::vectors_match_ts and strip_matches_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case strip:ts:fallback-absent-tool and strip:ts:fallback-no-registry; checked by agentcat-sdk::call::tests::vectors_match_ts and strip_matches_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > handles non-object args"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "strip_arguments takes the JSON object of rmcp's Option<JsonObject>; an arguments value that is not an object cannot reach it, and the caller leaves a request without arguments as it is"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > preserves the customer's own session_id param"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case strip:ts:owns-session; checked by agentcat-sdk::call::tests::vectors_match_ts and strip_matches_ts"
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > strips exactly what was injected"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case strip:ts:exact; checked by agentcat-sdk::call::tests::vectors_match_ts and strip_matches_ts"
 
 [[test]]
 key = "v1|src/tests/handler-property.test.ts|MCP SDK callback/handler compatibility > should have either callback or handler property (SDK version dependent)"
@@ -2491,19 +2637,27 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|appendMintBack > does not mutate the original result"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "prepend_mint_back takes the result by &mut and changes it in place; Rust has no aliasing of the customer's result to protect (the event keeps its own copy)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|appendMintBack > leaves non-array content untouched"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-20"
+reason = "rmcp's CallToolResult.content is always a list, so a result with non-array content cannot reach prepend_mint_back"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|appendMintBack > prepends a text block as the first content element"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case mint-back:ts:prepends-first; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|appendMintBack > prepends on isError results too"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case mint-back:ts:is-error; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|buildHandleTags > clamps a >200-char agent_id to exactly 200 chars in the tag only"
@@ -2761,19 +2915,27 @@ reason = "handles.json case valid:ts:wrong-prefix; checked by agentcat-sdk::hand
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case structured:ts:first-key; checked by agentcat-sdk::call::tests::vectors_match_ts, with mirror_wire_order_matches_ts for the key order (C21)"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > applies to isError results that carry structuredContent"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case structured:ts:is-error; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > never clobbers an existing key (customer data wins)"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case structured:ts:own-mcp-session; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case structured:ts:absent, structured:ts:array and structured:ts:string; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved"
@@ -3574,7 +3736,9 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully"
-status = "todo"
+status = "n/a"
+category = "covered-by-vector:call.json"
+reason = "call.json case report-missing:ts:missing-description; checked by agentcat-sdk::call::tests::vectors_match_ts"
 
 [[test]]
 key = "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should successfully call get_more_tools with description and optional context"

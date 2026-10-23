@@ -1,11 +1,14 @@
 // The functions the oracle server can call: name -> function. Property tests name
 // them in requests. Add an entry here when a test needs another TS function.
 // A TS function that logs is wrapped in captureLogs: its result is {value, logs}.
-import { loadCore } from "./bundle.mjs";
+import { loadCore, loadModule } from "./bundle.mjs";
 import { captureLogs } from "./logs.mjs";
 import { lock } from "./paths.mjs";
 
 const core = await loadCore();
+// Two modules the shared core bundle does not hold: they log nothing, so a bundle of their own is fine.
+const exceptions = await loadModule("exceptions");
+const handleInjection = await loadModule("handle-injection");
 
 /** What the oracle.* handle wrappers write in place of a minted (random) session ID. */
 const MINTED = "<minted>";
@@ -145,6 +148,24 @@ export const functions = {
   // sessionFromHookValue for a hook value (absent: null) and a project ID (absent: undefined).
   "oracle.sessionFromHookValue": ({ value, projectId }) =>
     maskMinted(core.handles.sessionFromHookValue(value ?? null, projectId)),
+  // appendMintBack and mirrorStructuredMintBack (src/modules/handles.ts): the result with the block
+  // prepended, or the mint mirrored into structuredContent; the input as it was when nothing applies.
+  "handles.appendMintBack": (result, text) => core.handles.appendMintBack(result, text),
+  "handles.mirrorStructuredMintBack": (result, mint) => core.handles.mirrorStructuredMintBack(result, mint),
+  // captureException (src/modules/exceptions.ts) on one JSON value: a CallToolResult-like value
+  // ({isError, content: [...]}) gives {message, platform} (its `type` is undefined, so absent).
+  "exceptions.captureException": (error) => exceptions.captureException(error),
+  // The arguments cloneRequestWithStrippedArguments (src/modules/handle-injection.ts) hands the
+  // customer's handler for a call of tool `name`. `registry` is [[name, [params]]] (the injected
+  // parameters per tool) or null for no registry.
+  "oracle.strip": ({ name, arguments: args, registry }) =>
+    handleInjection.cloneRequestWithStrippedArguments(
+      { method: "tools/call", params: { name, arguments: args } },
+      registry === null ? undefined : new Map(registry.map(([tool, params]) => [tool, new Set(params)])),
+    ).params.arguments,
+  // handleReportMissing (src/modules/tools.ts) for a call whose `context` argument is `context`
+  // (absent: undefined): {value: the result, logs}.
+  "oracle.reportMissing": ({ context }) => captureLogs(core, () => core.tools.handleReportMissing({ context })),
   // buildInjectedList (src/engine/listWrap.ts) on each listing page in turn, with one tracking-data
   // object for all pages, as one tracked server holds it: its reported-conflict and declared-session
   // sets and its get_more_tools shadow warning carry over from page to page. `options` are the TS

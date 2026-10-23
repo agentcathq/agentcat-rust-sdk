@@ -1,0 +1,146 @@
+//! The pure parts of a tool call in the TS SDK: stripping the injected arguments before the
+//! customer's handler runs (B-050, B-051), the mint-back text and its structured mirror (B-056,
+//! B-058), the `get_more_tools` call (B-046) and the shapes of the `error` of an event (B-097,
+//! RD-05, RD-06). `call/tests.rs` checks them against `tests/vectors/call.json` and the JS oracle.
+use rmcp::model::{CallToolResult, ContentBlock, ErrorCode, ErrorData, JsonObject};
+use serde_json::{Map, Value};
+
+use crate::constants::{
+    AGENT_ID_PARAM, GET_MORE_TOOLS_NAME, GET_MORE_TOOLS_RESULT_TEXT, MCP_SESSION_KEY,
+    SESSION_ID_PARAM, report_missing_log_line,
+};
+use crate::inject::{CONTEXT_PARAM, ToolEntry};
+use crate::js;
+
+#[cfg(test)]
+mod tests;
+
+/// The `platform` of an event's `error` (RD-06).
+const PLATFORM: &str = "rust";
+
+/// The message of an error result without text (B-097).
+const UNKNOWN_ERROR: &str = "Unknown error";
+
+/// The arguments the customer's handler receives: `arguments` without the parameters the SDK
+/// injected into the tool. With a registry `entry` those are exactly the parameters it recorded
+/// (B-050). Without one (a tool the listings never showed) they are `session_id`, `agent_id` and
+/// `context`, and for `get_more_tools`, whose `context` is its own parameter, only `session_id`
+/// and `agent_id` (B-051). The other arguments keep their order.
+pub(crate) fn strip_arguments(
+    arguments: &JsonObject,
+    entry: Option<&ToolEntry>,
+    tool_name: &str,
+) -> JsonObject {
+    let names: &[&str] = match entry {
+        Some(entry) => &entry.injected,
+        None if tool_name == GET_MORE_TOOLS_NAME => &[SESSION_ID_PARAM, AGENT_ID_PARAM],
+        None => &[SESSION_ID_PARAM, AGENT_ID_PARAM, CONTEXT_PARAM],
+    };
+    arguments
+        .iter()
+        .filter(|(key, _)| !names.contains(&key.as_str()))
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect()
+}
+
+/// Puts the mint-back `text` first in the content of `result`, as TS's `appendMintBack` does for
+/// any result, `isError` ones too (B-056). An rmcp result always has a list for `content`.
+pub(crate) fn prepend_mint_back(result: &mut CallToolResult, text: String) {
+    result.content.insert(0, ContentBlock::text(text));
+}
+
+/// Mirrors the structured `mint` into `structured` as `mcp_session` (B-058), when `structured`
+/// is an object without its own `mcp_session` key: the customer's value wins, and an array, a
+/// string, a number, `null` or no value at all stays as it is.
+///
+/// The new object has JavaScript's key order (C21), which `{ mcp_session: mint, ...structured }`
+/// gives and `JSON.stringify` writes: the array-index keys ascending, then `mcp_session`, then
+/// the other keys in their order.
+pub(crate) fn mirror_mint_back(structured: &mut Option<Value>, mint: Map<String, Value>) {
+    let Some(Value::Object(body)) = structured else {
+        return;
+    };
+    if body.contains_key(MCP_SESSION_KEY) {
+        return;
+    }
+    let mut spread = Map::with_capacity(body.len() + 1);
+    spread.insert(MCP_SESSION_KEY.to_owned(), Value::Object(mint));
+    spread.append(body);
+    let order: Vec<String> = js::own_entries(&spread)
+        .into_iter()
+        .map(|(key, _)| key.clone())
+        .collect();
+    for key in order {
+        if let Some(value) = spread.remove(&key) {
+            body.insert(key, value);
+        }
+    }
+}
+
+/// The `error` of an event whose tool returned the error result `result`, as TS's
+/// `captureException` reads a `CallToolResult` (B-097): the text blocks joined with a space and
+/// trimmed, or `Unknown error` when that is empty. TS's `type` is `undefined` there, so the key
+/// is absent. The `platform` is `rust` (RD-06).
+pub(crate) fn result_error(result: &CallToolResult) -> Map<String, Value> {
+    let texts: Vec<&str> = result
+        .content
+        .iter()
+        .filter_map(|block| match block {
+            ContentBlock::Text(text) => Some(text.text.as_str()),
+            _ => None,
+        })
+        .collect();
+    let joined = texts.join(" ");
+    let message = match js::trim(&joined) {
+        "" => UNKNOWN_ERROR,
+        trimmed => trimmed,
+    };
+    let mut error = Map::new();
+    error.insert("message".to_owned(), Value::String(message.to_owned()));
+    error.insert("platform".to_owned(), Value::String(PLATFORM.to_owned()));
+    error
+}
+
+/// The `error` of an event whose tool returned the JSON-RPC error `error`: its message, the
+/// [`code_name`] as `type`, and the `rust` platform (RD-05, RD-06).
+pub(crate) fn error_data_error(error: &ErrorData) -> Map<String, Value> {
+    let mut shape = Map::new();
+    shape.insert(
+        "message".to_owned(),
+        Value::String(error.message.to_string()),
+    );
+    shape.insert("type".to_owned(), Value::String(code_name(error.code)));
+    shape.insert("platform".to_owned(), Value::String(PLATFORM.to_owned()));
+    shape
+}
+
+/// The name of a JSON-RPC error code, the `type` of an `error` (C24): `ParseError`,
+/// `InvalidRequest`, `MethodNotFound`, `InvalidParams`, `InternalError` and `ResourceNotFound`
+/// for rmcp's codes, `JsonRpcError(<code>)` for any other.
+pub(crate) fn code_name(code: ErrorCode) -> String {
+    match code {
+        ErrorCode::PARSE_ERROR => "ParseError".to_owned(),
+        ErrorCode::INVALID_REQUEST => "InvalidRequest".to_owned(),
+        ErrorCode::METHOD_NOT_FOUND => "MethodNotFound".to_owned(),
+        ErrorCode::INVALID_PARAMS => "InvalidParams".to_owned(),
+        ErrorCode::INTERNAL_ERROR => "InternalError".to_owned(),
+        ErrorCode::RESOURCE_NOT_FOUND => "ResourceNotFound".to_owned(),
+        ErrorCode(other) => format!("JsonRpcError({other})"),
+    }
+}
+
+/// The answer to a `get_more_tools` call and its log line (B-046). The line carries the length
+/// of the `context` argument: the UTF-16 length of a string, the length of an array, and 0 for
+/// anything else, also for an object with a `length` key, which TS's `context?.length` reads
+/// (R23, RD-26).
+pub(crate) fn report_missing(context: Option<&Value>) -> (CallToolResult, String) {
+    let length = match context {
+        Some(Value::String(text)) => js::utf16_len(text),
+        Some(Value::Array(items)) => items.len(),
+        _ => 0,
+    };
+    let mut result = CallToolResult::success(vec![ContentBlock::text(GET_MORE_TOOLS_RESULT_TEXT)]);
+    // TS's result has no `isError` key; rmcp's `success` writes `false`.
+    result.is_error = None;
+    (result, report_missing_log_line(length))
+}
