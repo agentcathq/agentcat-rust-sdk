@@ -2,8 +2,8 @@
 
 Reviews of plans 1 and 2 found these items and deferred them. Each plan's final review sorted them into a later
 plan. The person who writes that plan reads this list, checks each item against the code as it stands, and either
-puts it in a task or records why not. Line numbers are as of `b9b91e0` (plan 1 items), `e685d14` (plan 2 items)
-or `dd67f1d` (plan 3 items) and can drift. Plan 2 closed every item that plan 1 carried to it.
+puts it in a task or records why not. Line numbers are as of `b9b91e0` (plan 1 items), `e685d14` (plan 2 items),
+`dd67f1d` (plan 3 items) or `da0b53d` (plan 3 final review items) and can drift. Plan 2 closed every item that plan 1 carried to it.
 
 ## Plan 3 (interception, Rust reference server)
 
@@ -49,7 +49,8 @@ Plan 3 closed or moved every item carried to it. The moved items are below, mark
 
 - From plan 3, because events are compared in plan 4: `extra-headers-only` in `harness/src/normalize.mjs` hides D06
   (every header verbatim) and D34 (the shape of `extra`). Keep every header except a named volatile set, keep the
-  key set of `extra`, keep `requestInfo.url`, and record the known shape difference as an RD-07 ruling. The
+  key set of `extra`, keep `requestInfo.url` (its text differs from TS's WHATWG `URL.href`: RD-31, pending), and
+  record the known shape difference as an RD-07 ruling. The
   `extra` key order differs from TS v1 (`_meta` before `requestId`), and `request.params` puts `_meta` last
   where B-082 says "as received" (rmcp's own client sends it first): align each, or name it in RD-07.
 - From plan 3, because events are compared in plan 4: RD-04: a Rust timestamp with zero milliseconds becomes
@@ -78,6 +79,14 @@ Plan 3 closed or moved every item carried to it. The moved items are below, mark
   `float_roundtrip` is on in a customer build).
 - From plan 3: check the four unused `cargo deny` licenses again after reqwest and rustls join, and remove each
   license that is still unused.
+- From the plan 3 final review: build the `ToolCall` snapshot only when a hook is set. Today `start_hooks`
+  (`call/run.rs`) clones the arguments, the `_meta` and the whole `RequestContext` on every traced call; take the
+  check early, because this is the hot path.
+- From the plan 3 final review: a drop guard, so that a call whose future a customer wrapper drops (a timeout,
+  a `select!`) still sends its record. Today the record goes to the sink only when the call completes or panics.
+- From the plan 3 final review: a second harness canary that perturbs the call path (mint-back or mirror). The
+  canary proves only that the gate sees listing changes, and the reference tools ignore unknown keys, so strip
+  regressions are pinned only by Rust unit tests.
 
 ## Plan 5 (finish)
 
@@ -143,3 +152,9 @@ Plan 3 closed or moved every item carried to it. The moved items are below, mark
   Revisit if TS main moves test work to worker threads.
 - From plan 3: the harness reference server's `cfg(not(unix))` branch (`harness/rust-server/src/main.rs`) has been
   built only on Linux; the final PR's macOS and Windows runs (C17) build it.
+- From the plan 3 final review: document (or cap) the registry (C19). It is per handle and handler type, keyed by
+  tool name and never pruned, so it grows with per-tenant tool names; and on a server without `get_tool`, one
+  session's listing sets the strip set of another session's calls.
+- From the plan 3 final review: the CI `rmcp (<version>)` legs pin `rmcp-macros` to the exact rmcp version, so an
+  rmcp patch without a matching `rmcp-macros` patch fails its leg (it fails closed). The remedy: take the highest
+  `rmcp-macros` of the same minor.

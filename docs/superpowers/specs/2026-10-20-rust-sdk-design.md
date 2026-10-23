@@ -237,7 +237,7 @@ Fields as B-077, with `sdk_language = "Rust"` and `agentcat_version` = the crate
   lower-case name, as TS's WHATWG `Headers` gives them, B-081: values trimmed of HTTP whitespace; repeated values
   joined in arrival order with `", "`, `"; "` for `cookie`; only the last `set-cookie` kept; names in byte order
   with array-index names first; a value that is not UTF-8 read lossily, RD-30. The absolute URL is rebuilt from
-  `Host`, path and query). On stdio there is no
+  `Host`, path and query, without TS's WHATWG normalization, RD-31). On stdio there is no
   `requestInfo`.
 - Client info ladder (B-085): the `_meta` client info (rmcp keeps the 2026-07-28 envelope keys in `_meta`, which it
   moves whole into `RequestContext::meta`), then the client of the peer's `initialize` (`peer_info`). rmcp's
@@ -340,6 +340,7 @@ manifest point to these IDs.
 | RD-28 | Truncation assigns an own `message: undefined` to an `error` that has no `message` (an object, or an array spread into index keys), and normalize counts that property toward the 100-key breadth. So an `error` of exactly 100 keys gets `"...": "[MaxProperties ~]"`, and an existing `"..."` key at the breadth limit gets the marker as its value. | Only keys that JSON holds count, so these `error` values keep their keys and values. | Owner ruling R23. |
 | RD-29 | With `enableTracing: false`, the inner tap of a high-level server (B-020) still strips the injected names from a tool's arguments. On a server instance that has not served `tools/list` (a per-request server: stateless HTTP, or the 2026-07-28 HTTP handler), nothing has built the registries (B-022 returns at step 2, before the rebuild of B-027), so it strips `session_id`, `agent_id` and `context` by the heuristic (B-051), a tool's own `context` too: the handler receives none of them (K-01, K-05). | With tracing off, the handler receives the raw arguments on every transport (B-023, K-05): Rust has no inner tap (RD-17). | **Pending** (R17): unforced. Rust could strip with tracing off, but it learns a tool's schema through `get_tool` and per-handle registries (C03, C19), so it would still keep the tool's own `context` where TS loses it. Harness: the `own_context` call of `tracing-off.json`. |
 | RD-30 | Node's `Headers` reads a header value byte by byte as Latin-1, so `caf\xe9` gives `café` and UTF-8 bytes give mojibake (`cafÃ©`). | A value that is not UTF-8 is read lossily (`caf\xe9` gives `caf\u{FFFD}`), and UTF-8 bytes give the text they encode (`café`). | **Pending** (R17): unforced. Rust could decode Latin-1 as Node does; lossy UTF-8 is the Rust idiom for `http::HeaderValue` bytes. ASCII values, the usual case, are equal. No harness scenario sends such a header (event comparison is plan 4). |
+| RD-31 | `extra.requestInfo.url` is the WHATWG URL of the request, as `URL.href` gives it (B-081): the host lower-cased, a default port (`:80` for `http`, `:443` for `https`) dropped, and dot segments (`/a/../b`) resolved. | `requestInfo.url` is the raw text (D34): `http://<Host><path and query>` from the `Host` header and the request target, or an absolute request URI as it is (HTTP/2, a proxy request), with no normalization; an origin-form request without a `Host` header has no `url`. | **Pending** (R17): unforced. Rust could parse and serialize the URL with WHATWG rules (the `url` crate, a new dependency); the raw text needs none. A lower-case host without a default port and a path without dot segments, the usual case, give the same text. No harness scenario compares `extra` yet (event comparison is plan 4). |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register, and in `rulings.json` once a harness scenario reaches it), and work continues;
@@ -453,7 +454,9 @@ Verification infrastructure comes first, so drift is caught while the code is wr
 - rmcp churn: new defaulted `ServerHandler` methods (canary), and a 4.0 within months (an rmcp major forces an
   AgentCat major, R13). CI tests the newest patch of every 3.x minor and runs the canary on each (R25).
 - `Tracked<H>` does not forward `negotiate_initialize` (rmcp 3.3.0 and later, C25): forwarding it would break
-  the 3.0 floor, so a customer override of it is lost. The canary allowlists it.
+  the 3.0 floor. A customer override of it is kept on the normal path: `Tracked::initialize` forwards to the
+  inner `initialize`, and rmcp's default `initialize` calls `negotiate_initialize` on the inner type. Only a
+  direct call of `negotiate_initialize` on the `Tracked` wrapper uses rmcp's default. The canary allowlists it.
 - Blocking drain in `Drop` on a current-thread runtime while hooks still need that runtime: hooks cannot progress,
   so the drain waits up to its timeout. The plan must test this case and keep the drain bounded.
 - `preserve_order` changes JSON map order for the whole customer build. It is required (R07); the README states it.
