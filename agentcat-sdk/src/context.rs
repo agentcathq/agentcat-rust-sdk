@@ -2,10 +2,11 @@
 
 use crate::client::AgentCat;
 
-/// The tracked call a tool is running in. While tracing is on, the SDK puts one into the request
-/// context of each tool call before the call reaches the handler, so a tool can take it as an
-/// `Extension<CallContext>` (rmcp's `rmcp::handler::server::common::Extension`) next to its
-/// parameters.
+/// The tracked call a tool is running in. The SDK puts one into the request context of every tool
+/// call it passes to the handler, so a tool can take it as an `Extension<CallContext>` (rmcp's
+/// `rmcp::handler::server::common::Extension`) next to its parameters. A call the SDK does not
+/// trace (tracing off, or no session ID could be issued) gets one too, with no session and no
+/// agent.
 ///
 /// ```no_run
 /// use agentcat_sdk::CallContext;
@@ -39,13 +40,14 @@ impl CallContext {
 
     /// The session ID the call belongs to: the one the agent sent, or the one the SDK issued for
     /// this call. `None` when the call has no session: the agent sent a value this server did not
-    /// issue, or the tool declares its own `session_id` parameter.
+    /// issue, the tool declares its own `session_id` parameter, or the SDK does not trace the
+    /// call.
     pub fn session_id(&self) -> Option<&str> {
         (!self.session_id.is_empty()).then_some(self.session_id.as_str())
     }
 
-    /// The `agent_id` the agent sent, trimmed; `None` when agent tracking is off or the agent sent
-    /// none.
+    /// The `agent_id` the agent sent, trimmed; `None` when agent tracking is off, the agent sent
+    /// none, or the SDK does not trace the call.
     pub fn agent_id(&self) -> Option<&str> {
         self.agent_id.as_deref()
     }

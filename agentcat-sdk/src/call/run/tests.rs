@@ -23,8 +23,9 @@ use crate::call::{error_data_error, report_missing, result_error};
 use crate::client::AgentCat;
 use crate::config::Options;
 use crate::constants::{
-    DEFAULT_CONTEXT_PARAMETER_DESCRIPTION, GET_MORE_TOOLS_NAME, GET_MORE_TOOLS_RESULT_TEXT,
-    MCP_SESSION_KEY, SESSION_ID_PARAM_PATTERN,
+    AGENT_ID_PARAM, DEFAULT_CONTEXT_PARAMETER_DESCRIPTION, GET_MORE_TOOLS_NAME,
+    GET_MORE_TOOLS_RESULT_TEXT, MCP_SESSION_KEY, SESSION_ID_PARAM_PATTERN,
+    get_more_tools_descriptor,
 };
 use crate::context::CallContext;
 use crate::event::CallRecord;
@@ -199,23 +200,13 @@ async fn listing_follows_the_handle_options() {
     );
 
     let more = listed(&tools, GET_MORE_TOOLS_NAME);
-    let description = more["description"].as_str().unwrap();
-    assert!(
-        description.contains("Check for additional tools"),
-        "{description}"
-    );
+    let descriptor = get_more_tools_descriptor();
+    assert_eq!(more["description"], descriptor["description"]);
     let required = more["inputSchema"]["required"].as_array().unwrap();
     for name in ["context", "session_id", "agent_id"] {
         assert!(required.contains(&json!(name)), "{name} is required");
     }
-    let annotations = json!({
-        "title": "Get More Tools",
-        "readOnlyHint": true,
-        "destructiveHint": false,
-        "idempotentHint": true,
-        "openWorldHint": false,
-    });
-    assert_eq!(more["annotations"], annotations);
+    assert_eq!(more["annotations"], descriptor["annotations"]);
 
     let (agentcat, _sink) = recording(Options::default());
     let client = connect(agentcat.track(Sample), "defaults").await;
@@ -395,6 +386,82 @@ async fn rebuild_retries_after_a_failed_listing() {
     let failed = "Warning: registry rebuild-on-demand failed - Error: list boom";
     assert_eq!(sink.logs(), [failed, failed]);
     assert_eq!(sink.take_records().len(), 2);
+}
+
+/// TS's composed-input `union_tool` (`handles-integration.test.ts`): its `oneOf` input schema gets
+/// no injected parameters.
+fn union_tool() -> Tool {
+    let schema = object(json!({
+        "type": "object",
+        "oneOf": [
+            {
+                "properties": {"kind": {"const": "a"}, "a": {"type": "string"}},
+                "required": ["kind", "a"]
+            },
+            {
+                "properties": {"kind": {"const": "b"}, "b": {"type": "number"}},
+                "required": ["kind", "b"]
+            }
+        ]
+    }));
+    Tool::new("union_tool", "takes one of two shapes", schema)
+}
+
+/// A hand-written server that lists [`union_tool`] and answers a call with its arguments as
+/// structured content. `Composed(true)` also answers `get_tool` with the tool; `Composed(false)`
+/// answers `None`, as rmcp's default `get_tool` does.
+#[derive(Debug, Clone, Copy)]
+struct Composed(bool);
+
+impl ServerHandler for Composed {
+    fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(Ok(ListToolsResult::with_all_items(vec![union_tool()])))
+    }
+
+    fn get_tool(&self, name: &str) -> Option<Tool> {
+        (self.0 && name == "union_tool").then(union_tool)
+    }
+
+    fn call_tool(
+        &self,
+        request: CallToolRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<CallToolResponse, ErrorData>> + MaybeSendFuture + '_ {
+        let arguments = Value::Object(request.arguments.unwrap_or_default());
+        ready(Ok(CallToolResult::structured(arguments).into()))
+    }
+
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
+
+/// B-050 (Task 7 fix round 1): a composed-input tool gets no injected parameters, and TS still
+/// gives every listed tool a registry entry, an empty one here (`listWrap.ts`: "the strip
+/// fallback must apply only to tools never seen in any listing"; call.json case
+/// `strip:entry:empty-list`). So the handler receives the arguments as sent, whether the SDK
+/// learns the tool from `get_tool`, from a listing, or from a rebuild.
+#[tokio::test]
+async fn composed_tool_gets_the_same_arguments_on_every_path() {
+    let sent = with_handles(json!({"kind": "a", "a": "x"}));
+    let paths = [
+        ("get_tool", true, false),
+        ("registry", false, true),
+        ("rebuild", false, false),
+    ];
+    for (path, answers_get_tool, lists_first) in paths {
+        let (agentcat, _sink) = recording(tracking());
+        let client = connect(agentcat.track(Composed(answers_get_tool)), path).await;
+        if lists_first {
+            client.list_all_tools().await.expect("the listing works");
+        }
+        let result = call(&client, "union_tool", sent.clone()).await;
+        assert_eq!(result.structured_content, Some(sent.clone()), "{path}");
+    }
 }
 
 /// RD-12, K-01: a tool on page 2 that declares its own `context` keeps it after page 1 is listed
@@ -807,9 +874,10 @@ async fn is_error_result_gets_mint_back() {
     let record = only_record(&sink);
     assert_eq!(result.is_error, Some(true));
     assert_eq!(texts(&result), [mint_back(&record).as_str(), "failed"]);
-    let block = texts(&result)[0];
-    assert!(block.starts_with("[session_id issued"), "{block}");
-    assert!(!block.contains("agent_id"), "no agent_id was sent");
+    assert!(
+        !texts(&result)[0].contains(AGENT_ID_PARAM),
+        "no agent_id was sent"
+    );
     assert!(record.is_error);
     assert_eq!(record.error, Some(result_error(&original)));
     let response = record.response.expect("a result is recorded");
@@ -988,6 +1056,28 @@ async fn call_context_reaches_tool() {
         whoami(&invalid),
         json!({"session_id": null, "agent_id": agent})
     );
+}
+
+/// Task 7 fix round 1 ruling: a call the SDK does not trace (tracing off, or the degraded path
+/// when no session ID can be issued) still reaches the tool with a [`CallContext`], one with no
+/// session and no agent.
+#[tokio::test]
+async fn call_context_reaches_untraced_tool() {
+    let none = json!({"session_id": null, "agent_id": null});
+    let arguments = || json!({"session_id": "start", "agent_id": "opus|whoami|x1y2z"});
+
+    let (agentcat, sink) = recording(tracking().enable_tracing(false));
+    let client = connect(agentcat.track(Sample), "tracing off").await;
+    let result = call(&client, "whoami", arguments()).await;
+    assert_eq!(whoami(&result), none, "tracing off");
+    assert!(sink.take_records().is_empty());
+
+    let (agentcat, sink) = recording(tracking());
+    let client = connect(agentcat.track(Sample), "degraded").await;
+    let _failure = SessionIdFailure::start();
+    let result = call(&client, "whoami", arguments()).await;
+    assert_eq!(whoami(&result), none, "degraded path");
+    assert!(sink.take_records().is_empty());
 }
 
 /// B-077, B-083, B-096: the resource name (`Unknown Tool` for an empty name), the intent rules,

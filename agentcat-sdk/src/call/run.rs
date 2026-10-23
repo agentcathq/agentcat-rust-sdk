@@ -65,7 +65,8 @@ struct Schema {
 ///
 /// 1. `get_more_tools` is intercepted when report-missing is on.
 /// 2. With tracing off, the intercept is answered, and any other call goes to the handler with
-///    its raw arguments; nothing is recorded (B-023, K-05).
+///    its raw arguments and a [`CallContext`] without a session; nothing is recorded (B-023,
+///    K-05).
 /// 3. The call starts (`started_at`).
 /// 4. The tool's schema ([`learn_schema`]).
 /// 5. The session handles. When minting fails, the call takes the degraded path: it is answered
@@ -174,17 +175,20 @@ pub(crate) async fn run_call<H: ServerHandler>(
 }
 
 /// A call that is not traced (tracing off, or the degraded path): the intercept is answered, and
-/// any other call goes to the handler with its raw arguments (B-022 steps 2 and 9).
+/// any other call goes to the handler with its raw arguments (B-022 steps 2 and 9) and a
+/// [`CallContext`] without a session or an agent, so a tool that reads one keeps working.
 async fn untraced<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
-    context: RequestContext<RoleServer>,
+    mut context: RequestContext<RoleServer>,
     intercept: bool,
 ) -> Result<CallToolResponse, ErrorData> {
     if intercept {
         let shared = tracked.agentcat().inner();
         return Ok(answer_report_missing(shared, &request).into());
     }
+    let call = CallContext::new(String::new(), None, tracked.agentcat().clone());
+    context.extensions.insert(call);
     tracked.inner().call_tool(request, context).await
 }
 
@@ -223,7 +227,9 @@ fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Val
 /// The schema of the tool `name` (C03): `inner.get_tool(name)` through the tool-list pipeline
 /// ([`Tracked::lookup_tool`]), else the registry's entry, else, while the registry has never
 /// recorded a listing, the entry after a [`rebuild`]. Without an entry the call gets TS's
-/// heuristic strip (B-051).
+/// heuristic strip (B-051). A tool that got no parameters (a composed input schema, for example)
+/// has an empty entry, as TS gives every listed tool one (`listWrap.ts`), so its arguments stay as
+/// sent.
 ///
 /// The tool is foreign when the registry's set of tools that declared their own `session_id`
 /// holds it, or when its `get_tool` schema declares one (C19). The mirror gate is the entry's
