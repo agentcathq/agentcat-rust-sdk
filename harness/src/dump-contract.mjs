@@ -1,8 +1,8 @@
 // Generates harness/contract/tool-contract.json: the tools/list result of the
 // TS v2 reference server (R20: v2 is the answer key on both lanes), served
 // untracked. The Rust reference server loads this file, so both servers expose
-// the same customer schemas. ts-v2 itself loads this file to register its
-// tools, so the output is a fixed point of the committed file.
+// the same customer schemas. ts-v2 registers its tools from TOOLS in
+// servers/common.mjs, so a changed TOOLS needs a regeneration (--check fails on drift).
 //   node harness/src/dump-contract.mjs           write harness/contract/tool-contract.json
 //   node harness/src/dump-contract.mjs --check   regenerate to a temp dir; exit 1 on any byte difference
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";

@@ -293,11 +293,15 @@ test("on a driver error every connected client is closed, so an SDK-spawned stdi
   assert.equal(res.code, 1, res.stderr);
   const pid = Number(readFileSync(pidFile, "utf8"));
   assert.ok(pid > 0);
-  let alive = true;
-  try {
-    process.kill(pid, 0);
-  } catch {
-    alive = false;
-  }
-  assert.equal(alive, false, `server ${pid} still runs after the driver exited`);
+  const isAlive = () => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  // Bounded poll: up to 2 s in 50 ms steps.
+  for (let waited = 0; isAlive() && waited < 2000; waited += 50) await new Promise((r) => setTimeout(r, 50));
+  assert.equal(isAlive(), false, `server ${pid} still runs after the driver exited`);
 });

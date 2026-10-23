@@ -134,10 +134,125 @@ function hook(name, spec) {
 }
 
 // ---------------------------------------------------------------------------
-// Tool behaviors (harness/README.md, "Tools"). The schemas live with each
-// server: ts-v1 declares them in zod; ts-v2 and the Rust server load
-// contract/tool-contract.json, which dump-contract.mjs writes from ts-v2 (R20).
+// Tool definitions and behaviors (harness/README.md, "Tools"). TOOLS holds each
+// tool's name, description and JSON schemas once; ts-v2 registers from it, and
+// dump-contract.mjs writes ts-v2's tools/list to contract/tool-contract.json
+// (R20), which the Rust server embeds. ts-v1 declares the same tools in zod; a
+// test keeps the two in step. Adding a tool: TOOLS, toolHandlers, ts-v1's zod,
+// then regenerate the contract.
 // ---------------------------------------------------------------------------
+
+/** Tool definitions: name, description, inputSchema and (optional) outputSchema, as JSON Schema. */
+export const TOOLS = [
+  {
+    "name": "echo",
+    "description": "Echo a message back",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string",
+          "description": "Message to echo"
+        }
+      },
+      "required": [
+        "msg"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "structured",
+    "description": "Returns structuredContent per its outputSchema",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "msg": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "msg"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "outputSchema": {
+      "type": "object",
+      "properties": {
+        "echoed": {
+          "type": "string",
+          "description": "The echoed message"
+        }
+      },
+      "required": [
+        "echoed"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "boom",
+    "description": "Always throws",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "tool_error",
+    "description": "Returns an isError result",
+    "inputSchema": {
+      "type": "object",
+      "properties": {},
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "big",
+    "description": "Returns a large text payload",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "size": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "size"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  },
+  {
+    "name": "emit_custom",
+    "description": "Publishes an AgentCat custom event",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session": {
+          "type": "string"
+        },
+        "resource": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "session",
+        "resource"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
+  }
+];
 
 /**
  * Tool name -> handler (arguments -> CallToolResult). `agentcat` is the TS SDK

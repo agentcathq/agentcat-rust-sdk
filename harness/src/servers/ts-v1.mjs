@@ -31,7 +31,8 @@ const { mode, port, tracked, projectId, options } = startup(NAME);
 // ---------------------------------------------------------------------------
 // The tools of the other reference servers (R20: ts-v2 is the answer key; the
 // contract file in contract/tool-contract.json is ts-v2's tools/list). These zod
-// schemas describe the same tools, minus the `execution` field v1 adds.
+// schemas describe the same tools, minus the `execution` field v1 adds; a test
+// (contract.test.mjs) keeps them in step with the contract.
 // ---------------------------------------------------------------------------
 const agentcat = await loadAgentCat();
 

@@ -2,8 +2,9 @@
 // instrumented with the real TypeScript SDK built from the pinned commit. It
 // serves protocol 2026-07-28 (no initialize handshake; design decision C18)
 // and the 2025 era, with the tools, identity and behaviors of ts-v1.mjs. The
-// tool names, descriptions and schemas come from harness/contract/tool-contract.json
-// (dump-contract.mjs writes it from this server, R20), as the Rust reference server loads them.
+// tool names, descriptions and schemas come from TOOLS in common.mjs; dump-contract.mjs
+// writes this server's tools/list to harness/contract/tool-contract.json (R20), which the
+// Rust reference server embeds.
 //
 // usage: node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v2.mjs stdio
 //                                              both eras (serveStdio), one tracked server per connection
@@ -17,7 +18,6 @@ import "../egress-guard.mjs"; // first import: installed before any other module
 
 import http from "node:http";
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
 
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import {
@@ -30,16 +30,15 @@ import {
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { AjvJsonSchemaValidator } from "@modelcontextprotocol/server/validators/ajv";
 
-import { SERVER_INFO, listen, loadAgentCat, methodNotAllowed, sendError, startup, toolHandlers } from "./common.mjs";
+import { SERVER_INFO, TOOLS, listen, loadAgentCat, methodNotAllowed, sendError, startup, toolHandlers } from "./common.mjs";
 
 const NAME = "ts-v2";
 const { mode, port, tracked, projectId, options } = startup(NAME);
 
 // ---------------------------------------------------------------------------
-// The tool contract: names, descriptions and JSON schemas from the file that
-// dump-contract.mjs writes from this server; behaviors from common.mjs.
+// The tools: names, descriptions and JSON schemas from TOOLS, behaviors from
+// toolHandlers (both in common.mjs).
 // ---------------------------------------------------------------------------
-const CONTRACT = JSON.parse(readFileSync(new URL("../../contract/tool-contract.json", import.meta.url), "utf8"));
 const agentcat = await loadAgentCat();
 
 // Arguments are validated as ts-v1's zod objects validate them: a key the
@@ -65,7 +64,7 @@ function buildServer() {
   // wraps, so a function shared by two servers is wrapped only on the first.
   const handlers = toolHandlers({ tracked, projectId, agentcat });
   const server = new McpServer(SERVER_INFO);
-  for (const tool of CONTRACT) {
+  for (const tool of TOOLS) {
     server.registerTool(
       tool.name,
       {
