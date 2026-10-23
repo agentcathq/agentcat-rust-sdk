@@ -49,9 +49,9 @@ Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` o
 node harness/src/driver.mjs harness/scenarios/basic.json ts stdio \
   -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v1.mjs
 
-# The Rust reference server (build it first); it publishes nothing before plan 4
+# The Rust reference server (build it first)
 cargo build -p harness-ref-server
-node harness/src/driver.mjs harness/scenarios/basic.json rust stdio --expect-publishes 0 \
+node harness/src/driver.mjs harness/scenarios/basic.json rust stdio \
   -- target/debug/harness-ref-server
 
 # The 2026-07-28 lane against the TS v2 server
@@ -251,7 +251,7 @@ differences listed in "The Rust reference server" below.
 | argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. A 2026-07-28 request is served as in `http` mode. |
 | HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. Rust: `http-stateless`, and 2026-07-28 requests in either mode, answer JSON. In `http` mode, a 2025-era POST gets rmcp's SSE stream (a priming event, then one event per JSON-RPC message), because rmcp serves JSON only without session mode. |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
-| SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first). |
+| SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first). The tracked Rust server also drains on SIGTERM in every mode and on stdin EOF (stdio): it runs `shutdown(5 s)` and prints `{"drained":true}` or `{"drained":false}` on stderr before it exits. An untracked server prints nothing. |
 | `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. The TS server passes it to `track` as `apiBaseUrl`. |
 | `HARNESS_PROJECT_ID` | Project ID passed to `track` and to custom events. Required unless untracked. |
 | `HARNESS_OPTIONS` | The options profile (JSON, below). Default `{}`. |
@@ -341,9 +341,9 @@ Where it differs from the TS servers:
   requests answer JSON, as the TS servers do.
 - `AGENTCAT_API_URL`: the check is stricter than the WHATWG parse of `common.mjs`: no user info,
   backslash, whitespace or control character; the host spelled `127.0.0.1`, `localhost` (any case)
-  or `[::1]`; a port, when given, of 1 to 5 digits below 65536. The value is checked and kept: the
-  SDK has no API URL option and publishes nothing yet (plan 4), so the matrix runs the tracked Rust
-  server with `--expect-publishes 0`.
+  or `[::1]`; a port, when given, of 1 to 5 digits below 65536. The value is checked and goes in as
+  the SDK's `api_base_url` option, so a tracked Rust server publishes to the mock like the TS
+  servers; the matrix expects the scenario's `expectPublishes` from it.
 - The profile: a flag must be a boolean (`customContextDescription` a string), where `common.mjs`
   copies any value. A `returns` value must fit the hook's SDK type: `resolveSessionId` a string or
   `null`; `identify` `null` or `{"userId": string, "userName"?: string, "userData"?: object}`;
@@ -439,7 +439,7 @@ Example (`scenarios/basic.json`):
 - No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
   such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
 - `expectPublishes` is the count the tracked TS v2 server publishes, read from a TS run. The tracked Rust
-  server publishes nothing before plan 4, and the matrix runs it with `--expect-publishes 0`.
+  server publishes the same count, and the matrix gives it no override.
 
 The scenario files in `scenarios/` are the scenario names that `parity/manifest.toml` can reference
 as `harness:<name>`:

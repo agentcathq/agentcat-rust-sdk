@@ -77,7 +77,7 @@ RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-fea
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps --document-private-items
 
 # deny
-cargo deny check
+cargo deny --all-features check
 
 # minimal-versions
 cargo +nightly minimal-versions check --direct --workspace

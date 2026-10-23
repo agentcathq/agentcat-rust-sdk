@@ -1,7 +1,6 @@
 //! [`Sink`]: where the SDK hands what it produces: its log lines, the record of each tool call
 //! and each assembled event, and the lifecycle calls `flush` and `shutdown`. The delivery queue
-//! ([`Delivery`](crate::delivery::Delivery)) is the sink of a handle that publishes; the
-//! [`DiscardSink`] drops everything.
+//! ([`Delivery`](crate::delivery::Delivery)) is the sink of a handle that publishes.
 
 use std::fmt;
 use std::future::{Future, ready};
@@ -56,16 +55,4 @@ pub(crate) trait Sink: Send + Sync + fmt::Debug {
     fn shutdown_blocking(&self, _timeout: Duration) -> bool {
         true
     }
-}
-
-/// A [`Sink`] that drops everything; its lifecycle methods answer `true` at once.
-#[derive(Debug)]
-pub(crate) struct DiscardSink;
-
-impl Sink for DiscardSink {
-    fn log(&self, _message: String) {}
-
-    fn record(&self, _record: CallRecord) {}
-
-    fn event(&self, _job: EventJob) {}
 }

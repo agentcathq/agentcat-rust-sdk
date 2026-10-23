@@ -9,11 +9,17 @@ use std::time::{Duration, SystemTime};
 use rmcp::ServerHandler;
 
 use crate::config::Options;
+#[cfg(not(test))]
+use crate::config::{Env, ProcessEnv, resolve_api_base_url};
 use crate::custom::{CustomEvent, publish_string};
-use crate::delivery::{Delivery, DeliveryConfig, Publisher};
+#[cfg(not(test))]
+use crate::delivery::http::ApiPublisher;
+use crate::delivery::{Delivery, DeliveryConfig, LineWriter, Publisher};
 use crate::error::Error;
+#[cfg(not(test))]
+use crate::logging;
 use crate::registry::ToolRegistry;
-use crate::sink::{DiscardSink, Sink};
+use crate::sink::Sink;
 use crate::tracked::Tracked;
 
 #[cfg(test)]
@@ -86,12 +92,69 @@ impl Inner {
     }
 }
 
+/// The line TS writes when no project ID is given (B-003).
+const NO_PROJECT_WARNING: &str =
+    "Warning: No projectId provided and no exporters configured. Events will not be sent anywhere.";
+
+/// What a handle posts with, the lines it logs first and where its worker writes them.
+struct Transport {
+    publisher: Arc<dyn Publisher>,
+    startup_lines: Vec<String>,
+    /// Where the worker writes its lines; `None` is the process logger.
+    write: Option<LineWriter>,
+}
+
+impl Transport {
+    /// The real transport: the process logger is set to the destination of `options` (the first
+    /// handle wins, D38) and events go to the API (C44).
+    #[cfg(not(test))]
+    fn process(options: &Options) -> Self {
+        logging::configure(options.log_to(), ProcessEnv.home_dir());
+        let mut startup_lines = Vec::new();
+        let publisher = ApiPublisher::new(
+            resolve_api_base_url(options, &ProcessEnv),
+            &mut startup_lines,
+        );
+        Self {
+            publisher: Arc::new(publisher),
+            startup_lines,
+            write: None,
+        }
+    }
+
+    /// The transport of a handle that [`AgentCat::new`] builds in a unit test (P15): events are
+    /// accepted and dropped, nothing reaches a network, and the process logger stays as it is
+    /// (unset, so the real home directory is not written to). A test that needs the real
+    /// publisher builds it itself, against a loopback server.
+    #[cfg(test)]
+    fn process(options: &Options) -> Self {
+        let _ = options;
+        Self {
+            publisher: Arc::new(OfflinePublisher),
+            startup_lines: Vec::new(),
+            write: None,
+        }
+    }
+}
+
+/// A publisher that accepts every event and sends none (P15).
+#[cfg(test)]
+#[derive(Debug)]
+struct OfflinePublisher;
+
+#[cfg(test)]
+impl Publisher for OfflinePublisher {
+    fn publish(
+        &self,
+        _request: agentcat_api::models::PublishEventRequest,
+    ) -> crate::sink::BoxFuture<'static, Result<(), String>> {
+        Box::pin(std::future::ready(Ok(())))
+    }
+}
+
 /// The sink of a handle that publishes: a [`Delivery`] for `project_id` with the redaction hooks
 /// of `options`, posting through `publisher`.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "called by AgentCat::new (plan 4 task 8)")
-)]
+#[cfg(test)]
 fn delivery_sink(
     project_id: &str,
     options: &Options,
@@ -113,13 +176,45 @@ const _: () = {
 };
 
 impl AgentCat {
-    /// A handle for `project_id`. Building one cannot fail and starts nothing. An empty
-    /// `project_id` means telemetry only: events are built but never sent to `AgentCat`.
+    /// A handle for `project_id`. Building one cannot fail and starts no thread until the first
+    /// event or log line. An empty `project_id` means telemetry only: events are built but never
+    /// sent to `AgentCat`.
     pub fn new(project_id: impl Into<String>, options: Options) -> Self {
-        Self::from_inner(Inner {
-            project_id: project_id.into(),
+        let transport = Transport::process(&options);
+        Self::assemble(
+            project_id.into(),
             options,
-            sink: Arc::new(DiscardSink),
+            transport,
+            DeliveryConfig::default(),
+        )
+    }
+
+    /// A handle whose events go through a [`Delivery`] over `transport`. An empty `project_id`
+    /// queues TS's warning (B-003), then the transport's own lines; the first line starts the
+    /// worker, which writes it.
+    fn assemble(
+        project_id: String,
+        options: Options,
+        transport: Transport,
+        config: DeliveryConfig,
+    ) -> Self {
+        let project = project_id.clone();
+        let delivery = match transport.write {
+            None => Delivery::new(project, &options, transport.publisher, None, config),
+            Some(write) => {
+                Delivery::with_writer(project, &options, transport.publisher, None, config, write)
+            }
+        };
+        if project_id.is_empty() {
+            delivery.log(NO_PROJECT_WARNING.to_owned());
+        }
+        for line in transport.startup_lines {
+            delivery.log(line);
+        }
+        Self::from_inner(Inner {
+            project_id,
+            options,
+            sink: Arc::new(delivery),
             registries: Mutex::default(),
         })
     }
@@ -168,7 +263,7 @@ impl AgentCat {
     /// empty, else `session_id` verbatim (it may be empty for none). The event has no server or
     /// client fields and goes through no redaction hook. It is queued even while tracing is off.
     ///
-    /// ```
+    /// ```no_run
     /// use agentcat_sdk::{AgentCat, CustomEvent, Options};
     ///
     /// let agentcat = AgentCat::new("proj_123", Options::default());

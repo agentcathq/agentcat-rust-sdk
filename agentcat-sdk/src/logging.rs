@@ -63,10 +63,6 @@ fn emit(message: &str) {
 static GLOBAL: OnceLock<Logger> = OnceLock::new();
 
 /// Sets the process-wide logger; the first call wins.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the handle constructor (plan 4 task 8)")
-)]
 pub(crate) fn configure(destination: LogDestination, home: Option<PathBuf>) {
     let _ = GLOBAL.set(Logger::new(destination, home));
 }

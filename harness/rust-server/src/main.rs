@@ -47,13 +47,15 @@ use rmcp::{ServerHandler, ServiceExt};
 use serde_json::{Value, json};
 use tokio::net::TcpListener;
 
-use crate::profile::{Behavior, Profile};
-use crate::tools::{RefServer, Tools};
+use crate::profile::Profile;
+use crate::tools::{CustomTarget, RefServer, Tools};
 
 /// The prefix of log lines.
 const NAME: &str = "harness-ref-server";
 /// The exit code for bad arguments, a non-local `AGENTCAT_API_URL` or an invalid profile.
 const EXIT_REFUSED: u8 = 2;
+/// How long the drain before exit may take.
+const DRAIN_TIMEOUT: Duration = Duration::from_secs(5);
 /// The path of the streamable HTTP endpoint.
 const MCP_PATH: &str = "/mcp";
 /// How long the runtime waits for its tasks once serving ends. A stdio read that blocks on an
@@ -79,12 +81,8 @@ struct Startup {
     mode: Mode,
     /// The handle every tracked server shares; `None` untracked (`HARNESS_NO_TRACK=1`).
     agentcat: Option<AgentCat>,
-    /// `AGENTCAT_API_URL`, checked to be local. The SDK has no API URL option yet.
-    #[expect(dead_code, reason = "the delivery pipeline (plan 4) publishes to it")]
-    api_url: String,
-    /// The profile's `redactSensitiveInformation`. The SDK has no redaction yet.
-    #[expect(dead_code, reason = "the SDK's redaction (plan 4) takes it")]
-    redact: Option<Behavior>,
+    /// The project every tracked server publishes to, also the target of `emit_custom`.
+    project_id: String,
 }
 
 /// Why the server does not start: the line for stderr. The exit code is [`EXIT_REFUSED`].
@@ -147,13 +145,14 @@ fn startup(args: &[OsString]) -> Result<Startup, Refusal> {
     }
     let canary = env("HARNESS_CANARY").as_deref() == Some("1");
     let options = env("HARNESS_OPTIONS").unwrap_or_else(|| "{}".to_owned());
-    let Profile { options, redact } = profile::parse(&options, canary)
+    let Profile { options } = profile::parse(&options, canary)
         .map_err(|error| Refusal::named(format_args!("HARNESS_OPTIONS: {error}")))?;
+    // The checked local URL goes in as the option, not only through the environment.
+    let options = options.api_base_url(api_url);
     Ok(Startup {
         mode,
-        agentcat: tracked.then(|| AgentCat::new(project_id, options)),
-        api_url,
-        redact,
+        agentcat: tracked.then(|| AgentCat::new(project_id.clone(), options)),
+        project_id,
     })
 }
 
@@ -222,22 +221,44 @@ fn is_local_http_url(text: &str) -> bool {
     host_ok && port_ok
 }
 
-/// Serves the mode: `stdio`, or HTTP with one tracked server per session or request.
+/// Serves the mode: `stdio`, or HTTP with one tracked server per session or request. A tracked
+/// server then drains the handle (`agentcat.shutdown(5 s)`) and prints `{"drained":<bool>}` on
+/// stderr before it exits, on stdin EOF (stdio) and on SIGTERM (every mode). An untracked server
+/// prints nothing.
 async fn serve(startup: Startup, tools: Tools) -> ExitCode {
-    let Startup { mode, agentcat, .. } = startup;
-    match (mode, agentcat) {
-        (Mode::Stdio, Some(agentcat)) => serve_stdio(agentcat.track(RefServer::new(tools))).await,
-        (Mode::Stdio, None) => serve_stdio(RefServer::new(tools)).await,
+    let Startup {
+        mode,
+        agentcat,
+        project_id,
+    } = startup;
+    let custom =
+        |agentcat: &AgentCat| Some(CustomTarget::new(agentcat.clone(), project_id.clone()));
+    let code = match (mode, &agentcat) {
+        (Mode::Stdio, Some(agentcat)) => {
+            let server = RefServer::new(tools, custom(agentcat));
+            serve_stdio(agentcat.track(server)).await
+        }
+        (Mode::Stdio, None) => serve_stdio(RefServer::new(tools, None)).await,
         (Mode::Http { port, stateless }, Some(agentcat)) => {
+            let handle = agentcat.clone();
+            let target = custom(agentcat);
             serve_http(port, stateless, move || {
-                Ok(agentcat.track(RefServer::new(tools.clone())))
+                Ok(handle.track(RefServer::new(tools.clone(), target.clone())))
             })
             .await
         }
         (Mode::Http { port, stateless }, None) => {
-            serve_http(port, stateless, move || Ok(RefServer::new(tools.clone()))).await
+            serve_http(port, stateless, move || {
+                Ok(RefServer::new(tools.clone(), None))
+            })
+            .await
         }
+    };
+    if let Some(agentcat) = agentcat {
+        let drained = agentcat.shutdown(DRAIN_TIMEOUT).await;
+        write_stderr(&json!({ "drained": drained }).to_string());
     }
+    code
 }
 
 /// Serves `server` over stdio until stdin closes or SIGTERM arrives.

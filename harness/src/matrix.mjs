@@ -16,8 +16,8 @@
 //                 transport or lane name (rulings.mjs).
 //   --env2        an environment variable for every run of the second server (untracked and tracked),
 //                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
-// Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (the
-// `rust` server tracked also gets --expect-publishes 0 until plan 4 publishes). Labels are
+// Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (every
+// tracked server, Rust included, must publish the scenario's expectPublishes). Labels are
 // <server>-<lane>-<u|t>; when both servers have the same name the second one's labels end in -b.
 // Output: harness/out/matrix.json (one entry per combination: driver exit codes, delta summary) and one
 // line per combination: `ok|FAIL <scenario> <transport> <lane>: ...`.
@@ -173,7 +173,7 @@ async function main() {
         label: run.label,
         transport: run.combo.transport,
         lane: run.combo.lane,
-        expectPublishes: !run.tracked || run.name === "rust" ? 0 : undefined,
+        expectPublishes: run.tracked ? undefined : 0,
         tracked: run.tracked,
         command: commands[run.server],
         extraEnv: run.server === 1 ? opts.env2 : {},

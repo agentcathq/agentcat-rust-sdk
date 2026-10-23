@@ -124,10 +124,14 @@ impl Drop for Exit<'_> {
     }
 }
 
-/// The body of the worker thread: the loop on a current-thread runtime with the time driver.
+/// The body of the worker thread: the loop on a current-thread runtime with the time and IO drivers (reqwest needs the IO driver).
 fn run_thread(shared: &Arc<Shared>) {
     let _exit = Exit(shared);
-    let Ok(runtime) = Builder::new_current_thread().enable_time().build() else {
+    let Ok(runtime) = Builder::new_current_thread()
+        .enable_time()
+        .enable_io()
+        .build()
+    else {
         return;
     };
     runtime.block_on(run(shared));

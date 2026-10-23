@@ -5,8 +5,8 @@
 //!   `enableAgentTracking` (booleans), `customContextDescription` (a string), each passed to its
 //!   [`Options`] setter.
 //! - Hooks: `resolveSessionId`, `identify`, `eventTags` and `eventProperties` become the SDK hooks
-//!   with the canned behavior; `redactSensitiveInformation` is checked and kept (the SDK has no
-//!   redaction yet).
+//!   with the canned behavior; `redactSensitiveInformation` becomes the SDK's string redaction
+//!   hook (`replace` replaces each occurrence of the secret with `[REDACTED]`).
 //!
 //! A behavior is `{"returns": <value>}` or `{"throws": "<message>"}` (`redactSensitiveInformation`
 //! also takes `{"replace": "<secret>"}`), plus an optional `"sleepMs": <n>`. Where ts-v2 copies a
@@ -34,8 +34,6 @@ const RETURNS_THROWS_REPLACE: &[&str] = &["returns", "throws", "replace"];
 pub(crate) struct Profile {
     /// The SDK options the profile sets.
     pub(crate) options: Options,
-    /// The `redactSensitiveInformation` behavior, kept for the SDK's redaction (plan 4).
-    pub(crate) redact: Option<Behavior>,
 }
 
 /// A canned behavior: what the hook answers, after it sleeps.
@@ -76,7 +74,6 @@ pub(crate) fn parse(text: &str, canary: bool) -> Result<Profile, String> {
         return Err("must be a JSON object".to_owned());
     };
     let mut options = Options::default();
-    let mut redact = None;
     for (key, value) in &entries {
         options = match key.as_str() {
             "enableTracing" => options.enable_tracing(flag(key, value)?),
@@ -107,8 +104,7 @@ pub(crate) fn parse(text: &str, canary: bool) -> Result<Profile, String> {
                 if matches!(&behavior.kind, Kind::Returns(returned) if !returned.is_string()) {
                     return Err(format!("{key}: \"returns\" must be a string"));
                 }
-                redact = Some(behavior);
-                options
+                options.redact_sensitive_information(redactor(behavior))
             }
             _ => return Err(format!("unknown key {}", Value::from(key.as_str()))),
         };
@@ -116,7 +112,7 @@ pub(crate) fn parse(text: &str, canary: bool) -> Result<Profile, String> {
     if canary {
         options = options.custom_context_description(CANARY_DESCRIPTION);
     }
-    Ok(Profile { options, redact })
+    Ok(Profile { options })
 }
 
 /// A boolean flag.
@@ -205,6 +201,30 @@ fn canned<T: Clone + Send + Sync + 'static>(
     }
 }
 
+/// The string redaction hook of the behavior: after its sleep, the text with each occurrence of
+/// the secret replaced (`replace`), the returned string (`returns`) or an error (`throws`).
+fn redactor(
+    behavior: Behavior,
+) -> impl Fn(String) -> Pin<Box<dyn Future<Output = Result<String, HookError>> + Send>>
++ Send
++ Sync
++ 'static {
+    let Behavior { kind, sleep } = behavior;
+    move |text: String| {
+        let kind = kind.clone();
+        Box::pin(async move {
+            if let Some(duration) = sleep {
+                tokio::time::sleep(duration).await;
+            }
+            match kind {
+                Kind::Replace(secret) => Ok(text.replace(&secret, "[REDACTED]")),
+                Kind::Throws(message) => Err(HookError::from(message)),
+                Kind::Returns(value) => Ok(value.as_str().unwrap_or_default().to_owned()),
+            }
+        })
+    }
+}
+
 /// A `resolveSessionId` answer: a string, or `null` for none.
 fn session_id(value: &Value) -> Result<Option<String>, Unfit> {
     match value {
@@ -260,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn the_basic_profile_parses_and_keeps_the_redaction() {
+    fn the_basic_profile_parses_and_sets_the_redaction() {
         let profile = parse(
             r#"{"identify": {"returns": {"userId": "user-1", "userName": "User One", "userData": {"plan": "pro"}}},
                 "eventTags": {"returns": {"team": "core"}}, "eventProperties": {"returns": {"region": "eu"}},
@@ -269,14 +289,39 @@ mod tests {
             false,
         )
         .expect("the profile parses");
+        let _ = profile;
+    }
+
+    #[tokio::test]
+    async fn the_redactor_replaces_returns_or_throws() {
+        let replace = behavior(
+            "redactSensitiveInformation",
+            &serde_json::json!({"replace": "SECRET"}),
+            RETURNS_THROWS_REPLACE,
+        )
+        .expect("replace");
+        let hook = redactor(replace);
         assert_eq!(
-            profile.redact,
-            Some(Behavior {
-                kind: Kind::Replace("SECRET_TOKEN".to_owned()),
-                sleep: None
-            })
+            hook("a SECRET b SECRET".to_owned()).await.ok().as_deref(),
+            Some("a [REDACTED] b [REDACTED]")
         );
-        assert!(parse("{}", true).expect("empty").redact.is_none());
+        let returns = behavior(
+            "redactSensitiveInformation",
+            &serde_json::json!({"returns": "fixed"}),
+            RETURNS_THROWS_REPLACE,
+        )
+        .expect("returns");
+        assert_eq!(
+            redactor(returns)("x".to_owned()).await.ok().as_deref(),
+            Some("fixed")
+        );
+        let throws = behavior(
+            "redactSensitiveInformation",
+            &serde_json::json!({"throws": "no"}),
+            RETURNS_THROWS_REPLACE,
+        )
+        .expect("throws");
+        assert!(redactor(throws)("x".to_owned()).await.is_err());
     }
 
     #[test]

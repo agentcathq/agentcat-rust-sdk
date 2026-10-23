@@ -25,12 +25,22 @@ rmcp = { workspace = true }
 # `http::request::Parts`, which rmcp's streamable HTTP server puts in the request extensions; http 1.x
 # does not build without "std".
 http = { workspace = true, features = ["std"] }
-tokio = { workspace = true, features = ["rt", "time", "sync"] }
+# "net" turns on the IO driver of the delivery thread, which reqwest needs.
+tokio = { workspace = true, features = ["rt", "time", "sync", "net"] }
 futures = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 chrono = { workspace = true, features = ["std"] }
 tracing = { workspace = true, features = ["std"] }
 agentcat-api = { workspace = true }
+reqwest = { workspace = true }
+
+[features]
+default = ["rustls"]
+# C44: exactly one TLS stack is the usual choice; both together pull both.
+rustls = ["agentcat-api/rustls"]
+native-tls = ["agentcat-api/native-tls"]
+# The test fake (plan 4 task 10).
+test-util = []
 
 [lints]
 workspace = true
@@ -38,6 +48,7 @@ workspace = true
 # Test-only dependencies live here, not in `[workspace.dependencies]`: the `--no-dev-deps` builds of
 # cargo-hack and minimal-versions would report a workspace entry that only dev-dependencies use as unused.
 [dev-dependencies]
+wiremock = "0.6"
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 # "std" is needed to read PROPTEST_CASES and to save failing seeds in proptest-regressions/.
 proptest = { version = "1", default-features = false, features = ["std"] }

@@ -122,10 +122,10 @@ test("over http-stateless, ts-v1 and ts-v2 publish the boom error with type, sta
 });
 
 // rmcp serves server/discover and the per-request 2026-07-28 envelope itself; the driver fails a
-// session that negotiates another version. The Rust SDK publishes nothing yet (plan 4).
+// session that negotiates another version. The tracked Rust server publishes the scenario's count.
 test("2026-07-28: the tracked Rust server negotiates the lane on stdio and HTTP", { timeout: 180_000 }, async () => {
   for (const transport of ["stdio", "http"]) {
-    const res = await driver(BASIC, "rustlane", transport, ["--lane", LANE, "--expect-publishes", "0"], { server: RUST_SERVER });
+    const res = await driver(BASIC, "rustlane", transport, ["--lane", LANE], { server: RUST_SERVER });
     assert.equal(res.code, 0, `${transport}: ${res.stderr}`);
     const report = readJson(outFile("basic", "rustlane", transport, "report"));
     assert.equal(report.lane, LANE);

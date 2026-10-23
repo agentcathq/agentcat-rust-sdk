@@ -43,6 +43,7 @@ use crate::sink::{BoxFuture, Sink};
 use queue::{Job, Kind, Reply, Request, Worker};
 use worker::Shared;
 
+pub(crate) mod http;
 mod queue;
 pub(crate) mod wire;
 mod worker;

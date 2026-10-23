@@ -462,47 +462,60 @@ rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_forw
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should accept apiBaseUrl as an optional string property"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|AgentCatOptions apiBaseUrl > should be undefined when not set"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|EventQueue.configure() > should reconfigure the apiClient with the given base URL"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-08"
+reason = "asserts that the process-global queue's apiClient is reconfigured (last call wins, K-09); each Rust handle owns its publisher (C10), and the URL a publisher posts to is pinned by agentcat-sdk::delivery::http::tests::posts_to_public_events_path"
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() when apiBaseUrl option is provided"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence", "agentcat-sdk::delivery::http::tests::base_url_option_wins_over_env"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() with AGENTCAT_API_URL env var when no option is set"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should call configure() with MCPCAT_API_URL env var when no option is set"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should fall back to legacy MCPCAT_API_URL when AGENTCAT_API_URL is unset"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should not call configure() when neither option nor env var is set"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-08"
+reason = "asserts that the process-global queue is left unconfigured; a Rust handle always builds its own publisher, with the default URL when neither option nor variable is set (agentcat-sdk::config::tests::api_base_url_precedence)"
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize AGENTCAT_API_URL over legacy MCPCAT_API_URL"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize apiBaseUrl option over AGENTCAT_API_URL env var"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence", "agentcat-sdk::delivery::http::tests::base_url_option_wins_over_env"]
 
 [[test]]
 key = "v1|src/tests/api-base-url.test.ts|track() URL resolution > should prioritize apiBaseUrl option over MCPCAT_API_URL env var"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::config::tests::api_base_url_precedence"]
 
 [[test]]
 key = "v1|src/tests/basic-server.test.ts|Basic Server Test > should be able to access server info from regular Server instance"

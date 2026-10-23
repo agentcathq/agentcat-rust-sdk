@@ -180,19 +180,11 @@ pub(crate) trait Env: Send + Sync + fmt::Debug {
     fn var(&self, name: &str) -> Option<String>;
 
     /// The user's home directory.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the log writer (plan 4 task 3)")
-    )]
     fn home_dir(&self) -> Option<PathBuf>;
 }
 
 /// The environment of the running process.
 #[derive(Debug, Clone, Copy)]
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "built by the handle constructor (plan 4 task 9)")
-)]
 pub(crate) struct ProcessEnv;
 
 impl Env for ProcessEnv {
@@ -251,10 +243,6 @@ impl Env for MapEnv {
 /// The base URL events go to (B-006): the first non-empty of the option, `AGENTCAT_API_URL`,
 /// `MCPCAT_API_URL`, else the default. The value is used as given, with no trailing slash
 /// trimmed, as in TypeScript.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery worker (plan 4 task 8)")
-)]
 pub(crate) fn resolve_api_base_url(options: &Options, env: &dyn Env) -> String {
     options
         .api_base_url_option()
@@ -541,10 +529,6 @@ impl Options {
     }
 
     /// Where the SDK writes its log lines.
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the log writer (plan 4 task 3)")
-    )]
     pub(crate) fn log_to(&self) -> LogDestination {
         self.log_destination
     }

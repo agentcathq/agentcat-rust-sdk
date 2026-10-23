@@ -11,7 +11,7 @@ use std::fmt;
 use std::future::{Future, ready};
 use std::sync::Arc;
 
-use agentcat_sdk::capture_error;
+use agentcat_sdk::{AgentCat, CustomEvent, capture_error};
 use rmcp::handler::server::tool::{ToolCallContext, ToolRoute, ToolRouter};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
@@ -22,7 +22,7 @@ use rmcp::model::{
 use rmcp::service::{MaybeSendFuture, RequestContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 use serde::Deserialize;
-use serde_json::json;
+use serde_json::{Map, json};
 
 /// The tool contract: the `tools/list` result of `ts-v2.mjs` (R20), written by
 /// `harness/src/dump-contract.mjs`.
@@ -95,12 +95,32 @@ fn route(tool: Tool) -> Result<ToolRoute<RefServer>, String> {
 #[derive(Clone, Debug)]
 pub(crate) struct RefServer {
     tools: Tools,
+    /// Where `emit_custom` publishes; `None` untracked.
+    custom: Option<CustomTarget>,
 }
 
 impl RefServer {
-    /// A server with `tools`.
-    pub(crate) fn new(tools: Tools) -> Self {
-        Self { tools }
+    /// A server with `tools`; `custom` is where `emit_custom` publishes (`None`: it publishes
+    /// nothing).
+    pub(crate) fn new(tools: Tools, custom: Option<CustomTarget>) -> Self {
+        Self { tools, custom }
+    }
+}
+
+/// The handle and project that `emit_custom` publishes to.
+#[derive(Clone, Debug)]
+pub(crate) struct CustomTarget {
+    agentcat: AgentCat,
+    project_id: String,
+}
+
+impl CustomTarget {
+    /// A target for events of `project_id` through `agentcat`.
+    pub(crate) fn new(agentcat: AgentCat, project_id: String) -> Self {
+        Self {
+            agentcat,
+            project_id,
+        }
     }
 }
 
@@ -226,17 +246,38 @@ fn big(Parameters(Size { size }): Parameters<Size>) -> Result<CallToolResult, St
 
 /// The arguments of `emit_custom`.
 #[derive(Debug, Deserialize)]
-#[expect(dead_code, reason = "custom events (plan 4) publish them")]
 struct Custom {
     session: String,
     resource: String,
     message: Option<String>,
 }
 
-/// `emit_custom`: answers `published`. The SDK has no custom events yet (plan 4 adds them), so
-/// it publishes nothing, as the untracked TS servers do.
-fn emit_custom(Parameters(_custom): Parameters<Custom>) -> CallToolResult {
-    text("published".to_owned())
+/// `emit_custom`: publishes a custom event as `common.mjs` does (resource, message, parameters
+/// `{"from": "emit_custom"}`, tags `{"kind": "custom"}`) and answers `published`. Untracked, it
+/// publishes nothing, as the untracked TS servers do.
+fn emit_custom(
+    server: &RefServer,
+    Parameters(Custom {
+        session,
+        resource,
+        message,
+    }): Parameters<Custom>,
+) -> Result<CallToolResult, String> {
+    let Some(target) = &server.custom else {
+        return Ok(text("published".to_owned()));
+    };
+    let mut event = CustomEvent::new()
+        .resource_name(resource)
+        .parameters(json!({"from": "emit_custom"}))
+        .tags(Map::from_iter([("kind".to_owned(), json!("custom"))]));
+    if let Some(message) = message {
+        event = event.message(message);
+    }
+    target
+        .agentcat
+        .publish_custom_event(&session, &target.project_id, event)
+        .map_err(|error| error.to_string())?;
+    Ok(text("published".to_owned()))
 }
 
 /// The arguments of `own_session`: the tool declares its own `session_id`.
