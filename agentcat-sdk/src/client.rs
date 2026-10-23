@@ -4,10 +4,12 @@ use std::any::TypeId;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, Mutex, PoisonError};
+use std::time::Duration;
 
 use rmcp::ServerHandler;
 
 use crate::config::Options;
+use crate::delivery::{Delivery, DeliveryConfig, Publisher};
 use crate::registry::ToolRegistry;
 use crate::sink::{DiscardSink, Sink};
 use crate::tracked::Tracked;
@@ -82,6 +84,27 @@ impl Inner {
     }
 }
 
+/// The sink of a handle that publishes: a [`Delivery`] for `project_id` with the redaction hooks
+/// of `options`, posting through `publisher`.
+#[cfg_attr(
+    not(test),
+    expect(dead_code, reason = "called by AgentCat::new (plan 4 task 8)")
+)]
+fn delivery_sink(
+    project_id: &str,
+    options: &Options,
+    publisher: Arc<dyn Publisher>,
+    config: DeliveryConfig,
+) -> Arc<dyn Sink> {
+    Arc::new(Delivery::new(
+        project_id.to_owned(),
+        options,
+        publisher,
+        None,
+        config,
+    ))
+}
+
 const _: () = {
     const fn send_sync_static<T: Send + Sync + 'static>() {}
     send_sync_static::<AgentCat>();
@@ -97,6 +120,19 @@ impl AgentCat {
             sink: Arc::new(DiscardSink),
             registries: Mutex::default(),
         })
+    }
+
+    /// A handle like [`AgentCat::new`] whose events go through a delivery queue that posts with
+    /// `publisher` and uses `config`.
+    #[cfg(test)]
+    pub(crate) fn with_delivery(
+        project_id: &str,
+        options: Options,
+        publisher: Arc<dyn Publisher>,
+        config: DeliveryConfig,
+    ) -> Self {
+        let sink = delivery_sink(project_id, &options, publisher, config);
+        Self::with_sink(project_id, options, sink)
     }
 
     /// A handle like [`AgentCat::new`] that hands its log lines to `sink`.
@@ -125,6 +161,47 @@ impl AgentCat {
     /// What the clones of this handle share.
     pub(crate) fn inner(&self) -> &Inner {
         &self.inner
+    }
+
+    /// Waits until every event this handle took so far is delivered, for at most `timeout`;
+    /// `true` when that happened in time. Events taken while it waits are waited for too.
+    ///
+    /// The SDK's delivery thread keeps the time, so the calling runtime needs no timer. Events
+    /// still go out after a `false`. Use it before a short-lived process ends, or in a test.
+    ///
+    /// ```no_run
+    /// # async fn run(agentcat: agentcat_sdk::AgentCat) {
+    /// use std::time::Duration;
+    ///
+    /// let delivered = agentcat.flush(Duration::from_secs(5)).await;
+    /// # let _ = delivered;
+    /// # }
+    /// ```
+    pub async fn flush(&self, timeout: Duration) -> bool {
+        self.inner.sink.flush(timeout).await
+    }
+
+    /// Like [`flush`](Self::flush), then stops this handle for good: every event it takes from
+    /// the call on is dropped, for all its clones. When `timeout` passes first, the events left
+    /// are abandoned and it returns `false`.
+    ///
+    /// Without it, the drop of the last clone runs the same shutdown with a 5 s timeout.
+    /// `std::process::exit` and a panic under `panic = "abort"` skip that drain.
+    pub async fn shutdown(&self, timeout: Duration) -> bool {
+        self.inner.sink.shutdown(timeout).await
+    }
+
+    /// [`flush`](Self::flush) that blocks the calling thread for at most `timeout` (and a few
+    /// milliseconds more). It needs no tokio runtime; on a runtime thread it blocks that thread.
+    pub fn flush_blocking(&self, timeout: Duration) -> bool {
+        self.inner.sink.flush_blocking(timeout)
+    }
+
+    /// [`shutdown`](Self::shutdown) that blocks the calling thread for at most `timeout` (and a
+    /// few milliseconds more). It needs no tokio runtime; on a runtime thread it blocks that
+    /// thread.
+    pub fn shutdown_blocking(&self, timeout: Duration) -> bool {
+        self.inner.sink.shutdown_blocking(timeout)
     }
 }
 

@@ -100,7 +100,7 @@ fn tool_call_event_follows_ts_key_order() {
         .map(|(key, _)| key.as_str())
         .collect();
 
-    let mut job = from_call(record(), "proj_1", false);
+    let mut job = from_call(record(), "proj_1");
     let results = HookResults {
         session_value: None,
         identity: Some(
@@ -117,7 +117,7 @@ fn tool_call_event_follows_ts_key_order() {
     let mut failed = record();
     failed.is_error = true;
     failed.error = Some(object(json!({"message": "failed", "platform": "rust"})));
-    let job = from_call(failed, "proj_1", false);
+    let job = from_call(failed, "proj_1");
     let present: Vec<&str> = all
         .iter()
         .copied()
@@ -130,14 +130,15 @@ fn tool_call_event_follows_ts_key_order() {
 
 /// B-077: the fields of the event, taken from the record, with the SDK's own values: an empty
 /// `id`, the `mcp:tools/call` type, `sdkLanguage` `Rust` and the crate version (D01, RD-14), and
-/// an empty `identifyActorData`. Both redaction stages are on, and the job keeps the hook mode,
-/// the hooks, the runtime and the backtrace of the record.
+/// an empty `identifyActorData`. Both redaction stages are on, and the job takes the hook mode of
+/// the record's resolution (the one source of it), the hooks, the runtime and the backtrace.
 #[tokio::test]
 async fn event_takes_the_record_fields() {
     let mut record = record();
     record.runtime = tokio::runtime::Handle::try_current().ok();
     record.backtrace = Some(Backtrace::force_capture());
-    let job = from_call(record, "proj_1", true);
+    record.resolution.hook_mode = true;
+    let job = from_call(record, "proj_1");
     let expected = json!({
         "id": "",
         "sessionId": "ses_1",
@@ -186,7 +187,7 @@ fn absent_fields_are_absent_keys() {
         name: None,
         version: Some("2.0.0".to_owned()),
     });
-    let job = from_call(record, "", false);
+    let job = from_call(record, "");
     for key in [
         "inputTokens",
         "outputTokens",
@@ -213,7 +214,7 @@ fn absent_fields_are_absent_keys() {
 fn event_timestamp_is_iso_millis() {
     let mut record = record();
     record.started_at = UNIX_EPOCH + Duration::from_secs(1_700_000_000);
-    let job = from_call(record, "proj_1", false);
+    let job = from_call(record, "proj_1");
     assert_eq!(job.event["timestamp"], json!("2023-11-14T22:13:20.000Z"));
 }
 
@@ -222,7 +223,7 @@ fn event_timestamp_is_iso_millis() {
 /// the customer's result in TS carries it (B-025).
 #[test]
 fn response_has_no_result_type() {
-    let job = from_call(record(), "proj_1", false);
+    let job = from_call(record(), "proj_1");
     let response = job.event["response"].as_object().expect("a response");
     assert!(!response.contains_key("resultType"), "{response:?}");
     assert_eq!(response["content"], json!([{"type": "text", "text": "hi"}]));
@@ -230,7 +231,7 @@ fn response_has_no_result_type() {
     let mut record = record();
     let input_required = InputRequiredResult::from_request_state("state-1");
     record.response = Some(serde_json::to_value(input_required).expect("a result is JSON"));
-    let job = from_call(record, "proj_1", false);
+    let job = from_call(record, "proj_1");
     assert_eq!(job.event["response"]["resultType"], json!("input_required"));
 }
 
@@ -241,7 +242,7 @@ fn sessionless_call_has_empty_session() {
     let mut record = record();
     record.resolution.session_id = String::new();
     record.resolution.session_source = SessionSource::Invalid;
-    let job = from_call(record, "proj_1", false);
+    let job = from_call(record, "proj_1");
     assert_eq!(job.event["sessionId"], json!(""));
 }
 
@@ -278,7 +279,7 @@ async fn event_job_debug_hides_credentials() {
     context.extensions.insert(credential_parts());
     let mut record = record();
     record.extra = extra_value(&context);
-    let job = from_call(record, "proj_1", false);
+    let job = from_call(record, "proj_1");
     let text = format!("{job:?}");
     assert_credentials_hidden(&text);
     assert!(text.contains("echo"), "the other fields print: {text}");

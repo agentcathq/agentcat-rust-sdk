@@ -3,6 +3,9 @@
 //! tokio runtime the call runs on (C14, C26), and the call never waits for them: plan 4 settles
 //! the [`PendingHooks`] when it assembles the event. `rmcp/local` is not supported (C27).
 use std::fmt;
+use std::future::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 use http::request::Parts;
 use rmcp::RoleServer;
@@ -10,7 +13,7 @@ use rmcp::model::{CallToolRequestParams, JsonObject};
 use rmcp::service::RequestContext;
 use serde_json::{Map, Value};
 use tokio::runtime::Handle;
-use tokio::task::JoinHandle;
+use tokio::task::{JoinError, JoinHandle};
 
 use crate::config::{Hook, HookError, Options, UserIdentity};
 use crate::event::{
@@ -169,7 +172,9 @@ impl fmt::Debug for ContextSummary<'_> {
 type Settled<T> = Result<Option<T>, HookError>;
 
 /// The tasks of the hooks started for one call, `None` for a hook that is not set or did not
-/// start. Dropping a handle leaves its task running.
+/// start. Dropping it aborts every task that has not finished (RD-35's reason: a detached task
+/// would leak), as when the queue drops the event (overflow, a shutdown deadline). Take a handle
+/// out with `Option::take` to keep its task.
 #[derive(Debug, Default)]
 pub(crate) struct PendingHooks {
     /// The `resolve_session_id` task; only in hook mode.
@@ -189,6 +194,52 @@ impl PendingHooks {
             || self.identify.is_some()
             || self.event_tags.is_some()
             || self.event_properties.is_some()
+    }
+}
+
+impl Drop for PendingHooks {
+    fn drop(&mut self) {
+        // `abort` does nothing to a task that has finished.
+        if let Some(task) = &self.resolve_session_id {
+            task.abort();
+        }
+        if let Some(task) = &self.identify {
+            task.abort();
+        }
+        if let Some(task) = &self.event_tags {
+            task.abort();
+        }
+        if let Some(task) = &self.event_properties {
+            task.abort();
+        }
+    }
+}
+
+/// A task handle that aborts its task when it is dropped, so a customer hook whose event is
+/// dropped (a cancelled pipeline, a shutdown deadline) does not keep running detached (RD-35's
+/// reason). Awaiting it awaits the task.
+#[derive(Debug)]
+pub(crate) struct AbortOnDrop<T>(JoinHandle<T>);
+
+impl<T> AbortOnDrop<T> {
+    /// Takes over `task`.
+    pub(crate) fn new(task: JoinHandle<T>) -> Self {
+        Self(task)
+    }
+}
+
+impl<T> Future for AbortOnDrop<T> {
+    type Output = Result<T, JoinError>;
+
+    fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        Pin::new(&mut self.0).poll(cx)
+    }
+}
+
+impl<T> Drop for AbortOnDrop<T> {
+    fn drop(&mut self) {
+        // `abort` does nothing to a task that has finished.
+        self.0.abort();
     }
 }
 

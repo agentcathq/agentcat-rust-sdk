@@ -25,7 +25,7 @@ rmcp = { workspace = true }
 # `http::request::Parts`, which rmcp's streamable HTTP server puts in the request extensions; http 1.x
 # does not build without "std".
 http = { workspace = true, features = ["std"] }
-tokio = { workspace = true, features = ["rt", "time"] }
+tokio = { workspace = true, features = ["rt", "time", "sync"] }
 futures = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 chrono = { workspace = true, features = ["std"] }

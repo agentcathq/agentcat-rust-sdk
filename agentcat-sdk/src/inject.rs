@@ -22,7 +22,7 @@ use crate::constants::{
     MCP_SESSION_STATUS_DESCRIPTION, SESSION_ID_PARAM, SESSION_ID_PARAM_DESCRIPTION,
     SESSION_ID_PARAM_PATTERN, get_more_tools_descriptor,
 };
-use crate::js;
+use crate::js::{self, truthy};
 
 #[cfg(test)]
 mod tests;
@@ -528,17 +528,6 @@ fn inject_context(
             ));
             (tool, ContextStep::Failed)
         }
-    }
-}
-
-/// JavaScript's truthiness of a JSON value: `false`, `0`, `""` and `null` are falsy.
-fn truthy(value: &Value) -> bool {
-    match value {
-        Value::Null => false,
-        Value::Bool(b) => *b,
-        Value::Number(n) => n.as_f64().is_some_and(|f| f != 0.0),
-        Value::String(s) => !s.is_empty(),
-        Value::Array(_) | Value::Object(_) => true,
     }
 }
 

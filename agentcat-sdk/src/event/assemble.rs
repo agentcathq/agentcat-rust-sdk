@@ -85,12 +85,9 @@ fn redact_event(event: &TsEvent) -> TsEvent {
 /// `error` and `tags` (the SDK's tags). `identifyActorGivenId`, `identifyActorName` and
 /// `properties` come from the hooks ([`apply`](crate::pipeline::settle::apply)).
 ///
-/// The job takes the record's hooks, runtime and backtrace, with both redaction stages on.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
-)]
-pub(crate) fn from_call(record: CallRecord, project_id: &str, hook_mode: bool) -> EventJob {
+/// The job takes the record's hooks, runtime and backtrace, and the hook mode of its resolution
+/// (the one source of the hook mode), with both redaction stages on.
+pub(crate) fn from_call(record: CallRecord, project_id: &str) -> EventJob {
     let CallRecord {
         started_at,
         duration_ms,
@@ -151,7 +148,7 @@ pub(crate) fn from_call(record: CallRecord, project_id: &str, hook_mode: bool) -
     EventJob {
         event,
         hooks: pending,
-        hook_mode,
+        hook_mode: resolution.hook_mode,
         runtime,
         string_redaction: true,
         event_redaction: true,

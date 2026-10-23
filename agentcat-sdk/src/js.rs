@@ -245,6 +245,17 @@ fn push_js_string(out: &mut String, value: &Value) {
     }
 }
 
+/// JavaScript's truthiness of a JSON value: `false`, `0`, `""` and `null` are falsy.
+pub(crate) fn truthy(value: &Value) -> bool {
+    match value {
+        Value::Null => false,
+        Value::Bool(b) => *b,
+        Value::Number(n) => n.as_f64().is_some_and(|f| f != 0.0),
+        Value::String(s) => !s.is_empty(),
+        Value::Array(_) | Value::Object(_) => true,
+    }
+}
+
 /// JavaScript's `typeof value`, where `None` is `undefined`: `"undefined"`, `"boolean"`,
 /// `"number"`, `"string"`, and `"object"` for `null`, an array and an object.
 pub(crate) fn type_of(value: Option<&Value>) -> &'static str {

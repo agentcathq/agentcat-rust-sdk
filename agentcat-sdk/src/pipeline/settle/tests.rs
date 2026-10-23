@@ -128,11 +128,9 @@ async fn settled_hooks_apply_in_ts_order() {
 #[tokio::test]
 async fn hanging_hook_is_aborted_after_budget() {
     let dropped = Arc::new(AtomicBool::new(false));
-    let hooks = PendingHooks {
-        identify: Some(hangs_watched(&dropped)),
-        event_tags: Some(returns(Some(object(json!({"env": "test"}))))),
-        ..PendingHooks::default()
-    };
+    let mut hooks = PendingHooks::default();
+    hooks.identify = Some(hangs_watched(&dropped));
+    hooks.event_tags = Some(returns(Some(object(json!({"env": "test"})))));
     let mut log = Vec::new();
     let started = Instant::now();
     let results = settle(hooks, BUDGET, &mut log).await;
@@ -167,12 +165,10 @@ async fn hanging_hook_is_aborted_after_budget() {
 async fn panicking_hook_logs_and_publishes_without_it() {
     let session: Task<String> = tokio::spawn(async { panic!("sync hook boom") });
     let identify: Task<UserIdentity> = tokio::spawn(async { panic!("identify exploded") });
-    let hooks = PendingHooks {
-        resolve_session_id: Some(session),
-        identify: Some(identify),
-        event_properties: Some(returns(Some(object(json!({"device": "mobile"}))))),
-        ..PendingHooks::default()
-    };
+    let mut hooks = PendingHooks::default();
+    hooks.resolve_session_id = Some(session);
+    hooks.identify = Some(identify);
+    hooks.event_properties = Some(returns(Some(object(json!({"device": "mobile"})))));
     let mut log = Vec::new();
     let results = settle(hooks, BUDGET, &mut log).await;
     assert_eq!(
@@ -208,12 +204,10 @@ async fn unset_and_null_hooks_change_nothing() {
     assert!(results.identity.is_none() && results.tags.is_none());
     assert!(results.session_value.is_none() && results.properties.is_none());
 
-    let hooks = PendingHooks {
-        identify: Some(returns(None)),
-        event_tags: Some(returns(None)),
-        event_properties: Some(returns(None)),
-        ..PendingHooks::default()
-    };
+    let mut hooks = PendingHooks::default();
+    hooks.identify = Some(returns(None));
+    hooks.event_tags = Some(returns(None));
+    hooks.event_properties = Some(returns(None));
     let results = settle(hooks, BUDGET, &mut log).await;
     assert_eq!(log, Vec::<String>::new());
     let mut event = call_event("ses_1", json!({"agentcat_session_id_source": "supplied"}));
@@ -257,10 +251,8 @@ async fn hook_errors_use_ts_texts() {
 #[tokio::test]
 async fn invalid_tags_are_dropped_with_ts_logs() {
     let raw = object(json!({"bad/key": "x", "count": 5, "env": "prod"}));
-    let hooks = PendingHooks {
-        event_tags: Some(returns(Some(raw))),
-        ..PendingHooks::default()
-    };
+    let mut hooks = PendingHooks::default();
+    hooks.event_tags = Some(returns(Some(raw)));
     let mut log = Vec::new();
     let results = settle(hooks, BUDGET, &mut log).await;
     assert_eq!(

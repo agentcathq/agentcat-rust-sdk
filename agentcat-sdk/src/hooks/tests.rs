@@ -271,8 +271,9 @@ async fn hook_panic_does_not_reach_the_call() {
         );
     }
     for record in sink.take_records() {
-        let identify = record.pending.identify.expect("identify started");
-        let tags = record.pending.event_tags.expect("tags started");
+        let mut pending = record.pending;
+        let identify = pending.identify.take().expect("identify started");
+        let tags = pending.event_tags.take().expect("tags started");
         assert!(identify.await.unwrap_err().is_panic());
         assert!(tags.await.unwrap_err().is_panic());
     }
@@ -386,8 +387,8 @@ async fn hook_error_does_not_reach_the_call() {
     let result = call(&client, "echo", json!({"msg": "hi"})).await;
     assert_eq!(texts(&result).last(), Some(&"hi"));
     assert_ne!(result.is_error, Some(true));
-    let record = only_record(&sink);
-    let settled = record.pending.event_properties.expect("started").await;
+    let mut pending = only_record(&sink).pending;
+    let settled = pending.event_properties.take().expect("started").await;
     let error = settled.expect("no panic").expect_err("the hook failed");
     assert_eq!(error.to_string(), "properties failed");
     client.cancel().await.unwrap();

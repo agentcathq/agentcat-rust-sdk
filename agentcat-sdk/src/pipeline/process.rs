@@ -5,7 +5,7 @@
 //! The customer's redaction hooks run on the job's runtime, the one the call (or the caller of
 //! `publish_custom_event`) ran on, not on the delivery worker's (C38, C14). Without that runtime,
 //! or when the hook's task panics or is cancelled, the event is dropped with the stage's line
-//! (RD-36).
+//! (RD-36). The hook's task is aborted when the pipeline is dropped before it ends.
 use std::convert::Infallible;
 use std::time::Duration;
 
@@ -21,6 +21,7 @@ use crate::config::{EventRedactor, HookError, StringRedactor};
 use crate::event::Event;
 use crate::event::assemble::{EventJob, render_backtrace};
 use crate::handles::new_event_id;
+use crate::hooks::AbortOnDrop;
 
 #[cfg(test)]
 mod tests;
@@ -60,11 +61,8 @@ pub(crate) struct Redactors {
 ///    event is dropped with `Failed to deliver AgentCat event after retries: could not generate an
 ///    event ID`, the line of TS's outer `catch`.
 ///
-/// Runs on a runtime with the time driver (the hook budget).
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
-)]
+/// Runs on a runtime with the time driver (the hook budget). Dropping the future aborts the
+/// hook tasks of the job and a redaction task that runs.
 pub(crate) async fn process(
     job: EventJob,
     redactors: &Redactors,
@@ -159,7 +157,7 @@ async fn redact_event(
     runtime: Option<&Handle>,
 ) -> Result<Option<Event>, String> {
     let runtime = runtime.ok_or_else(|| NO_RUNTIME.to_owned())?;
-    match runtime.spawn(hook.call(Event::from_ts(event))).await {
+    match AbortOnDrop::new(runtime.spawn(hook.call(Event::from_ts(event)))).await {
         Ok(result) => result.map_err(|error| error.to_string()),
         Err(error) => Err(failure_message(error)),
     }
@@ -182,13 +180,13 @@ async fn redact_event_strings(
         Ok::<_, Infallible>(String::new())
     });
     let hook = hook.clone();
-    let task = runtime.spawn(async move {
+    let task = AbortOnDrop::new(runtime.spawn(async move {
         let mut redacted = Vec::with_capacity(strings.len());
         for text in strings {
             redacted.push(hook.call(text).await?);
         }
         Ok::<_, HookError>(redacted)
-    });
+    }));
     let redacted = match task.await {
         Ok(result) => result.map_err(|error| error.to_string())?,
         Err(error) => return Err(failure_message(error)),

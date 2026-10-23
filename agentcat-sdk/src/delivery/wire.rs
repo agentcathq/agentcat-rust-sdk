@@ -32,10 +32,6 @@ mod tests;
 /// - `tags` are the event's string tags, left out when the event's `tags` is not an object.
 /// - `actor_id` is `identify_actor_given_id`: TS sends `actorId || identifyActorGivenId`, and a
 ///   Rust event has no `actorId`. `ip_address` and `event_id` are never set.
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
-)]
 pub(crate) fn publish_request(event: &TsEvent) -> PublishEventRequest {
     let text = |key: &str| event.get(key).and_then(Value::as_str).map(str::to_owned);
     let json = |key: &str| event.get(key).map(js::to_js_value);

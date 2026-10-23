@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use futures::future::join4;
 use serde_json::{Map, Value};
-use tokio::task::{JoinError, JoinHandle};
+use tokio::task::JoinError;
 
 use super::tags::validate_tags;
 use super::{TsEvent, set_field};
@@ -15,7 +15,7 @@ use crate::capture::panic_message;
 use crate::config::{HookError, UserIdentity};
 use crate::constants::AGENTCAT_TAG_SESSION_SOURCE;
 use crate::handles::session_from_hook_value;
-use crate::hooks::PendingHooks;
+use crate::hooks::{AbortOnDrop, PendingHooks};
 
 #[cfg(test)]
 mod tests;
@@ -100,15 +100,21 @@ impl fmt::Display for SessionMintFailed {
 /// A hook pushes its lines when it settles, so hooks that settle at different times log in that
 /// order, and hooks that settle together log in TS's order: `resolveSessionId`, `identify`,
 /// `eventTags`, `eventProperties`. Runs on a runtime with the time driver; the hook tasks may run
-/// on another runtime.
+/// on another runtime. Dropping the future aborts the hook tasks it has not settled.
 pub(crate) async fn settle(
-    hooks: PendingHooks,
+    mut hooks: PendingHooks,
     budget: Duration,
     log: &mut Vec<String>,
 ) -> HookResults {
+    // Each task leaves `hooks` in a guard that aborts it when this future is dropped (a job the
+    // queue abandons) or when its budget runs out.
+    let session_task = hooks.resolve_session_id.take().map(AbortOnDrop::new);
+    let identify_task = hooks.identify.take().map(AbortOnDrop::new);
+    let tags_task = hooks.event_tags.take().map(AbortOnDrop::new);
+    let properties_task = hooks.event_properties.take().map(AbortOnDrop::new);
     let lines = Mutex::new(Vec::new());
     let tags = async {
-        let raw = settle_one(hooks.event_tags, &EVENT_TAGS, budget, &lines).await?;
+        let raw = settle_one(tags_task, &EVENT_TAGS, budget, &lines).await?;
         let mut dropped = Vec::new();
         let valid = validate_tags(&raw, &mut dropped);
         push(&lines, dropped);
@@ -116,15 +122,10 @@ pub(crate) async fn settle(
     };
     // `join4` polls the four in this order every time, so hooks that settle together log in it.
     let (session_value, identity, tags, properties) = join4(
-        settle_one(
-            hooks.resolve_session_id,
-            &RESOLVE_SESSION_ID,
-            budget,
-            &lines,
-        ),
-        settle_one(hooks.identify, &IDENTIFY, budget, &lines),
+        settle_one(session_task, &RESOLVE_SESSION_ID, budget, &lines),
+        settle_one(identify_task, &IDENTIFY, budget, &lines),
         tags,
-        settle_one(hooks.event_properties, &EVENT_PROPERTIES, budget, &lines),
+        settle_one(properties_task, &EVENT_PROPERTIES, budget, &lines),
     )
     .await;
     log.extend(lines.into_inner().unwrap_or_else(PoisonError::into_inner));
@@ -139,13 +140,13 @@ pub(crate) async fn settle(
 /// The value of one hook `task` (`None` when the hook is not set), awaited for at most `budget`;
 /// the log line of a failure or a timeout goes to `lines` (see [`settle`]).
 async fn settle_one<T>(
-    task: Option<JoinHandle<Result<Option<T>, HookError>>>,
+    task: Option<AbortOnDrop<Result<Option<T>, HookError>>>,
     hook: &Label,
     budget: Duration,
     lines: &Mutex<Vec<String>>,
 ) -> Option<T> {
-    let mut task = task?;
-    let (value, line) = match tokio::time::timeout(budget, &mut task).await {
+    let task = task?;
+    let (value, line) = match tokio::time::timeout(budget, task).await {
         Ok(Ok(Ok(value))) => (value, None),
         Ok(Ok(Err(error))) => (None, Some(format!("{}{error}", hook.error_prefix))),
         Ok(Err(error)) => {
@@ -157,7 +158,7 @@ async fn settle_one<T>(
             (None, Some(line))
         }
         Err(_elapsed) => {
-            task.abort();
+            // `timeout` dropped the task's guard, which aborted it.
             let line = format!(
                 "Warning: {} hook did not settle within {}ms; publishing event without it",
                 hook.name,

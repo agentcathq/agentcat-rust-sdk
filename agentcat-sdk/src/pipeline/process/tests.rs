@@ -1,6 +1,6 @@
-//! The per-event pipeline (B-087) against TS: every `queue.json` case but the `retry:*` ones,
-//! which need the delivery worker (plan 4 task 6), with each case's hooks as finished or hanging
-//! tasks under a 50 ms budget; the Rust-only paths of the customer's redaction hooks (C38: the
+//! The per-event pipeline (B-087) against TS: every `queue.json` case but the `retry:*` ones
+//! with each case's hooks as finished or hanging tasks under a 50 ms budget, and the `retry:*`
+//! ones through the delivery worker; the Rust-only paths of the customer's redaction hooks (C38: the
 //! runtime they run on, RD-36 without one, a panic); [`assign`]; and tool calls served by rmcp,
 //! whose records go through `from_call` and `process` as TS's e2e redaction, sanitization,
 //! truncation and error-capture tests publish them.
@@ -22,6 +22,7 @@ use super::{Redactors, assign, process};
 use crate::client::AgentCat;
 use crate::config::{HookError, Options, UserIdentity};
 use crate::delivery::wire::publish_request;
+use crate::delivery::{Delivery, DeliveryConfig};
 use crate::event::Event;
 use crate::event::assemble::{EventJob, from_call};
 use crate::handles::SessionIdFailure;
@@ -29,6 +30,7 @@ use crate::hooks::PendingHooks;
 use crate::js;
 use crate::pipeline::TsEvent;
 use crate::pipeline::truncate::MAX_EVENT_BYTES;
+use crate::sink::Sink;
 use crate::test_support::rmcp::{RecordingSink, Sample, connect};
 use crate::test_support::{assert_js_eq, queue, vectors};
 
@@ -118,20 +120,6 @@ fn at<'a>(event: &'a TsEvent, pointer: &str) -> &'a Value {
 
 // ------------------------------------------------------------------------------- queue.json
 
-/// The redaction stages of a case's job: a tool call runs both; a custom event never runs the
-/// string stage (K-03), and only its server form runs the event stage (as plan 4 task 7 builds
-/// custom events; `custom::tests::custom_vectors_match_ts` runs these cases through the builders).
-fn redaction_stages(case: &Map<String, Value>) -> (bool, bool) {
-    match case
-        .get("custom")
-        .and_then(|custom| custom["form"].as_str())
-    {
-        None => (true, true),
-        Some("string") => (false, false),
-        Some(_) => (false, true),
-    }
-}
-
 /// Whether the delivery worker posts `event`: TS's `sendEvent` posts only an event with a project
 /// (B-104).
 fn posted(event: &TsEvent) -> bool {
@@ -154,20 +142,7 @@ async fn queue_vectors_match_ts() {
         if name.starts_with("retry:") {
             continue;
         }
-        let (string_redaction, event_redaction) = redaction_stages(&case);
-        let job = EventJob {
-            event: object(case["event"].clone()),
-            hooks: case
-                .get("hooks")
-                .and_then(Value::as_object)
-                .map(queue::pending_of)
-                .unwrap_or_default(),
-            hook_mode: case.get("hook_mode") == Some(&json!(true)),
-            runtime: Some(Handle::current()),
-            string_redaction,
-            event_redaction,
-            backtrace: None,
-        };
+        let job = queue::job_of(&case, Some(&Handle::current()));
         let mut log = Vec::new();
         let published = process(job, &queue::redactors_of(&case), BUDGET, &mut log).await;
         assert_eq!(log, queue::expected_logs(&case), "{name}: logs");
@@ -185,6 +160,81 @@ async fn queue_vectors_match_ts() {
         ran.push(name);
     }
     assert_eq!(ran.len(), 56, "every non-retry case ran: {ran:?}");
+}
+
+/// The shrunk retry delays of [`queue_retry_vectors_match_ts`]: the real 1, 2 and 4 s would break
+/// the 3 s limit of a test (ruling P1).
+const SHRUNK_RETRY_DELAYS: [Duration; 3] = [
+    Duration::from_millis(1),
+    Duration::from_millis(2),
+    Duration::from_millis(4),
+];
+
+/// The `retry:*` cases of `queue.json` through the delivery worker (ruling P1): a publisher fails
+/// the case's first `fail_attempts` attempts with `mock failure`. Every attempt's request must be
+/// TS's (`<evt>` masks), so the attempt count is TS's; the worker's lines must be TS's after
+/// [`queue::worker_logs`] (TS's JS error rendering as the message, ruling P7) and with each
+/// `evt_` ID as `<evt>`. The delays TS waited before each retry must be the default
+/// `retry_delays`; the worker runs with [`SHRUNK_RETRY_DELAYS`].
+#[test]
+fn queue_retry_vectors_match_ts() {
+    let defaults: Vec<u128> = DeliveryConfig::default()
+        .retry_delays
+        .iter()
+        .map(Duration::as_millis)
+        .collect();
+    let mut ran = Vec::new();
+    for case in queue::cases() {
+        let name = vectors::name(&case).to_owned();
+        if !name.starts_with("retry:") {
+            continue;
+        }
+        let delays: Vec<u128> = case["delays"]
+            .as_array()
+            .expect("delays")
+            .iter()
+            .map(|delay| u128::from(delay.as_u64().expect("milliseconds")))
+            .collect();
+        assert_eq!(delays, defaults[..delays.len()], "{name}: delays");
+
+        let failures = usize::try_from(case["fail_attempts"].as_u64().expect("a count")).unwrap();
+        let publisher = queue::RecordingPublisher::failing(failures);
+        let lines = queue::CapturedLines::default();
+        let config = DeliveryConfig {
+            retry_delays: SHRUNK_RETRY_DELAYS,
+            ..DeliveryConfig::default()
+        };
+        let delivery = Delivery::with_writer(
+            String::new(),
+            &Options::default(),
+            Arc::new(publisher.clone()),
+            None,
+            config,
+            lines.writer(),
+        );
+        delivery.event(queue::job_of(&case, None));
+        assert!(delivery.flush_blocking(Duration::from_secs(2)), "{name}");
+        drop(delivery);
+
+        let requests: Vec<Value> = publisher
+            .requests()
+            .iter()
+            .map(queue::to_ts_model)
+            .collect();
+        let expected = queue::expected_requests(&case);
+        assert_eq!(requests.len(), expected.len(), "{name}: attempts");
+        for (actual, expected) in requests.iter().zip(&expected) {
+            assert_js_eq(actual, expected, &name);
+        }
+        let logs: Vec<String> = lines
+            .lines()
+            .iter()
+            .map(|line| queue::mask_event_ids(line))
+            .collect();
+        assert_eq!(logs, queue::worker_logs(&case), "{name}: logs");
+        ran.push(name);
+    }
+    assert_eq!(ran, ["retry:2-failures", "retry:4-failures"]);
 }
 
 // ---------------------------------------------------------------------------------- assign
@@ -321,6 +371,44 @@ fn string_redactor_runs_on_customer_runtime() {
     for (text, id) in &seen {
         assert_eq!(*id, customer.handle().id(), "{text} ran on another runtime");
     }
+}
+
+/// Ruling P14 (RD-35's reason): a `process` future dropped while the string hook runs, as the
+/// delivery worker drops a job it abandons at a shutdown deadline, aborts the hook's task on the
+/// customer's runtime instead of leaving it running detached.
+#[test]
+fn dropped_process_aborts_redaction_task() {
+    let customer = Builder::new_multi_thread()
+        .worker_threads(1)
+        .build()
+        .unwrap();
+    let worker = Builder::new_current_thread().enable_time().build().unwrap();
+    let (started, started_rx) = tokio::sync::oneshot::channel::<()>();
+    let (signal, dropped) = queue::DropSignal::new();
+    let hook_state = Arc::new(Mutex::new(Some((started, signal))));
+    let redactors = string_hook(move |text: String| {
+        let state = hook_state.lock().unwrap().take();
+        async move {
+            // The first call holds the signal and never returns, so only an abort drops it.
+            let (started, _signal) = state.expect("one call: the first never returns");
+            started.send(()).unwrap();
+            std::future::pending::<()>().await;
+            Ok(text)
+        }
+    });
+
+    let job = job(call_event(), Some(customer.handle().clone()));
+    let mut log = Vec::new();
+    let outcome = worker.block_on(async {
+        tokio::select! {
+            _ = process(job, &redactors, BUDGET, &mut log) => "finished",
+            _ = started_rx => "the hook started",
+        }
+    });
+    assert_eq!(outcome, "the hook started");
+    dropped
+        .recv_timeout(Duration::from_secs(2))
+        .expect("dropping process aborts the redaction task");
 }
 
 /// B-088, C39: the event-level hook cannot change the system fields: the ID, the session, the
@@ -498,7 +586,7 @@ async fn publish_calls<S: ServerHandler>(
     let mut log = Vec::new();
     let mut published = Vec::new();
     for record in sink.take_records() {
-        let job = from_call(record, E2E_PROJECT, options.hook_mode());
+        let job = from_call(record, E2E_PROJECT);
         published.push(process(job, &redactors, Duration::from_secs(1), &mut log).await);
     }
     (published, log)

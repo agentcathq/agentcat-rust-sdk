@@ -36,6 +36,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 
 use crate::context::CallContext;
+use crate::event::assemble::EventJob;
 use crate::event::{CallRecord, ClientIdentity, client_identity, extra_value, request_value};
 use crate::sink::Sink;
 
@@ -688,7 +689,7 @@ pub(crate) fn identity_json(identity: Option<&ClientIdentity>) -> Value {
     Value::Object(object)
 }
 
-/// A [`Sink`] that keeps every log line and every call record.
+/// A [`Sink`] that keeps every log line and every call record, and drops assembled events.
 #[derive(Debug, Default)]
 pub(crate) struct RecordingSink {
     logs: Mutex<Vec<String>>,
@@ -724,4 +725,6 @@ impl Sink for RecordingSink {
             .unwrap_or_else(PoisonError::into_inner)
             .push(record);
     }
+
+    fn event(&self, _job: EventJob) {}
 }

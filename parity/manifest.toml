@@ -1980,23 +1980,30 @@ rust = ["agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should be able to add events directly"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::enqueue_never_blocks"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should be accessible and have required methods"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "checks that the TS eventQueue singleton has add, getStats and destroy; Rust has a queue per handle, and the compiler checks AgentCat's flush, shutdown and blocking twins"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should handle destroy method without errors"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::blocking_twins_work_outside_a_runtime"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should prevent adding events after destroy"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::shutdown_rejects_later_events"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > EventQueue singleton > should track queue stats correctly"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "checks the shape of the TS-internal getStats(); Rust exposes no queue statistics"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > logs only event metadata on successful send, never the payload"
@@ -2006,39 +2013,52 @@ reason = "queue.json case call:log-metadata-only; checked by agentcat-sdk::pipel
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > should handle multiple events"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::at_most_five_in_flight"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > should process events end-to-end through publishEvent"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::call_record_is_published"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > Process lifecycle handling > should handle SIGINT signal"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-09"
+reason = "Rust installs no signal handler (RD-09): the customer calls flush or shutdown, and the last drop of the handle drains for at most 5 s, checked by agentcat-sdk::delivery::tests::last_drop_drains_queue"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > continues delivery when runtime task registration throws"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Rust has no background-task registrar or Workers waitUntil (RD-19, B-106): the delivery thread keeps running after the handler returns, so no registration can throw"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > does not hold AgentCat delivery open for custom exporters"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Rust has no background-task registrar or Workers waitUntil (RD-19, B-106): the delivery thread keeps running after the handler returns, and Rust has no custom exporters"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > does not register telemetry-only events"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Rust has no background-task registrar or Workers waitUntil (RD-19, B-106): the delivery thread keeps running after the handler returns; that a telemetry-only event is never posted (B-104) is checked by agentcat-sdk::delivery::tests::telemetry_only_is_not_posted_but_observed"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > keeps the registered task pending until AgentCat ingestion completes"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::flush_waits_for_in_flight"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > settles an event when queue overflow drops it"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::overflow_drops_oldest_pending", "agentcat-sdk::delivery::tests::overflow_drop_aborts_hooks"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > background delivery lifecycle > settles fail-open when AgentCat ingestion exhausts retries"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::retries_three_times_then_logs_failure"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events"
@@ -2060,11 +2080,14 @@ reason = "queue.json case redact-event:throws; checked by agentcat-sdk::pipeline
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should run the event hook before string redaction and compose both"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::process::tests::queue_vectors_match_ts", "agentcat-sdk::pipeline::process::tests::event_hook_sees_raw_values_before_string_redaction"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should calculate duration when not provided"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "asserts only that buildSessionInfo runs; Rust's call path always measures a call's duration (CallRecord::duration_ms), so a tool-call event never lacks one"
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should leave the token fields undefined when the event has none"
@@ -2074,15 +2097,19 @@ reason = "queue.json case call:no-tokens; checked by agentcat-sdk::pipeline::pro
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when enableTracing is false"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::call::run::tests::tracing_off_forwards_raw_arguments"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should not publish event when server tracking data is missing"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Tracked always holds its AgentCat handle, so TS's missing tracking data cannot occur."
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should preserve existing duration"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::event::assemble::tests::event_takes_the_record_fields"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null"
@@ -2092,7 +2119,8 @@ reason = "queue.json case call:no-session; checked by agentcat-sdk::pipeline::pr
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish event with server tracking data and session info"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::delivery::tests::call_record_is_published"]
 
 [[test]]
 key = "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request"
@@ -4209,19 +4237,27 @@ reason = "sanitize.json case test:image-audio-text; checked by agentcat-sdk::pip
 
 [[test]]
 key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > does not re-raise when the customer has their own listener for the signal"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-09"
+reason = "Rust installs no signal handler (RD-09): the customer calls flush or shutdown, and the last drop of the handle drains for at most 5 s, checked by agentcat-sdk::delivery::tests::last_drop_drains_queue"
 
 [[test]]
 key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > never throws even when re-raise fails"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-09"
+reason = "Rust installs no signal handler (RD-09): the customer calls flush or shutdown, and the last drop of the handle drains for at most 5 s, checked by agentcat-sdk::delivery::tests::last_drop_drains_queue"
 
 [[test]]
 key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > re-raises even when the flush itself fails"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-09"
+reason = "Rust installs no signal handler (RD-09): the customer calls flush or shutdown, and the last drop of the handle drains for at most 5 s, checked by agentcat-sdk::delivery::tests::last_drop_drains_queue"
 
 [[test]]
 key = "v1|src/tests/signal-shutdown.test.ts|runSignalShutdown > re-raises the signal after the flush settles so default termination proceeds"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-09"
+reason = "Rust installs no signal handler (RD-09): the customer calls flush or shutdown, and the last drop of the handle drains for at most 5 s, checked by agentcat-sdk::delivery::tests::last_drop_drains_queue"
 
 [[test]]
 key = "v1|src/tests/structured-mintback.test.ts|structured mint-back: high-level (V2) path > content-only tools are unaffected: block leads content, no structuredContent conjured"
@@ -5411,12 +5447,18 @@ status = "todo"
 
 [[test]]
 key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > captures HTTP headers from a genuine workerd Request into event parameters"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "runs the TS SDK inside workerd (Cloudflare Workers); Rust has no Workers target (RD-19)"
 
 [[test]]
 key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > keeps AgentCat ingestion alive after a v2 handler returns"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Rust has no background-task registrar or Workers waitUntil (RD-19, B-106): the delivery thread keeps running after the handler returns"
 
 [[test]]
 key = "workers|src/tests/workers/event-delivery.test.ts|Cloudflare Workers event delivery > resolves deferred hooks inside waitUntil after the response has returned"
-status = "todo"
+status = "n/a"
+category = "ruled-divergence:RD-19"
+reason = "Rust has no background-task registrar or Workers waitUntil (RD-19, B-106): the delivery thread keeps running after the handler returns, and the hooks settle on that thread"

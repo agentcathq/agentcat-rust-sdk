@@ -72,10 +72,6 @@ pub(crate) fn configure(destination: LogDestination, home: Option<PathBuf>) {
 }
 
 /// Writes through the process-wide logger; nothing happens before [`configure`].
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery worker (plan 4 task 6)")
-)]
 pub(crate) fn write(message: &str) {
     if let Some(logger) = GLOBAL.get() {
         logger.write(message);
