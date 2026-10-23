@@ -12,8 +12,12 @@
 //                           `pending` only when it is set (this call has hooks, so it is gone)
 //                  request: Object.keys of parameters.request
 //                  params:  Object.keys of parameters.request.params, for a call with `_meta`
-//                           (TS records the JSON-RPC message with its keys in arrival order, so these
-//                           two lists are the order the v1 Client sends)
+//                           TS records the JSON-RPC message with its keys in arrival order, so these
+//                           two lists are not a TS order. `method, params` and the params order
+//                           `name, arguments, _meta` are this probe's own input, which v1's
+//                           Protocol.request passes through unchanged (`{...request, jsonrpc, id}`);
+//                           only `jsonrpc, id`, after the caller's keys, come from v1. A client that
+//                           sends another order gets that order back
 //                  extra:   Object.keys of parameters.extra (v1's RequestHandlerExtra over the
 //                           in-memory transport)
 //   custom_string  event:   the keys of a session-string custom event as the queue sends it: the keys
