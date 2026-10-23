@@ -3,6 +3,7 @@
 //! and the protocol version of the handle tags (B-067, C28). `event/tests.rs` checks the client
 //! identity and the protocol version against `tests/vectors/event.json`, and the shapes of
 //! `request` and `extra`.
+use std::fmt;
 use std::time::SystemTime;
 
 use http::header::{COOKIE, HOST, SET_COOKIE};
@@ -34,6 +35,18 @@ const META_KEY: &str = "_meta";
 /// The header of the transport session of streamable HTTP, as `http` names it (lower case).
 const SESSION_ID_HEADER: &str = "mcp-session-id";
 
+/// The headers that carry credentials. The data keeps them (D06); `Debug` output hides their
+/// values ([`redact_headers`]).
+const CREDENTIAL_HEADERS: [&str; 4] = [
+    "authorization",
+    "proxy-authorization",
+    "cookie",
+    "set-cookie",
+];
+
+/// What `Debug` output shows in place of a credential header's value.
+const REDACTED: &str = "<redacted>";
+
 /// The client a request names (B-085): its name and version, each when it is a string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ClientIdentity {
@@ -53,12 +66,8 @@ impl From<&Implementation> for ClientIdentity {
 }
 
 /// One tool call as the SDK records it (B-077). The call path builds it and hands it to the
-/// [`Sink`](crate::sink::Sink); plan 4 assembles the published event from it.
-#[derive(Debug)]
-#[cfg_attr(
-    not(test),
-    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
-)]
+/// [`Sink`](crate::sink::Sink); plan 4 assembles the published event from it. Its `Debug` output
+/// hides the values of the credential headers in `extra` ([`redact_headers`]).
 pub(crate) struct CallRecord {
     /// When the call started: the event's `timestamp`.
     pub(crate) started_at: SystemTime,
@@ -94,6 +103,30 @@ pub(crate) struct CallRecord {
     pub(crate) client: Option<ClientIdentity>,
     /// The customer hooks started for the call (B-022 step 7).
     pub(crate) pending: PendingHooks,
+}
+
+impl fmt::Debug for CallRecord {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("CallRecord")
+            .field("started_at", &self.started_at)
+            .field("duration_ms", &self.duration_ms)
+            .field("resolution", &self.resolution)
+            .field("resource_name", &self.resource_name)
+            .field("request", &self.request)
+            .field("extra", &redact_extra(&self.extra))
+            .field("input_tokens", &self.input_tokens)
+            .field("output_tokens", &self.output_tokens)
+            .field("tags", &self.tags)
+            .field("user_intent", &self.user_intent)
+            .field("response", &self.response)
+            .field("is_error", &self.is_error)
+            .field("error", &self.error)
+            .field("server_name", &self.server_name)
+            .field("server_version", &self.server_version)
+            .field("client", &self.client)
+            .field("pending", &self.pending)
+            .finish()
+    }
 }
 
 /// `parameters.request` of a `tools/call` request, the raw JSON-RPC request TS records (B-082):
@@ -202,6 +235,36 @@ pub(crate) fn project_headers(headers: &HeaderMap) -> Map<String, Value> {
         .into_iter()
         .map(|(name, value)| (name.clone(), value.clone()))
         .collect()
+}
+
+/// `headers`, a [`project_headers`] map, for `Debug` output: the value of each credential header
+/// (`authorization`, `proxy-authorization`, `cookie`, `set-cookie`, in any case) becomes
+/// `"<redacted>"`; the names and the other headers stay as they are.
+pub(crate) fn redact_headers(headers: &Map<String, Value>) -> Map<String, Value> {
+    headers
+        .iter()
+        .map(|(name, value)| {
+            let credential = CREDENTIAL_HEADERS
+                .iter()
+                .any(|credential| name.eq_ignore_ascii_case(credential));
+            let value = if credential {
+                Value::String(REDACTED.to_owned())
+            } else {
+                value.clone()
+            };
+            (name.clone(), value)
+        })
+        .collect()
+}
+
+/// `extra`, an [`extra_value`], for `Debug` output: its `requestInfo.headers` through
+/// [`redact_headers`].
+fn redact_extra(extra: &Value) -> Value {
+    let mut extra = extra.clone();
+    if let Some(Value::Object(headers)) = extra.pointer_mut("/requestInfo/headers") {
+        *headers = redact_headers(headers);
+    }
+    extra
 }
 
 /// `text` without its leading and trailing HTTP whitespace (tab, line feed, carriage return and

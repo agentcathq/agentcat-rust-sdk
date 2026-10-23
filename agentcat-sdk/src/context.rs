@@ -41,7 +41,9 @@ impl CallContext {
     /// The session ID the call belongs to: the one the agent sent, or the one the SDK issued for
     /// this call. `None` when the call has no session: the agent sent a value this server did not
     /// issue, the tool declares its own `session_id` parameter, or the SDK does not trace the
-    /// call.
+    /// call. Also always `None` with a
+    /// [`resolve_session_id`](crate::Options::resolve_session_id) hook set: the hook decides the
+    /// session after the call starts, so the context has none.
     pub fn session_id(&self) -> Option<&str> {
         (!self.session_id.is_empty()).then_some(self.session_id.as_str())
     }

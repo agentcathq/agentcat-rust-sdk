@@ -2,6 +2,8 @@
 //! starts them for one tool call (B-022 step 7, B-026). The hooks run as `Send` tasks on the
 //! tokio runtime the call runs on (C14, C26), and the call never waits for them: plan 4 settles
 //! the [`PendingHooks`] when it assembles the event. `rmcp/local` is not supported (C27).
+use std::fmt;
+
 use http::request::Parts;
 use rmcp::RoleServer;
 use rmcp::model::{CallToolRequestParams, JsonObject};
@@ -11,7 +13,9 @@ use tokio::runtime::Handle;
 use tokio::task::JoinHandle;
 
 use crate::config::{Hook, HookError, Options, UserIdentity};
-use crate::event::{ClientIdentity, project_headers, protocol_version, transport_session_id};
+use crate::event::{
+    ClientIdentity, project_headers, protocol_version, redact_headers, transport_session_id,
+};
 use crate::sink::Sink;
 
 #[cfg(test)]
@@ -20,6 +24,10 @@ mod tests;
 /// One tool call as a hook sees it (D35): the request as the client sent it, with the injected
 /// arguments (`session_id`, `agent_id`, `context`) still in it, and what the SDK knows about the
 /// client and the transport. Clones are independent copies.
+///
+/// Its `Debug` output hides credentials: the values of the `authorization`,
+/// `proxy-authorization`, `cookie` and `set-cookie` headers print as `"<redacted>"`, and the
+/// request context prints as its request ID and whether it holds HTTP request parts.
 ///
 /// ```
 /// # use agentcat_sdk::{Options, ToolCall};
@@ -30,7 +38,7 @@ mod tests;
 /// });
 /// # let _ = options;
 /// ```
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct ToolCall {
     tool_name: String,
     arguments: Option<JsonObject>,
@@ -85,8 +93,12 @@ impl ToolCall {
         &self.meta
     }
 
-    /// The HTTP headers of the request: names in lower case, repeated values joined with `", "`
-    /// (D06). `None` on a transport without HTTP, such as stdio.
+    /// The HTTP headers of the request, every header included, `authorization` and `cookie` too
+    /// (D06), as TS's WHATWG `Headers` gives them: names in lower case, in byte order, after the
+    /// names that are array indexes in numeric order; values trimmed of leading and trailing HTTP
+    /// whitespace; the values of a repeated name joined in arrival order with `", "` (`"; "` for
+    /// `cookie`), except `set-cookie`, which keeps only its last value; a value that is not UTF-8
+    /// read lossily. `None` on a transport without HTTP, such as stdio.
     #[must_use]
     pub fn headers(&self) -> Option<&Map<String, Value>> {
         self.headers.as_ref()
@@ -122,6 +134,34 @@ impl ToolCall {
     #[must_use]
     pub fn request_context(&self) -> &RequestContext<RoleServer> {
         &self.request_context
+    }
+}
+
+impl fmt::Debug for ToolCall {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ToolCall")
+            .field("tool_name", &self.tool_name)
+            .field("arguments", &self.arguments)
+            .field("meta", &self.meta)
+            .field("headers", &self.headers.as_ref().map(redact_headers))
+            .field("client", &self.client)
+            .field("protocol_version", &self.protocol_version)
+            .field("transport_session_id", &self.transport_session_id)
+            .field("request_context", &ContextSummary(&self.request_context))
+            .finish()
+    }
+}
+
+/// A request context in `Debug` output: its request ID and whether it holds HTTP request parts,
+/// never the parts themselves, whose headers carry credentials.
+struct ContextSummary<'a>(&'a RequestContext<RoleServer>);
+
+impl fmt::Debug for ContextSummary<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("RequestContext")
+            .field("id", &self.0.id)
+            .field("http_parts", &self.0.extensions.get::<Parts>().is_some())
+            .finish_non_exhaustive()
     }
 }
 

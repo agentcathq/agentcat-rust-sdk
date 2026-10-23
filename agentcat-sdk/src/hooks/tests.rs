@@ -19,7 +19,10 @@ use crate::config::{HookError, Options};
 use crate::event::CallRecord;
 use crate::handles::SessionSource;
 use crate::sink::Sink;
-use crate::test_support::rmcp::{RecordingSink, Sample, bare_context, connect};
+use crate::test_support::rmcp::{
+    CREDENTIAL_HEADERS, RecordingSink, Sample, assert_credentials_hidden, bare_context, connect,
+    credential_parts,
+};
 
 type Client = RunningService<RoleClient, rmcp::model::InitializeRequestParams>;
 
@@ -130,6 +133,28 @@ async fn hooks_receive_raw_arguments() {
             .is_none(),
         "the snapshot is taken before the CallContext is added"
     );
+}
+
+/// D06 keeps the credential headers in the snapshot, and its `Debug` output hides them: the values
+/// of `authorization`, `proxy-authorization`, `cookie` and `set-cookie` print as `<redacted>`
+/// under their names, other headers print as they are, and the request context prints as a
+/// summary (its id, whether HTTP parts are present), not with the raw headers of its parts.
+/// Rust-only: TS has no `Debug`.
+#[tokio::test(flavor = "current_thread")]
+async fn tool_call_debug_hides_credentials() {
+    let mut context = bare_context(None);
+    context.extensions.insert(credential_parts());
+    let call = ToolCall::new(&params("echo", json!({"x": 1})), &context, None);
+
+    let text = format!("{call:?}");
+    assert_credentials_hidden(&text);
+    assert!(text.contains("<redacted>"), "{text}");
+    assert!(text.contains("\"echo\""), "the other fields print: {text}");
+    assert!(text.contains("http_parts: true"), "{text}");
+    let headers = call.headers().expect("HTTP headers");
+    for (name, value) in CREDENTIAL_HEADERS {
+        assert_eq!(headers[name], value, "D06: the data keeps {name}");
+    }
 }
 
 #[tokio::test(flavor = "current_thread")]

@@ -47,6 +47,14 @@ const ANSWERED: Duration = Duration::from_secs(2);
 const LIST_PANICKED: &str =
     "Warning: registry rebuild-on-demand failed - Error: list_tools exploded";
 
+/// The log line of a `get_tool` lookup of `beta` that panicked on the call path (C30), in the
+/// style of [`LIST_PANICKED`]. Rust-only: TS has no `get_tool`.
+const LOOKUP_PANICKED: &str = "Warning: Tool lookup for beta panicked: get_tool exploded";
+
+/// The log line of a `get_info` that panicked on the call path (C30), in the style of
+/// [`LIST_PANICKED`]. Rust-only: TS reads the server info without customer code.
+const INFO_PANICKED: &str = "Warning: get_info panicked: get_info exploded";
+
 /// A handle with the default options whose log lines and records go to a [`RecordingSink`].
 fn recording() -> (AgentCat, Arc<RecordingSink>) {
     let sink = Arc::new(RecordingSink::default());
@@ -589,7 +597,7 @@ async fn rebuild_panic_is_a_failed_rebuild() {
 
 /// Controller ruling (Task 8): a `get_tool` that panics gives no schema (C03), so the call takes
 /// the registry's entry after a rebuild: `beta` keeps its own `context`, which the heuristic strip
-/// would drop.
+/// would drop. Each panic is logged with its message (C30).
 #[tokio::test]
 async fn get_tool_panic_is_no_schema() {
     let (agentcat, sink) = recording();
@@ -606,10 +614,23 @@ async fn get_tool_panic_is_no_schema() {
     let records = sink.take_records();
     assert_eq!(records.len(), 2);
     assert!(records.iter().all(|record| record.error.is_none()));
+    let logs = sink.logs();
+    let lookups: Vec<&String> = logs.iter().filter(|line| line.contains("lookup")).collect();
+    assert_eq!(lookups, [LOOKUP_PANICKED, LOOKUP_PANICKED], "{logs:?}");
+    assert_eq!(
+        logs.first().map(String::as_str),
+        Some(LOOKUP_PANICKED),
+        "{logs:?}"
+    );
+    assert_eq!(
+        logs.last().map(String::as_str),
+        Some(LOOKUP_PANICKED),
+        "{logs:?}"
+    );
 }
 
 /// Controller ruling (Task 8): a `get_info` that panics leaves the record without a server name
-/// and version (B-086); the call goes on.
+/// and version (B-086), and the panic is logged with its message (C30); the call goes on.
 #[tokio::test]
 async fn get_info_panic_records_no_server() {
     let (agentcat, sink) = recording();
@@ -622,4 +643,10 @@ async fn get_info_panic_records_no_server() {
     assert_eq!(record.server_name, None);
     assert_eq!(record.server_version, None);
     assert!(record.error.is_none());
+    let logs = sink.logs();
+    let infos: Vec<&String> = logs
+        .iter()
+        .filter(|line| line.contains("get_info"))
+        .collect();
+    assert_eq!(infos, [INFO_PANICKED], "{logs:?}");
 }

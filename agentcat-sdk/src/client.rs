@@ -2,6 +2,7 @@
 
 use std::any::TypeId;
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use rmcp::ServerHandler;
@@ -30,19 +31,22 @@ mod tests;
 /// };
 /// # let _ = make_server();
 /// ```
-#[derive(Clone, Debug)]
+///
+/// Its `Debug` output shows the project ID and the options only.
+#[derive(Clone)]
 pub struct AgentCat {
     inner: Arc<Inner>,
 }
 
+impl fmt::Debug for AgentCat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.inner.debug_fields(f, "AgentCat")
+    }
+}
+
 /// What the clones of one [`AgentCat`] share.
-#[derive(Debug)]
 pub(crate) struct Inner {
     /// The project that receives the events; `""` means telemetry only (B-003).
-    #[cfg_attr(
-        not(test),
-        expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
-    )]
     pub(crate) project_id: String,
     pub(crate) options: Options,
     /// Where the SDK hands its own log lines.
@@ -51,7 +55,22 @@ pub(crate) struct Inner {
     registries: Mutex<HashMap<TypeId, ToolRegistry>>,
 }
 
+impl fmt::Debug for Inner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.debug_fields(f, "Inner")
+    }
+}
+
 impl Inner {
+    /// `Debug` output under the name `name` with the project ID and the options only, not the
+    /// registries or the sink.
+    fn debug_fields(&self, f: &mut fmt::Formatter<'_>, name: &str) -> fmt::Result {
+        f.debug_struct(name)
+            .field("project_id", &self.project_id)
+            .field("options", &self.options)
+            .finish_non_exhaustive()
+    }
+
     /// Runs `f` on the registry of the handler type `H`, made on first use. A poisoned lock is
     /// taken over. The lock is held for `f` only, never across an `.await`.
     pub(crate) fn with_registry<H: 'static, R>(&self, f: impl FnOnce(&mut ToolRegistry) -> R) -> R {

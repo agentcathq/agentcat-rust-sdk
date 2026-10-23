@@ -19,8 +19,8 @@ use rmcp::transport::streamable_http_server::StreamableHttpServerConfig;
 use serde_json::{Map, Value, json};
 
 use super::{
-    CallRecord, ClientIdentity, client_identity, project_headers, protocol_version, request_info,
-    request_url, request_value,
+    CallRecord, ClientIdentity, client_identity, extra_value, project_headers, protocol_version,
+    request_info, request_url, request_value,
 };
 use crate::client::AgentCat;
 use crate::config::Options;
@@ -29,8 +29,8 @@ use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
 use crate::sink::Sink;
 use crate::test_support::rmcp::{
-    ContextEcho, RecordingSink, Sample, bare_context, connect, connect_http, identity_json,
-    serve_http,
+    CREDENTIAL_HEADERS, ContextEcho, RecordingSink, Sample, assert_credentials_hidden,
+    bare_context, connect, connect_http, credential_parts, identity_json, serve_http,
 };
 use crate::test_support::vectors;
 
@@ -565,4 +565,26 @@ fn recording_sink_takes_records_in_order() {
     let taken: Vec<Value> = sink.take_records().into_iter().map(fields).collect();
     assert_eq!(taken, [fields(record(1)), fields(record(2))]);
     assert!(sink.take_records().is_empty());
+}
+
+/// D06 keeps the credential headers in `extra`, and the record's `Debug` output hides them as the
+/// [`ToolCall`](crate::ToolCall)'s does: the values of `authorization`, `proxy-authorization`,
+/// `cookie` and `set-cookie` print as `<redacted>` under their names, other headers and the other
+/// fields print as they are. Rust-only: TS has no `Debug`.
+#[tokio::test]
+async fn call_record_debug_hides_credentials() {
+    let mut context = bare_context(None);
+    context.extensions.insert(credential_parts());
+    let mut record = record(7);
+    record.extra = extra_value(&context);
+
+    let text = format!("{record:?}");
+    assert_credentials_hidden(&text);
+    assert!(text.contains("<redacted>"), "{text}");
+    assert!(text.contains("tool_7"), "the other fields print: {text}");
+    assert!(text.contains("http://localhost:8080/mcp"), "{text}");
+    let headers = &record.extra["requestInfo"]["headers"];
+    for (name, value) in CREDENTIAL_HEADERS {
+        assert_eq!(headers[name], value, "D06: the data keeps {name}");
+    }
 }

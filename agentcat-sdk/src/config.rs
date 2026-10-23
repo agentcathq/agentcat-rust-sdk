@@ -204,7 +204,9 @@ impl Options {
     }
 
     /// Whether tool calls are recorded and tools get the `session_id` parameter. With tracing
-    /// off, tools still get the `context` parameter and `get_more_tools`.
+    /// off, tools get neither `session_id` nor `agent_id` (also with agent tracking on), each call
+    /// goes to the tool with its arguments as the agent sent them, and nothing is recorded; tools
+    /// still get the `context` parameter and `get_more_tools`.
     #[must_use]
     pub fn enable_tracing(mut self, on: bool) -> Self {
         self.tracing = on;
@@ -220,6 +222,7 @@ impl Options {
     }
 
     /// Whether tools get a required `agent_id` parameter, with which agents identify themselves.
+    /// Only with tracing on ([`enable_tracing`](Self::enable_tracing)).
     #[must_use]
     pub fn enable_agent_tracking(mut self, on: bool) -> Self {
         self.agent_tracking = on;

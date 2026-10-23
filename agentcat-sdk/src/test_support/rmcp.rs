@@ -1,12 +1,14 @@
 //! rmcp helpers for the crate's tests: in-memory and streamable HTTP client connections, a bare
-//! request context, the [`Probe`] server, whose answers are sentinels, the [`Paged`],
-//! [`SilentPaged`], [`Sample`], [`ContextEcho`] and [`Mrtr`] servers and the [`RecordingSink`].
+//! request context, request parts with credential headers, the [`Probe`] server, whose answers
+//! are sentinels, the [`Paged`], [`SilentPaged`], [`Sample`], [`ContextEcho`] and [`Mrtr`]
+//! servers and the [`RecordingSink`].
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::future::ready;
 use std::sync::{Arc, Mutex, PoisonError};
 
-use http::{HeaderName, HeaderValue};
+use http::request::Parts;
+use http::{HeaderName, HeaderValue, Request};
 use rmcp::handler::server::common::Extension;
 use rmcp::handler::server::wrapper::{Json, Parameters};
 use rmcp::model::{
@@ -133,6 +135,53 @@ pub(crate) fn bare_context(
     let (server_end, _client_end) = tokio::io::duplex(PIPE_BYTES);
     let running = serve_directly::<RoleServer, _, _, _, _>(Probe, server_end, peer_info);
     RequestContext::new(RequestId::Number(1), running.peer().clone())
+}
+
+/// The credential headers whose values a `Debug` output must hide, each with a value that occurs
+/// nowhere else in the output.
+pub(crate) const CREDENTIAL_HEADERS: [(&str, &str); 4] = [
+    ("authorization", "Bearer credential-authorization-1"),
+    ("proxy-authorization", "Basic credential-proxy-2"),
+    ("cookie", "sid=credential-cookie-3"),
+    ("set-cookie", "sid=credential-set-cookie-4"),
+];
+
+/// An ordinary header, whose value a `Debug` output shows.
+pub(crate) const ORDINARY_HEADER: (&str, &str) = ("x-test-header", "ordinary-value-5");
+
+/// The parts of a POST to `/mcp` with a `Host`, the [`CREDENTIAL_HEADERS`] (names in mixed case)
+/// and the [`ORDINARY_HEADER`].
+pub(crate) fn credential_parts() -> Parts {
+    let mut builder = Request::builder()
+        .method("POST")
+        .uri(HTTP_PATH)
+        .header("Host", "localhost:8080");
+    for (name, value) in CREDENTIAL_HEADERS {
+        builder = builder.header(name.to_uppercase(), value);
+    }
+    let (name, value) = ORDINARY_HEADER;
+    let request = builder.header(name, value).body(()).expect("valid parts");
+    request.into_parts().0
+}
+
+/// Asserts that `text`, the `Debug` output of a value built from [`credential_parts`], names each
+/// credential header, shows none of their values, and shows the ordinary header's value.
+///
+/// # Panics
+///
+/// When `text` shows a credential value, misses a credential header's name or the ordinary value.
+pub(crate) fn assert_credentials_hidden(text: &str) {
+    for (name, value) in CREDENTIAL_HEADERS {
+        assert!(
+            text.contains(&format!("{name:?}")),
+            "{name} is missing: {text}"
+        );
+        assert!(!text.contains(value), "the value of {name} leaks: {text}");
+    }
+    assert!(
+        text.contains(ORDINARY_HEADER.1),
+        "the ordinary value is missing: {text}"
+    );
 }
 
 /// The protocol versions the [`Probe`] supports: fewer than rmcp knows, so a request for

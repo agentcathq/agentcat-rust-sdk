@@ -92,8 +92,9 @@ struct Schema {
 ///
 /// For a failed call, an error captured during the call replaces the error that the result
 /// (B-097) or the JSON-RPC code name (R09) would give (C23). The other customer calls this path
-/// makes (`get_tool`, the rebuild's `list_tools`, `get_info`) are contained when they panic, and
-/// the call goes on without what they would have given.
+/// makes (`get_tool`, the rebuild's `list_tools`, `get_info`) are contained when they panic: each
+/// panic is logged with its message (C30), and the call goes on without what they would have
+/// given.
 pub(crate) async fn run_call<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
@@ -130,7 +131,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let request_json = request_value(&request, &context);
     let input_tokens = estimate_input_tokens(request_json.pointer("/params/arguments"));
     let tags = call_tags(&request, &resolution, &context);
-    let server = server_info(tracked.inner());
+    let server = server_info(shared, tracked.inner());
     let mut record = CallRecord {
         started_at,
         duration_ms: 0,
@@ -279,9 +280,18 @@ fn resource_name(name: &str) -> String {
 }
 
 /// The `server_info` of `inner` (B-086), or none when its `get_info` panics: the panic is
-/// contained and the record gets no server name or version.
-fn server_info<H: ServerHandler>(inner: &H) -> Option<Implementation> {
-    catch_unwind(AssertUnwindSafe(|| inner.get_info().server_info)).ok()
+/// contained, logged with its message (C30), and the record gets no server name or version.
+fn server_info<H: ServerHandler>(shared: &Inner, inner: &H) -> Option<Implementation> {
+    match catch_unwind(AssertUnwindSafe(|| inner.get_info().server_info)) {
+        Ok(server) => Some(server),
+        Err(payload) => {
+            let message = panic_message(&*payload);
+            shared
+                .sink
+                .log(format!("Warning: get_info panicked: {message}"));
+            None
+        }
+    }
 }
 
 /// The intent of a call that is not intercepted (B-083, K-08): with the tool-call context on and
@@ -301,8 +311,9 @@ fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Val
 /// has an empty entry, as TS gives every listed tool one (`listWrap.ts`), so its arguments stay as
 /// sent.
 ///
-/// A `get_tool` that panics gives no schema: the panic is contained and the registry, the rebuild
-/// and the heuristic follow as for a tool `get_tool` does not know.
+/// A `get_tool` that panics gives no schema: the panic is contained and logged with its message
+/// (C30), and the registry, the rebuild and the heuristic follow as for a tool `get_tool` does not
+/// know.
 ///
 /// The tool is foreign when the registry's set of tools that declared their own `session_id`
 /// holds it, or when its `get_tool` schema declares one (C19). The mirror gate is the entry's
@@ -313,10 +324,16 @@ async fn learn_schema<H: ServerHandler>(
     context: &RequestContext<RoleServer>,
 ) -> Schema {
     let shared = tracked.agentcat().inner();
-    let looked_up = catch_unwind(AssertUnwindSafe(|| tracked.lookup_tool(name)))
-        .ok()
-        .flatten()
-        .map(|(_tool, entry)| entry);
+    let looked_up = match catch_unwind(AssertUnwindSafe(|| tracked.lookup_tool(name))) {
+        Ok(found) => found.map(|(_tool, entry)| entry),
+        Err(payload) => {
+            let message = panic_message(&*payload);
+            shared.sink.log(format!(
+                "Warning: Tool lookup for {name} panicked: {message}"
+            ));
+            None
+        }
+    };
     let mut known = registry_view::<H>(shared, name);
     if looked_up.is_none() && known.entry.is_none() && !known.listed {
         rebuild(tracked, context).await;
