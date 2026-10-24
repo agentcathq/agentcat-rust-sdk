@@ -1,0 +1,55 @@
+[
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context; TS v2 publishes its own keys (mcpReq, http, sessionId), Rust publishes the D34 shape from rmcp's RequestContext (requestId, _meta, requestInfo, sessionId); the headers and the URL inside it compare equal",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.request\\.params\\._meta",
+    "lanes": ["2026-07-28"],
+    "reason": "every tool-call event at 2026-07-28: the TS v2 host library lifts the io.modelcontextprotocol/* envelope keys out of params._meta into extra.mcpReq.envelope before dispatch (TS src/modules/session.ts:33-36), so the request TS records has no _meta; rmcp keeps the envelope in params._meta (design 6.5, 6.6), and the Rust SDK records the request as rmcp hands it over",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "basic",
+    "reason": "basic.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[4\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "features-off",
+    "reason": "features-off.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[5\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "features-off",
+    "reason": "features-off.json, the get_more_tools call with enableReportMissing false (an unknown tool): TS's error is the host's ProtocolError with a V8 stack and frames; Rust's is rmcp's ErrorData, whose type is its code name InvalidParams (C24), with no stack and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[5\\]\\.body\\.error\\.message",
+    "scenario": "features-off",
+    "reason": "features-off.json, the get_more_tools call with enableReportMissing false (an unknown tool): the message is the host's text, Tool get_more_tools not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[1[12]\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "schemas",
+    "reason": "schemas.json, the two calls of the unknown tool nope: TS's error is the host's ProtocolError with a V8 stack and frames; Rust's is rmcp's ErrorData, whose type is its code name InvalidParams (C24), with no stack and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[1[12]\\]\\.body\\.error\\.message",
+    "scenario": "schemas",
+    "reason": "schemas.json, the two calls of the unknown tool nope: the message is the host's text, Tool nope not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[1[34]\\]\\.body\\.(?:response\\.content\\[0\\]\\.text|error\\.message)",
+    "scenario": "schemas",
+    "reason": "schemas.json, the two echo calls with msg 5: the isError result text, and the error message taken from it, are the host validator's text: ajv's from the TS v2 host library, serde's from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  }
+]

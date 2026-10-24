@@ -1,9 +1,10 @@
-// Rulings shared by diff.mjs, delta.mjs and matrix.mjs: the file format, the matching and the report lines.
-// A rulings file is a JSON array of
+// Rulings shared by diff.mjs, delta.mjs, events.mjs and matrix.mjs: the file format, the matching and the
+// report lines. Delta rulings live in harness/rulings.json (rulings-ts.json for TS against TS), event rulings
+// in harness/rulings-events.json (rulings-events-ts.json). A rulings file is a JSON array of
 // {"path": "<regex>", "reason", "deviation": "RD-xx", "pending"?: true, "scenario"?: "<scenario name>",
 //  "transports"?: ["<transport>", ...], "lanes"?: ["<lane>", ...]};
-// each regex is anchored as ^(?:<regex>)$. `scenario`, `transports` and `lanes` scope a delta ruling to the
-// matching combinations in matrix.mjs (see rulingsFor); diff.mjs and delta.mjs know no combination and
+// each regex is anchored as ^(?:<regex>)$. `scenario`, `transports` and `lanes` scope a delta or event ruling
+// to the matching combinations in matrix.mjs (see rulingsFor); diff.mjs and delta.mjs know no combination and
 // match by path alone. `fail(message)` reports a bad file and must not return.
 import { readFileSync } from "node:fs";
 
@@ -103,9 +104,10 @@ export function rulingInRun(r, { scenarios, transports, lanes }) {
 
 /**
  * One line per ruling: RULING / RULING (pending) / UNUSED RULING, with the match count and the scope of
- * a scoped ruling: `in <scenario>`, `on <transport>,...`, `at <lane>,...`.
+ * a scoped ruling: `in <scenario>`, `on <transport>,...`, `at <lane>,...`. Each line starts with `prefix`
+ * (matrix.mjs: `EVENT ` for the event rulings).
  */
-export function rulingLines(rulings) {
+export function rulingLines(rulings, prefix = "") {
   return rulings.map((r) => {
     const what = `${r.matched === 0 ? "UNUSED RULING" : "RULING"}${r.pending ? " (pending)" : ""}`;
     const scope = [
@@ -113,7 +115,7 @@ export function rulingLines(rulings) {
       r.transports === undefined ? "" : ` on ${r.transports.join(",")}`,
       r.lanes === undefined ? "" : ` at ${r.lanes.join(",")}`,
     ].join("");
-    return `${what} ${r.deviation} matched ${r.matched}${scope}: ${JSON.stringify(r.path)} (${r.reason})\n`;
+    return `${prefix}${what} ${r.deviation} matched ${r.matched}${scope}: ${JSON.stringify(r.path)} (${r.reason})\n`;
   });
 }
 

@@ -1,7 +1,7 @@
-// Structural diff of two normalized runs. Object keys compare unordered;
-// arrays compare in order (content-block order is part of the contract).
-// Every violation of an ordered check (normalized `violations`) is a diff
-// entry, on either side, even when both sides share it.
+// Structural diff of two normalized runs (structuralDiff in events.mjs). Object
+// keys compare unordered; arrays compare in order (content-block order is part
+// of the contract). Every violation of an ordered check (normalized
+// `violations`) is a diff entry, on either side, even when both sides share it.
 //
 // usage: node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]
 // rulings: JSON array of {"path": "<regex>", "reason": "...", "deviation": "RD-xx"}; a
@@ -15,7 +15,8 @@
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
-import { clip, loadRulings, matchRulings, readJson, rulingLines } from "./rulings.mjs";
+import { printDiffs, structuralDiff } from "./events.mjs";
+import { loadRulings, matchRulings, readJson, rulingLines } from "./rulings.mjs";
 
 function usage(message) {
   if (message) process.stderr.write(`diff: ${message}\n`);
@@ -36,37 +37,8 @@ const a = readJson(aPath, usage);
 const b = readJson(bPath, usage);
 const rulings = loadRulings(rulingsPath, usage);
 
-const diffs = [];
-const kind = (v) => (Array.isArray(v) ? "array" : v === null ? "null" : typeof v);
-const has = (o, k) => Object.hasOwn(o, k);
-
-function walk(x, y, p) {
-  if (JSON.stringify(x) === JSON.stringify(y)) return;
-  const tx = kind(x);
-  const ty = kind(y);
-  if (tx !== ty) return void diffs.push({ path: p, a: x, b: y });
-  if (tx === "array") {
-    // One entry per element; the shorter side shows "<missing>".
-    for (let i = 0; i < Math.max(x.length, y.length); i++) {
-      if (i >= y.length) diffs.push({ path: `${p}[${i}]`, a: x[i], b: "<missing>" });
-      else if (i >= x.length) diffs.push({ path: `${p}[${i}]`, a: "<missing>", b: y[i] });
-      else walk(x[i], y[i], `${p}[${i}]`);
-    }
-    return;
-  }
-  if (tx === "object") {
-    for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) {
-      if (!has(x, k)) diffs.push({ path: `${p}.${k}`, a: "<absent>", b: y[k] });
-      else if (!has(y, k)) diffs.push({ path: `${p}.${k}`, a: x[k], b: "<absent>" });
-      else walk(x[k], y[k], `${p}.${k}`);
-    }
-    return;
-  }
-  diffs.push({ path: p, a: x, b: y });
-}
-
 const strip = ({ violations, ...doc }) => doc;
-walk(strip(a), strip(b), "$");
+const diffs = structuralDiff(strip(a), strip(b));
 
 // Ordered-check violations: one entry per (rule, path), on either side.
 const violationKey = (v) => `${v.path}.<${v.rule}>`;
@@ -82,18 +54,8 @@ for (const [side, doc] of [["a", a], ["b", b]]) {
 }
 diffs.push(...violations.values());
 
-let unexpected = 0;
-let ruled = 0;
-for (const d of diffs) {
-  const hits = matchRulings(rulings, d.path);
-  if (hits.length > 0) {
-    ruled += 1;
-    process.stdout.write(`RULED ${hits.map((r) => r.deviation).join(",")} ${d.path}: ${clip(d.a)} != ${clip(d.b)}\n`);
-  } else {
-    unexpected += 1;
-    process.stdout.write(`DIFF  ${d.path}: ${clip(d.a)} != ${clip(d.b)}\n`);
-  }
-}
+const entries = diffs.map((d) => ({ ...d, ruledBy: matchRulings(rulings, d.path).map((r) => r.deviation) }));
+const { ruled, unexpected } = printDiffs(entries, (line) => process.stdout.write(line), "DIFF  ");
 for (const line of rulingLines(rulings)) process.stdout.write(line);
 const unused = rulings.filter((r) => r.matched === 0);
 process.stdout.write(`${JSON.stringify({ total: diffs.length, ruled, unexpected, unusedRulings: unused.length })}\n`);

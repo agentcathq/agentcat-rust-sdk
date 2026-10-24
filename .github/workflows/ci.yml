@@ -192,16 +192,17 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
       - uses: ./.github/actions/node-oracle
       - run: cargo build -p harness-ref-server
-      # Every scenario, transport and lane: every delta difference ruled, every ruling used.
+      # Every scenario, transport and lane: every delta and event difference ruled, every ruling used,
+      # every tracked Rust server drained.
       - name: Matrix against TS v2
         run: node harness/src/matrix.mjs
-      # The Rust server against itself: no difference at all, ruled or not.
+      # The Rust server against itself: no delta or event difference at all, ruled or not.
       - name: A/A run
         run: |
           node harness/src/matrix.mjs --servers rust,rust --scenarios basic
           node harness/src/l3-expect.mjs none
       # HARNESS_CANARY=1 perturbs the second server: the matrix must exit 1 with every driver passing and
-      # an unruled difference in every combination, at the canary's paths only.
+      # an unruled delta difference in every combination, at the canary's paths only, and no event difference.
       - name: Canary run
         run: |
           canary=0

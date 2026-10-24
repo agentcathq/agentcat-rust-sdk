@@ -5,6 +5,8 @@
 //   POST /__fail?n=K&status=S  -> the next K publish calls answer status S (retry tests)
 // Anything else is recorded and answered 404: it shows up in the normalized
 // document (nonPublishRequests), so the diff sees it, and it fails the driver run.
+// Each recorded request keeps its body text as `rawBody` beside the parsed `body`
+// (the text itself when it is not JSON): the normalizer rule number-source reads it.
 //
 // usage: node harness/src/mock-api.mjs [port]   (0 or none: an ephemeral port)
 // Prints one ready line on stdout: {"ready": true, "port": <port>}. Binds 127.0.0.1 only.
@@ -64,6 +66,7 @@ const server = http.createServer((req, res) => {
       },
       status,
       body,
+      rawBody: raw,
     });
     res.writeHead(status, { "content-type": "application/json" });
     res.end(JSON.stringify(status === 202 ? { status: "accepted" } : { error: "mock" }));

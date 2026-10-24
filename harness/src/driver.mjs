@@ -4,26 +4,34 @@
 // a black box: the TS and Rust reference servers run under the same driver.
 //
 // usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless>
-//          [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>
+//          [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>
 //   label      output file tag, e.g. "ts" or "rust"
 //   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
 //   --lane     the client's protocol lane: 2025-11-25 (default; the v1 client, initialize
 //              handshake) or 2026-07-28 (the v2 client, versionNegotiation "auto"). A session
 //              that negotiates another version fails the run (exit 1).
 //   --expect-publishes  the publish count to expect, instead of the scenario's expectPublishes
+//   --expect-drained    every server process must print the line {"drained":true} on stderr before it
+//              exits (the tracked Rust server's drain, decision C46)
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
 // After the steps, the driver closes the clients, waits for the servers to exit
-// and keeps the mock open for a final quiet window before it counts.
+// and keeps the mock open for a final quiet window before it counts. The servers'
+// stderr is piped through the driver's stderr; report.json records per server
+// process whether it printed {"drained":true} (`drained`) and whether an HTTP
+// server needed SIGKILL after SIGTERM (`killed`).
 // Every publish body is then validated against harness/contract/publish-event.schema.json
 // (src/contract/validate.mjs); report.json records the result as `contract` and the
 // number of bodies checked as `contractChecked`, and the TS commit of the oracle
 // (oracle/oracle.lock, or ORACLE_SHA) as `ts_sha`. No body to check is a contract failure
 // unless the scenario expects no publish (an untracked run).
 // Exit 0: exactly expectPublishes publishes, no other request reached the mock,
-//         and the contract holds (every publish body is valid).
-// Exit 1: the count differs, another request arrived, the contract fails, or the
-//         run failed (a negotiated version other than --lane; in a tracked run, a
-//         saveHandleAs that finds no handle or a ${NAME} with no saved value).
+//         the contract holds (every publish body is valid), no server needed
+//         SIGKILL and, with --expect-drained, every server printed {"drained":true}.
+// Exit 1: the count differs, another request arrived, the contract fails, an HTTP
+//         server needed SIGKILL after SIGTERM, with --expect-drained a server exited
+//         without printing {"drained":true}, or the run failed (a negotiated version
+//         other than --lane; in a tracked run, a saveHandleAs that finds no handle or
+//         a ${NAME} with no saved value).
 //         On a run failure every connected client is closed first.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
@@ -52,7 +60,9 @@ const TRANSPORTS = ["stdio", "http", "http-stateless"];
 const LANES = ["2025-11-25", "2026-07-28"];
 const PUBLISH_PATH = "/v1/public/events/";
 const USAGE =
-  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>";
+  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>";
+/** The line a tracked Rust server prints on stderr once its drain succeeded. */
+const DRAINED_LINE = '{"drained":true}';
 
 function usage(message) {
   process.stderr.write(`driver: ${message}\n${USAGE}\n`);
@@ -84,13 +94,18 @@ if (expectAt >= 0) {
   expectOverride = Number(text);
   head.splice(expectAt, 2);
 }
+const drainedAt = head.indexOf("--expect-drained");
+const expectDrained = drainedAt >= 0;
+if (expectDrained) head.splice(drainedAt, 1);
 if (!LANES.includes(lane)) usage(`unsupported lane ${JSON.stringify(lane)} (supported: ${LANES.join(", ")})`);
 if (head.length !== 3) usage("expected <scenario.json> <label> <transport>");
 const [scenarioPath, label, transport] = head;
 if (!/^[A-Za-z0-9_-]+$/.test(label)) usage(`bad label ${JSON.stringify(label)} (letters, digits, _ and - only)`);
 if (!TRANSPORTS.includes(transport)) usage(`unknown transport ${JSON.stringify(transport)}`);
 
-const TOP_KEYS = ["name", "projectId", "options", "httpHeaders", "expectPublishes", "settleTimeoutMs", "quietMs", "sessions"];
+const TOP_KEYS = ["name", "projectId", "options", "httpHeaders", "expectPublishes", "settleTimeoutMs", "quietMs", "eventOrder", "sessions"];
+/** The values of the scenario key eventOrder (normalize.mjs): absent, the events sort by time. */
+const EVENT_ORDERS = ["multiset"];
 const STEP_KEYS = { listTools: ["op", "cursor"], callTool: ["op", "name", "args", "saveHandleAs"] };
 
 let scenario;
@@ -118,6 +133,7 @@ function checkScenario(s) {
   onlyKeys(s, TOP_KEYS, "scenario");
   if (typeof s.name !== "string" || !/^[A-Za-z0-9_-]+$/.test(s.name)) usage("scenario.name must be letters, digits, _ and -");
   if (typeof s.projectId !== "string" || s.projectId === "") usage("scenario.projectId must be a non-empty string");
+  if (s.eventOrder !== undefined && !EVENT_ORDERS.includes(s.eventOrder)) usage(`scenario.eventOrder must be one of ${EVENT_ORDERS.join(", ")}`);
   if (!Array.isArray(s.sessions) || s.sessions.length === 0) usage("scenario.sessions must be a non-empty array");
   for (const [si, session] of s.sessions.entries()) {
     if (!session || typeof session !== "object" || Array.isArray(session)) usage(`sessions[${si}] must be an object`);
@@ -179,6 +195,28 @@ const exited = (child) => (isRunning(child) ? new Promise((resolve) => child.onc
 const within = (promise, deadline) =>
   Promise.race([promise.then(() => true), sleep(Math.max(0, deadline - Date.now())).then(() => false)]);
 
+/**
+ * Pipes a server's stderr stream through the driver's stderr, line by line, and watches it for
+ * DRAINED_LINE. `where` names the server in messages. `ended` resolves once the stream has ended and
+ * every line is read.
+ */
+function watchStderr(stream, where) {
+  const watch = { where, drained: false, ended: Promise.resolve() };
+  if (!stream) return watch;
+  const lines = createInterface({ input: stream, crlfDelay: Number.POSITIVE_INFINITY });
+  watch.ended = new Promise((resolve) => lines.once("close", resolve));
+  lines.on("line", (line) => {
+    process.stderr.write(`${line}\n`);
+    if (line.trim() === DRAINED_LINE) watch.drained = true;
+  });
+  return watch;
+}
+
+/** The stderr of every server process the driver started (stdio: one per session; HTTP: one). */
+const stderrWatches = [];
+/** Whether an HTTP server needed SIGKILL after SIGTERM. */
+let killed = false;
+
 const children = [];
 /** Every connected client, so a failed run can close them (a stdio client ends the server it spawned). */
 const clients = [];
@@ -204,20 +242,23 @@ async function main() {
     HARNESS_PROJECT_ID: scenario.projectId,
     HARNESS_OPTIONS: JSON.stringify(scenario.options ?? {}),
   };
+  // The Rust SDK reads AGENTCAT_ENABLED (decision C45): a developer shell's value must not turn it off.
+  delete serverEnv.AGENTCAT_ENABLED;
 
   let httpUrl;
   let httpChild;
   if (transport !== "stdio") {
     httpChild = spawn(serverCmd[0], [...serverCmd.slice(1), transport, "0"], {
       env: serverEnv,
-      stdio: ["ignore", "pipe", "inherit"],
+      stdio: ["ignore", "pipe", "pipe"],
     });
     children.push(httpChild);
+    stderrWatches.push(watchStderr(httpChild.stderr, "the server"));
     ({ url: httpUrl } = await readyLine(httpChild, "server"));
   }
 
-  async function connect(clientInfo, negotiated) {
-    if (lane === "2026-07-28") return connectV2(clientInfo, negotiated);
+  async function connect(clientInfo, negotiated, si) {
+    if (lane === "2026-07-28") return connectV2(clientInfo, negotiated, si);
     const client = new Client(clientInfo, { capabilities: {} });
     const t =
       transport === "stdio"
@@ -225,9 +266,10 @@ async function main() {
             command: serverCmd[0],
             args: [...serverCmd.slice(1), "stdio"],
             env: serverEnv,
-            stderr: "inherit",
+            stderr: "pipe",
           })
         : new StreamableHTTPClientTransport(new URL(httpUrl), { requestInit: { headers: scenario.httpHeaders ?? {} } });
+    if (transport === "stdio") stderrWatches.push(watchStderr(t.stderr, `the server of session ${si}`));
     // The client hands the negotiated protocol version to transports that take it.
     const setVersion = t.setProtocolVersion?.bind(t);
     t.setProtocolVersion = (version) => {
@@ -238,7 +280,7 @@ async function main() {
     return client;
   }
 
-  async function connectV2(clientInfo, negotiated) {
+  async function connectV2(clientInfo, negotiated, si) {
     const client = new V2Client(clientInfo, { capabilities: {}, versionNegotiation: { mode: "auto" } });
     const t =
       transport === "stdio"
@@ -246,9 +288,11 @@ async function main() {
             command: serverCmd[0],
             args: [...serverCmd.slice(1), "stdio"],
             env: serverEnv,
-            stderr: "inherit",
+            stderr: "pipe",
           })
         : new V2StreamableHTTPClientTransport(new URL(httpUrl), { requestInit: { headers: scenario.httpHeaders ?? {} } });
+    // The probe sibling of "auto" discards its own stderr; this is the session's server.
+    if (transport === "stdio") stderrWatches.push(watchStderr(t.stderr, `the server of session ${si}`));
     await client.connect(t);
     // "auto" falls back to initialize when the server does not prove the
     // 2026-07-28 era; the transcript keeps what was negotiated.
@@ -285,7 +329,7 @@ async function main() {
   const transcript = [];
   for (const [si, session] of scenario.sessions.entries()) {
     const negotiated = {};
-    const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated);
+    const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated, si);
     clients.push(client);
     // "auto" can fall back to initialize: the lane must be the one that was asked for.
     if (negotiated.protocolVersion !== lane) {
@@ -355,8 +399,11 @@ async function main() {
     if (!(await within(exited(httpChild), exitDeadline))) {
       process.stderr.write(`driver: the server did not exit within ${settleTimeoutMs} ms of SIGTERM; killing it\n`);
       httpChild.kill("SIGKILL");
+      killed = true;
     }
   }
+  // Every server has exited (or been killed): read the rest of its stderr.
+  await within(Promise.all(stderrWatches.map((w) => w.ended)), Date.now() + settleTimeoutMs);
   // 3. Keep the mock open for a final quiet window, then take the snapshot.
   await settle(() => true, Date.now() + settleTimeoutMs);
   const requests = await getRequests();
@@ -385,6 +432,8 @@ async function main() {
     nonPublishRequests,
     contract,
     contractChecked,
+    drained: stderrWatches.map((w) => w.drained),
+    killed,
     report,
   };
   write("report", summary);
@@ -402,7 +451,10 @@ async function main() {
     process.stderr.write(`driver: ${contract.length} publish body/bodies fail the contract (harness/contract/publish-event.schema.json):\n`);
     for (const line of formatInvalid(contract)) process.stderr.write(`driver: ${line}\n`);
   }
-  return publishes === expected && nonPublishRequests === 0 && contract === "ok" ? 0 : 1;
+  if (killed) process.stderr.write("driver: the server needed SIGKILL after SIGTERM\n");
+  const undrained = expectDrained ? stderrWatches.filter((w) => !w.drained) : [];
+  for (const w of undrained) process.stderr.write(`driver: ${w.where} exited without printing ${DRAINED_LINE}\n`);
+  return publishes === expected && nonPublishRequests === 0 && contract === "ok" && !killed && undrained.length === 0 ? 0 : 1;
 }
 
 main().then(
@@ -412,6 +464,8 @@ main().then(
     // Close every client first: closing a stdio client ends the server it spawned, which killAll cannot reach.
     await within(Promise.all(clients.map((c) => c.close().catch(() => {}))), Date.now() + settleTimeoutMs);
     killAll();
+    // The servers' last stderr lines, bounded: a stream that never ends must not hold the exit.
+    await within(Promise.all(stderrWatches.map((w) => w.ended)), Date.now() + 2000);
     process.exit(1);
   },
 );

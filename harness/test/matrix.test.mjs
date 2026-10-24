@@ -56,6 +56,8 @@ test("--env2 reaches the second server only: HARNESS_CANARY=1 makes a Rust A/A c
   assert.ok(entry.delta.unexpected > 0, JSON.stringify(entry.delta));
   // The canary changes the injected context description, which only the tracked listing carries.
   assert.ok(entry.differences.every((d) => d.path.startsWith("$.delta.transcript[1].result.tools[")), res.stdout);
+  // The published events stay the same: the driver's arguments do not come from the description.
+  assert.deepEqual(entry.events, { total: 0, ruled: 0, unexpected: 0 });
 });
 
 test("a ruling whose scenario is not a scenario name, or names no scenario file, exits 2", async (t) => {
@@ -150,4 +152,59 @@ test("A/A of ts-v2 on basic, stdio, 2025-11-25 has one combination and no delta 
   assert.equal(doc[0].delta.unexpected, 0);
   assert.deepEqual(Object.values(doc[0].exitCodes), [0, 0, 0, 0]);
   assert.match(res.stdout, /^ok .*basic.*stdio.*2025-11-25/m);
+});
+
+// ---------------------------------------------------------------------------
+// Task 12: the event comparison.
+// ---------------------------------------------------------------------------
+const TS_RUST_ONE = ["--servers", "ts-v2,rust", "--transports", "stdio", "--lanes", "2025-11-25"];
+
+test("an event difference without a ruling exits 1; harness/rulings-events.json rules every one", { timeout: 300_000 }, async (t) => {
+  const empty = writeJson(join(tempDir(t), "rulings-events.json"), []);
+  let res = await matrix([...TS_RUST_ONE, "--scenarios", "basic", "--event-rulings", empty]);
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  let [entry] = readJson(join(OUT, "matrix.json"));
+  assert.deepEqual(Object.values(entry.exitCodes), [0, 0, 0, 0]);
+  assert.equal(entry.delta.unexpected, 0, JSON.stringify(entry.delta));
+  assert.ok(entry.events.unexpected > 0 && entry.events.ruled === 0, JSON.stringify(entry.events));
+  assert.equal(entry.eventDifferences.length, entry.events.unexpected);
+  assert.ok(entry.eventDifferences.every((d) => d.path.startsWith("$.events[")), JSON.stringify(entry.eventDifferences));
+  const { total, ruled, unexpected } = entry.events;
+  assert.match(res.stdout, new RegExp(`^FAIL basic stdio 2025-11-25: delta \\{.*\\} events ${total}/${ruled}/${unexpected}$`, "m"));
+  assert.match(res.stdout, /^ {2}EVENT \$\.events\[\d+\]\.body\.parameters\.extra\.<keys>: /m);
+
+  // The default event rulings (Rust against TS) rule them all.
+  res = await matrix([...TS_RUST_ONE, "--scenarios", "basic"]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  [entry] = readJson(join(OUT, "matrix.json"));
+  assert.ok(entry.events.total > 0 && entry.events.ruled === entry.events.total, JSON.stringify(entry.events));
+  assert.equal(entry.eventDifferences, undefined);
+});
+
+test("an event ruling scoped to another scenario rules nothing here and, when its scenario does not run, is not reported", { timeout: 300_000 }, async (t) => {
+  const any = "\\$\\.events\\[\\d+\\]\\..*";
+  const rulings = writeJson(join(tempDir(t), "rulings-events.json"), [
+    { path: any, scenario: "basic", reason: "every event difference, in basic only", deviation: "RD-90" },
+    { path: any, scenario: "tracing-off", reason: "a scenario this run leaves out", deviation: "RD-91" },
+  ]);
+  const res = await matrix([...TS_RUST_ONE, "--scenarios", "basic,features-off", "--event-rulings", rulings]);
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  const [basic, featuresOff] = readJson(join(OUT, "matrix.json"));
+  assert.ok(basic.events.total > 0 && basic.events.ruled === basic.events.total, JSON.stringify(basic.events));
+  assert.ok(featuresOff.events.unexpected > 0 && featuresOff.events.ruled === 0, JSON.stringify(featuresOff.events));
+  assert.match(res.stdout, new RegExp(`^EVENT RULING RD-90 matched ${basic.events.ruled} in basic: `, "m"));
+  assert.match(res.stdout, /^ok basic stdio 2025-11-25: /m);
+  assert.match(res.stdout, /^FAIL features-off stdio 2025-11-25: /m);
+  assert.doesNotMatch(res.stdout, /RD-91/);
+});
+
+test("--event-rulings: a malformed file or a scenario that names no scenario file exits 2", async (t) => {
+  const dir = tempDir(t);
+  const notArray = writeJson(join(dir, "object.json"), { path: "x" });
+  let res = await matrix(["--servers", "rust,rust", "--event-rulings", notArray]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  const noScenario = writeJson(join(dir, "no-scenario.json"), [{ path: "\\$\\.events", reason: "test", deviation: "RD-90", scenario: "no-such" }]);
+  res = await matrix(["--servers", "rust,rust", "--event-rulings", noScenario]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /RD-90 names the scenario "no-such"/);
 });

@@ -231,6 +231,8 @@ test("error frames of another shape, an empty stack and an unknown sdk_language 
   for (const [name, change] of Object.entries(variants)) {
     const requests = structuredClone(raw);
     change(requests[at].body);
+    // number-source reads the raw text the mock recorded: write the changed body there too.
+    requests[at].rawBody = JSON.stringify(requests[at].body);
     const res = await diff(base, await normalizedVariant(dir, name, requests, transcript));
     assert.equal(res.code, 1, `${name}: ${res.stdout}`);
     const field = name.split("-")[0];

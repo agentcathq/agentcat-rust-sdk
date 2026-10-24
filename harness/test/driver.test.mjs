@@ -13,6 +13,7 @@ import {
   DRIVER,
   DUMP_CONTRACT,
   HARNESS,
+  RUST_SERVER,
   TS_SERVER,
   TS_SERVER_PLUS,
   TS_V2_SERVER,
@@ -304,4 +305,57 @@ test("on a driver error every connected client is closed, so an SDK-spawned stdi
   // Bounded poll: up to 2 s in 50 ms steps.
   for (let waited = 0; isAlive() && waited < 2000; waited += 50) await new Promise((r) => setTimeout(r, 50));
   assert.equal(isAlive(), false, `server ${pid} still runs after the driver exited`);
+});
+
+// ---------------------------------------------------------------------------
+// Task 12: the drain protocol, the server environment and the event order.
+// ---------------------------------------------------------------------------
+const ONE_ECHO = [{ op: "callTool", name: "echo", args: { msg: "hi" } }];
+
+test('--expect-drained fails a stdio server that exits without printing {"drained":true}', { timeout: 120_000 }, async (t) => {
+  // The TS server publishes and exits on stdin EOF, but prints no drained line.
+  const res = await driver(oneCall(t, 1), "nodrain", "stdio", ["--expect-drained"]);
+  assert.equal(res.code, 1, res.stderr);
+  assert.match(res.stderr, /^driver: the server of session 0 exited without printing \{"drained":true\}$/m);
+  assert.equal(readJson(outFile("one", "nodrain", "stdio", "report")).publishes, 1);
+});
+
+for (const transport of ["stdio", "http"]) {
+  test(`--expect-drained passes the tracked Rust server, which drains before it exits (${transport})`, { timeout: 120_000 }, async (t) => {
+    const res = await driver(oneCall(t, 1), `drained${transport}`, transport, ["--expect-drained"], { server: RUST_SERVER });
+    assert.equal(res.code, 0, res.stderr);
+    const report = readJson(outFile("one", `drained${transport}`, transport, "report"));
+    assert.equal(report.publishes, 1);
+    assert.deepEqual(report.drained, [true]);
+    assert.equal(report.killed, false);
+  });
+}
+
+for (const extra of [[], ["--expect-drained"]]) {
+  test(`an HTTP server that needs SIGKILL after SIGTERM fails the run (${extra.join(" ") || "no flag"})`, { timeout: 120_000 }, async (t) => {
+    const path = scenarioOf(t, "nokill", ONE_ECHO, { expectPublishes: 1, settleTimeoutMs: 1500 });
+    const env = { FIXTURE_IGNORE_SIGTERM: "1" };
+    const res = await driver(path, "nokill", "http", extra, { server: TS_SERVER_PLUS, env });
+    assert.equal(res.code, 1, res.stderr);
+    assert.match(res.stderr, /^driver: the server did not exit within 1500 ms of SIGTERM; killing it$/m);
+    const report = readJson(outFile("nokill", "nokill", "http", "report"));
+    assert.equal(report.publishes, 1);
+    assert.equal(report.killed, true);
+  });
+}
+
+test("AGENTCAT_ENABLED in the caller's environment does not reach the server", { timeout: 120_000 }, async (t) => {
+  const res = await driver(oneCall(t, 1), "enabledoff", "stdio", [], { server: RUST_SERVER, env: { AGENTCAT_ENABLED: "false" } });
+  assert.equal(res.code, 0, res.stderr);
+  assert.equal(readJson(outFile("one", "enabledoff", "stdio", "report")).publishes, 1);
+});
+
+test('the scenario key eventOrder takes "multiset" only (exit 2 otherwise)', { timeout: 120_000 }, async (t) => {
+  const bad = scenarioOf(t, "order", ONE_ECHO, { eventOrder: "time" });
+  let res = await driver(bad, "orderbad", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 2, res.stderr);
+  assert.match(res.stderr, /eventOrder/);
+  const good = scenarioOf(t, "order", ONE_ECHO, { eventOrder: "multiset" });
+  res = await driver(good, "ordergood", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
+  assert.equal(res.code, 0, res.stderr);
 });

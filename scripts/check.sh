@@ -45,10 +45,11 @@ node harness/src/dump-contract.mjs --check
 # scripts/ tests never contact the network (rmcp-versions.mjs fetches only when run as a script)
 node --test "scripts/*.test.mjs"
 
-# harness-l3 (the Rust reference server is built above): the MCP-wire delta against TS v2 on every
-# scenario, transport and lane; an A/A run of the Rust server, which must show no difference at all,
-# ruled or not; and the canary run, whose perturbed second server must be caught on every combination.
-# harness/src/l3-expect.mjs checks harness/out/matrix.json after each of the last two.
+# harness-l3 (the Rust reference server is built above): the MCP-wire delta and the published events
+# against TS v2 on every scenario, transport and lane (every tracked Rust server must drain); an A/A run
+# of the Rust server, which must show no delta or event difference at all, ruled or not; and the canary
+# run, whose perturbed second server must be caught in the delta of every combination and nowhere in the
+# events. harness/src/l3-expect.mjs checks harness/out/matrix.json after each of the last two.
 node harness/src/matrix.mjs
 node harness/src/matrix.mjs --servers rust,rust --scenarios basic
 node harness/src/l3-expect.mjs none

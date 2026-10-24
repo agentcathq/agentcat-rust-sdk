@@ -3,7 +3,8 @@
 The differential harness. One scripted MCP client (the driver) runs a scenario against a reference
 server, a local mock API records every event the server publishes, a normalizer turns the run into a
 language-neutral document, and a diff compares two documents. Allowed differences are listed in
-`rulings.json` (Rust against TS) and `rulings-ts.json` (TS against TS).
+`rulings.json` (MCP-wire delta rulings, Rust against TS), `rulings-events.json` (event rulings, Rust
+against TS), and their TS-against-TS twins `rulings-ts.json` and `rulings-events-ts.json`.
 
 This package holds two TS reference servers, instrumented with the real TS SDK at the commit pinned
 in `oracle/oracle.lock`, and the Rust reference server (`rust-server/`, see "The Rust reference
@@ -34,13 +35,14 @@ Nothing in the harness contacts an address other than `127.0.0.1`, `localhost` o
   `AGENTCAT_API_URL` is an `http://` URL on `127.0.0.1`, `localhost` or `[::1]`, and pass it to the
   TS SDK as the `apiBaseUrl` option, so a TS SDK that stopped reading the variable still publishes
   to the mock.
-- The driver gives every server `DISABLE_DIAGNOSTICS=true` and a temp `HOME` (the TS SDK writes
+- The driver gives every server `DISABLE_DIAGNOSTICS=true` and a temp `HOME` (both SDKs write
   `~/agentcat.log` there). The TS servers also pass `disableDiagnostics: true`.
 - Untracked (`HARNESS_NO_TRACK=1`), the TS servers never publish: `emit_custom` answers without
   calling `publishCustomEvent`.
 - The Rust reference server runs no egress guard. It refuses to start the same way (exit 2,
-  `refusing to start`), with a stricter check of `AGENTCAT_API_URL`, and publishes nothing: the SDK
-  has no delivery before plan 4.
+  `refusing to start`), with a stricter check of `AGENTCAT_API_URL`, and passes that URL to the SDK
+  as its `api_base_url` option, so the SDK's delivery publishes to the mock only. Untracked, it
+  publishes nothing.
 
 ## Commands
 
@@ -58,12 +60,13 @@ node harness/src/driver.mjs harness/scenarios/basic.json rust stdio \
 node harness/src/driver.mjs harness/scenarios/basic.json ts2 http --lane 2026-07-28 \
   -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v2.mjs
 
-# Compare two runs: here two TS runs, the second with the label ts-b (a TS-vs-Rust document diff
-# compares events, which the Rust server publishes from plan 4)
+# Compare two runs: here two TS runs, the second with the label ts-b (a TS-vs-Rust document diff also
+# compares transcripts, whose host differences only the matrix's delta comparison leaves out)
 node harness/src/diff.mjs harness/out/basic.ts.stdio.normalized.json \
   harness/out/basic.ts-b.stdio.normalized.json --rulings harness/rulings-ts.json
 
-# The MCP-wire delta of TS v2 against Rust on every scenario, transport and lane (the L3 gate's first run)
+# The MCP-wire delta and the published events of TS v2 against Rust on every scenario, transport and
+# lane (the L3 gate's first run)
 node harness/src/matrix.mjs
 
 # Regenerate the tool contract, or check that it is current
@@ -80,7 +83,7 @@ node harness/src/contract/extract-schema.mjs ~/agentcat-server origin/main
 node harness/src/contract/extract-schema.mjs --check ~/agentcat-server
 ```
 
-### delta.mjs and matrix.mjs (the MCP-wire delta)
+### delta.mjs and matrix.mjs (the MCP-wire delta and the event comparison)
 
 The MCP-wire delta is what tracking changes on the wire: the ops (`add`, `remove`, `change`) that turn
 an untracked run's transcript into the tracked run's, for one server. `delta.mjs` compares the delta of
@@ -91,43 +94,60 @@ takes four `*.normalized.json` files. Paths look like `$.delta.transcript[4].res
 tracked-document violation is an `add` at `$.delta.violations[<rule>]@<violation path>`. Output and exit
 codes follow `diff.mjs` (`DELTA <path>: ts <x> != rust <y>`, `RULED ...`, ruling lines, a JSON summary).
 
-`node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...`
+`node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--event-rulings <file>] [--env2 <NAME=value>]...`
 runs, per scenario, transport and lane, both servers untracked (`HARNESS_NO_TRACK=1`) and tracked, then
-compares the two deltas. Servers: `ts-v1`, `ts-v2` (default first) and `rust` (default second;
-`HARNESS_RUST_SERVER`, else `target/debug/harness-ref-server`). Labels are `<server>-<lane>-<u|t>`; two
-equal server names (an A/A run) give the second server the suffix `-b`. `--env2` sets an environment
-variable for every run of the second server, untracked and tracked (repeatable; `matrix.json` records it).
-It writes `harness/out/matrix.json`.
+compares the two deltas and the published events (decision C46). Servers: `ts-v1`, `ts-v2` (default
+first) and `rust` (default second; `HARNESS_RUST_SERVER`, else `target/debug/harness-ref-server`). Labels
+are `<server>-<lane>-<u|t>`; two equal server names (an A/A run) give the second server the suffix `-b`.
+A tracked Rust run gets `--expect-drained` (only the tracked Rust server prints the drained line).
+`--env2` sets an environment variable for every run of the second server, untracked and tracked
+(repeatable; `matrix.json` records it). It writes `harness/out/matrix.json`.
 
-Rulings: `rulings.json` holds the delta rulings for Rust against TS (`delta.mjs`, the matrix). A TS-vs-Rust
-document diff with `diff.mjs` compares events, which wait for plan 4, so in plan 3 the file holds delta
-rulings only. `rulings-ts.json` is for TS against TS (A/A runs and the nightly drift sweep, so a Rust
-ruling never counts as unused there).
+The event comparison (`src/events.mjs`, the structural diff that `diff.mjs` also uses) compares the
+`events` and `nonPublishRequests` of the two tracked normalized documents. Object keys compare unordered,
+so a different key order never shows; arrays compare in order. Paths look like
+`$.events[3].body.parameters.extra.<keys>` and `$.nonPublishRequests[0]`.
+
+Each combination prints one line,
+`ok|FAIL <scenario> <transport> <lane>: delta {"total","ruled","unexpected"} events <total>/<ruled>/<unexpected>`,
+and on a FAIL one indented line per unruled difference: `DELTA <path>: ts <x> != rust <y>` or
+`EVENT <path>: <first server> != <second server>`. Each entry of `matrix.json` holds `delta` and `events`
+(the counts), `differences` (the unruled delta entries) and `eventDifferences` (the unruled event entries,
+`{path, a, b, ruledBy}`). After the lines come the ruling lines of the delta rulings and of the event
+rulings (these start with `EVENT `).
+
+Rulings: `rulings.json` holds the delta rulings for Rust against TS (`delta.mjs`, `--rulings`), and
+`rulings-events.json` the event rulings (`--event-rulings`). When both servers are TS, the defaults are
+`rulings-ts.json` and `rulings-events-ts.json` (A/A runs and the nightly drift sweep, so a Rust ruling never
+counts as unused there). Both kinds take the same scope keys (`scenario`, `transports`, `lanes`) and the
+same checks; the whole matrix fails on an unused ruling of either kind.
 
 ### The L3 gate
 
 `scripts/check.sh` and the CI job `harness-l3` build the Rust reference server, then run three matrices:
 
 1. `node harness/src/matrix.mjs`: TS v2 against Rust, every scenario, transport and lane. It must exit 0:
-   every driver passes, every delta difference has a ruling, and every ruling matches something.
+   every driver passes (each tracked Rust server drains), every delta and event difference has a ruling,
+   and every ruling matches something.
 2. The A/A run `node harness/src/matrix.mjs --servers rust,rust --scenarios basic`: it must exit 0 with no
-   delta difference at all, ruled or not. `node harness/src/l3-expect.mjs none` checks that
-   `delta.total` is 0 in every combination of `matrix.json`.
+   delta or event difference at all, ruled or not. `node harness/src/l3-expect.mjs none` checks that
+   `delta.total` and `events.total` are 0 in every combination of `matrix.json`.
 3. The canary run, the A/A run plus `--env2 HARNESS_CANARY=1`: the second server serves the context
    description `"canary"`. It must exit 1. `node harness/src/l3-expect.mjs caught` checks that every
-   driver passed and that every combination reports an unruled difference, each under
-   `$.delta.transcript[1].result.tools[` (basic.json's tracked listing). A canary that passes means the
-   delta comparison has gone blind; one caught elsewhere is a different failure.
+   driver passed, that every combination reports an unruled delta difference, each under
+   `$.delta.transcript[1].result.tools[` (basic.json's tracked listing), and that no combination reports
+   an event difference (the canary does not change what the servers publish). A canary that passes means
+   the delta comparison has gone blind; one caught elsewhere is a different failure.
 
 `l3-expect.mjs <none|caught> [matrix.json]` reads `harness/out/matrix.json` by default; exit 0 as expected,
-1 not (one line per bad combination), 2 on bad arguments.
+1 not (one line per bad combination; a combination without `delta` or `events` is bad), 2 on bad arguments.
 
 One full matrix (36 combinations, 144 driver runs) took 75 to 100 s at `--jobs 4` on the development
 machine; the A/A and canary runs about 12 s each.
 
 ### driver.mjs
 
-`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] -- <server cmd...>`
+`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>`
 
 - `label` tags the output files (letters, digits, `_`, `-`). The lane is not in the file name: give
   runs on different lanes different labels.
@@ -143,9 +163,16 @@ machine; the A/A and canary runs about 12 s each.
     2026-07-28 era. A session that negotiates a version other than `--lane` fails the run: exit 1
     with `driver: negotiated <version>, expected <lane>`.
 - `--expect-publishes <n>` (a non-negative integer) replaces the scenario's `expectPublishes` count.
-- The server gets the parent environment plus `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID`
-  (the scenario's `projectId`), `HARNESS_OPTIONS` (the scenario's `options` as JSON),
-  `DISABLE_DIAGNOSTICS=true`, and `HOME` and `USERPROFILE` set to
+- `--expect-drained`: every server process (stdio: the server of each session; HTTP: the one server)
+  must print the line `{"drained":true}` on stderr before it exits (the tracked Rust server's drain,
+  "Server protocol" below). A server that exits without it fails the run: exit 1 with
+  `driver: the server of session <s> exited without printing {"drained":true}` (HTTP: `the server`).
+- The driver pipes each server's stderr through its own stderr, line by line, and reads it for the
+  drained line (stdio: the client transport's `stderr: "pipe"`; HTTP: the child's stderr).
+- The server gets the parent environment, without `AGENTCAT_ENABLED` (the Rust SDK reads it, decision
+  C45: a developer shell's `AGENTCAT_ENABLED=false` would turn the tracked Rust server off), plus
+  `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID` (the scenario's `projectId`), `HARNESS_OPTIONS`
+  (the scenario's `options` as JSON), `DISABLE_DIAGNOSTICS=true`, and `HOME` and `USERPROFILE` set to
   `harness/out/home/<scenario>.<label>.<transport>/` (recreated per run). `HARNESS_NO_TRACK` passes
   through from the caller's environment.
 - In a tracked run (`HARNESS_NO_TRACK` unset), a `saveHandleAs` step whose result carries no handle,
@@ -163,7 +190,8 @@ machine; the A/A and canary runs about 12 s each.
      `settleTimeoutMs` passes;
   2. closes the clients and waits, up to `settleTimeoutMs`, for the servers to exit: a stdio server
      must exit when its stdin closes (the stdio client transport sends SIGTERM after 2 s, then
-     SIGKILL); an HTTP server gets SIGTERM, then SIGKILL at the limit;
+     SIGKILL); an HTTP server gets SIGTERM, then SIGKILL at the limit, and a server that needs the
+     SIGKILL fails the run (exit 1, with or without `--expect-drained`);
   3. keeps the mock open until no request arrived for `quietMs` (at most `settleTimeoutMs`), then
      takes the snapshot. A publish sent on client close or during a shutdown drain is counted.
 - It then validates every publish body against the publish contract (`contract/`, below). In
@@ -172,18 +200,20 @@ machine; the A/A and canary runs about 12 s each.
   per invalid body (`{seq, id, event_type, resource_name, errors: [{instancePath, keyword, message, params}]}`).
   A run with no publish body passes the contract only when the scenario expects 0 publishes.
   `ts_sha` in `report.json` is the TS commit the run used: `oracle/oracle.lock`, or `ORACLE_SHA`
-  when it is set (the driver then writes a trace line to stderr).
+  when it is set (the driver then writes a trace line to stderr). `drained` lists, per server
+  process, whether it printed `{"drained":true}`; `killed` says whether the HTTP server needed SIGKILL.
 - Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request,
-  and the contract is `"ok"`. Exit 1 when the count differs, when any other request reached the
-  mock (listed in the report as `nonPublishRequests`), when the contract fails (each error on
-  stderr), or when the run fails. Exit 2 on bad arguments or a bad scenario.
+  the contract is `"ok"`, no server needed SIGKILL and, with `--expect-drained`, every server printed
+  the drained line. Exit 1 when the count differs, when any other request reached the mock (listed in
+  the report as `nonPublishRequests`), when the contract fails (each error on stderr), when a server
+  needed SIGKILL or did not drain, or when the run fails. Exit 2 on bad arguments or a bad scenario.
 
 ### diff.mjs
 
 `node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]`
 
-Object keys compare unordered; arrays compare in order, and arrays of different length give one entry
-per element (`<missing>` on the shorter side). Each ordered-check violation in either
+The structural diff is the one of `src/events.mjs`. Object keys compare unordered; arrays compare in
+order, and arrays of different length give one entry per element (`<missing>` on the shorter side). Each ordered-check violation in either
 document is a diff entry, even when both documents share it. Output lines:
 
 - `DIFF  <path>: <a> != <b>` for a difference no ruling matches;
@@ -251,7 +281,7 @@ differences listed in "The Rust reference server" below.
 | argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. A 2026-07-28 request is served as in `http` mode. |
 | HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. Rust: `http-stateless`, and 2026-07-28 requests in either mode, answer JSON. In `http` mode, a 2025-era POST gets rmcp's SSE stream (a priming event, then one event per JSON-RPC message), because rmcp serves JSON only without session mode. |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
-| SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first). The tracked Rust server also drains on SIGTERM in every mode and on stdin EOF (stdio): it runs `shutdown(5 s)` and prints `{"drained":true}` or `{"drained":false}` on stderr before it exits. An untracked server prints nothing. |
+| SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first); one that needs SIGKILL fails the driver run. The tracked Rust server also drains on SIGTERM in every mode and on stdin EOF (stdio): it runs `shutdown(5 s)` and prints `{"drained":true}` or `{"drained":false}` on stderr before it exits (the matrix runs it with `--expect-drained`). An untracked server prints nothing. |
 | `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. The TS server passes it to `track` as `apiBaseUrl`. |
 | `HARNESS_PROJECT_ID` | Project ID passed to `track` and to custom events. Required unless untracked. |
 | `HARNESS_OPTIONS` | The options profile (JSON, below). Default `{}`. |
@@ -328,8 +358,9 @@ the CI job `oracle-harness` build it before the harness tests.
   in `common.mjs`. rmcp's `ToolRouter` does the dispatch, `get_tool`, the argument errors and the
   conversion of a tool's `Err` into an `isError` result. `tools/list` keeps the contract's order
   (rmcp's router sorts by name) and, on 2026-07-28, adds `ttlMs: 0` and `cacheScope: "private"` as
-  ts-v2 does. `boom` records its error with `capture_error`. `emit_custom` answers `published` and
-  publishes nothing (the SDK has no custom events before plan 4).
+  ts-v2 does. `boom` records its error with `capture_error`. `emit_custom` publishes its custom event
+  with `AgentCat::publish_custom_event` (tracked; untracked it publishes nothing) and answers
+  `published`, as the TS servers do.
 - `src/profile.rs`: the options profile.
 
 Where it differs from the TS servers:
@@ -348,8 +379,8 @@ Where it differs from the TS servers:
   copies any value. A `returns` value must fit the hook's SDK type: `resolveSessionId` a string or
   `null`; `identify` `null` or `{"userId": string, "userName"?: string, "userData"?: object}`;
   `eventTags` and `eventProperties` an object or `null`; `redactSensitiveInformation` a string.
-  Anything else exits 2. `redactSensitiveInformation` is checked and kept: the SDK has no redaction
-  yet (plan 4). Every hook is async; `sleepMs` sleeps on the tokio timer.
+  Anything else exits 2. `redactSensitiveInformation` becomes the SDK's string redaction hook
+  (`redact_sensitive_information`). Every hook is async; `sleepMs` sleeps on the tokio timer.
 - `HARNESS_CANARY=1` sets the context description to `"canary"`, whatever the profile says: the
   perturbed configuration that the L3 canary run must catch.
 - `big` with a negative `size`, or one above V8's longest string, fails with JavaScript's
@@ -436,6 +467,12 @@ Example (`scenarios/basic.json`):
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
   in later arguments is replaced with it.
 - `listTools` takes an optional `cursor`.
+- `eventOrder` (optional) takes `"multiset"` only (any other value exits 2): the normalizer then sorts
+  the events on their normalized body alone, so their order is not compared. Without it they sort by
+  time ("Normalized document" below).
+- Two events of one session whose relative order matters must not start in the same millisecond,
+  unless the scenario compares events as a multiset: in the same millisecond the order falls back to
+  the resource name and the body, and the two servers may or may not land in the same millisecond.
 - No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
   such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
 - `expectPublishes` is the count the tracked TS v2 server publishes, read from a TS run. The tracked Rust
@@ -462,6 +499,8 @@ as `harness:<name>`:
   (`op`, `request`, then `result` or `error`).
 - `events`: one entry per publish request,
   `{"mock_status": <status>, "content_type": <header>, "query": <query string>, "body": <normalized body>}`.
+  The body is read from the raw text the mock recorded (`rawBody`, beside the parsed `body` in
+  `raw.json`); a request without `rawBody` uses its parsed `body`.
 - `nonPublishRequests`: every other request the mock received, `{"method", "path", "query", "status"}`,
   sorted.
 - `violations`: failed ordered checks, `{"rule", "path", ...}`.
@@ -471,13 +510,14 @@ The normalizer rules, each listed in `report.rules` of the run report:
 | Rule | What it does |
 |---|---|
 | `request-fields` | A publish keeps its status, `content-type` and query string; its other headers (`user-agent`, `accept`) are dropped as language-specific. Every non-publish request stays as method, path, query and status. |
+| `number-source` | The body is parsed from its raw text with source-text access (`JSON.parse` reviver `context.source`, Node 22). An integer number below 1e21 in magnitude whose source text differs from `String(Number(source))` becomes `<non-js-number:<source>>`: it catches `1.0`, `-0`, `1e2` and an exact integer above 2^53, which JavaScript never writes. Every other number compares by value, so a float that serde_json writes as `1e-6` equals TS's `0.000001` (RD-32). |
 | `camelCase-alias-drop` | Drops a camelCase body key when its snake_case twin exists (the TS generated client sends both). Dropped names go to `report.camelCaseAliasKeys`. |
-| `timestamp-class` | `timestamp` becomes `<iso8601-ms-Z>`, or `<bad-timestamp:...>`. |
+| `timestamp-class` | `timestamp` becomes `<iso8601-Z>` when it is ISO 8601 with three millisecond digits or whole seconds (chrono drops a zero fraction, RD-04) and `Z`, else `<bad-timestamp:...>`. |
 | `duration-class` | `duration` becomes `<duration-ms>` (non-negative integer), or `<bad-duration:...>`. |
 | `language-fields` | `sdk_language` becomes `<sdk_language>` when it is `"TypeScript"` or `"Rust"`, else `<bad-sdk_language:<value>>`; `agentcat_version` becomes `<semver>`, or `<bad-version:...>`. |
-| `extra-headers-only` | `parameters.extra` (the host SDK's request context) becomes `{"<headers>": {...}}` with only `user-agent`, `x-anthropic-client`, `x-test-header` and `mcp-protocol-version`. |
+| `extra-projection` | `parameters.extra` (the host SDK's request context) becomes `{"<keys>": "<its sorted top-level keys, comma-joined>", "<headers>": {...}, "<url>": "..."}`. `<headers>` holds every header of every `headers` object anywhere under `extra`, by lower-case name, with the values of `host`, `content-length` and `mcp-session-id` as `<host>`, `<content-length>` and `<mcp-session-id>`. `<url>` is `requestInfo.url` (Rust, TS v1) or `http.req.url` (TS v2) with its port as `<port>`. A part `extra` does not have is left out (stdio has no headers and no URL). The keys differ by host (RD-07); one string gives one difference per event. |
 | `error-shape-class` | In `error` and each `error.chained_errors` entry: `stack` becomes `<stack:<type>>` (`<stack:empty>` for `""`); `frames` becomes `<frames:array:<sorted, comma-joined union of the frame keys>>` (a frame that is not an object adds `<type>`), or `<frames:<type>>` when not an array; `platform` becomes `<platform:<type>>`. |
-| `id-placeholders` | Every `evt_`, `ses_` and `agt_` KSUID becomes `<prefix#n>` by first appearance, the same across transcript and events. |
+| `id-placeholders` | Every `evt_`, `ses_` and `agt_` KSUID becomes `<prefix#n>` by first appearance, the same across transcript and events. A `ses_` ID whose KSUID time is before 2024-03-01 is derived from a hook value (B-065: derived times fall between 2024-01-01 and about 2024-02-19) and becomes `<ses-derived#n>`, with its own count, so a derived ID never matches a minted one. |
 | `mcp-session-first` | Every `structuredContent` that has `mcp_session` must have it as its first key; a violation goes to `violations`. |
 | `property-order` | For each tool in a `tools/list` result, adds `inputSchema["<properties-order>"]`: the key order of `inputSchema.properties`. |
 | `server-info-meta-drop` | In each transcript `result`, drops `_meta["io.modelcontextprotocol/serverInfo"]`, and `_meta` when that leaves it empty. The TS v2 host library adds the key to every 2026-07-28 result and rmcp adds none: host behavior, not AgentCat's (RD-13). Other `_meta` keys, errors and event bodies stay. |
@@ -485,18 +525,20 @@ The normalizer rules, each listed in `report.rules` of the run report:
 
 `<type>` is `string`, `number`, `boolean`, `object`, `array` or `null`.
 
-Events are ordered by timestamp; in the same millisecond, an event with a `duration` (a call, which
-can enclose events published during it) comes before one without; then by resource name, then by the
-body with its IDs masked. The TS queue publishes events concurrently, so arrival order is noise. The
-`duration` step keeps a custom event published during a tool call after the call event, also when
-both land in the same millisecond.
+Events are ordered by the time of their raw `timestamp` (so `…:29Z` comes before `…:29.005Z`); in the
+same millisecond, an event with a `duration` (a call, which can enclose events published during it)
+comes before one without; then by resource name, then by the normalized body with its IDs masked and its
+keys sorted, so a raw duration or a key order never decides a tie. The TS queue publishes events
+concurrently, so arrival order is noise. The `duration` step keeps a custom event published during a
+tool call after the call event, also when both land in the same millisecond. A scenario with
+`"eventOrder": "multiset"` sorts on the masked normalized body alone.
 
 The ordered checks read key order as JavaScript keeps it, so they do not apply to integer-like keys
 (JavaScript puts those first).
 
 ## Rulings
 
-`rulings.json` lists each allowed difference:
+`rulings.json` (delta rulings) and `rulings-events.json` (event rulings) list each allowed difference:
 
 ```json
 [{ "path": "<regex over whole diff paths>", "reason": "why the difference is allowed", "deviation": "RD-xx" }]
@@ -505,19 +547,20 @@ The ordered checks read key order as JavaScript keeps it, so they do not apply t
 `path` must match the whole diff path: diff.mjs anchors it as `^(?:<path>)$`, so `resource_name`
 alone matches nothing. A diff path looks like `$.events[3].body.resource_name` or
 `$.transcript[1].result.tools[0].inputSchema.<properties-order>`; a violation's path ends with
-`.<rule>`. Write `\$`, `\.`, `\[` and `\]` for the literal characters. `deviation` names the ruled
+`.<rule>`; a delta path starts with `$.delta.`. Write `\$`, `\.`, `\[` and `\]` for the literal characters. `deviation` names the ruled
 divergence in the design decision log. A ruling may also carry `"pending": true` (a boolean, nothing
 else): a provisional ruling that waits for the owner's answer. It allows differences like any other.
 
-A delta ruling may also carry `"scenario": "<name>"`, a scenario name (`scenarios/<name>.json`). A delta
-path names the transcript entry by its index only, so a ruling for one call of one scenario needs it:
+A delta or event ruling may also carry `"scenario": "<name>"`, a scenario name (`scenarios/<name>.json`).
+A delta path names the transcript entry by its index only, and an event path the event by its index in
+the sorted events, so a ruling for one call of one scenario needs it:
 `matrix.mjs` then applies the ruling only to that scenario's combinations, and a run that leaves the
 scenario out neither reports the ruling nor counts it as unused. Without `scenario`, a delta ruling
 covers its index in every scenario, transport and lane. A `scenario` that is not a string of letters,
 digits, `_` and `-` makes the rulings file malformed (exit 2); one that names no scenario file makes
 `matrix.mjs` exit 2.
 
-A delta ruling may also carry `"transports"` and `"lanes"`: each a non-empty array of names, transports
+A delta or event ruling may also carry `"transports"` and `"lanes"`: each a non-empty array of names, transports
 from `stdio`, `http` and `http-stateless`, lanes from `2025-11-25` and `2026-07-28`. `matrix.mjs` then
 applies the ruling only to the combinations whose transport is in `transports` and whose lane is in
 `lanes` (an absent field means every one), so a difference that TS shows on some transports or lanes
@@ -530,5 +573,12 @@ rules RD-29 this way: one ruling for `http-stateless` (both lanes) and one for `
 `diff.mjs` and `delta.mjs` compare documents that carry no scenario, transport or lane: they ignore
 `scenario`, `transports` and `lanes` and match by path alone. The ruling line of a scoped ruling ends
 its count with its scope, `in <scenario>`, `on <transport>,...` and `at <lane>,...`
-(`RULING (pending) RD-29 matched 2 in tracing-off on http at 2026-07-28: ...`). Keep a delta ruling's
-regex to the exact paths. In plan 3, `rulings.json` holds delta rulings only.
+(`RULING (pending) RD-29 matched 2 in tracing-off on http at 2026-07-28: ...`). Keep a ruling's
+regex to the exact paths.
+
+`rulings.json` holds the delta rulings only, and `rulings-events.json` the event rulings only (the matrix
+reads each with its own flag). `rulings-events.json` rules, for TS v2 against Rust: the keys of
+`parameters.extra` on every event (RD-07); the 2026-07-28 envelope that rmcp keeps in
+`parameters.request.params._meta` and the TS v2 host lifts out (RD-13); the `type`, `stack` and `frames`
+of the errors that Rust has no source for (RD-06); and the host's own texts for an unknown tool and an
+argument error (RD-13). Each ruling names its scenario and event index where it covers one call.

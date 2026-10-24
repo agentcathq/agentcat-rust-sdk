@@ -1,8 +1,9 @@
 // The matrix runner: for each scenario, transport and lane it runs two servers untracked and tracked
-// through the driver, then compares the two MCP-wire deltas (see delta.mjs).
+// through the driver, then compares the two MCP-wire deltas (see delta.mjs) and the published events of
+// the two tracked runs (see events.mjs, decision C46).
 //
 // usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>]
-//          [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...
+//          [--lanes <list>] [--jobs <n>] [--rulings <file>] [--event-rulings <file>] [--env2 <NAME=value>]...
 //   --servers     two names from ts-v1, ts-v2, rust (default ts-v2,rust). `rust` runs HARNESS_RUST_SERVER,
 //                 else target/debug/harness-ref-server; a missing binary exits 2 before any driver starts.
 //   --scenarios   names resolved as harness/scenarios/<name>.json (default: every scenario file)
@@ -14,16 +15,23 @@
 //                 one whose scenario, transports or lanes are not in this run is neither reported nor counted
 //                 as unused. A "scenario" that names no scenario file exits 2, and so does an unknown
 //                 transport or lane name (rulings.mjs).
+//   --event-rulings  default harness/rulings-events-ts.json when both servers are TS, else
+//                 harness/rulings-events.json: the rulings of the event comparison, scoped and checked as the
+//                 delta rulings are.
 //   --env2        an environment variable for every run of the second server (untracked and tracked),
 //                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
 // Per combination: both servers untracked (HARNESS_NO_TRACK=1, --expect-publishes 0) and tracked (every
-// tracked server, Rust included, must publish the scenario's expectPublishes). Labels are
-// <server>-<lane>-<u|t>; when both servers have the same name the second one's labels end in -b.
-// Output: harness/out/matrix.json (one entry per combination: driver exit codes, delta summary) and one
-// line per combination: `ok|FAIL <scenario> <transport> <lane>: ...`.
-// Exit 0: every driver passed and every delta difference is ruled (unused rulings count only when the
-//         whole matrix ran, that is, without --scenarios, --transports and --lanes).
-// Exit 1: a driver failed, an unruled delta difference, or (whole matrix) an unused ruling.
+// tracked server, Rust included, must publish the scenario's expectPublishes; a tracked Rust server also
+// runs with --expect-drained). Labels are <server>-<lane>-<u|t>; when both servers have the same name the
+// second one's labels end in -b. The event comparison reads the `events` and `nonPublishRequests` of the
+// two tracked normalized documents.
+// Output: harness/out/matrix.json (one entry per combination: driver exit codes, the delta summary `delta`
+// and its unruled `differences`, the event summary `events` and its unruled `eventDifferences`) and one line
+// per combination: `ok|FAIL <scenario> <transport> <lane>: delta {...} events <total>/<ruled>/<unexpected>`,
+// followed on a FAIL by one indented `DELTA ...` or `EVENT ...` line per unruled difference.
+// Exit 0: every driver passed and every delta and event difference is ruled (unused rulings count only when
+//         the whole matrix ran, that is, without --scenarios, --transports and --lanes).
+// Exit 1: a driver failed, an unruled delta or event difference, or (whole matrix) an unused ruling.
 // Exit 2: bad arguments.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
@@ -31,6 +39,7 @@ import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { compareDeltas, documentDelta, printEntries } from "./delta.mjs";
+import { compareEvents, printDiffs } from "./events.mjs";
 import { LANES, TRANSPORTS, loadRulings, readJson, rulingInRun, rulingLines, rulingsFor } from "./rulings.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -39,8 +48,9 @@ const REPO = join(HARNESS, "..");
 const OUT = join(HARNESS, "out");
 const GUARD = pathToFileURL(join(HERE, "egress-guard.mjs")).href;
 const SERVERS = ["ts-v1", "ts-v2", "rust"];
+const FLAGS = ["--servers", "--scenarios", "--transports", "--lanes", "--jobs", "--rulings", "--event-rulings", "--env2"];
 const USAGE =
-  "usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--env2 <NAME=value>]...";
+  "usage: node harness/src/matrix.mjs [--servers <a>,<b>] [--scenarios <names>] [--transports <list>] [--lanes <list>] [--jobs <n>] [--rulings <file>] [--event-rulings <file>] [--env2 <NAME=value>]...";
 
 function usage(message) {
   process.stderr.write(`matrix: ${message}\n${USAGE}\n`);
@@ -51,14 +61,14 @@ function parseArgs(argv) {
   const opts = { env2: {} };
   for (let i = 0; i < argv.length; i += 2) {
     const flag = argv[i];
-    if (!["--servers", "--scenarios", "--transports", "--lanes", "--jobs", "--rulings", "--env2"].includes(flag)) usage(`unknown argument ${JSON.stringify(flag)}`);
+    if (!FLAGS.includes(flag)) usage(`unknown argument ${JSON.stringify(flag)}`);
     if (i + 1 >= argv.length) usage(`${flag} needs a value`);
     const value = argv[i + 1];
     if (flag === "--env2") {
       const m = /^([A-Za-z_][A-Za-z0-9_]*)=(.*)$/s.exec(value);
       if (!m) usage(`--env2 needs NAME=value, got ${JSON.stringify(value)}`);
       opts.env2[m[1]] = m[2];
-    } else opts[flag.slice(2)] = value;
+    } else opts[flag.slice(2).replace(/-(\w)/g, (_, c) => c.toUpperCase())] = value;
   }
   return opts;
 }
@@ -88,9 +98,10 @@ function serverCommand(name) {
  * Runs the driver; resolves {code, tail} (the last lines of its output). `extraEnv` goes to the driver,
  * which passes its environment on to the server.
  */
-function runDriver({ scenarioPath, label, transport, lane, expectPublishes, tracked, command, extraEnv }) {
+function runDriver({ scenarioPath, label, transport, lane, expectPublishes, expectDrained, tracked, command, extraEnv }) {
   const args = [join(HERE, "driver.mjs"), scenarioPath, label, transport, "--lane", lane];
   if (expectPublishes !== undefined) args.push("--expect-publishes", String(expectPublishes));
+  if (expectDrained) args.push("--expect-drained");
   args.push("--", ...command);
   const env = { ...process.env, ...extraEnv };
   if (tracked) delete env.HARNESS_NO_TRACK;
@@ -135,16 +146,22 @@ async function main() {
   const jobs = opts.jobs === undefined ? 4 : Number(opts.jobs);
   if (!Number.isInteger(jobs) || jobs < 1) usage(`--jobs needs a positive integer, got ${JSON.stringify(opts.jobs)}`);
   const bothTs = names.every((n) => n.startsWith("ts-"));
-  const rulingsPath = opts.rulings ? resolve(opts.rulings) : join(HARNESS, bothTs ? "rulings-ts.json" : "rulings.json");
-  const rulings = loadRulings(rulingsPath, usage);
-  for (const r of rulings) {
-    if (r.scenario !== undefined && !existsSync(join(scenarioDir, `${r.scenario}.json`))) {
-      usage(`${rulingsPath}: the ruling ${r.deviation} names the scenario ${JSON.stringify(r.scenario)}: no ${join(scenarioDir, `${r.scenario}.json`)}`);
+  /** A rulings file, checked: a ruling's scenario must name a scenario file. */
+  const rulingsFrom = (path) => {
+    const rulings = loadRulings(path, usage);
+    for (const r of rulings) {
+      if (r.scenario !== undefined && !existsSync(join(scenarioDir, `${r.scenario}.json`))) {
+        usage(`${path}: the ruling ${r.deviation} names the scenario ${JSON.stringify(r.scenario)}: no ${join(scenarioDir, `${r.scenario}.json`)}`);
+      }
     }
-  }
-  // A ruling scoped to a scenario, transports or lanes that this run leaves out can match nothing here: not
-  // reported, not counted.
-  const active = rulings.filter((r) => rulingInRun(r, { scenarios, transports, lanes }));
+    // A ruling scoped to a scenario, transports or lanes that this run leaves out can match nothing here: not
+    // reported, not counted.
+    return rulings.filter((r) => rulingInRun(r, { scenarios, transports, lanes }));
+  };
+  const active = rulingsFrom(opts.rulings ? resolve(opts.rulings) : join(HARNESS, bothTs ? "rulings-ts.json" : "rulings.json"));
+  const activeEvents = rulingsFrom(
+    opts.eventRulings ? resolve(opts.eventRulings) : join(HARNESS, bothTs ? "rulings-events-ts.json" : "rulings-events.json"),
+  );
   const commands = names.map(serverCommand);
   const whole = !opts.scenarios && !opts.transports && !opts.lanes;
 
@@ -174,6 +191,8 @@ async function main() {
         transport: run.combo.transport,
         lane: run.combo.lane,
         expectPublishes: run.tracked ? undefined : 0,
+        // Only a tracked Rust server drains and prints {"drained":true} before it exits.
+        expectDrained: run.tracked && run.name === "rust",
         tracked: run.tracked,
         command: commands[run.server],
         extraEnv: run.server === 1 ? opts.env2 : {},
@@ -201,19 +220,25 @@ async function main() {
       const lines = [];
       const { ruled, unexpected } = printEntries(entries, (l) => lines.push(l));
       entry.delta = { total: entries.length, ruled, unexpected };
-      if (unexpected > 0) {
-        failed = true;
-        entry.differences = entries.filter((e) => e.ruledBy.length === 0);
-      }
-      line = `${unexpected > 0 ? "FAIL" : "ok"} ${combo.scenario} ${combo.transport} ${combo.lane}: delta ${JSON.stringify(entry.delta)}`;
-      if (unexpected > 0) line += `\n${lines.filter((l) => l.startsWith("DELTA")).map((l) => `  ${l}`).join("")}`.trimEnd();
+      if (unexpected > 0) entry.differences = entries.filter((e) => e.ruledBy.length === 0);
+      // The events the two tracked servers published.
+      const eventEntries = compareEvents(aT, bT, rulingsFor(activeEvents, combo));
+      const counts = printDiffs(eventEntries, (l) => lines.push(l), "EVENT ");
+      entry.events = { total: eventEntries.length, ...counts };
+      if (counts.unexpected > 0) entry.eventDifferences = eventEntries.filter((e) => e.ruledBy.length === 0);
+      const bad = unexpected > 0 || counts.unexpected > 0;
+      if (bad) failed = true;
+      line = `${bad ? "FAIL" : "ok"} ${combo.scenario} ${combo.transport} ${combo.lane}: delta ${JSON.stringify(entry.delta)}`;
+      line += ` events ${entry.events.total}/${entry.events.ruled}/${entry.events.unexpected}`;
+      if (bad) line += `\n${lines.filter((l) => /^(DELTA|EVENT) /.test(l)).map((l) => `  ${l}`).join("")}`.trimEnd();
     }
     summary.push(entry);
     process.stdout.write(`${line}\n`);
   }
   writeFileSync(join(OUT, "matrix.json"), `${JSON.stringify(summary, null, 2)}\n`);
   for (const l of rulingLines(active)) process.stdout.write(l);
-  if (whole && active.some((r) => r.matched === 0)) failed = true;
+  for (const l of rulingLines(activeEvents, "EVENT ")) process.stdout.write(l);
+  if (whole && [...active, ...activeEvents].some((r) => r.matched === 0)) failed = true;
   process.exit(failed ? 1 : 0);
 }
 

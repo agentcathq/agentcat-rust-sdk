@@ -2,12 +2,13 @@
 // and the canary matrices).
 //
 // usage: node harness/src/l3-expect.mjs <none|caught> [matrix.json]   (default harness/out/matrix.json)
-//   none    the A/A run: at least one combination, every driver exited 0, and every delta has no
-//           difference at all, ruled or not (delta.total 0).
+//   none    the A/A run: at least one combination, every driver exited 0, and every delta and every event
+//           comparison has no difference at all, ruled or not (delta.total 0, events.total 0).
 //   caught  the canary run (HARNESS_CANARY=1 on the second server of `--scenarios basic`): at least one
-//           combination, every driver exited 0, and every combination has an unruled difference, each at
+//           combination, every driver exited 0, every combination has an unruled delta difference, each at
 //           a path under CANARY_PREFIX (the injected context description of the tracked tools/list, the
-//           only thing the canary changes). A canary caught anywhere else is a different failure.
+//           only thing the canary changes), and no event difference (events.total 0: the canary does not
+//           change what the servers publish). A canary caught anywhere else is a different failure.
 // Exit 0: as expected. Exit 1: not as expected (one line per bad combination). Exit 2: bad arguments or an
 // unreadable matrix.json.
 import { dirname, join } from "node:path";
@@ -30,7 +31,15 @@ function problem(c, mode) {
   const failed = Object.entries(c.exitCodes ?? {}).filter(([, code]) => code !== 0);
   if (c.exitCodes === undefined || failed.length > 0) return `driver exit ${JSON.stringify(c.exitCodes)}`;
   if (c.delta === undefined) return "no delta";
-  if (mode === "none") return c.delta.total === 0 ? undefined : `delta ${JSON.stringify(c.delta)}`;
+  if (c.events === undefined) return "no event comparison";
+  if (mode === "none") {
+    if (c.delta.total !== 0) return `delta ${JSON.stringify(c.delta)}`;
+    return c.events.total === 0 ? undefined : `events ${JSON.stringify(c.events)}`;
+  }
+  if (c.events.total !== 0) {
+    const first = (c.eventDifferences ?? [])[0];
+    return first ? `an event difference: ${first.path}` : `events ${JSON.stringify(c.events)}`;
+  }
   const diffs = c.differences ?? [];
   if (c.delta.unexpected === 0 || diffs.length === 0) return `no unruled difference: delta ${JSON.stringify(c.delta)}`;
   const elsewhere = diffs.filter((d) => typeof d.path !== "string" || !d.path.startsWith(CANARY_PREFIX));

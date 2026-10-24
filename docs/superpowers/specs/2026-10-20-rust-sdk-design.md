@@ -322,7 +322,7 @@ manifest point to these IDs.
 | RD-10 | No kill switch; no test fake. | `AGENTCAT_ENABLED`, `testing::Fake` (D44, D41). | PHP decisions. |
 | RD-11 | `null` project ID = telemetry only. | `from_env` reads `AGENTCAT_PROJECT_ID`; `""` = telemetry only (D36). | PHP decision. |
 | RD-12 | Each listing page replaces the registries; rebuild reads page 1 (K-01, K-02, B-048). | Registries merged per tool; rebuild follows `next_cursor`; `get_tool` first (C03). A tool found through `get_tool` takes its foreign status from its current schema; the registry's set of tools that declare their own `session_id` only grows, as in TS (C19). | PHP D66. |
-| RD-13 | Host SDK behavior of the TS MCP SDK (`execution` on tools, omitted `isError`, zod validation). | rmcp's own behavior. | Not AgentCat's; the harness compares the AgentCat delta, not host output (section 11). |
+| RD-13 | Host SDK behavior of the TS MCP SDK (`execution` on tools, omitted `isError`, zod validation, its texts for an unknown tool and an argument error; the v2 host lifts the 2026-07-28 envelope keys out of `params._meta` into `extra.mcpReq.envelope` before dispatch, so the recorded `parameters.request` has no envelope). | rmcp's own behavior (rmcp keeps the envelope in `params._meta`, which the event records). | Not AgentCat's; the harness compares the AgentCat delta, not host output (section 11), and rules these in the published events (`harness/rulings-events.json`). |
 | RD-14 | `sdkLanguage: "TypeScript"`, `agentcatVersion` 2.1.1. | `"Rust"`, crate version. | D01. |
 | RD-15 | Log prefix `[sdk=… node=… mcp=…]`. | `[sdk=… rust=… rmcp=…]`; optional `tracing` route. | C07. |
 | RD-16 | Exporters and remote diagnostics. | Absent in the first pass. | R04, C05. |

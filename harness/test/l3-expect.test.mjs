@@ -8,7 +8,10 @@ import { HARNESS, run, tempDir, writeJson } from "./support.mjs";
 const L3 = join(HARNESS, "src", "l3-expect.mjs");
 const TOOL_PATH = "$.delta.transcript[1].result.tools[0].inputSchema.properties.context.description";
 
-const combo = (transport, { exitCodes, delta, differences } = {}) => {
+const NO_EVENTS = { total: 0, ruled: 0, unexpected: 0 };
+const EVENT_PATH = "$.events[3].body.error.type";
+
+const combo = (transport, { exitCodes, delta, differences, events, eventDifferences } = {}) => {
   const c = {
     scenario: "basic",
     transport,
@@ -18,6 +21,8 @@ const combo = (transport, { exitCodes, delta, differences } = {}) => {
   };
   if (delta !== null) c.delta = delta ?? { total: 0, ruled: 0, unexpected: 0 };
   if (differences) c.differences = differences;
+  if (events !== null) c.events = events ?? NO_EVENTS;
+  if (eventDifferences) c.eventDifferences = eventDifferences;
   return c;
 };
 const caught = (transport, paths = [TOOL_PATH]) =>
@@ -79,4 +84,33 @@ test("a bad mode, an extra argument or an unreadable file exits 2", async (t) =>
   }
   const notArray = writeJson(join(dir, "object.json"), { scenario: "basic" });
   assert.equal((await run(process.execPath, [L3, "none", notArray])).code, 2);
+});
+
+test("none: an event difference, ruled or not, or a combination without an event comparison fails", async (t) => {
+  for (const [doc, why] of [
+    [[combo("stdio"), combo("http", { events: { total: 1, ruled: 1, unexpected: 0 } })], /basic http 2025-11-25: events \{"total":1/],
+    [[combo("stdio", { events: null })], /basic stdio 2025-11-25: no event comparison/],
+  ]) {
+    const res = await check(t, "none", doc);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stderr, why);
+  }
+});
+
+test("caught: an event difference, or a combination without an event comparison, fails", async (t) => {
+  const withEvent = {
+    ...caught("http"),
+    events: { total: 1, ruled: 0, unexpected: 1 },
+    eventDifferences: [{ path: EVENT_PATH, a: "x", b: "y", ruledBy: [] }],
+  };
+  const noEvents = { ...caught("http") };
+  delete noEvents.events;
+  for (const [doc, why] of [
+    [[caught("stdio"), withEvent], /basic http 2025-11-25: an event difference: \$\.events\[3\]\.body\.error\.type/],
+    [[caught("stdio"), noEvents], /basic http 2025-11-25: no event comparison/],
+  ]) {
+    const res = await check(t, "caught", doc);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stderr, why);
+  }
 });
