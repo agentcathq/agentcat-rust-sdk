@@ -120,7 +120,8 @@ Rulings: `rulings.json` holds the delta rulings for Rust against TS (`delta.mjs`
 `rulings-events.json` the event rulings (`--event-rulings`). When both servers are TS, the defaults are
 `rulings-ts.json` and `rulings-events-ts.json` (A/A runs and the nightly drift sweep, so a Rust ruling never
 counts as unused there). Both kinds take the same scope keys (`scenario`, `transports`, `lanes`) and the
-same checks; the whole matrix fails on an unused ruling of either kind.
+same checks; the whole matrix fails on an unused ruling of either kind. An event ruling can also pin the
+values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot.
 
 ### The L3 gate
 
@@ -169,6 +170,10 @@ machine; the A/A and canary runs about 12 s each.
   `driver: the server of session <s> exited without printing {"drained":true}` (HTTP: `the server`).
 - The driver pipes each server's stderr through its own stderr, line by line, and reads it for the
   drained line (stdio: the client transport's `stderr: "pipe"`; HTTP: the child's stderr).
+- Before each connect and each step, the driver waits until the wall clock is past the millisecond in
+  which the previous request was answered. A server stamps an event between a request's arrival and its
+  answer, so the events of two requests in a row never share a millisecond, and the time order of the
+  normalizer is the request order on every server and in every run.
 - The server gets the parent environment, without `AGENTCAT_ENABLED` (the Rust SDK reads it, decision
   C45: a developer shell's `AGENTCAT_ENABLED=false` would turn the tracked Rust server off), plus
   `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID` (the scenario's `projectId`), `HARNESS_OPTIONS`
@@ -217,7 +222,8 @@ order, and arrays of different length give one entry per element (`<missing>` on
 document is a diff entry, even when both documents share it. Output lines:
 
 - `DIFF  <path>: <a> != <b>` for a difference no ruling matches;
-- `RULED <RD-xx> <path>: <a> != <b>` for a difference a ruling matches;
+- `RULED <RD-xx> <path>: <a> != <b>` for a difference a ruling matches (its path, and its pinned values
+  when it has them, see Rulings);
 - `RULING <RD-xx> matched <n>: ...` or `UNUSED RULING <RD-xx> matched 0: ...` for each ruling
   (`RULING (pending) <RD-xx> matched <n>: ...` for a ruling marked `"pending": true`);
 - a JSON summary line `{"total", "ruled", "unexpected", "unusedRulings"}`.
@@ -470,9 +476,11 @@ Example (`scenarios/basic.json`):
 - `eventOrder` (optional) takes `"multiset"` only (any other value exits 2): the normalizer then sorts
   the events on their normalized body alone, so their order is not compared. Without it they sort by
   time ("Normalized document" below).
-- Two events of one session whose relative order matters must not start in the same millisecond,
-  unless the scenario compares events as a multiset: in the same millisecond the order falls back to
-  the resource name and the body, and the two servers may or may not land in the same millisecond.
+- The driver starts each request in a later millisecond than the previous answer ("driver.mjs" above),
+  so the events of two steps never share a millisecond. Two events of one step (a call and the custom
+  events it publishes) can: their order then falls back to the `duration`, the resource name and the
+  body (below), so a step must not publish two events whose order matters unless the scenario compares
+  events as a multiset.
 - No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
   such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
 - `expectPublishes` is the count the tracked TS v2 server publishes, read from a TS run. The tracked Rust
@@ -576,9 +584,28 @@ its count with its scope, `in <scenario>`, `on <transport>,...` and `at <lane>,.
 (`RULING (pending) RD-29 matched 2 in tracing-off on http at 2026-07-28: ...`). Keep a ruling's
 regex to the exact paths.
 
+An event ruling may also pin the values it allows, so a path regex alone does not let any value pass.
+Each difference of the event comparison and of `diff.mjs` carries two values: `a`, the first server's
+(TS, the answer key), and `b`, the second server's (Rust). A side that does not have the key reads
+`"<absent>"`.
+
+- `"ts": <value>`: the ruling matches only when `a` equals this JSON value (key order aside).
+- `"rust": <value>`: the ruling matches only when `b` equals this JSON value.
+- `"rustKeys": "<regex>"`: the ruling matches only when `b` is an object with at least one key and every
+  key matches the regex, anchored as `^(?:<regex>)$`. A `rustKeys` that is not a non-empty string or not a
+  valid regex makes the rulings file malformed (exit 2).
+
+A difference on a ruled path whose values the pins do not allow is unruled (an `EVENT` or `DIFF` line), and
+it does not count in the ruling's `matched`. A delta difference carries no values, so a pinned ruling
+never matches in `delta.mjs`; delta rulings do not pin. The ruling line shows the pins after the scope:
+`ts=<value>`, `rust=<value>` and `rustKeys="<regex>"`.
+
 `rulings.json` holds the delta rulings only, and `rulings-events.json` the event rulings only (the matrix
 reads each with its own flag). `rulings-events.json` rules, for TS v2 against Rust: the keys of
-`parameters.extra` on every event (RD-07); the 2026-07-28 envelope that rmcp keeps in
-`parameters.request.params._meta` and the TS v2 host lifts out (RD-13); the `type`, `stack` and `frames`
+`parameters.extra` on every event (RD-07), with one ruling per transport and lane that pins the TS v2 key
+set and the Rust D34 key set (`"ts": "mcpReq", "rust": "requestId"` on stdio at 2025-11-25, for example);
+the 2026-07-28 envelope that rmcp keeps in `parameters.request.params._meta` and the TS v2 host lifts out
+(RD-13), pinned to `"ts": "<absent>"` and `"rustKeys": "io\\.modelcontextprotocol/.+"`, so any other key in
+Rust's `_meta` is unruled; the `type`, `stack` and `frames`
 of the errors that Rust has no source for (RD-06); and the host's own texts for an unknown tool and an
 argument error (RD-13). Each ruling names its scenario and event index where it covers one call.

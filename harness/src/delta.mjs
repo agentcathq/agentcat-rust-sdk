@@ -17,24 +17,16 @@
 //   the four files are normalized documents (driver output *.normalized.json). Output: `DELTA <path>: ts <x> != rust <y>`
 //   per unruled difference, `RULED RD-xx ...` per ruled one, the ruling lines of diff.mjs, a JSON summary.
 //   rulings: as in diff.mjs (harness/rulings.json for Rust against TS, harness/rulings-ts.json for TS against TS);
-//   as there, a ruling's "scenario", "transports" and "lanes" are ignored here (matrix.mjs scopes by them).
+//   as there, a ruling's "scenario", "transports" and "lanes" are ignored here (matrix.mjs scopes by them);
+//   a delta difference carries no values, so a ruling that pins "ts", "rust" or "rustKeys" never matches here.
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
 import { fileURLToPath } from "node:url";
 
-import { clip, loadRulings, matchRulings, readJson, rulingLines } from "./rulings.mjs";
+import { canon, clip, loadRulings, matchRulings, readJson, rulingLines } from "./rulings.mjs";
 
 const kind = (v) => (Array.isArray(v) ? "array" : v === null ? "null" : typeof v);
-
-/** A string that is equal for deeply equal JSON values, whatever the key order. */
-function canon(v) {
-  if (Array.isArray(v)) return `[${v.map(canon).join(",")}]`;
-  if (v !== null && typeof v === "object") {
-    return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(",")}}`;
-  }
-  return JSON.stringify(v) ?? "undefined";
-}
 
 const keyPath = (p, k) => (/^[A-Za-z0-9_$-]+$/.test(k) ? `${p}.${k}` : `${p}[${JSON.stringify(k)}]`);
 

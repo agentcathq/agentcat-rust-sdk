@@ -2,10 +2,14 @@
 // report lines. Delta rulings live in harness/rulings.json (rulings-ts.json for TS against TS), event rulings
 // in harness/rulings-events.json (rulings-events-ts.json). A rulings file is a JSON array of
 // {"path": "<regex>", "reason", "deviation": "RD-xx", "pending"?: true, "scenario"?: "<scenario name>",
-//  "transports"?: ["<transport>", ...], "lanes"?: ["<lane>", ...]};
+//  "transports"?: ["<transport>", ...], "lanes"?: ["<lane>", ...], "ts"?: <value>, "rust"?: <value>,
+//  "rustKeys"?: "<regex>"};
 // each regex is anchored as ^(?:<regex>)$. `scenario`, `transports` and `lanes` scope a delta or event ruling
 // to the matching combinations in matrix.mjs (see rulingsFor); diff.mjs and delta.mjs know no combination and
-// match by path alone. `fail(message)` reports a bad file and must not return.
+// match by path alone. `ts`, `rust` and `rustKeys` pin the values a ruling allows (see valuesHold): they apply
+// where a difference carries its two values, `a` (the first server, TS) and `b` (the second, Rust), that is
+// in the event comparison and diff.mjs; a delta difference carries none, so a pinned ruling never matches it.
+// `fail(message)` reports a bad file and must not return.
 import { readFileSync } from "node:fs";
 
 /** The form of a scenario name: harness/scenarios/<name>.json. */
@@ -18,7 +22,26 @@ export const TRANSPORTS = ["stdio", "http", "http-stateless"];
 export const LANES = ["2025-11-25", "2026-07-28"];
 
 /** The keys a ruling may have. */
-const KEYS = ["path", "reason", "deviation", "pending", "scenario", "transports", "lanes"];
+const KEYS = ["path", "reason", "deviation", "pending", "scenario", "transports", "lanes", "ts", "rust", "rustKeys"];
+
+const isObject = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
+
+/** A string that is equal for deeply equal JSON values, whatever the key order. */
+export function canon(v) {
+  if (Array.isArray(v)) return `[${v.map(canon).join(",")}]`;
+  if (isObject(v)) return `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${canon(v[k])}`).join(",")}}`;
+  return JSON.stringify(v) ?? "undefined";
+}
+
+/** Compiles a ruling regex, anchored as ^(?:<regex>)$; `what` names it in the failure. */
+function anchored(text, what, where, fail) {
+  try {
+    new RegExp(text); // the pattern must be valid on its own, not only once wrapped
+    return new RegExp(`^(?:${text})$`);
+  } catch (err) {
+    return fail(`${where}: bad ${what}regex: ${err.message}`);
+  }
+}
 
 /** Fails unless `r[key]`, when present, is a non-empty array of names from `allowed`. */
 function checkNames(r, key, allowed, what, where, fail) {
@@ -58,20 +81,42 @@ export function loadRulings(path, fail) {
     if (typeof r.path !== "string" || r.path === "") fail(`${where}: "path" must be a non-empty regex string`);
     if (typeof r.reason !== "string" || r.reason.trim() === "") fail(`${where}: "reason" must be a non-empty string`);
     if (typeof r.deviation !== "string" || !/^RD-\d+$/.test(r.deviation)) fail(`${where}: "deviation" must look like RD-<n>`);
-    let re;
-    try {
-      new RegExp(r.path); // the pattern must be valid on its own, not only once wrapped
-      re = new RegExp(`^(?:${r.path})$`);
-    } catch (err) {
-      fail(`${where}: bad regex: ${err.message}`);
+    if (Object.hasOwn(r, "rustKeys") && (typeof r.rustKeys !== "string" || r.rustKeys === "")) {
+      fail(`${where}: "rustKeys" must be a non-empty regex string`);
     }
-    return { ...r, re, matched: 0 };
+    const re = anchored(r.path, "", where, fail);
+    const rustKeysRe = Object.hasOwn(r, "rustKeys") ? anchored(r.rustKeys, "rustKeys ", where, fail) : undefined;
+    return { ...r, re, rustKeysRe, matched: 0 };
   });
 }
 
-/** The rulings whose whole-path regex matches; each hit adds one to the ruling's count. */
-export function matchRulings(rulings, path) {
-  const hits = rulings.filter((r) => r.re.test(path));
+/**
+ * Whether the values of a difference, `values` = {a, b} (the first server's and the second's; absent for a
+ * delta difference), are the ones a ruling allows: `ts` deep-equals `a` and `rust` deep-equals `b` (key order
+ * aside; a side that does not have the key is the text "<absent>"), and with `rustKeys`, `b` is an object of
+ * at least one key, each matching the anchored regex. A ruling without these keys allows any values; a
+ * ruling with them never allows a difference without values.
+ */
+function valuesHold(r, values) {
+  const pinsTs = Object.hasOwn(r, "ts");
+  const pinsRust = Object.hasOwn(r, "rust");
+  if (!pinsTs && !pinsRust && r.rustKeysRe === undefined) return true;
+  if (values === undefined) return false;
+  if (pinsTs && canon(values.a) !== canon(r.ts)) return false;
+  if (pinsRust && canon(values.b) !== canon(r.rust)) return false;
+  if (r.rustKeysRe !== undefined) {
+    const keys = isObject(values.b) ? Object.keys(values.b) : [];
+    if (keys.length === 0 || !keys.every((k) => r.rustKeysRe.test(k))) return false;
+  }
+  return true;
+}
+
+/**
+ * The rulings whose whole-path regex matches and whose pinned values (valuesHold) allow `values`; each hit
+ * adds one to the ruling's count.
+ */
+export function matchRulings(rulings, path, values) {
+  const hits = rulings.filter((r) => r.re.test(path) && valuesHold(r, values));
   for (const r of hits) r.matched += 1;
   return hits;
 }
@@ -103,8 +148,9 @@ export function rulingInRun(r, { scenarios, transports, lanes }) {
 }
 
 /**
- * One line per ruling: RULING / RULING (pending) / UNUSED RULING, with the match count and the scope of
- * a scoped ruling: `in <scenario>`, `on <transport>,...`, `at <lane>,...`. Each line starts with `prefix`
+ * One line per ruling: RULING / RULING (pending) / UNUSED RULING, with the match count, the scope of
+ * a scoped ruling: `in <scenario>`, `on <transport>,...`, `at <lane>,...`, and its pinned values:
+ * `ts=<value>`, `rust=<value>`, `rustKeys="<regex>"`. Each line starts with `prefix`
  * (matrix.mjs: `EVENT ` for the event rulings).
  */
 export function rulingLines(rulings, prefix = "") {
@@ -114,6 +160,9 @@ export function rulingLines(rulings, prefix = "") {
       r.scenario === undefined ? "" : ` in ${r.scenario}`,
       r.transports === undefined ? "" : ` on ${r.transports.join(",")}`,
       r.lanes === undefined ? "" : ` at ${r.lanes.join(",")}`,
+      Object.hasOwn(r, "ts") ? ` ts=${clip(r.ts)}` : "",
+      Object.hasOwn(r, "rust") ? ` rust=${clip(r.rust)}` : "",
+      Object.hasOwn(r, "rustKeys") ? ` rustKeys=${JSON.stringify(r.rustKeys)}` : "",
     ].join("");
     return `${prefix}${what} ${r.deviation} matched ${r.matched}${scope}: ${JSON.stringify(r.path)} (${r.reason})\n`;
   });

@@ -198,6 +198,27 @@ test("an event ruling scoped to another scenario rules nothing here and, when it
   assert.doesNotMatch(res.stdout, /RD-91/);
 });
 
+test("a whole-matrix run fails on an event ruling that matched nothing and names it", { timeout: 600_000 }, async (t) => {
+  // Rust A/A over every scenario, transport and lane: no event difference, so the one event ruling stays
+  // unused. No delta rulings: the default RD-29 delta rulings would stay unused too.
+  const dir = tempDir(t);
+  const noDelta = writeJson(join(dir, "rulings.json"), []);
+  const unused = writeJson(join(dir, "rulings-events.json"), [
+    { path: "\\$\\.events\\[\\d+\\]\\.body\\.never", reason: "a ruling no difference matches", deviation: "RD-90" },
+  ]);
+  const res = await run(process.execPath, [MATRIX, "--servers", "rust,rust", "--rulings", noDelta, "--event-rulings", unused], {
+    timeoutMs: 600_000,
+  });
+  assert.equal(res.code, 1, res.stdout + res.stderr);
+  const summary = readJson(join(OUT, "matrix.json"));
+  assert.equal(summary.length, 36);
+  assert.ok(summary.every((e) => e.events.total === 0 && e.delta.total === 0), JSON.stringify(summary.map((e) => [e.events, e.delta])));
+  assert.equal(res.stdout.match(/^ok /gm)?.length, 36, res.stdout);
+  assert.doesNotMatch(res.stdout, /^FAIL /m);
+  assert.match(res.stdout, /^EVENT UNUSED RULING RD-90 matched 0: /m);
+  assert.equal(res.stdout.match(/UNUSED RULING/g)?.length, 1, res.stdout);
+});
+
 test("--event-rulings: a malformed file or a scenario that names no scenario file exits 2", async (t) => {
   const dir = tempDir(t);
   const notArray = writeJson(join(dir, "object.json"), { path: "x" });

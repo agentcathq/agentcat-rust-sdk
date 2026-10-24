@@ -7,8 +7,9 @@
 // shorter one, "<missing>" on that side. Paths look like $.events[3].body.parameters.extra.<keys>.
 //
 // compareEvents(a, b, rulings) compares the `events` and `nonPublishRequests` of two normalized documents
-// and gives each entry the RD ids of the rulings whose whole-path regex matches it (`ruledBy`; each hit
-// counts in the ruling's `matched`, see rulings.mjs).
+// and gives each entry the RD ids of the rulings whose whole-path regex matches it and whose pinned values
+// (`ts` for the first side `a`, `rust` for the second side `b`, `rustKeys`) allow its two values (`ruledBy`;
+// each hit counts in the ruling's `matched`, see rulings.mjs).
 import { clip, matchRulings } from "./rulings.mjs";
 
 /** The parts of a normalized document that the event comparison reads. */
@@ -49,7 +50,7 @@ const eventParts = (doc) => Object.fromEntries(EVENT_PARTS.map((k) => [k, Array.
 
 /** One entry {path, a, b, ruledBy} per difference in the events and non-publish requests of `a` and `b`. */
 export function compareEvents(a, b, rulings = []) {
-  return structuralDiff(eventParts(a), eventParts(b)).map((d) => ({ ...d, ruledBy: matchRulings(rulings, d.path).map((r) => r.deviation) }));
+  return structuralDiff(eventParts(a), eventParts(b)).map((d) => ({ ...d, ruledBy: matchRulings(rulings, d.path, d).map((r) => r.deviation) }));
 }
 
 /**

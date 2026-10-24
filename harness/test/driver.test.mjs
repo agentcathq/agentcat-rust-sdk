@@ -359,3 +359,21 @@ test('the scenario key eventOrder takes "multiset" only (exit 2 otherwise)', { t
   res = await driver(good, "ordergood", "stdio", [], { env: { HARNESS_NO_TRACK: "1" } });
   assert.equal(res.code, 0, res.stderr);
 });
+
+test("each request starts in a later millisecond than the last response, so no two calls share an event millisecond", { timeout: 120_000 }, async (t) => {
+  // Rust over stdio answers an echo in well under a millisecond: without the wait, calls in a row land in
+  // one millisecond, and the event order of the normalizer falls back to the body.
+  const calls = 40;
+  const steps = Array.from({ length: calls }, (_, i) => ({ op: "callTool", name: "echo", args: { msg: `call ${i}` } }));
+  const path = scenarioOf(t, "inarow", steps, { expectPublishes: calls });
+  const res = await driver(path, "inarow", "stdio", [], { server: RUST_SERVER });
+  assert.equal(res.code, 0, res.stderr);
+  const events = readJson(outFile("inarow", "inarow", "stdio", "raw"))
+    .filter((r) => r.method === "POST" && r.path === "/v1/public/events/")
+    .map((r) => ({ id: r.body.parameters.request.id, ms: Date.parse(r.body.timestamp) }))
+    .sort((a, b) => a.id - b.id);
+  assert.equal(events.length, calls);
+  for (let i = 1; i < events.length; i++) {
+    assert.ok(events[i].ms > events[i - 1].ms, `request ${events[i].id} shares or precedes the millisecond of ${events[i - 1].id}: ${JSON.stringify(events)}`);
+  }
+});

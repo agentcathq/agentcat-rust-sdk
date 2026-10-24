@@ -14,6 +14,10 @@
 //   --expect-drained    every server process must print the line {"drained":true} on stderr before it
 //              exits (the tracked Rust server's drain, decision C46)
 // outputs: harness/out/<scenario>.<label>.<transport>.{raw,transcript,normalized,report}.json
+// Before each connect and each step, the driver waits until the wall clock is past the millisecond
+// in which the previous request was answered: a server stamps an event between a request's arrival and
+// its answer, so the events of two requests in a row never share a millisecond, and the time order of
+// the normalizer is the request order on every server and every run.
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts. The servers'
 // stderr is piped through the driver's stderr; report.json records per server
@@ -189,6 +193,11 @@ mkdirSync(home, { recursive: true });
 
 const countPublishes = (requests) => requests.filter((r) => r.method === "POST" && r.path === PUBLISH_PATH).length;
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Waits until the wall clock is past the millisecond `ms` (Date.now() > ms). */
+async function pastMillisecond(ms) {
+  while (Date.now() <= ms) await sleep(1);
+}
 const isRunning = (child) => child.exitCode === null && child.signalCode === null;
 const exited = (child) => (isRunning(child) ? new Promise((resolve) => child.once("exit", resolve)) : Promise.resolve());
 /** Resolves true when `promise` settles before `deadline` (epoch ms), false otherwise. */
@@ -327,9 +336,13 @@ async function main() {
   }
 
   const transcript = [];
+  // Date.now() when the previous request was answered (see pastMillisecond).
+  let answeredAt = Number.NEGATIVE_INFINITY;
   for (const [si, session] of scenario.sessions.entries()) {
     const negotiated = {};
+    await pastMillisecond(answeredAt);
     const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated, si);
+    answeredAt = Date.now();
     clients.push(client);
     // "auto" can fall back to initialize: the lane must be the one that was asked for.
     if (negotiated.protocolVersion !== lane) {
@@ -349,6 +362,7 @@ async function main() {
     for (const [i, step] of session.steps.entries()) {
       const where = `step ${i} of session ${si}`;
       const entry = { session: si, op: step.op };
+      await pastMillisecond(answeredAt);
       try {
         if (step.op === "listTools") {
           entry.result = await client.listTools(step.cursor ? { cursor: step.cursor } : undefined);
@@ -361,6 +375,7 @@ async function main() {
         // Protocol errors (JSON-RPC errors) are part of the observable contract.
         entry.error = { name: e?.constructor?.name, code: e?.code, message: String(e?.message ?? e) };
       }
+      answeredAt = Date.now();
       if (step.saveHandleAs) {
         const handle = handleFrom(entry.result);
         if (handle === undefined && tracked) throw new DriverFailure(`${where}: no session handle for ${step.saveHandleAs}`);

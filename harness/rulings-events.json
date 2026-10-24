@@ -1,13 +1,55 @@
 [
   {
     "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
-    "reason": "every tool-call event: parameters.extra is the host SDK's handler context; TS v2 publishes its own keys (mcpReq, http, sessionId), Rust publishes the D34 shape from rmcp's RequestContext (requestId, _meta, requestInfo, sessionId); the headers and the URL inside it compare equal",
+    "transports": ["stdio"],
+    "lanes": ["2025-11-25"],
+    "ts": "mcpReq",
+    "rust": "requestId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (requestId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "mcpReq",
+    "rust": "_meta,requestId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (_meta,requestId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http"],
+    "lanes": ["2025-11-25"],
+    "ts": "http,mcpReq,sessionId",
+    "rust": "requestId,requestInfo,sessionId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq,sessionId), Rust publishes the D34 shape from rmcp's RequestContext (requestId,requestInfo,sessionId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http-stateless"],
+    "lanes": ["2025-11-25"],
+    "ts": "http,mcpReq",
+    "rust": "requestId,requestInfo",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (requestId,requestInfo); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http", "http-stateless"],
+    "lanes": ["2026-07-28"],
+    "ts": "http,mcpReq",
+    "rust": "_meta,requestId,requestInfo",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (_meta,requestId,requestInfo); the headers and the URL inside it compare equal. The pins allow these two key sets only",
     "deviation": "RD-07"
   },
   {
     "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.request\\.params\\._meta",
     "lanes": ["2026-07-28"],
-    "reason": "every tool-call event at 2026-07-28: the TS v2 host library lifts the io.modelcontextprotocol/* envelope keys out of params._meta into extra.mcpReq.envelope before dispatch (TS src/modules/session.ts:33-36), so the request TS records has no _meta; rmcp keeps the envelope in params._meta (design 6.5, 6.6), and the Rust SDK records the request as rmcp hands it over",
+    "ts": "<absent>",
+    "rustKeys": "io\\.modelcontextprotocol/.+",
+    "reason": "every tool-call event at 2026-07-28: the TS v2 host library lifts the io.modelcontextprotocol/* envelope keys out of params._meta into extra.mcpReq.envelope before dispatch (TS src/modules/session.ts:33-36), so the request TS records has no _meta; rmcp keeps the envelope in params._meta (design 6.5, 6.6), and the Rust SDK records the request as rmcp hands it over; the pins allow only a TS request without _meta and a Rust _meta of io.modelcontextprotocol/* keys alone",
     "deviation": "RD-13"
   },
   {

@@ -11,7 +11,8 @@
 // answered yet (R17); it allows differences like any other, and its line reads
 // "RULING (pending) <RD-xx> matched <n>". A ruling's "scenario", "transports" and "lanes" (matrix.mjs
 // scopes by them) are ignored here: a document carries no combination, so every ruling matches by path
-// alone.
+// alone. Its pinned values hold here as in the event comparison: "ts" must equal the value of <a>, "rust"
+// the value of <b>, and with "rustKeys" every key of <b> must match (rulings.mjs).
 // Exit 0: every difference is ruled and every ruling matched something.
 // Exit 1: an unruled difference, or a ruling that matched nothing.
 // Exit 2: bad arguments or a malformed rulings file.
@@ -54,7 +55,7 @@ for (const [side, doc] of [["a", a], ["b", b]]) {
 }
 diffs.push(...violations.values());
 
-const entries = diffs.map((d) => ({ ...d, ruledBy: matchRulings(rulings, d.path).map((r) => r.deviation) }));
+const entries = diffs.map((d) => ({ ...d, ruledBy: matchRulings(rulings, d.path, d).map((r) => r.deviation) }));
 const { ruled, unexpected } = printDiffs(entries, (line) => process.stdout.write(line), "DIFF  ");
 for (const line of rulingLines(rulings)) process.stdout.write(line);
 const unused = rulings.filter((r) => r.matched === 0);
