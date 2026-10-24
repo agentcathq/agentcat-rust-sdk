@@ -18,11 +18,14 @@
 //!
 //! Environment: `AGENTCAT_API_URL` (required, `http://` on `127.0.0.1`, `localhost` or `[::1]`),
 //! `HARNESS_PROJECT_ID` (required unless untracked), `HARNESS_OPTIONS` (the options profile, see
-//! `profile`), `HARNESS_NO_TRACK=1` (serve the tools untracked), `HARNESS_CANARY=1` (the perturbed
-//! context description). Exit 2: bad arguments, a non-local `AGENTCAT_API_URL` or an invalid
-//! profile. Logs go to stderr only.
+//! `profile`), `HARNESS_NO_TRACK=1` (serve the tools untracked), `HARNESS_PAGE_SIZE=<n>` (serve
+//! `tools/list` in pages of `n`, see `tools::page`), `HARNESS_CANARY` (the perturbation of an L3
+//! canary run: `1` the context description, `call` the mint-back text of results, `event` the
+//! resource name of events; see `profile::Canary`). Exit 2: bad arguments, a non-local
+//! `AGENTCAT_API_URL`, a bad page size or canary, or an invalid profile. Logs go to stderr only.
 #![forbid(unsafe_code)]
 
+mod canary;
 mod profile;
 mod tools;
 
@@ -47,7 +50,8 @@ use rmcp::{ServerHandler, ServiceExt};
 use serde_json::{Value, json};
 use tokio::net::TcpListener;
 
-use crate::profile::Profile;
+use crate::canary::CallCanary;
+use crate::profile::{Canary, Profile};
 use crate::tools::{CustomTarget, RefServer, Tools};
 
 /// The prefix of log lines.
@@ -81,8 +85,13 @@ struct Startup {
     mode: Mode,
     /// The handle every tracked server shares; `None` untracked (`HARNESS_NO_TRACK=1`).
     agentcat: Option<AgentCat>,
-    /// The project every tracked server publishes to, also the target of `emit_custom`.
+    /// The project every tracked server publishes to, also the target of `emit_custom` and
+    /// `emit_custom_server`.
     project_id: String,
+    /// The tools of one `tools/list` page; `None`: every tool on one page.
+    page_size: Option<usize>,
+    /// The perturbation of an L3 canary run.
+    canary: Canary,
 }
 
 /// Why the server does not start: the line for stderr. The exit code is [`EXIT_REFUSED`].
@@ -105,7 +114,7 @@ fn main() -> ExitCode {
             return ExitCode::from(EXIT_REFUSED);
         }
     };
-    let tools = match Tools::from_contract() {
+    let tools = match Tools::from_contract(startup.page_size) {
         Ok(tools) => tools,
         Err(error) => {
             log(&error);
@@ -143,7 +152,8 @@ fn startup(args: &[OsString]) -> Result<Startup, Refusal> {
     if tracked && project_id.is_empty() {
         return Err(Refusal::named("HARNESS_PROJECT_ID is required"));
     }
-    let canary = env("HARNESS_CANARY").as_deref() == Some("1");
+    let page_size = page_size(env("HARNESS_PAGE_SIZE").as_deref())?;
+    let canary = Canary::from_env(env("HARNESS_CANARY").as_deref()).map_err(Refusal::named)?;
     let options = env("HARNESS_OPTIONS").unwrap_or_else(|| "{}".to_owned());
     let Profile { options } = profile::parse(&options, canary)
         .map_err(|error| Refusal::named(format_args!("HARNESS_OPTIONS: {error}")))?;
@@ -153,7 +163,27 @@ fn startup(args: &[OsString]) -> Result<Startup, Refusal> {
         mode,
         agentcat: tracked.then(|| AgentCat::new(project_id.clone(), options)),
         project_id,
+        page_size,
+        canary,
     })
+}
+
+/// The page size of `HARNESS_PAGE_SIZE`: a positive decimal integer without a leading zero, or
+/// `None` when it is unset or empty.
+fn page_size(text: Option<&str>) -> Result<Option<usize>, Refusal> {
+    let Some(text) = text.filter(|text| !text.is_empty()) else {
+        return Ok(None);
+    };
+    text.parse::<usize>()
+        .ok()
+        .filter(|_| text.bytes().all(|b| b.is_ascii_digit()) && !text.starts_with('0'))
+        .map(Some)
+        .ok_or_else(|| {
+            Refusal::named(format_args!(
+                "HARNESS_PAGE_SIZE: must be a positive integer, got {}",
+                Value::from(text)
+            ))
+        })
 }
 
 /// The mode of argv: `stdio` (also with no argument), `http [<port>]` or
@@ -221,31 +251,40 @@ fn is_local_http_url(text: &str) -> bool {
     host_ok && port_ok
 }
 
-/// Serves the mode: `stdio`, or HTTP with one tracked server per session or request. A tracked
-/// server then drains the handle (`agentcat.shutdown(5 s)`) and prints `{"drained":<bool>}` on
-/// stderr before it exits, on stdin EOF (stdio) and on SIGTERM (every mode). An untracked server
-/// prints nothing.
+/// Serves the mode: `stdio`, or HTTP with one tracked server per session or request. With the
+/// call canary, each tracked server is wrapped in [`CallCanary`]. A tracked server then drains
+/// the handle (`agentcat.shutdown(5 s)`) and prints `{"drained":<bool>}` on stderr before it
+/// exits, on stdin EOF (stdio) and on SIGTERM (every mode). An untracked server prints nothing.
 async fn serve(startup: Startup, tools: Tools) -> ExitCode {
     let Startup {
         mode,
         agentcat,
         project_id,
+        page_size: _,
+        canary,
     } = startup;
     let custom =
         |agentcat: &AgentCat| Some(CustomTarget::new(agentcat.clone(), project_id.clone()));
+    let call_canary = canary == Canary::Call;
     let code = match (mode, &agentcat) {
         (Mode::Stdio, Some(agentcat)) => {
-            let server = RefServer::new(tools, custom(agentcat));
-            serve_stdio(agentcat.track(server)).await
+            let server = agentcat.track(RefServer::new(tools, custom(agentcat)));
+            if call_canary {
+                serve_stdio(CallCanary(server)).await
+            } else {
+                serve_stdio(server).await
+            }
         }
         (Mode::Stdio, None) => serve_stdio(RefServer::new(tools, None)).await,
         (Mode::Http { port, stateless }, Some(agentcat)) => {
             let handle = agentcat.clone();
             let target = custom(agentcat);
-            serve_http(port, stateless, move || {
-                Ok(handle.track(RefServer::new(tools.clone(), target.clone())))
-            })
-            .await
+            let tracked = move || handle.track(RefServer::new(tools.clone(), target.clone()));
+            if call_canary {
+                serve_http(port, stateless, move || Ok(CallCanary(tracked()))).await
+            } else {
+                serve_http(port, stateless, move || Ok(tracked())).await
+            }
         }
         (Mode::Http { port, stateless }, None) => {
             serve_http(port, stateless, move || {
@@ -453,6 +492,34 @@ mod tests {
         for bad in ["65536", "-1", "+1", "", "0x10"] {
             assert!(
                 mode_of(&["http", bad]).is_err_and(|line| line.contains("bad port")),
+                "{bad}"
+            );
+        }
+    }
+
+    #[test]
+    fn page_sizes_are_positive_integers() {
+        let size = |text: Option<&str>| page_size(text).map_err(|Refusal(line)| line);
+        assert_eq!(size(None), Ok(None));
+        assert_eq!(size(Some("")), Ok(None));
+        assert_eq!(size(Some("3")), Ok(Some(3)));
+        assert_eq!(size(Some("12")), Ok(Some(12)));
+        for bad in [
+            "0",
+            "-1",
+            "1.5",
+            "x",
+            "03",
+            " 3",
+            "+3",
+            "99999999999999999999999",
+        ] {
+            assert_eq!(
+                size(Some(bad)),
+                Err(format!(
+                    "{NAME}: HARNESS_PAGE_SIZE: must be a positive integer, got {}",
+                    Value::from(bad)
+                )),
                 "{bad}"
             );
         }

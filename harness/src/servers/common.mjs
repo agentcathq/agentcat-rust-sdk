@@ -29,7 +29,8 @@ function isLocalHttpUrl(text) {
 
 /**
  * Reads the command line and environment of server `name` (e.g. "ts-v1"), or exits 2.
- * Returns {mode, port, tracked, projectId, options}.
+ * Returns {mode, port, tracked, projectId, options, pageSize}; `pageSize` (HARNESS_PAGE_SIZE, a
+ * positive integer) is undefined when tools/list serves every tool on one page.
  */
 export function startup(name) {
   const [mode = "stdio", portArg] = process.argv.slice(2);
@@ -49,13 +50,17 @@ export function startup(name) {
   const projectId = process.env.HARNESS_PROJECT_ID ?? "";
   if (tracked && projectId === "") fail(name, "HARNESS_PROJECT_ID is required");
 
+  const pageText = process.env.HARNESS_PAGE_SIZE ?? "";
+  if (pageText !== "" && !/^[1-9]\d*$/.test(pageText)) fail(name, `HARNESS_PAGE_SIZE: must be a positive integer, got ${JSON.stringify(pageText)}`);
+  const pageSize = pageText === "" ? undefined : Number(pageText);
+
   let options;
   try {
     options = buildOptions(JSON.parse(process.env.HARNESS_OPTIONS ?? "{}"), apiUrl);
   } catch (err) {
     fail(name, `HARNESS_OPTIONS: ${err.message}`);
   }
-  return { mode, port, tracked, projectId, options };
+  return { mode, port, tracked, projectId, options, pageSize };
 }
 
 /** The TS SDK built from the pinned commit (fetched and built on first use). */
@@ -69,9 +74,11 @@ export async function loadAgentCat() {
 // ---------------------------------------------------------------------------
 const FLAGS = ["enableTracing", "enableReportMissing", "enableToolCallContext", "enableAgentTracking", "customContextDescription"];
 // Hooks whose src/types.ts signature allows a synchronous return.
-const SYNC_HOOKS = ["resolveSessionId", "eventTags", "eventProperties"];
+const SYNC_HOOKS = ["resolveSessionId", "eventTags", "eventProperties", "redactEvent"];
 // Hooks whose signature returns a Promise.
 const ASYNC_HOOKS = ["identify", "redactSensitiveInformation"];
+// The event fields a redactEvent "merge" may set (the Rust server sets the matching Event fields).
+const MERGE_FIELDS = ["resourceName", "sessionId", "eventType", "userIntent", "properties"];
 
 // `apiUrl` (AGENTCAT_API_URL, which startup has checked) goes in as the `apiBaseUrl` option, the
 // name at the pinned commit, not only through the environment: a TS version that stopped reading
@@ -90,16 +97,21 @@ function buildOptions(profile, apiUrl) {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** The kinds of behavior each hook takes. */
+const KINDS = { redactSensitiveInformation: ["returns", "throws", "replace"], redactEvent: ["returns", "throws", "merge"] };
+
 /**
  * A canned behavior -> a function with the hook's signature:
  *   {"returns": <value or null>} | {"throws": "<message>"}, either plus "sleepMs": <n>;
- *   redactSensitiveInformation also takes {"replace": "<secret>"} (each occurrence -> "[REDACTED]").
+ *   redactSensitiveInformation also takes {"replace": "<secret>"} (each occurrence -> "[REDACTED]");
+ *   redactEvent takes {"returns": null} (drop the event) and {"merge": {<field>: <value>}} (the event
+ *   with those fields set, `{...event, ...merge}`; a field is one of MERGE_FIELDS).
  * A synchronous-capable hook answers synchronously unless sleepMs is given; identify
  * and redactSensitiveInformation always return a Promise. Each call returns a fresh copy.
  */
 function hook(name, spec) {
   if (!spec || typeof spec !== "object" || Array.isArray(spec)) throw new Error(`${name}: a behavior must be an object`);
-  const kinds = name === "redactSensitiveInformation" ? ["returns", "throws", "replace"] : ["returns", "throws"];
+  const kinds = KINDS[name] ?? ["returns", "throws"];
   for (const key of Object.keys(spec)) {
     if (key !== "sleepMs" && !kinds.includes(key)) throw new Error(`${name}: unknown key ${JSON.stringify(key)}`);
   }
@@ -110,19 +122,31 @@ function hook(name, spec) {
   if (kind === "replace" && (typeof spec.replace !== "string" || spec.replace === "")) {
     throw new Error(`${name}: "replace" must be a non-empty string`);
   }
+  if (name === "redactEvent" && kind === "returns" && spec.returns !== null) throw new Error(`${name}: "returns" must be null`);
+  if (kind === "merge") {
+    if (!spec.merge || typeof spec.merge !== "object" || Array.isArray(spec.merge)) throw new Error(`${name}: "merge" must be an object`);
+    for (const field of Object.keys(spec.merge)) {
+      if (!MERGE_FIELDS.includes(field)) throw new Error(`${name}: unknown merge field ${JSON.stringify(field)} (use ${MERGE_FIELDS.join(", ")})`);
+    }
+  }
   if ("sleepMs" in spec && !(Number.isInteger(spec.sleepMs) && spec.sleepMs >= 0)) {
     throw new Error(`${name}: "sleepMs" must be a non-negative integer`);
   }
-  const answer = (text) => {
+  const answer = (input) => {
     if (kind === "throws") throw new Error(spec.throws);
-    if (kind === "replace") return text.split(spec.replace).join("[REDACTED]");
+    if (kind === "replace") return input.split(spec.replace).join("[REDACTED]");
+    if (kind === "merge") return { ...input, ...structuredClone(spec.merge) };
     return structuredClone(spec.returns);
   };
-  if (name === "redactSensitiveInformation") {
-    return async (text) => {
-      if (spec.sleepMs !== undefined) await sleep(spec.sleepMs);
-      return answer(text);
-    };
+  if (name === "redactSensitiveInformation" || name === "redactEvent") {
+    // The hook's argument (the text, or the event) is what the answer works on.
+    if (ASYNC_HOOKS.includes(name) || spec.sleepMs !== undefined) {
+      return async (input) => {
+        if (spec.sleepMs !== undefined) await sleep(spec.sleepMs);
+        return answer(input);
+      };
+    }
+    return (input) => answer(input);
   }
   if (ASYNC_HOOKS.includes(name) || spec.sleepMs !== undefined) {
     return async (_request, _extra) => {
@@ -330,14 +354,42 @@ export const TOOLS = [
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
+  },
+  {
+    "name": "emit_custom_server",
+    "description": "Publishes an AgentCat custom event in the name of this server",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "session": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "resource"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
   }
 ];
 
 /**
- * Tool name -> handler (arguments -> CallToolResult). `agentcat` is the TS SDK
- * module. Each call returns new functions: call it once per server.
+ * Tool name -> handler (arguments -> CallToolResult). `agentcat` is the TS SDK module; `server()`
+ * returns the tracked McpServer the handlers serve (emit_custom_server publishes in its name). Each
+ * call returns new functions: call it once per server.
  */
-export function toolHandlers({ tracked, projectId, agentcat }) {
+export function toolHandlers({ tracked, projectId, agentcat, server }) {
   const text = (value) => ({ content: [{ type: "text", text: value }] });
   return {
     echo: async ({ msg }) => text(msg),
@@ -362,7 +414,46 @@ export function toolHandlers({ tracked, projectId, agentcat }) {
     own_session: async ({ session_id }) => text(`session_id=${session_id}`),
     own_context: async ({ context }) => text(context),
     structured_own: async ({ msg }) => ({ ...text(msg), structuredContent: { echoed: msg } }),
+    emit_custom_server: async ({ resource, message, session, tags }) => {
+      // Untracked: as emit_custom.
+      if (!tracked) return text("published");
+      // The server form; `tags` is undefined unless the call gives it, as TS's `if (eventData.tags)` reads it.
+      await agentcat.publishCustomEvent(server(), projectId, {
+        resourceName: resource,
+        message,
+        sessionId: session,
+        parameters: { from: "emit_custom_server" },
+        tags,
+      });
+      return text("published");
+    },
   };
+}
+
+/**
+ * Pages tools/list (HARNESS_PAGE_SIZE): replaces the tools/list entry of the low-level server's
+ * request-handler map with a wrapper that serves `pageSize` tools of the full result from the start
+ * index in `params.cursor` (decimal, default 0), with `nextCursor` (the next start index) while tools
+ * remain. A cursor that is not a decimal index of a tool fails with InvalidParams. Call it after the
+ * tools are registered and before track(), so the SDK wraps the paging handler (test servers only).
+ * `invalidParams(message)` builds the host SDK's protocol error.
+ */
+export function pageToolsList(lowLevelServer, pageSize, invalidParams) {
+  const handlers = lowLevelServer._requestHandlers;
+  const full = handlers.get("tools/list");
+  if (typeof full !== "function") throw new Error("pageToolsList: the server has no tools/list handler");
+  handlers.set("tools/list", async (request, extra) => {
+    const result = await full(request, extra);
+    const cursor = request?.params?.cursor;
+    const valid =
+      cursor === undefined || (typeof cursor === "string" && /^(?:0|[1-9]\d*)$/.test(cursor) && Number(cursor) < result.tools.length);
+    if (!valid) throw invalidParams(`invalid cursor ${JSON.stringify(cursor)}`);
+    const start = cursor === undefined ? 0 : Number(cursor);
+    const end = start + pageSize;
+    const page = { ...result, tools: result.tools.slice(start, end) };
+    if (end < result.tools.length) page.nextCursor = String(end);
+    return page;
+  });
 }
 
 // ---------------------------------------------------------------------------

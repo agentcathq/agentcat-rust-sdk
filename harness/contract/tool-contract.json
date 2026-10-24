@@ -185,5 +185,32 @@
       "additionalProperties": false,
       "$schema": "http://json-schema.org/draft-07/schema#"
     }
+  },
+  {
+    "name": "emit_custom_server",
+    "description": "Publishes an AgentCat custom event in the name of this server",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "resource": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "session": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "object",
+          "additionalProperties": {}
+        }
+      },
+      "required": [
+        "resource"
+      ],
+      "additionalProperties": false,
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    }
   }
 ]

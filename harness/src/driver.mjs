@@ -17,7 +17,10 @@
 // Before each connect and each step, the driver waits until the wall clock is past the millisecond
 // in which the previous request was answered: a server stamps an event between a request's arrival and
 // its answer, so the events of two requests in a row never share a millisecond, and the time order of
-// the normalizer is the request order on every server and every run.
+// the normalizer is the request order on every server and every run. A parallel step (its callTool
+// steps at once, recorded in step order; an inner step may name an earlier session's client) waits
+// once, as a whole. A listTools step lists one page (cursor: the step's `cursor`; `saveCursorAs` keeps
+// the result's nextCursor); a scenario's pageSize becomes the server's HARNESS_PAGE_SIZE.
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts. The servers'
 // stderr is piped through the driver's stderr; report.json records per server
@@ -35,7 +38,7 @@
 //         server needed SIGKILL after SIGTERM, with --expect-drained a server exited
 //         without printing {"drained":true}, or the run failed (a negotiated version
 //         other than --lane; in a tracked run, a saveHandleAs that finds no handle or
-//         a ${NAME} with no saved value).
+//         a ${NAME} with no saved value; in any run, a saveCursorAs without a nextCursor).
 //         On a run failure every connected client is closed first.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
@@ -107,10 +110,18 @@ const [scenarioPath, label, transport] = head;
 if (!/^[A-Za-z0-9_-]+$/.test(label)) usage(`bad label ${JSON.stringify(label)} (letters, digits, _ and - only)`);
 if (!TRANSPORTS.includes(transport)) usage(`unknown transport ${JSON.stringify(transport)}`);
 
-const TOP_KEYS = ["name", "projectId", "options", "httpHeaders", "expectPublishes", "settleTimeoutMs", "quietMs", "eventOrder", "sessions"];
+const TOP_KEYS = ["name", "projectId", "options", "httpHeaders", "pageSize", "expectPublishes", "settleTimeoutMs", "quietMs", "eventOrder", "sessions"];
 /** The values of the scenario key eventOrder (normalize.mjs): absent, the events sort by time. */
 const EVENT_ORDERS = ["multiset"];
-const STEP_KEYS = { listTools: ["op", "cursor"], callTool: ["op", "name", "args", "saveHandleAs"] };
+const STEP_KEYS = {
+  listTools: ["op", "cursor", "saveCursorAs"],
+  callTool: ["op", "name", "args", "saveHandleAs"],
+  parallel: ["op", "steps"],
+};
+/** The keys of a callTool step inside a parallel step: `session` names the session whose client runs it. */
+const INNER_KEYS = [...STEP_KEYS.callTool, "session"];
+/** A name that saveHandleAs and saveCursorAs save under, and `${NAME}` reads. */
+const VAR_NAME = /^\w+$/;
 
 let scenario;
 try {
@@ -131,24 +142,53 @@ function onlyKeys(obj, allowed, where) {
   for (const key of Object.keys(obj)) if (!allowed.includes(key)) usage(`${where}: unknown key ${JSON.stringify(key)}`);
 }
 
+/** Exits 2 unless `name`, when given, is a VAR_NAME; `key` names the field. */
+function checkName(name, key, where) {
+  if (name !== undefined && !(typeof name === "string" && VAR_NAME.test(name))) usage(`${where}: ${key} must be letters, digits and _`);
+}
+
+/** Exits 2 unless `step` is a callTool step with a name; `keys` are the keys it may have. */
+function checkCall(step, keys, where) {
+  if (typeof step.name !== "string") usage(`${where}: a callTool step needs a name`);
+  onlyKeys(step, keys, where);
+  checkName(step.saveHandleAs, "saveHandleAs", where);
+}
+
+/** Exits 2 on a bad step of session `si`: listTools, callTool, or parallel (callTool steps of this or an earlier session). */
+function checkStep(step, where, si) {
+  if (!step || typeof step !== "object" || Array.isArray(step) || !Object.hasOwn(STEP_KEYS, step.op)) {
+    usage(`${where}: op must be listTools, callTool with a name, or parallel`);
+  }
+  if (step.op === "callTool") return checkCall(step, STEP_KEYS.callTool, where);
+  onlyKeys(step, STEP_KEYS[step.op], where);
+  if (step.op === "listTools") {
+    if (step.cursor !== undefined && typeof step.cursor !== "string") usage(`${where}: cursor must be a string`);
+    return checkName(step.saveCursorAs, "saveCursorAs", where);
+  }
+  if (!Array.isArray(step.steps) || step.steps.length === 0) usage(`${where}: steps must be a non-empty array of callTool steps`);
+  for (const [k, inner] of step.steps.entries()) {
+    const at = `${where}.steps[${k}]`;
+    if (!inner || typeof inner !== "object" || inner.op !== "callTool") usage(`${at}: a parallel step holds callTool steps only`);
+    checkCall(inner, INNER_KEYS, at);
+    const s = inner.session;
+    if (s !== undefined && !(Number.isInteger(s) && s >= 0 && s <= si)) usage(`${at}: session must be the index of this or an earlier session`);
+  }
+}
+
 /** Validates the scenario; returns the publish count expected on this transport and lane. */
 function checkScenario(s) {
   if (!s || typeof s !== "object" || Array.isArray(s)) usage("scenario must be a JSON object");
   onlyKeys(s, TOP_KEYS, "scenario");
   if (typeof s.name !== "string" || !/^[A-Za-z0-9_-]+$/.test(s.name)) usage("scenario.name must be letters, digits, _ and -");
   if (typeof s.projectId !== "string" || s.projectId === "") usage("scenario.projectId must be a non-empty string");
+  if (s.pageSize !== undefined && !(Number.isInteger(s.pageSize) && s.pageSize > 0)) usage("scenario.pageSize must be a positive integer");
   if (s.eventOrder !== undefined && !EVENT_ORDERS.includes(s.eventOrder)) usage(`scenario.eventOrder must be one of ${EVENT_ORDERS.join(", ")}`);
   if (!Array.isArray(s.sessions) || s.sessions.length === 0) usage("scenario.sessions must be a non-empty array");
   for (const [si, session] of s.sessions.entries()) {
     if (!session || typeof session !== "object" || Array.isArray(session)) usage(`sessions[${si}] must be an object`);
     onlyKeys(session, ["client", "steps"], `sessions[${si}]`);
     if (!Array.isArray(session.steps)) usage(`sessions[${si}].steps must be an array`);
-    for (const [i, step] of session.steps.entries()) {
-      const where = `sessions[${si}].steps[${i}]`;
-      if (step?.op === "callTool" && typeof step.name !== "string") usage(`${where}: op must be listTools, or callTool with a name`);
-      if (!Object.hasOwn(STEP_KEYS, step?.op)) usage(`${where}: op must be listTools, or callTool with a name`);
-      onlyKeys(step, STEP_KEYS[step.op], where);
-    }
+    for (const [i, step] of session.steps.entries()) checkStep(step, `sessions[${si}].steps[${i}]`, si);
   }
   // A number, or an object keyed by `<transport>` or `<transport>@<lane>` (first match wins).
   const e = s.expectPublishes;
@@ -253,6 +293,9 @@ async function main() {
   };
   // The Rust SDK reads AGENTCAT_ENABLED (decision C45): a developer shell's value must not turn it off.
   delete serverEnv.AGENTCAT_ENABLED;
+  // The scenario's pageSize pages tools/list; without it, no page size, whatever the caller's environment says.
+  if (scenario.pageSize === undefined) delete serverEnv.HARNESS_PAGE_SIZE;
+  else serverEnv.HARNESS_PAGE_SIZE = String(scenario.pageSize);
 
   let httpUrl;
   let httpChild;
@@ -335,7 +378,35 @@ async function main() {
     return undefined;
   }
 
+  /** Saves the handle of a callTool step's result under its saveHandleAs, if it has one. */
+  function saveHandle(step, entry, where) {
+    if (!step.saveHandleAs) return;
+    const handle = handleFrom(entry.result);
+    if (handle === undefined && tracked) throw new DriverFailure(`${where}: no session handle for ${step.saveHandleAs}`);
+    vars[step.saveHandleAs] = handle;
+  }
+
+  /** A failed request: protocol errors (JSON-RPC errors) are part of the observable contract. */
+  const errorOf = (e) => ({ name: e?.constructor?.name, code: e?.code, message: String(e?.message ?? e) });
+
+  /**
+   * Runs the callTool step `step` on the client of session `si`; resolves its transcript entry. The
+   * request goes out before the first await, so the calls of a parallel step start in step order.
+   */
+  async function callStep(si, step, where) {
+    const entry = { session: si, op: "callTool", request: { name: step.name, arguments: subst(step.args ?? {}, where) } };
+    try {
+      entry.result = await sessionClients[si].callTool(entry.request);
+    } catch (e) {
+      if (e instanceof DriverFailure) throw e;
+      entry.error = errorOf(e);
+    }
+    return entry;
+  }
+
   const transcript = [];
+  /** The client of each session connected so far, by session index. */
+  const sessionClients = [];
   // Date.now() when the previous request was answered (see pastMillisecond).
   let answeredAt = Number.NEGATIVE_INFINITY;
   for (const [si, session] of scenario.sessions.entries()) {
@@ -344,6 +415,7 @@ async function main() {
     const client = await connect(session.client ?? { name: "harness-client", version: "1.0.0" }, negotiated, si);
     answeredAt = Date.now();
     clients.push(client);
+    sessionClients[si] = client;
     // "auto" can fall back to initialize: the lane must be the one that was asked for.
     if (negotiated.protocolVersion !== lane) {
       throw new DriverFailure(`negotiated ${negotiated.protocolVersion ?? null}, expected ${lane}`);
@@ -361,27 +433,42 @@ async function main() {
     });
     for (const [i, step] of session.steps.entries()) {
       const where = `step ${i} of session ${si}`;
-      const entry = { session: si, op: step.op };
+      // A parallel step waits once, as a whole: its calls start together.
       await pastMillisecond(answeredAt);
-      try {
-        if (step.op === "listTools") {
-          entry.result = await client.listTools(step.cursor ? { cursor: step.cursor } : undefined);
-        } else {
-          entry.request = { name: step.name, arguments: subst(step.args ?? {}, where) };
-          entry.result = await client.callTool(entry.request);
+      if (step.op === "parallel") {
+        const inner = step.steps.map((s, k) => [s, `step ${i}.${k} of session ${si}`]);
+        const entries = await Promise.all(inner.map(([s, at]) => callStep(s.session ?? si, s, at)));
+        answeredAt = Date.now();
+        // Recorded in step order, whatever order the answers came in.
+        for (const [k, [s, at]] of inner.entries()) {
+          saveHandle(s, entries[k], at);
+          transcript.push(entries[k]);
         }
-      } catch (e) {
-        if (e instanceof DriverFailure) throw e;
-        // Protocol errors (JSON-RPC errors) are part of the observable contract.
-        entry.error = { name: e?.constructor?.name, code: e?.code, message: String(e?.message ?? e) };
+      } else if (step.op === "listTools") {
+        const entry = { session: si, op: "listTools" };
+        if (step.cursor !== undefined) entry.request = { cursor: subst(step.cursor, where) };
+        // A paged scenario lists one page per step on both lanes: without a cursor, the v2 client's
+        // listTools() follows every nextCursor itself and drops it, so the driver sends the request.
+        const firstPageOnly = scenario.pageSize !== undefined && lane === "2026-07-28" && entry.request === undefined;
+        try {
+          entry.result = firstPageOnly ? await client.request({ method: "tools/list" }) : await client.listTools(entry.request);
+        } catch (e) {
+          if (e instanceof DriverFailure) throw e;
+          entry.error = errorOf(e);
+        }
+        answeredAt = Date.now();
+        if (step.saveCursorAs) {
+          const next = entry.result?.nextCursor;
+          if (typeof next !== "string") throw new DriverFailure(`${where}: no nextCursor for ${step.saveCursorAs}`);
+          vars[step.saveCursorAs] = next;
+        }
+        transcript.push(entry);
+      } else {
+        const entry = await callStep(si, step, where);
+        answeredAt = Date.now();
+        saveHandle(step, entry, where);
+        transcript.push(entry);
       }
-      answeredAt = Date.now();
-      if (step.saveHandleAs) {
-        const handle = handleFrom(entry.result);
-        if (handle === undefined && tracked) throw new DriverFailure(`${where}: no session handle for ${step.saveHandleAs}`);
-        vars[step.saveHandleAs] = handle;
-      }
-      transcript.push(entry);
     }
   }
 

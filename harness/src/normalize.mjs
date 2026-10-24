@@ -236,9 +236,11 @@ export async function normalizeRun({ requests, transcript, scenario }) {
     return { raw, entry };
   });
 
-  // Order: the event's time (its raw timestamp); in the same millisecond, an
-  // event with a duration (a call, which can enclose events published during
-  // it) before one without; then the resource name, then the normalized body
+  // Order: the event's time (its raw timestamp); in the same millisecond, a
+  // call (an event with a duration that is not a custom event: it can enclose
+  // events published during it) before the rest, a server-form custom event
+  // included (it has a duration but encloses nothing, K-03); then the resource
+  // name, then the normalized body
   // with its random IDs masked, key order aside (the queue publishes up to 5
   // events concurrently, so arrival order is noise; masking keeps the order
   // the same from run to run, and the normalized body has no raw duration or
@@ -247,7 +249,8 @@ export async function normalizeRun({ requests, transcript, scenario }) {
   const masked = (e) => canon(e.entry.body).replace(ID_RE, "<id>");
   for (const e of normalizedEvents) e.key = masked(e);
   const byBody = (a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
-  const untimed = (e) => (typeof e.raw?.duration === "number" ? 0 : 1);
+  const custom = (e) => (e.raw?.event_type ?? e.raw?.eventType) === "agentcat:custom";
+  const untimed = (e) => (typeof e.raw?.duration === "number" && !custom(e) ? 0 : 1);
   const byTime = (a, b) =>
     timeOf(a.raw?.timestamp) - timeOf(b.raw?.timestamp) ||
     String(a.raw?.timestamp).localeCompare(String(b.raw?.timestamp)) ||

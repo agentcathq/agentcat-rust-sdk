@@ -1,5 +1,6 @@
 // The matrix runner: arguments, and one A/A combination on the TS v2 server.
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
 import { join } from "node:path";
 import { before, test } from "node:test";
 
@@ -211,9 +212,11 @@ test("a whole-matrix run fails on an event ruling that matched nothing and names
   });
   assert.equal(res.code, 1, res.stdout + res.stderr);
   const summary = readJson(join(OUT, "matrix.json"));
-  assert.equal(summary.length, 36);
+  // Every scenario file, on 3 transports and 2 lanes.
+  const combinations = readdirSync(join(HARNESS, "scenarios")).filter((f) => f.endsWith(".json")).length * 3 * 2;
+  assert.equal(summary.length, combinations);
   assert.ok(summary.every((e) => e.events.total === 0 && e.delta.total === 0), JSON.stringify(summary.map((e) => [e.events, e.delta])));
-  assert.equal(res.stdout.match(/^ok /gm)?.length, 36, res.stdout);
+  assert.equal(res.stdout.match(/^ok /gm)?.length, combinations, res.stdout);
   assert.doesNotMatch(res.stdout, /^FAIL /m);
   assert.match(res.stdout, /^EVENT UNUSED RULING RD-90 matched 0: /m);
   assert.equal(res.stdout.match(/UNUSED RULING/g)?.length, 1, res.stdout);

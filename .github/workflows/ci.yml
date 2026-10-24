@@ -212,6 +212,21 @@ jobs:
             exit 1
           fi
           node harness/src/l3-expect.mjs caught
+      # HARNESS_CANARY=call changes the mint-back text after the SDK recorded the call: caught in the delta
+      # (results' first content block) of every combination, and nowhere in the events.
+      # HARNESS_CANARY=event renames every event in a redact_event hook: caught in the events (resource_name)
+      # of every combination, and nowhere in the delta.
+      - name: Call and event canary runs
+        run: |
+          for canary in call event; do
+            status=0
+            node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 "HARNESS_CANARY=$canary" || status=$?
+            if [ "$status" -ne 1 ]; then
+              echo "L3 $canary canary failed: the matrix exited $status, expected 1"
+              exit 1
+            fi
+            node harness/src/l3-expect.mjs "caught-$canary"
+          done
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

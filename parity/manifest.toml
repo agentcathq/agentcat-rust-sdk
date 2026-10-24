@@ -29,79 +29,98 @@ status = "todo"
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-mint'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-supplied'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'agent-tracking-x-hook'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::hooks::tests::hook_mode_listing_has_no_session_id"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'baseline-defaults'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'client-identity-ladder'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::client_identity_skips_peer_info_on_stateless_http", "agentcat-sdk::event::tests::stdio_client_is_the_handshake_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'context-custom-description'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'context-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'error-path'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'hooks-identity-tags-props'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'mint-back-structured-mirror'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::mirror_gate_follows_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'redaction'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'report-missing-call'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'report-missing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'session-continuity-stateful'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::tracked_stateful_http_record_has_session_and_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'strict-schema-injection'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'strip-proof-loose'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::tests::strip_matches_ts"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-hook-deterministic'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-hook-null'"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'task-supplied-continuity'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateful' > 'tracing-off'"
@@ -115,79 +134,98 @@ rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_reco
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-mint'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-supplied'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'agent-tracking-x-hook'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::hooks::tests::hook_mode_listing_has_no_session_id"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'baseline-defaults'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'client-identity-ladder'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::client_identity_skips_peer_info_on_stateless_http", "agentcat-sdk::event::tests::stdio_client_is_the_handshake_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'context-custom-description'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'context-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'error-path'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'hooks-identity-tags-props'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'mint-back-structured-mirror'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::mirror_gate_follows_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'rebuild-on-demand'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "harness:pagination", "agentcat-sdk::call::run::tests::strict_tool_without_get_tool_rebuilds_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'redaction'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'report-missing-call'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'report-missing-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'strict-schema-injection'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'strip-proof-loose'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::tests::strip_matches_ts"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-hook-deterministic'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-hook-null'"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'task-supplied-continuity'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v1-matrix.test.ts|e2e-http v1 lane: 'v1-stateless' > 'tracing-off'"
@@ -201,55 +239,68 @@ rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_reco
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-mint'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-supplied'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'agent-tracking-x-hook'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::hooks::tests::hook_mode_listing_has_no_session_id"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'baseline-defaults'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'client-identity-ladder'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::client_identity_skips_peer_info_on_stateless_http", "agentcat-sdk::event::tests::stdio_client_is_the_handshake_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'context-custom-description'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'context-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'error-path'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'hooks-identity-tags-props'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'mint-back-structured-mirror'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::mirror_gate_follows_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'rebuild-on-demand'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "harness:pagination", "agentcat-sdk::call::run::tests::strict_tool_without_get_tool_rebuilds_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'redaction'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-call'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'report-missing-off'"
@@ -258,23 +309,28 @@ rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'strict-schema-injection'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'strip-proof-loose'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::tests::strip_matches_ts"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-deterministic'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-hook-null'"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'task-supplied-continuity'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-auto' > 'tracing-off'"
@@ -288,55 +344,68 @@ rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_reco
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-mint'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-supplied'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'agent-tracking-x-hook'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::hooks::tests::hook_mode_listing_has_no_session_id"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'baseline-defaults'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'client-identity-ladder'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::client_identity_skips_peer_info_on_stateless_http", "agentcat-sdk::event::tests::stdio_client_is_the_handshake_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'context-custom-description'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'context-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'error-path'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'hooks-identity-tags-props'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'mint-back-structured-mirror'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::mirror_gate_follows_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'rebuild-on-demand'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "harness:pagination", "agentcat-sdk::call::run::tests::strict_tool_without_get_tool_rebuilds_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'redaction'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-call'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'report-missing-off'"
@@ -345,23 +414,28 @@ rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'strict-schema-injection'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'strip-proof-loose'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::tests::strip_matches_ts"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-deterministic'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-hook-null'"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'task-supplied-continuity'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-handler-legacy' > 'tracing-off'"
@@ -375,51 +449,63 @@ rust = ["harness:tracing-off", "agentcat-sdk::call::run::tests::tracing_off_reco
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-mint'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-supplied'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'agent-tracking-x-hook'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::hooks::tests::hook_mode_listing_has_no_session_id"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'baseline-defaults'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'client-identity-ladder'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::client_identity_skips_peer_info_on_stateless_http", "agentcat-sdk::event::tests::stdio_client_is_the_handshake_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'context-custom-description'"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "agentcat-sdk::call::run::tests::custom_description_listing_and_intents"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'context-off'"
-status = "todo"
+status = "ported"
+rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'error-path'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'hooks-identity-tags-props'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::sdk_tags_win_collisions"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'mint-back-structured-mirror'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::mirror_gate_follows_registry"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'redaction'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'report-missing-call'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'report-missing-off'"
@@ -428,27 +514,33 @@ rust = ["harness:features-off", "agentcat-sdk::call::run::tests::listing_follows
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'session-continuity-stateful'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::event::tests::tracked_stateful_http_record_has_session_and_client"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'strict-schema-injection'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'strip-proof-loose'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:schemas", "agentcat-sdk::call::tests::strip_matches_ts"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-hook-deterministic'"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-hook-null'"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'task-supplied-continuity'"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "e2e-http|src/tests/e2e-http/v2-matrix.test.ts|e2e-http v2 lane: 'v2-longlived' > 'tracing-off'"
@@ -875,7 +967,8 @@ reason = "TS server-shape compatibility checks and their errors do not exist in 
 
 [[test]]
 key = "v1|src/tests/concurrency.test.ts|concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
-status = "todo"
+status = "ported"
+rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent"]
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > emits the agentcat custom event type on the wire"
@@ -1601,7 +1694,8 @@ rust = ["agentcat-sdk::hooks::tests::hook_panic_does_not_reach_the_call", "agent
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > error-path events carry hook results resolved after the throw"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > hanging resolveSessionId/eventTags/eventProperties do not delay the tool call"
@@ -1610,7 +1704,8 @@ rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk:
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > redactEvent sees resolved hook state, and pending never reaches it or the processed event"
-status = "todo"
+status = "ported"
+rust = ["harness:redaction"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > the handler starts before a slow hook settles"
@@ -1990,7 +2085,8 @@ reason = "queue.json case custom:server-form-invalid-tags; checked by agentcat-s
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > redaction bypass > should not redact tags or properties when redactSensitiveInformation is configured"
-status = "todo"
+status = "ported"
+rust = ["harness:redaction", "agentcat-sdk::pipeline::redact::tests::vectors_match_ts"]
 
 [[test]]
 key = "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > tools/list is no longer an event > publishes no tools/list event even when tag/property callbacks are set"
@@ -2936,23 +3032,28 @@ status = "todo"
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > high-level: get_more_tools minting call — event.response keeps only the answer"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > high-level: minting call — block on the wire, absent from event.response"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: echoed handles — event.response is exactly the handler result"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: minting call — block on the wire, absent from event.response"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v1|src/tests/handles-integration.test.ts|published events exclude SDK-authored mint-back text > low-level: minting error call — event.response and event.error stay clean"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "v1|src/tests/handles.test.ts|appendMintBack > does not mutate the original result"
@@ -3432,7 +3533,8 @@ reason = "returns an object without userId from identify; the Rust hook returns 
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on every tool call and stamp every event, with no dedup"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Basic Identification Test > should call identify on the tool call and stamp the identity onto that event"
@@ -3461,11 +3563,13 @@ rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_identify_null"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > Null/Undefined Identity Handling > should work without identify function (anonymous sessions)"
-status = "todo"
+status = "ported"
+rust = ["harness:schemas", "agentcat-sdk::pipeline::settle::tests::unset_and_null_hooks_change_nothing"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > User Data Persistence Across Tool Calls > should maintain user identification across multiple tool calls"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v1|src/tests/identify.test.ts|Identify Feature > tools/list no longer identifies or publishes > should not run identify or publish an event for a tools/list request"
@@ -3670,159 +3774,237 @@ reason = "TS checks the installed MCP SDK version; Rust links one rmcp, tested o
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should NOT emit $ai_span for non-tool-call events even with enableAITracing"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should NOT emit $ai_span when enableAITracing is false or unset"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should allow customer tags to override $ai_* defaults on $ai_span"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should emit $ai_span alongside regular event for tool calls when enableAITracing is true"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should emit regular + $exception + $ai_span for error tool calls with enableAITracing"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should fall back to sessionId when identifyActorGivenId is not set"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should generate deterministic UUIDs for $ai_span trace and span IDs"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should include $set person properties from identity data"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should include userIntent in properties"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should map event types to PostHog event names"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not include $set when no identity data is present"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not include customer tag or property keys when not set on event"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not send $exception event when isError is false"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not throw when fetch fails"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should not throw when fetch returns non-ok response"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should omit $session_id entirely for sessionless events (empty sessionId)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should only set tool_name for tools/call events"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should pass through parameters and response as-is (objects stay objects)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should pass through string parameters and response as-is"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should send $exception event alongside regular event when isError is true"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should send correct payload structure for regular events"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer tags and properties directly on $ai_span (not namespaced)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer-defined properties directly into properties"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should spread customer-defined tags directly into properties"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should strip trailing slash from host"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should use custom host when provided"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-exporter.test.ts|PostHogExporter > should use identifyActorGivenId as distinct_id when available"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic for empty-string input"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic for non-KSUID input (fallback path)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should be deterministic — same input always produces same output"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should embed the KSUID timestamp in the UUIDv7"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should handle evt_ prefix"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should handle invalid KSUID gracefully with fallback timestamp"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce a valid UUIDv7"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce different UUIDs for different non-KSUID inputs"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce different UUIDs for different session IDs"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should produce timestamps that are before or equal to current time"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should set variant bits to 10xx"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/posthog-uuidv7.test.ts|toUUIDv7 > should set version bits to 7 (0111)"
-status = "todo"
+status = "n/a"
+category = "second-pass"
+reason = "exporters and diagnostics: second pass (R04, C05, RD-16)"
 
 [[test]]
 key = "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should always use 'agentcat:custom' as event type"
@@ -4341,7 +4523,8 @@ rust = ["harness:schemas", "harness:agent-tracking"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts an error result's content, including a throw the SDK turns into one"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::tokens::tests::output_tokens_match_ts"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > counts the raw arguments and the content text"
@@ -4355,15 +4538,19 @@ rust = ["agentcat-sdk::tokens::tests::output_tokens_match_ts", "agentcat-sdk::ev
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > keeps the raw counts when redaction rewrites the payloads"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:redaction"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > keeps the raw counts when truncation shortens the response"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v1|src/tests/token-estimates.test.ts|token estimates on tool-call events > never breaks the tool call when the estimator itself throws"
-status = "todo"
+status = "n/a"
+category = "ts-host-only"
+reason = "the test replaces the estimator with a throwing module mock (a JS module seam); the Rust estimator is a total function over serde_json::Value with no failure path (tokens::tests::estimate_tokens_never_overflows)"
 
 [[test]]
 key = "v1|src/tests/tokenEstimate.test.ts|estimateInputTokens (raw arguments) > never throws: a toJSON that throws yields an omitted field"
@@ -4972,7 +5159,8 @@ reason = "tags.json case test:all-invalid; checked by agentcat-sdk::pipeline::ta
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: OFF by default > injects no agent_id param, tags nothing, and mints task-only"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > advertises both handles as required on every tool including get_more_tools"
@@ -4981,19 +5169,23 @@ rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > echoes a self-chosen agent_id verbatim with source tag supplied"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > subagent flow: inherited task + own generated agent_id, no mint-back"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v2|src/tests/v2/agent-tracking.test.ts|v2 agent tracking: enableAgentTracking true > tolerates omission: task-only mint-back, event without agent identity"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v2|src/tests/v2/concurrency.test.ts|v2 concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
-status = "todo"
+status = "ported"
+rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent"]
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > describeSignals lists only true signals"
@@ -5051,11 +5243,13 @@ reason = "TS server-shape detection does not exist in Rust: Tracked<H> wraps a t
 
 [[test]]
 key = "v2|src/tests/v2/era-2026.test.ts|2026-07-28 era via createMcpHandler > rebuild-on-demand serves calls on instances that never listed"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking", "harness:pagination", "agentcat-sdk::call::run::tests::strict_tool_without_get_tool_rebuilds_registry"]
 
 [[test]]
 key = "v2|src/tests/v2/era-2026.test.ts|2026-07-28 era via createMcpHandler > tracks per-request instances and captures envelope identity"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "harness:custom-events"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > advertises the tool with required bespoke context, handles, and honest annotations"
@@ -5064,19 +5258,23 @@ rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > answers with the canned text and publishes an event carrying userIntent"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > applies the mint-back to its result; the published event keeps only the answer"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::get_more_tools_answered_and_recorded"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > keeps task continuity when a supplied session_id spans customer tools and get_more_tools"
-status = "todo"
+status = "ported"
+rust = ["harness:agent-tracking"]
 
 [[test]]
 key = "v2|src/tests/v2/get-more-tools.test.ts|v2 get_more_tools on a tracked high-level server > stamps identity resolved for a get_more_tools call onto its event"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: (request, extra) arguments carry the v2 ServerContext > passes the raw request and the v2 ServerContext to every hook"
@@ -5165,7 +5363,8 @@ rust = ["agentcat-sdk::hooks::tests::hooks_never_delay_the_call", "agentcat-sdk:
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on every tool call and stamps every event, with no dedup"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::pipeline::settle::tests::queue_hooks_identify"]
 
 [[test]]
 key = "v2|src/tests/v2/hooks.test.ts|v2 hooks: identify > runs identify on the tool call and stamps the identity onto that event"
@@ -5221,19 +5420,23 @@ reason = "Late registration is a TS mechanism: the wrapper in Rust sees every li
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > an invalid session_id publishes sessionless and tells the agent to re-send"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > appends the mint-back on isError results; event.response and event.error stay clean"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::is_error_result_gets_mint_back"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > echoed handles: event.response is exactly the handler result"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > first call sends start: mints session_id, prepends the mint-back, tags the source"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > injects required handles into listed tool schemas in canonical order"
@@ -5242,7 +5445,8 @@ rust = ["agentcat-sdk::call::run::tests::listing_follows_the_handle_options"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > minting call: block on the wire, absent from event.response"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::record_keeps_the_original_result"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > prefers the v2 envelope for clientInfo and protocol version"
@@ -5252,19 +5456,23 @@ reason = "the v2 envelope (ctx.mcpReq.envelope) is a host object of the TS MCP S
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > publishes no tools/list or initialize events"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::hooks::tests::listing_fires_no_hooks"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > publishes the event and rethrows when the low-level handler throws"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::error_data_returned_unchanged"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > stamps _meta clientInfo and protocol version when present"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v2|src/tests/v2/lowlevel-handles.test.ts|v2 low-level server: explicit handles > strips injected params before the customer handler; event keeps them"
-status = "todo"
+status = "ported"
+rust = ["harness:schemas", "agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing"]
 
 [[test]]
 key = "v2|src/tests/v2/options.test.ts|v2 options: customContextDescription > captures userIntent from calls made with the custom description configured"
@@ -5435,31 +5643,38 @@ rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > derives a deterministic ses_ id: same hook value + project → same id across calls and instances"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode", "agentcat-sdk::handles::tests::derive_matches_ts"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > emits no mint-back in hook mode; a supplied agent_id is tagged as supplied"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > hook mode + tracking on + omitted agent_id: no mint-back at all, no agent tags"
-status = "todo"
+status = "ported"
+rust = ["harness:hook-mode"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: resolveSessionId hook > mints silently on hook null: fresh ses_ per call, minted source, no mint-back"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::pipeline::settle::tests::queue_hooks_session_hook_null", "agentcat-sdk::pipeline::settle::tests::hook_mode_without_value_mints"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > mints on omission, announces the id, and tags the source as minted"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::call::run::tests::mint_back_for_minted_and_invalid_only"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > start begins a new task exactly like omission, case-insensitively"
-status = "todo"
+status = "ported"
+rust = ["harness:basic", "agentcat-sdk::handles::tests::extract_and_resolve_match_ts"]
 
 [[test]]
 key = "v2|src/tests/v2/session-modes.test.ts|v2 session modes: supplied vs minted (no hook) > tags a supplied session_id as supplied and reuses it verbatim, no mint-back"
-status = "todo"
+status = "ported"
+rust = ["harness:basic"]
 
 [[test]]
 key = "v2|src/tests/v2/smoke.test.ts|v2 harness smoke > round-trips a tool call through a real v2 server"

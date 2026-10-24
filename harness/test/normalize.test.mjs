@@ -157,6 +157,15 @@ test("event order: in the same millisecond the normalized body decides, not the 
   }
 });
 
+test("event order: in the same millisecond a custom event with a duration (the server form) sorts after the call it was published in", async () => {
+  // Both renamed alike by a redactEvent merge: neither the resource nor a raw duration may decide.
+  const call = publishOf(event({ resource_name: "renamed", duration: 1 }));
+  const custom = publishOf(event({ event_type: "agentcat:custom", resource_name: "renamed", duration: 0 }));
+  for (const requests of [[call, custom], [custom, call]]) {
+    assert.deepEqual((await events(requests)).map((e) => e.body.event_type), ["mcp:tools/call", "agentcat:custom"]);
+  }
+});
+
 test('event order: "eventOrder": "multiset" sorts on the normalized body alone', async () => {
   const one = (resource, at) => publishOf(event({ resource_name: resource, timestamp: `2026-01-01T00:00:00.${at}Z` }));
   // Two runs whose events started in opposite orders.

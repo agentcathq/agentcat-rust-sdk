@@ -13,5 +13,20 @@
     "lanes": ["2026-07-28"],
     "reason": "tracing-off.json, the own_context call with enableTracing false: TS's 2026-07-28 HTTP handler serves each request on a fresh server, whose inner tap strips context by the heuristic, so the tool loses its own context and the client rejects the result; Rust keeps the tool's own context: it strips the injected names with the schema it knows from get_tool and its registries (R27)",
     "deviation": "RD-29"
+  },
+  {
+    "path": "\\$\\.delta\\.transcript\\[7\\]\\.result\\.(?:content\\[0\\]\\.text|isError)",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes): the own_context call on page 3: no listing has built the registries of a per-request TS server, and TS's rebuild reads page 1 alone (K-01, K-02), so own_context is unknown, the heuristic strip (B-051) removes its own context and the host's zod validation fails the call; Rust's rebuild follows next_cursor and get_tool comes first (C03), so the tool keeps its own context",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.delta\\.transcript\\[7\\]\\.result\\.(?:content\\[0\\]\\.text|isError)",
+    "scenario": "pagination",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request): the own_context call on page 3: no listing has built the registries of a per-request TS server, and TS's rebuild reads page 1 alone (K-01, K-02), so own_context is unknown, the heuristic strip (B-051) removes its own context and the host's zod validation fails the call; Rust's rebuild follows next_cursor and get_tool comes first (C03), so the tool keeps its own context",
+    "deviation": "RD-12"
   }
 ]

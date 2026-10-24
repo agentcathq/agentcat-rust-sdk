@@ -78,7 +78,7 @@ test("caught: a combination without an unruled difference, one outside the canar
 test("a bad mode, an extra argument or an unreadable file exits 2", async (t) => {
   const dir = tempDir(t);
   const file = writeJson(join(dir, "matrix.json"), [combo("stdio")]);
-  for (const args of [[], ["both", file], ["none", file, "extra"], ["none", join(dir, "missing.json")]]) {
+  for (const args of [[], ["both", file], ["caught-calls", file], ["none", file, "extra"], ["none", join(dir, "missing.json")]]) {
     const res = await run(process.execPath, [L3, ...args]);
     assert.equal(res.code, 2, `${JSON.stringify(args)}: ${res.stdout}${res.stderr}`);
   }
@@ -110,6 +110,74 @@ test("caught: an event difference, or a combination without an event comparison,
     [[caught("stdio"), noEvents], /basic http 2025-11-25: no event comparison/],
   ]) {
     const res = await check(t, "caught", doc);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stderr, why);
+  }
+});
+
+// ---------------------------------------------------------------------------
+// Task 13: the call canary (HARNESS_CANARY=call) and the event canary (HARNESS_CANARY=event).
+// ---------------------------------------------------------------------------
+const MINT_PATH = "$.delta.transcript[2].result.content[0]";
+const RESOURCE_PATH = "$.events[0].body.resource_name";
+
+const MINT_TS = 'add {"type":"text","text":"[session_id issued — see this tool\'s session_id parameter description]\\nsession_id: <ses#1>\\nT...';
+const MINT_RUST = MINT_TS.replace("[session_id issued", "[session_id lssued");
+const callCaught = (transport, paths = [MINT_PATH]) =>
+  combo(transport, {
+    delta: { total: paths.length, ruled: 0, unexpected: paths.length },
+    differences: paths.map((path) => ({ path, ts: MINT_TS, rust: MINT_RUST, ruledBy: [] })),
+  });
+const eventCaught = (transport, paths = [RESOURCE_PATH]) =>
+  combo(transport, {
+    events: { total: paths.length, ruled: 0, unexpected: paths.length },
+    eventDifferences: paths.map((path) => ({ path, a: "echo", b: "canary", ruledBy: [] })),
+  });
+
+test("caught-call: passes when every combination has unruled differences in the first content block of results only", async (t) => {
+  // A call whose untracked answer was an error shows the whole tracked result as added.
+  const paths = [MINT_PATH, "$.delta.transcript[9].result", "$.delta.transcript[11].result.content[0].text"];
+  const res = await check(t, "caught-call", [callCaught("stdio"), callCaught("http", paths)]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /L3 call canary ok: 2 combination/);
+});
+
+test("caught-call: a difference elsewhere, an event difference, no unruled difference or a failed driver fails", async (t) => {
+  const withEvent = { ...callCaught("http"), events: { total: 1, ruled: 0, unexpected: 1 }, eventDifferences: [{ path: RESOURCE_PATH, a: "x", b: "y", ruledBy: [] }] };
+  for (const [doc, why] of [
+    [[callCaught("stdio"), callCaught("http", [MINT_PATH, TOOL_PATH])], /basic http 2025-11-25: a difference outside the canary paths: \$\.delta\.transcript\[1\]\.result\.tools/],
+    [[callCaught("stdio", ["$.delta.transcript[2].result.content[1]"])], /outside the canary paths: \$\.delta\.transcript\[2\]\.result\.content\[1\]/],
+    [[caught("stdio", [MINT_PATH])], /stdio 2025-11-25: not the call canary's change at \$\.delta\.transcript\[2\]\.result\.content\[0\]/],
+    [[callCaught("stdio", ["$.delta.transcript[9].structuredContent"])], /outside the canary paths: \$\.delta\.transcript\[9\]\.structuredContent/],
+    [[callCaught("stdio"), withEvent], /basic http 2025-11-25: an event difference: \$\.events\[0\]\.body\.resource_name/],
+    [[callCaught("stdio"), combo("http")], /basic http 2025-11-25: no unruled difference/],
+    [[{ ...callCaught("stdio"), exitCodes: { a: 1 } }], /driver exit/],
+    [[], /no combination ran/],
+  ]) {
+    const res = await check(t, "caught-call", doc);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stderr, why);
+  }
+});
+
+test("caught-event: passes when every combination has unruled event differences at resource_name only and no delta difference", async (t) => {
+  const res = await check(t, "caught-event", [eventCaught("stdio"), eventCaught("http", [RESOURCE_PATH, "$.events[9].body.resource_name"])]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.match(res.stdout, /L3 event canary ok: 2 combination/);
+});
+
+test("caught-event: a delta difference, an event difference elsewhere, no unruled event difference or a failed driver fails", async (t) => {
+  const withDelta = { ...eventCaught("http"), delta: { total: 1, ruled: 1, unexpected: 0 } };
+  for (const [doc, why] of [
+    [[eventCaught("stdio"), withDelta], /basic http 2025-11-25: a delta difference: delta \{"total":1/],
+    [[eventCaught("stdio", [RESOURCE_PATH, EVENT_PATH])], /an event difference outside the canary paths: \$\.events\[3\]\.body\.error\.type/],
+    [[eventCaught("stdio"), combo("http")], /basic http 2025-11-25: no unruled event difference/],
+    [[eventCaught("stdio"), combo("http", { events: { total: 1, ruled: 1, unexpected: 0 } })], /no unruled event difference/],
+    [[{ ...eventCaught("stdio"), exitCodes: { a: 1 } }], /driver exit/],
+    [[eventCaught("stdio", [RESOURCE_PATH]), { ...eventCaught("http"), events: undefined }], /no event comparison/],
+    [[], /no combination ran/],
+  ]) {
+    const res = await check(t, "caught-event", doc);
     assert.equal(res.code, 1, res.stdout + res.stderr);
     assert.match(res.stderr, why);
   }

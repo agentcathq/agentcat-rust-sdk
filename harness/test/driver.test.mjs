@@ -377,3 +377,106 @@ test("each request starts in a later millisecond than the last response, so no t
     assert.ok(events[i].ms > events[i - 1].ms, `request ${events[i].id} shares or precedes the millisecond of ${events[i - 1].id}: ${JSON.stringify(events)}`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Task 13: parallel steps, cursors and the page size (against the fake server of fixtures/).
+// ---------------------------------------------------------------------------
+const FAKE_SERVER = [process.execPath, join(HARNESS, "test", "fixtures", "fake-server.mjs")];
+
+/** A scenario of the given sessions (each a list of steps), untracked: no publishes. */
+function sessionsOf(t, name, sessions, extra = {}) {
+  return writeJson(join(tempDir(t), `${name}.json`), {
+    name,
+    projectId: readJson(BASIC).projectId,
+    options: {},
+    expectPublishes: 0,
+    sessions: sessions.map((steps) => ({ steps })),
+    ...extra,
+  });
+}
+
+const fake = (path, label, extra = [], env = {}) =>
+  driver(path, label, "stdio", extra, { server: FAKE_SERVER, env: { HARNESS_NO_TRACK: "1", ...env } });
+
+const gate = (id, want, more = {}) => ({ op: "callTool", name: "gate", args: { id, want }, ...more });
+const gateText = (entry) => JSON.parse(entry.result.content[0].text);
+
+test("a parallel step runs its calls at once and records them in step order", { timeout: 120_000 }, async (t) => {
+  const path = sessionsOf(t, "parallel", [[{ op: "parallel", steps: [0, 1, 2, 3].map((id) => gate(id, 4)) }]]);
+  const res = await fake(path, "parallel");
+  assert.equal(res.code, 0, res.stderr);
+  const calls = readJson(outFile("parallel", "parallel", "stdio", "transcript")).filter((e) => e.op !== "initialize");
+  // The gate opens only when all four calls are in flight; the later ones answer first.
+  assert.deepEqual(calls.map((e) => [e.session, e.op, e.request.arguments.id, gateText(e)]), [0, 1, 2, 3].map((id) => [0, "callTool", id, { id, together: 4 }]));
+});
+
+test("an inner step of a parallel step can run on an earlier session's client", { timeout: 120_000 }, async (t) => {
+  // stdio: each session has its own server, so each gate counts the calls of its own session.
+  const path = sessionsOf(t, "parallel2", [[], [{ op: "parallel", steps: [gate(0, 2, { session: 0 }), gate(1, 2), gate(2, 2, { session: 0 }), gate(3, 2)] }]]);
+  const res = await fake(path, "parallel2");
+  assert.equal(res.code, 0, res.stderr);
+  const calls = readJson(outFile("parallel2", "parallel2", "stdio", "transcript")).filter((e) => e.op === "callTool");
+  assert.deepEqual(calls.map((e) => [e.session, e.request.arguments.id, gateText(e).together]), [[0, 0, 2], [1, 1, 2], [0, 2, 2], [1, 3, 2]]);
+});
+
+test("saveCursorAs saves the result's nextCursor, and ${NAME} in a cursor uses it", { timeout: 120_000 }, async (t) => {
+  const path = sessionsOf(t, "cursors", [
+    [
+      { op: "listTools", saveCursorAs: "P2" },
+      { op: "listTools", cursor: "${P2}", saveCursorAs: "P3" },
+      { op: "listTools", cursor: "${P3}" },
+    ],
+  ]);
+  const res = await fake(path, "cursors");
+  assert.equal(res.code, 0, res.stderr);
+  const lists = readJson(outFile("cursors", "cursors", "stdio", "transcript")).filter((e) => e.op === "listTools");
+  assert.deepEqual(lists.map((e) => [e.request?.cursor, e.result.tools.map((tool) => tool.name), e.result.nextCursor]), [
+    [undefined, ["t0", "t1"], "page-2"],
+    ["page-2", ["t2", "t3"], "page-3"],
+    ["page-3", ["t4"], undefined],
+  ]);
+});
+
+test("saveCursorAs on a result without nextCursor exits 1 with the step and the name", { timeout: 120_000 }, async (t) => {
+  const path = sessionsOf(t, "nocursor", [[{ op: "listTools", cursor: "page-3", saveCursorAs: "P4" }]]);
+  const res = await fake(path, "nocursor");
+  assert.equal(res.code, 1, res.stderr);
+  assert.match(res.stderr, /^driver: step 0 of session 0: no nextCursor for P4$/m);
+});
+
+test("pageSize starts the server with HARNESS_PAGE_SIZE; without it the caller's value does not reach the server", { timeout: 120_000 }, async (t) => {
+  const env = [{ op: "callTool", name: "env", args: {} }];
+  let res = await fake(sessionsOf(t, "pagesize", [env], { pageSize: 3 }), "pagesize");
+  assert.equal(res.code, 0, res.stderr);
+  const text = (label) => readJson(outFile("pagesize", label, "stdio", "transcript")).find((e) => e.op === "callTool").result.content[0].text;
+  assert.equal(text("pagesize"), "3");
+  res = await fake(sessionsOf(t, "pagesize", [env]), "nopagesize", [], { HARNESS_PAGE_SIZE: "7" });
+  assert.equal(res.code, 0, res.stderr);
+  assert.equal(text("nopagesize"), "unset");
+});
+
+test("the scenario check rejects a bad parallel step, saveCursorAs or pageSize (exit 2)", async (t) => {
+  const call = { op: "callTool", name: "echo", args: { msg: "hi" } };
+  const one = (steps, extra = {}) => ({ name: "badsteps", projectId: readJson(BASIC).projectId, expectPublishes: 0, sessions: [{ steps }], ...extra });
+  const bad = {
+    "a listTools step in a parallel step": one([{ op: "parallel", steps: [call, { op: "listTools" }] }]),
+    "a nested parallel step": one([{ op: "parallel", steps: [{ op: "parallel", steps: [call] }] }]),
+    "an empty parallel step": one([{ op: "parallel", steps: [] }]),
+    "a parallel step without steps": one([{ op: "parallel" }]),
+    "an unknown parallel key": one([{ op: "parallel", steps: [call], name: "x" }]),
+    "an unknown key in an inner step": one([{ op: "parallel", steps: [{ ...call, cursor: "1" }] }]),
+    "an inner step on a later session": one([{ op: "parallel", steps: [{ ...call, session: 1 }] }]),
+    "an inner step on a session that is not an index": one([{ op: "parallel", steps: [{ ...call, session: "0" }] }]),
+    "session on a step outside a parallel step": one([{ ...call, session: 0 }]),
+    "saveCursorAs on a callTool step": one([{ ...call, saveCursorAs: "C" }]),
+    "a saveCursorAs that is not a name": one([{ op: "listTools", saveCursorAs: "a-b" }]),
+    "pageSize 0": one([call], { pageSize: 0 }),
+    "a pageSize that is not an integer": one([call], { pageSize: 1.5 }),
+    "a pageSize string": one([call], { pageSize: "3" }),
+  };
+  for (const [what, scenario] of Object.entries(bad)) {
+    const path = writeJson(join(tempDir(t), "bad.json"), scenario);
+    const res = await driver(path, "badsteps", "stdio");
+    assert.equal(res.code, 2, `${what}: ${res.stderr}`);
+  }
+});

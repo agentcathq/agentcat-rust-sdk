@@ -47,9 +47,11 @@ node --test "scripts/*.test.mjs"
 
 # harness-l3 (the Rust reference server is built above): the MCP-wire delta and the published events
 # against TS v2 on every scenario, transport and lane (every tracked Rust server must drain); an A/A run
-# of the Rust server, which must show no delta or event difference at all, ruled or not; and the canary
-# run, whose perturbed second server must be caught in the delta of every combination and nowhere in the
-# events. harness/src/l3-expect.mjs checks harness/out/matrix.json after each of the last two.
+# of the Rust server, which must show no delta or event difference at all, ruled or not; and three canary
+# runs, whose perturbed second server must be caught in every combination: the context canary
+# (HARNESS_CANARY=1) and the call canary (HARNESS_CANARY=call) in the delta and nowhere in the events, the
+# event canary (HARNESS_CANARY=event) in the events and nowhere in the delta. harness/src/l3-expect.mjs
+# checks harness/out/matrix.json after each of the last four.
 node harness/src/matrix.mjs
 node harness/src/matrix.mjs --servers rust,rust --scenarios basic
 node harness/src/l3-expect.mjs none
@@ -60,6 +62,15 @@ if [ "$canary" -ne 1 ]; then
   exit 1
 fi
 node harness/src/l3-expect.mjs caught
+for canary in call event; do
+  status=0
+  node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 "HARNESS_CANARY=$canary" || status=$?
+  if [ "$status" -ne 1 ]; then
+    echo "L3 $canary canary failed: the matrix exited $status, expected 1"
+    exit 1
+  fi
+  node harness/src/l3-expect.mjs "caught-$canary"
+done
 
 # test (R07 in a build of the SDK alone: another workspace member could turn the feature on)
 cargo nextest run --workspace --all-features

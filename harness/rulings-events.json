@@ -93,5 +93,179 @@
     "scenario": "schemas",
     "reason": "schemas.json, the two echo calls with msg 5: the isError result text, and the error message taken from it, are the host validator's text: ajv's from the TS v2 host library, serde's from rmcp (the transcripts differ the same way)",
     "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.response\\.content\\[0\\]\\.text",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+    "rust": "the tool's own context",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the result text: the host's validation error on TS, the tool's answer on Rust: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.(?:response\\.isError|is_error)",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": true,
+    "rust": "<absent>",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the failed call's isError on TS only: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": {
+      "message": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+      "platform": "<platform:string>"
+    },
+    "rust": "<absent>",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the error TS records from the failed call: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.output_tokens",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": 31,
+    "rust": 7,
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the token estimate of the two different results: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.response\\.content\\[0\\]\\.text",
+    "scenario": "pagination",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "ts": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+    "rust": "the tool's own context",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the result text: the host's validation error on TS, the tool's answer on Rust: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.(?:response\\.isError|is_error)",
+    "scenario": "pagination",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "ts": true,
+    "rust": "<absent>",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the failed call's isError on TS only: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error",
+    "scenario": "pagination",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "ts": {
+      "message": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+      "platform": "<platform:string>"
+    },
+    "rust": "<absent>",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the error TS records from the failed call: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.output_tokens",
+    "scenario": "pagination",
+    "transports": ["http"],
+    "lanes": ["2026-07-28"],
+    "ts": 31,
+    "rust": 7,
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the token estimate of the two different results: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; Rust's rebuild follows next_cursor (C03) and the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "redaction",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "redaction",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "redaction",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "hooks-fail",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "hooks-fail",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "hooks-fail",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[(?:6|8|10|12)\\]\\.body\\.client_name",
+    "scenario": "custom-events",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "harness-client",
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
+    "deviation": "RD-38",
+    "pending": true
+  },
+  {
+    "path": "\\$\\.events\\[(?:6|8|10|12)\\]\\.body\\.client_version",
+    "scenario": "custom-events",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "1.0.0",
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
+    "deviation": "RD-38",
+    "pending": true
+  },
+  {
+    "path": "\\$\\.events\\[6\\]\\.body\\.client_name",
+    "scenario": "redaction",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "harness-client",
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
+    "deviation": "RD-38",
+    "pending": true
+  },
+  {
+    "path": "\\$\\.events\\[6\\]\\.body\\.client_version",
+    "scenario": "redaction",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "1.0.0",
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
+    "deviation": "RD-38",
+    "pending": true
   }
 ]

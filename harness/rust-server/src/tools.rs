@@ -6,23 +6,27 @@
 //!
 //! Arguments are read with rmcp's [`Parameters`] extractor: a key the tool does not declare is
 //! ignored, as the TS servers drop it before the handler runs.
+//!
+//! With a page size (`HARNESS_PAGE_SIZE`), `tools/list` answers in pages, as `pageToolsList` in
+//! `common.mjs` (see [`page`]).
 use std::error::Error;
 use std::fmt;
 use std::future::{Future, ready};
+use std::ops::Range;
 use std::sync::Arc;
 
-use agentcat_sdk::{AgentCat, CustomEvent, capture_error};
+use agentcat_sdk::{AgentCat, CallContext, CustomEvent, capture_error};
 use rmcp::handler::server::tool::{ToolCallContext, ToolRoute, ToolRouter};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
-    CacheScope, CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock,
+    CacheScope, CallToolRequestParams, CallToolResponse, CallToolResult, ContentBlock, Extensions,
     Implementation, InitializeResult, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, Tool,
 };
 use rmcp::service::{MaybeSendFuture, RequestContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 use serde::Deserialize;
-use serde_json::{Map, json};
+use serde_json::{Map, Value, json};
 
 /// The tool contract: the `tools/list` result of `ts-v2.mjs` (R20), written by
 /// `harness/src/dump-contract.mjs`.
@@ -44,12 +48,15 @@ pub(crate) struct Tools {
     /// The tool names in contract order: rmcp's router lists by name, the TS servers by
     /// registration.
     order: Arc<[String]>,
+    /// The tools of one `tools/list` page (`HARNESS_PAGE_SIZE`); `None`: every tool on one page.
+    page_size: Option<usize>,
 }
 
 impl Tools {
-    /// Reads the embedded contract. Fails when it is not a list of tools, names a tool twice, or
-    /// names a tool that has no behavior here.
-    pub(crate) fn from_contract() -> Result<Self, String> {
+    /// Reads the embedded contract; `page_size` pages `tools/list` (see [`page`]). Fails when the
+    /// contract is not a list of tools, names a tool twice, or names a tool that has no behavior
+    /// here.
+    pub(crate) fn from_contract(page_size: Option<usize>) -> Result<Self, String> {
         let tools: Vec<Tool> = serde_json::from_str(CONTRACT)
             .map_err(|error| format!("the tool contract is not a list of tools: {error}"))?;
         let mut router = ToolRouter::new();
@@ -65,8 +72,38 @@ impl Tools {
         Ok(Self {
             router,
             order: order.into(),
+            page_size,
         })
     }
+}
+
+/// The tools of the `tools/list` page at `cursor`, of `len` tools in pages of `size`, as
+/// `pageToolsList` in `common.mjs`: the cursor is the decimal index of the page's first tool (no
+/// cursor: 0), and the next cursor is the index after the page while tools remain. A cursor that
+/// is not such an index below `len` is an error (`invalid cursor <cursor as JSON>`). Without a
+/// size, every tool, whatever the cursor.
+pub(crate) fn page(
+    len: usize,
+    cursor: Option<&str>,
+    size: Option<usize>,
+) -> Result<(Range<usize>, Option<String>), String> {
+    let Some(size) = size else {
+        return Ok((0..len, None));
+    };
+    let start = match cursor {
+        None => 0,
+        Some(text) => text
+            .parse::<usize>()
+            .ok()
+            .filter(|start| {
+                text.bytes().all(|b| b.is_ascii_digit())
+                    && (text == "0" || !text.starts_with('0'))
+                    && *start < len
+            })
+            .ok_or_else(|| format!("invalid cursor {}", Value::from(text)))?,
+    };
+    let end = start.saturating_add(size).min(len);
+    Ok((start..end, (end < len).then(|| end.to_string())))
 }
 
 /// The route of a contract tool: its definition and its behavior.
@@ -82,6 +119,7 @@ fn route(tool: Tool) -> Result<ToolRoute<RefServer>, String> {
         "own_session" => ToolRoute::new(tool, own_session),
         "own_context" => ToolRoute::new(tool, own_context),
         "structured_own" => ToolRoute::new(tool, structured_own),
+        "emit_custom_server" => ToolRoute::new(tool, emit_custom_server),
         other => {
             return Err(format!(
                 "the tool contract names {other:?}, which has no behavior here"
@@ -95,7 +133,7 @@ fn route(tool: Tool) -> Result<ToolRoute<RefServer>, String> {
 #[derive(Clone, Debug)]
 pub(crate) struct RefServer {
     tools: Tools,
-    /// Where `emit_custom` publishes; `None` untracked.
+    /// Where `emit_custom` and `emit_custom_server` publish; `None` untracked.
     custom: Option<CustomTarget>,
 }
 
@@ -107,7 +145,7 @@ impl RefServer {
     }
 }
 
-/// The handle and project that `emit_custom` publishes to.
+/// The handle and project that `emit_custom` publishes to (`emit_custom_server`: the project).
 #[derive(Clone, Debug)]
 pub(crate) struct CustomTarget {
     agentcat: AgentCat,
@@ -137,20 +175,28 @@ impl ServerHandler for RefServer {
         .with_server_info(Implementation::new(SERVER_NAME, SERVER_VERSION))
     }
 
-    /// Every tool in contract order, on one page. A 2026-07-28 request also gets the cache hints
-    /// `ts-v2.mjs` sends: `ttlMs: 0` and `cacheScope: "private"`.
+    /// The tools in contract order: all of them, or the page at the request's cursor with a page
+    /// size (see [`page`]; a bad cursor is an `InvalidParams` error). A 2026-07-28 request also
+    /// gets the cache hints `ts-v2.mjs` sends: `ttlMs: 0` and `cacheScope: "private"`.
     fn list_tools(
         &self,
-        _request: Option<PaginatedRequestParams>,
+        request: Option<PaginatedRequestParams>,
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
-        let tools = self
-            .tools
-            .order
+        let cursor = request
+            .as_ref()
+            .and_then(|request| request.cursor.as_deref());
+        let (range, next_cursor) = match page(self.tools.order.len(), cursor, self.tools.page_size)
+        {
+            Ok(page) => page,
+            Err(message) => return ready(Err(ErrorData::invalid_params(message, None))),
+        };
+        let tools = self.tools.order[range]
             .iter()
             .filter_map(|name| self.tools.router.get(name).cloned())
             .collect();
         let mut result = ListToolsResult::with_all_items(tools);
+        result.next_cursor = next_cursor;
         if context
             .protocol_version()
             .is_some_and(|version| version >= ProtocolVersion::V_2026_07_28)
@@ -280,6 +326,54 @@ fn emit_custom(
     Ok(text("published".to_owned()))
 }
 
+/// The arguments of `emit_custom_server`.
+#[derive(Debug, Deserialize)]
+struct CustomServer {
+    resource: String,
+    message: Option<String>,
+    session: Option<String>,
+    tags: Option<Map<String, Value>>,
+}
+
+/// `emit_custom_server`: publishes a custom event in the name of the server, as `common.mjs` does
+/// with `publishCustomEvent(server, projectId, ...)`: through the call's [`CallContext`], with
+/// resource, message, the session given (none without one), parameters
+/// `{"from": "emit_custom_server"}` and the tags given. Answers `published`; untracked (no
+/// context), it publishes nothing.
+#[expect(
+    clippy::needless_pass_by_value,
+    reason = "rmcp's handler extractors are taken by value"
+)]
+fn emit_custom_server(
+    server: &RefServer,
+    extensions: Extensions,
+    Parameters(CustomServer {
+        resource,
+        message,
+        session,
+        tags,
+    }): Parameters<CustomServer>,
+) -> Result<CallToolResult, String> {
+    let (Some(call), Some(target)) = (extensions.get::<CallContext>(), &server.custom) else {
+        return Ok(text("published".to_owned()));
+    };
+    let mut event = CustomEvent::new()
+        .resource_name(resource)
+        .parameters(json!({"from": "emit_custom_server"}));
+    if let Some(message) = message {
+        event = event.message(message);
+    }
+    if let Some(session) = session {
+        event = event.session_id(session);
+    }
+    if let Some(tags) = tags {
+        event = event.tags(tags);
+    }
+    call.publish_custom_event(&target.project_id, event)
+        .map_err(|error| error.to_string())?;
+    Ok(text("published".to_owned()))
+}
+
 /// The arguments of `own_session`: the tool declares its own `session_id`.
 #[derive(Debug, Deserialize)]
 struct OwnSession {
@@ -312,4 +406,35 @@ fn own_context(Parameters(OwnContext { context }): Parameters<OwnContext>) -> Ca
 /// `structured_own`: as [`structured`]; its output schema declares `mcp_session` itself.
 fn structured_own(params: Parameters<Msg>) -> CallToolResult {
     structured(params)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn pages_follow_the_decimal_cursor() {
+        assert_eq!(page(10, None, Some(3)), Ok((0..3, Some("3".to_owned()))));
+        assert_eq!(
+            page(10, Some("0"), Some(3)),
+            Ok((0..3, Some("3".to_owned())))
+        );
+        assert_eq!(
+            page(10, Some("3"), Some(3)),
+            Ok((3..6, Some("6".to_owned())))
+        );
+        assert_eq!(page(10, Some("8"), Some(3)), Ok((8..10, None)));
+        assert_eq!(page(10, Some("9"), Some(3)), Ok((9..10, None)));
+        assert_eq!(page(9, Some("6"), Some(3)), Ok((6..9, None)));
+        // Without a page size, one page of every tool, whatever the cursor.
+        assert_eq!(page(10, None, None), Ok((0..10, None)));
+        assert_eq!(page(10, Some("x"), None), Ok((0..10, None)));
+        for bad in ["10", "x", "03", "-1", "", "1.0", "+1"] {
+            assert_eq!(
+                page(10, Some(bad), Some(3)),
+                Err(format!("invalid cursor {}", Value::from(bad))),
+                "{bad}"
+            );
+        }
+    }
 }

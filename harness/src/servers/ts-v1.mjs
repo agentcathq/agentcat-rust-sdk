@@ -23,10 +23,12 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 
-import { SERVER_INFO, listen, loadAgentCat, methodNotAllowed, sendError, startup, toolHandlers } from "./common.mjs";
+import { ErrorCode, McpError } from "@modelcontextprotocol/sdk/types.js";
+
+import { SERVER_INFO, listen, loadAgentCat, methodNotAllowed, pageToolsList, sendError, startup, toolHandlers } from "./common.mjs";
 
 const NAME = "ts-v1";
-const { mode, port, tracked, projectId, options } = startup(NAME);
+const { mode, port, tracked, projectId, options, pageSize } = startup(NAME);
 
 // ---------------------------------------------------------------------------
 // The tools of the other reference servers (R20: ts-v2 is the answer key; the
@@ -39,7 +41,7 @@ const agentcat = await loadAgentCat();
 function buildServer() {
   // Fresh handler functions per server: the TS SDK marks each function it
   // wraps, so a function shared by two servers is wrapped only on the first.
-  const handlers = toolHandlers({ tracked, projectId, agentcat });
+  const handlers = toolHandlers({ tracked, projectId, agentcat, server: () => server });
   const server = new McpServer(SERVER_INFO);
   server.registerTool(
     "echo",
@@ -95,6 +97,20 @@ function buildServer() {
     },
     handlers.structured_own,
   );
+  server.registerTool(
+    "emit_custom_server",
+    {
+      description: "Publishes an AgentCat custom event in the name of this server",
+      inputSchema: {
+        resource: z.string(),
+        message: z.string().optional(),
+        session: z.string().optional(),
+        tags: z.record(z.unknown()).optional(),
+      },
+    },
+    handlers.emit_custom_server,
+  );
+  if (pageSize !== undefined) pageToolsList(server.server, pageSize, (message) => new McpError(ErrorCode.InvalidParams, message));
   if (tracked) agentcat.track(server, projectId, options);
   return server;
 }

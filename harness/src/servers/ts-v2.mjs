@@ -22,6 +22,8 @@ import { randomUUID } from "node:crypto";
 import { toNodeHandler } from "@modelcontextprotocol/node";
 import {
   McpServer,
+  ProtocolError,
+  ProtocolErrorCode,
   WebStandardStreamableHTTPServerTransport,
   createMcpHandler,
   fromJsonSchema,
@@ -30,10 +32,10 @@ import {
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import { AjvJsonSchemaValidator } from "@modelcontextprotocol/server/validators/ajv";
 
-import { SERVER_INFO, TOOLS, listen, loadAgentCat, methodNotAllowed, sendError, startup, toolHandlers } from "./common.mjs";
+import { SERVER_INFO, TOOLS, listen, loadAgentCat, methodNotAllowed, pageToolsList, sendError, startup, toolHandlers } from "./common.mjs";
 
 const NAME = "ts-v2";
-const { mode, port, tracked, projectId, options } = startup(NAME);
+const { mode, port, tracked, projectId, options, pageSize } = startup(NAME);
 
 // ---------------------------------------------------------------------------
 // The tools: names, descriptions and JSON schemas from TOOLS, behaviors from
@@ -62,7 +64,7 @@ const zodLikeArguments = {
 function buildServer() {
   // Fresh handler functions per server: the TS SDK marks each function it
   // wraps, so a function shared by two servers is wrapped only on the first.
-  const handlers = toolHandlers({ tracked, projectId, agentcat });
+  const handlers = toolHandlers({ tracked, projectId, agentcat, server: () => server });
   const server = new McpServer(SERVER_INFO);
   for (const tool of TOOLS) {
     server.registerTool(
@@ -75,6 +77,7 @@ function buildServer() {
       handlers[tool.name],
     );
   }
+  if (pageSize !== undefined) pageToolsList(server.server, pageSize, (message) => new ProtocolError(ProtocolErrorCode.InvalidParams, message));
   if (tracked) agentcat.track(server, projectId, options);
   return server;
 }

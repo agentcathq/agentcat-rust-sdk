@@ -1,0 +1,23 @@
+{
+  "name": "redaction",
+  "projectId": "proj_HARNESS00000000000000000000",
+  "options": {
+    "eventTags": { "returns": { "note": "SECRET_TOKEN" } },
+    "eventProperties": { "returns": { "region": "SECRET_TOKEN" } },
+    "redactSensitiveInformation": { "replace": "SECRET_TOKEN" },
+    "redactEvent": { "merge": { "resourceName": "renamed", "sessionId": "merged-session", "properties": { "merged": "yes" } } }
+  },
+  "expectPublishes": 7,
+  "sessions": [
+    {
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "first SECRET_TOKEN", "context": "Checking that SECRET_TOKEN leaves the process redacted" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "again SECRET_TOKEN", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "boom", "args": { "session_id": "${S1}" } },
+        { "op": "callTool", "name": "emit_custom", "args": { "session": "${S1}", "resource": "checkout", "message": "custom SECRET_TOKEN", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "emit_custom_server", "args": { "session": "${S1}", "resource": "server-side", "message": "server SECRET_TOKEN", "session_id": "${S1}" } }
+      ]
+    }
+  ]
+}

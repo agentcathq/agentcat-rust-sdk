@@ -125,7 +125,7 @@ values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot.
 
 ### The L3 gate
 
-`scripts/check.sh` and the CI job `harness-l3` build the Rust reference server, then run three matrices:
+`scripts/check.sh` and the CI job `harness-l3` build the Rust reference server, then run five matrices:
 
 1. `node harness/src/matrix.mjs`: TS v2 against Rust, every scenario, transport and lane. It must exit 0:
    every driver passes (each tracked Rust server drains), every delta and event difference has a ruling,
@@ -139,12 +139,27 @@ values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot.
    `$.delta.transcript[1].result.tools[` (basic.json's tracked listing), and that no combination reports
    an event difference (the canary does not change what the servers publish). A canary that passes means
    the delta comparison has gone blind; one caught elsewhere is a different failure.
+4. The call canary run, the A/A run plus `--env2 HARNESS_CANARY=call`: the second server wraps its tracked
+   handler in an outer handler that changes `[session_id issued` to `[session_id lssued` at the start of a
+   result's first text block, after the SDK recorded the call. It must exit 1.
+   `node harness/src/l3-expect.mjs caught-call` checks that every driver passed, that every combination
+   reports an unruled delta difference, each at `$.delta.transcript[<n>].result`, its `.content[0]` or
+   `.content[0].text` (a call whose untracked answer was an error shows the whole tracked result as
+   added), each showing the canary's change alone (the Rust text is the TS text with `issued` made
+   `lssued`), and that no combination reports an event difference.
+5. The event canary run, the A/A run plus `--env2 HARNESS_CANARY=event`: a `redact_event` hook on the
+   second server sets the resource name of every event it sees to `canary`. It must exit 1.
+   `node harness/src/l3-expect.mjs caught-event` checks that every driver passed, that no combination
+   reports a delta difference (the hook runs after the call), and that every combination reports an
+   unruled event difference, each at `$.events[<n>].body.resource_name`. A canary that passes means the
+   event comparison has gone blind.
 
-`l3-expect.mjs <none|caught> [matrix.json]` reads `harness/out/matrix.json` by default; exit 0 as expected,
-1 not (one line per bad combination; a combination without `delta` or `events` is bad), 2 on bad arguments.
+`l3-expect.mjs <none|caught|caught-call|caught-event> [matrix.json]` reads `harness/out/matrix.json` by
+default; exit 0 as expected, 1 not (one line per bad combination; a combination without `delta` or
+`events` is bad), 2 on bad arguments.
 
-One full matrix (36 combinations, 144 driver runs) took 75 to 100 s at `--jobs 4` on the development
-machine; the A/A and canary runs about 12 s each.
+One full matrix (12 scenarios: 72 combinations, 288 driver runs) took about 180 s at `--jobs 4` on the
+development machine; the A/A and canary runs about 12 s each.
 
 ### driver.mjs
 
@@ -173,17 +188,24 @@ machine; the A/A and canary runs about 12 s each.
 - Before each connect and each step, the driver waits until the wall clock is past the millisecond in
   which the previous request was answered. A server stamps an event between a request's arrival and its
   answer, so the events of two requests in a row never share a millisecond, and the time order of the
-  normalizer is the request order on every server and in every run.
+  normalizer is the request order on every server and in every run. A `parallel` step waits once, as a
+  whole: its calls start together, so their events can share a millisecond (use `"eventOrder":
+  "multiset"`).
+- A `listTools` step lists one page: with `cursor`, that page; without, the first. On the 2026-07-28 lane
+  in a scenario with `pageSize`, the driver sends a cursor-less `tools/list` itself, because the v2
+  client's `listTools()` without a cursor follows every `nextCursor` and returns all pages as one.
 - The server gets the parent environment, without `AGENTCAT_ENABLED` (the Rust SDK reads it, decision
   C45: a developer shell's `AGENTCAT_ENABLED=false` would turn the tracked Rust server off), plus
   `AGENTCAT_API_URL` (the mock), `HARNESS_PROJECT_ID` (the scenario's `projectId`), `HARNESS_OPTIONS`
   (the scenario's `options` as JSON), `DISABLE_DIAGNOSTICS=true`, and `HOME` and `USERPROFILE` set to
   `harness/out/home/<scenario>.<label>.<transport>/` (recreated per run). `HARNESS_NO_TRACK` passes
-  through from the caller's environment.
+  through from the caller's environment. `HARNESS_PAGE_SIZE` is the scenario's `pageSize`; without one,
+  the driver removes a `HARNESS_PAGE_SIZE` of the caller's environment.
 - In a tracked run (`HARNESS_NO_TRACK` unset), a `saveHandleAs` step whose result carries no handle,
   and a `${NAME}` with no saved value, exit 1 with
   `driver: step <i> of session <s>: no session handle for <NAME>`. An untracked run issues no handles
-  and keeps the `${NAME}` text literally.
+  and keeps the `${NAME}` text literally. A `saveCursorAs` step whose result has no `nextCursor` exits 1
+  in every run: `driver: step <i> of session <s>: no nextCursor for <NAME>`.
 - The `initialize` transcript entry of each session holds
   `{protocolVersion, serverInfo, capabilities, instructions}` as the client reports them, on both
   lanes (`null` for a part the server did not send).
@@ -291,12 +313,13 @@ differences listed in "The Rust reference server" below.
 | `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. The TS server passes it to `track` as `apiBaseUrl`. |
 | `HARNESS_PROJECT_ID` | Project ID passed to `track` and to custom events. Required unless untracked. |
 | `HARNESS_OPTIONS` | The options profile (JSON, below). Default `{}`. |
-| `HARNESS_NO_TRACK=1` | Serve the same tools untracked: no `track`, and `emit_custom` publishes nothing. |
+| `HARNESS_NO_TRACK=1` | Serve the same tools untracked: no `track`, and `emit_custom` and `emit_custom_server` publish nothing. |
+| `HARNESS_PAGE_SIZE` | A positive decimal integer without a leading zero (else exit 2): `tools/list` answers in pages of that many tools. The cursor is the decimal index of the page's first tool; `nextCursor` is the index after the page while tools remain. A cursor that is not such an index below the tool count answers the JSON-RPC error `-32602` `invalid cursor <cursor as JSON>` (ts-v1's host adds its `MCP error -32602: ` prefix). Unset or empty: one page of every tool. The driver sets it from the scenario's `pageSize`. The TS servers page by replacing the `tools/list` entry of the low-level server's request-handler map before `track` (`pageToolsList` in `common.mjs`, test-server code only), so the TS SDK wraps the paging handler. |
 | `HOME`, `USERPROFILE` | A harness temp dir (the TS SDK writes `~/agentcat.log`). |
 | `DISABLE_DIAGNOSTICS=true` | Set by the driver. The TS server also always passes `disableDiagnostics: true` to `track`, whatever the profile says. |
 
-Exit 2 on bad arguments, a non-local `AGENTCAT_API_URL` or an invalid options profile. Logs go to
-stderr only.
+Exit 2 on bad arguments, a non-local `AGENTCAT_API_URL`, a bad `HARNESS_PAGE_SIZE` or an invalid
+options profile. Logs go to stderr only.
 
 ### Server identity
 
@@ -325,6 +348,7 @@ later server's thrown error loses its stack. The behaviors (in `src/servers/comm
 | `own_session` | `{session_id: string, x?: string}` (the tool declares its own `session_id`, so the SDK treats it as foreign) | `content: [{type: "text", text: "session_id=<value received>"}]` |
 | `own_context` | `{context: string}` (the tool declares its own `context`) | `content: [{type: "text", text: context}]` |
 | `structured_own` | `{msg: string}`, output schema `{echoed: string, mcp_session?: {session_id: string, ...}}` (it declares `mcp_session` itself) | `content: [{type: "text", text: msg}]`, `structuredContent: {echoed: msg}` |
+| `emit_custom_server` | `{resource: string, message?: string, session?: string, tags?: object}` | Tracked: first awaits the server form `publishCustomEvent(<the tracked server>, projectId, {resourceName: resource, message, sessionId: session, parameters: {from: "emit_custom_server"}, tags})` (K-03: the tracked project, the `enableTracing` gate, the `redactEvent` hook and no string redaction; without `session` the event has no session). Untracked: no publish. Then returns `content: [{type: "text", text: "published"}]`. |
 
 ### TS v1 and v2 differences
 
@@ -364,10 +388,13 @@ the CI job `oracle-harness` build it before the harness tests.
   in `common.mjs`. rmcp's `ToolRouter` does the dispatch, `get_tool`, the argument errors and the
   conversion of a tool's `Err` into an `isError` result. `tools/list` keeps the contract's order
   (rmcp's router sorts by name) and, on 2026-07-28, adds `ttlMs: 0` and `cacheScope: "private"` as
-  ts-v2 does. `boom` records its error with `capture_error`. `emit_custom` publishes its custom event
-  with `AgentCat::publish_custom_event` (tracked; untracked it publishes nothing) and answers
-  `published`, as the TS servers do.
-- `src/profile.rs`: the options profile.
+  ts-v2 does. With `HARNESS_PAGE_SIZE` it serves the contract's tools in pages, as the TS servers do.
+  `boom` records its error with `capture_error`. `emit_custom` publishes its custom event with
+  `AgentCat::publish_custom_event` and `emit_custom_server` with `CallContext::publish_custom_event`
+  (the server form, C16; the `CallContext` comes from the request's extensions), both only when tracked,
+  and answer `published`, as the TS servers do.
+- `src/profile.rs`: the options profile and `HARNESS_CANARY`.
+- `src/canary.rs`: the outer handler of the call canary (`HARNESS_CANARY=call`).
 
 Where it differs from the TS servers:
 
@@ -385,10 +412,17 @@ Where it differs from the TS servers:
   copies any value. A `returns` value must fit the hook's SDK type: `resolveSessionId` a string or
   `null`; `identify` `null` or `{"userId": string, "userName"?: string, "userData"?: object}`;
   `eventTags` and `eventProperties` an object or `null`; `redactSensitiveInformation` a string.
+  A `redactEvent` merge field must fit its `Event` field: `resourceName`, `sessionId`, `eventType` and
+  `userIntent` a string, `properties` an object (`common.mjs` checks only the field names).
   Anything else exits 2. `redactSensitiveInformation` becomes the SDK's string redaction hook
-  (`redact_sensitive_information`). Every hook is async; `sleepMs` sleeps on the tokio timer.
-- `HARNESS_CANARY=1` sets the context description to `"canary"`, whatever the profile says: the
-  perturbed configuration that the L3 canary run must catch.
+  (`redact_sensitive_information`), `redactEvent` its event redaction hook (`redact_event`). Every
+  hook is async; `sleepMs` sleeps on the tokio timer.
+- `HARNESS_CANARY` perturbs the server for an L3 canary run ("The L3 gate" above): `1` sets the context
+  description to `"canary"`, whatever the profile says; `call` wraps each tracked server in an outer
+  handler that changes `[session_id issued` to `[session_id lssued` at the start of a result's first
+  text block; `event` sets a `redact_event` hook, in place of the profile's, that sets every event's
+  resource name to `canary`. Unset or empty: no perturbation. Any other value exits 2. The TS servers
+  do not read it.
 - `big` with a negative `size`, or one above V8's longest string, fails with JavaScript's
   `RangeError` text (`Invalid count value: <n>`, `Invalid string length`) instead of allocating.
 - Argument errors carry serde's text (`failed to deserialize parameters: ...`) where ts-v2 carries
@@ -404,13 +438,14 @@ Flags, copied to the SDK options as given: `enableTracing`, `enableReportMissing
 `enableToolCallContext`, `enableAgentTracking`, `customContextDescription`.
 
 Hooks, each a canned behavior: `resolveSessionId`, `identify`, `eventTags`, `eventProperties`,
-`redactSensitiveInformation`. A behavior is one of:
+`redactSensitiveInformation`, `redactEvent`. A behavior is one of:
 
 | Behavior | The hook... |
 |---|---|
 | `{"returns": <value or null>}` | returns a fresh copy of the value. |
 | `{"throws": "<message>"}` | throws `new Error(message)` (rejects, for a hook that returns a Promise). |
 | `{"replace": "<secret>"}` | `redactSensitiveInformation` only: replaces every occurrence of the secret with `[REDACTED]`. |
+| `{"merge": {<field>: <value>, ...}}` | `redactEvent` only: returns `{...event, ...merge}` (Rust sets the matching `Event` fields). A field is one of `resourceName`, `sessionId`, `eventType`, `userIntent`, `properties`; another key exits 2. The SDKs restore the event's ID, session, project, type and timestamp after the hook, so a merged `sessionId` or `eventType` does not reach the wire. |
 
 The value each hook's `returns` takes (as in the TS SDK's `src/types.ts`):
 
@@ -421,11 +456,12 @@ The value each hook's `returns` takes (as in the TS SDK's `src/types.ts`):
 | `eventTags` | the MCP request, the request extra | an object of string values, or `null` |
 | `eventProperties` | the MCP request, the request extra | an object of any JSON values, or `null` |
 | `redactSensitiveInformation` | one text string | a string (used for every text) |
+| `redactEvent` | the whole event | `null` only (drops the event); use `merge` to change it |
 
 Any behavior can add `"sleepMs": <n>`: the hook waits n milliseconds, then answers. The TS server
 turns each behavior into a function with the hook's signature from `src/types.ts` at the pinned
-commit: `resolveSessionId`, `eventTags` and `eventProperties` answer synchronously unless `sleepMs`
-is given; `identify` and `redactSensitiveInformation` always return a Promise.
+commit: `resolveSessionId`, `eventTags`, `eventProperties` and `redactEvent` answer synchronously
+unless `sleepMs` is given; `identify` and `redactSensitiveInformation` always return a Promise.
 
 Example (`scenarios/basic.json`):
 
@@ -466,20 +502,28 @@ Example (`scenarios/basic.json`):
   `<transport>@<lane>` (for example `http@2026-07-28`) or by transport (`stdio`, `http`,
   `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`. Any other key exits 2.
 - The driver exits 2 on a key it does not know at the top level of the scenario, in a session
-  (`client`, `steps`) or in a step (`listTools`: `op`, `cursor`; `callTool`: `op`, `name`, `args`,
-  `saveHandleAs`).
+  (`client`, `steps`) or in a step (`listTools`: `op`, `cursor`, `saveCursorAs`; `callTool`: `op`,
+  `name`, `args`, `saveHandleAs`; `parallel`: `op`, `steps`; a step inside `parallel`: the `callTool`
+  keys and `session`).
 - `httpHeaders` go on every HTTP request of the client.
 - Each session is a new client connection. `saveHandleAs` stores the `ses_` handle a result issued
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
   in later arguments is replaced with it.
-- `listTools` takes an optional `cursor`.
+- `listTools` takes an optional `cursor` (a string; `${NAME}` works) and an optional `saveCursorAs`, which
+  stores the result's `nextCursor` under that name (no `nextCursor`: exit 1, in every run).
+- `pageSize` (optional, a positive integer) starts the servers with `HARNESS_PAGE_SIZE`, so `tools/list`
+  answers in pages ("Server protocol" above).
+- `{"op": "parallel", "steps": [<callTool steps>]}` runs its calls at once (`Promise.all`) and records
+  their transcript entries in step order. A step inside it may name `"session": <index>`, this session or
+  an earlier one, to run on that session's client (default: this session's). The `saveHandleAs` of its
+  steps take effect after all of them answered.
 - `eventOrder` (optional) takes `"multiset"` only (any other value exits 2): the normalizer then sorts
   the events on their normalized body alone, so their order is not compared. Without it they sort by
   time ("Normalized document" below).
 - The driver starts each request in a later millisecond than the previous answer ("driver.mjs" above),
   so the events of two steps never share a millisecond. Two events of one step (a call and the custom
-  events it publishes) can: their order then falls back to the `duration`, the resource name and the
-  body (below), so a step must not publish two events whose order matters unless the scenario compares
+  events it publishes) can: their order then falls back to the call-first step, the resource name and
+  the body (below), so a step must not publish two events whose order matters unless the scenario compares
   events as a multiset.
 - No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
   such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
@@ -497,6 +541,15 @@ as `harness:<name>`:
 | `agent-tracking` | `enableAgentTracking`, `customContextDescription` | Calls with and without `agent_id` (a two-line value, a number, blanks), with minted, supplied and invalid handles; a call before any listing. |
 | `features-off` | `enableReportMissing: false`, `enableToolCallContext: false` | No `get_more_tools` and no `context` injection; a `context` argument that is not ours; a call to `get_more_tools`. |
 | `tracing-off` | `enableTracing: false` | Calls with `context`, and `own_context` with its own `context` (RD-29 on per-request TS servers); no handles, no mint-back, no mirror; `get_more_tools` answered by the SDK. |
+| `redaction` | `eventTags` and `eventProperties` return `SECRET_TOKEN` values, `redactSensitiveInformation` replace, `redactEvent` merge (`resourceName`, `sessionId`, `properties`) | Renamed resources and restored sessions on the call events; tags keep `SECRET_TOKEN` (string redaction skips them), and the merged `properties` replace the hook's whole value (no `region` key); the session-string custom event of `emit_custom` untouched by both hooks; the server-form custom event of `emit_custom_server` renamed but not string-redacted (K-03). |
+| `redact-drop` | `redactEvent` returns `null` | Every event that runs the hook is dropped: only the session-string custom event of `emit_custom` publishes. |
+| `hooks-fail` | `identify` throws after 200 ms, `eventTags` returns invalid tags (a bad key, a 33-character key, a number value, a newline in a value) and one valid tag, `eventProperties` throws | Calls in two sessions: no identity, no properties, only the valid tag. |
+| `concurrency` | `{}`, `"eventOrder": "multiset"` | A `parallel` step of 8 `echo` calls with one handle on the first session's client, at the same time as 2 calls on a second session. |
+| `pagination` | `{}`, `pageSize: 3` | Page 1, a call to a page-2 tool before page 2 is listed (K-01 against RD-12), page 2, the call again, page 3 and `own_context` on it (RD-12 on per-request TS servers). |
+| `custom-events` | `{}` | The session-string form (`emit_custom`) with and without a session, the server form (`emit_custom_server`) with and without a session, and invalid custom tags (all dropped, or one valid tag kept). |
+
+Panics have no scenario: a TS tool cannot panic (RD-06), and the Rust tests of Tasks 6 and 9 of plan 4
+cover the events of a panicking tool.
 
 ## Normalized document
 
@@ -534,8 +587,9 @@ The normalizer rules, each listed in `report.rules` of the run report:
 `<type>` is `string`, `number`, `boolean`, `object`, `array` or `null`.
 
 Events are ordered by the time of their raw `timestamp` (so `…:29Z` comes before `…:29.005Z`); in the
-same millisecond, an event with a `duration` (a call, which can enclose events published during it)
-comes before one without; then by resource name, then by the normalized body with its IDs masked and its
+same millisecond, a call (an event with a `duration` that is not a custom event: it can enclose events
+published during it) comes before the rest, a server-form custom event included (it has a `duration`,
+K-03, but encloses nothing); then by resource name, then by the normalized body with its IDs masked and its
 keys sorted, so a raw duration or a key order never decides a tie. The TS queue publishes events
 concurrently, so arrival order is noise. The `duration` step keeps a custom event published during a
 tool call after the call event, also when both land in the same millisecond. A scenario with
