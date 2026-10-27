@@ -237,9 +237,8 @@
     "lanes": ["2026-07-28"],
     "ts": "<absent>",
     "rust": "harness-client",
-    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
-    "deviation": "RD-38",
-    "pending": true
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
   },
   {
     "path": "\\$\\.events\\[(?:6|8|10|12)\\]\\.body\\.client_version",
@@ -248,9 +247,8 @@
     "lanes": ["2026-07-28"],
     "ts": "<absent>",
     "rust": "1.0.0",
-    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
-    "deviation": "RD-38",
-    "pending": true
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
   },
   {
     "path": "\\$\\.events\\[6\\]\\.body\\.client_name",
@@ -259,9 +257,8 @@
     "lanes": ["2026-07-28"],
     "ts": "<absent>",
     "rust": "harness-client",
-    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
-    "deviation": "RD-38",
-    "pending": true
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
   },
   {
     "path": "\\$\\.events\\[6\\]\\.body\\.client_version",
@@ -270,8 +267,7 @@
     "lanes": ["2026-07-28"],
     "ts": "<absent>",
     "rust": "1.0.0",
-    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Pending owner ruling (R17)",
-    "deviation": "RD-38",
-    "pending": true
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
   }
 ]
