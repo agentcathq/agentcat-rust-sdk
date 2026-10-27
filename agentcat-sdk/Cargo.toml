@@ -46,6 +46,11 @@ test-util = []
 name = "fake"
 required-features = ["test-util"]
 
+# A customer's tests of a `redact_event` hook, outside the crate so `#[non_exhaustive]` applies.
+[[test]]
+name = "customer_redaction"
+required-features = ["test-util"]
+
 [lints]
 workspace = true
 

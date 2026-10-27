@@ -164,7 +164,8 @@ fn run_thread(shared: &Arc<Shared>) {
 ///   lines, and it exits once the last handle dropped.
 ///
 /// Between turns it waits for a wake (a push, a line, a request, a job's end) or the next
-/// deadline.
+/// deadline. A request whose caller stopped waiting (a cancelled async `flush` or `shutdown`)
+/// stays in the waiting list like any other until it is answered.
 async fn run(shared: &Arc<Shared>) {
     let mut tasks: Vec<JoinHandle<()>> = Vec::new();
     let mut waiting: Vec<Request> = Vec::new();

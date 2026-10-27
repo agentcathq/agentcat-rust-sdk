@@ -19,7 +19,14 @@
 //! - `shutdown` is terminal: from the call on, a push is dropped with TS's `Queue is shutting
 //!   down, event dropped`. Once the queue is empty or the deadline passed, the worker abandons what
 //!   is left (after `Shutting down with <n> events still in queue` when events are pending) and
-//!   aborts the events in flight with their hooks; from then on it only writes log lines.
+//!   aborts the events in flight with their hooks; it answers once each aborted task is dropped,
+//!   and from then on it answers every request `true` at once and only writes log lines. On a
+//!   handle whose worker never started, the `Queue is shutting down` line is dropped with its
+//!   event (C42: such a handle writes nothing).
+//! - The worker cannot tell a caller that stopped waiting from one that waits: the request of a
+//!   cancelled async `flush` or `shutdown` stays in its waiting list until the queue and the
+//!   in-flight events are empty or the deadline passes, and a cancelled `shutdown` still shuts
+//!   the handle down.
 //! - The last drop of the handle runs that shutdown with `drop_drain` (5 s) and waits for the
 //!   worker's answer on a `std::sync::mpsc` channel, for at most `drop_drain` and 100 ms more, so it
 //!   never waits on the caller's runtime; the worker then exits. A drop on the worker thread itself
@@ -27,7 +34,6 @@
 use std::fmt;
 use std::future::ready;
 use std::sync::{Arc, mpsc};
-use std::thread;
 use std::time::Duration;
 
 use agentcat_api::models::PublishEventRequest;
@@ -40,7 +46,7 @@ use crate::logging;
 use crate::pipeline::TsEvent;
 use crate::pipeline::process::Redactors;
 use crate::sink::{BoxFuture, Sink};
-use queue::{Job, Kind, Reply, Request, Worker};
+use queue::{Job, Kind, Reply, Request};
 use worker::Shared;
 
 pub(crate) mod http;
@@ -274,28 +280,15 @@ impl Sink for Delivery {
 }
 
 impl Drop for Delivery {
-    /// The drain of the last drop (C36): a shutdown with `drop_drain` that also tells the worker
-    /// to exit once it stopped. Off the worker thread it waits for the answer for at most
-    /// `drop_drain` and 100 ms more; on the worker thread it does not wait (the answer would need
-    /// the thread it blocks). Without a running worker there is nothing to drain.
+    /// The drain of the last drop (C36): [`Queue::close`](queue::Queue::close) hands the worker a
+    /// shutdown with `drop_drain` and tells it to exit once it stopped. Off the worker thread the
+    /// drop waits for the answer for at most `drop_drain` and 100 ms more; on the worker thread it
+    /// does not wait (the answer would need the thread it blocks). Without a running worker there
+    /// is nothing to drain.
     fn drop(&mut self) {
         let drain = self.shared.config.drop_drain;
         let (sender, receiver) = mpsc::channel();
-        let wait = {
-            let mut queue = self.shared.lock();
-            if matches!(queue.worker, Worker::Idle | Worker::Gone) {
-                return;
-            }
-            let on_worker = queue.worker == Worker::Running(thread::current().id());
-            queue.closed = true;
-            let reply = if on_worker {
-                Reply::Nobody
-            } else {
-                Reply::Blocking(sender)
-            };
-            queue.push_request(Request::new(Kind::Shutdown, drain, reply));
-            !on_worker
-        };
+        let wait = self.shared.lock().close(drain, sender);
         self.shared.wake();
         if wait {
             let _ = receiver.recv_timeout(drain.saturating_add(ANSWER_GRACE));

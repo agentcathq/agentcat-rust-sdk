@@ -153,6 +153,11 @@ pub enum LogDestination {
     #[default]
     File,
     /// `tracing` events with the target `agentcat`.
+    ///
+    /// The delivery thread of each handle emits these events, not the thread of the tool call. A
+    /// subscriber that `tracing::subscriber::with_default` sets on another thread does not see
+    /// them. Set a global subscriber instead, for example with
+    /// `tracing::subscriber::set_global_default`.
     Tracing,
 }
 
@@ -381,6 +386,11 @@ impl Options {
     /// Redacts every string of each event before it leaves the process: the hook gets one string
     /// at a time and returns the string to send. It runs on the tokio runtime that serves the
     /// call. When it fails, the SDK drops the event rather than send it unredacted.
+    ///
+    /// The SDK gives the hook no time limit, as the TypeScript SDK gives none. An event holds one
+    /// of the 5 delivery slots of its handle while the hook runs on it. A hook that never
+    /// completes holds its slot for good, and five such hooks stop the delivery of the handle:
+    /// later events wait in the queue until a shutdown abandons them.
     #[must_use]
     pub fn redact_sensitive_information<F, Fut>(mut self, hook: F) -> Self
     where
@@ -393,7 +403,13 @@ impl Options {
 
     /// Changes each event before it leaves the process: the hook gets the whole [`Event`] and
     /// returns the event to send, or `Ok(None)` to drop it. It runs on the tokio runtime that
-    /// serves the call. When it fails, the SDK drops the event.
+    /// serves the call. When it fails, the SDK drops the event. To unit-test the hook, call it
+    /// with an event from [`Event::default`].
+    ///
+    /// The SDK gives the hook no time limit, as the TypeScript SDK gives none. An event holds one
+    /// of the 5 delivery slots of its handle while the hook runs on it. A hook that never
+    /// completes holds its slot for good, and five such hooks stop the delivery of the handle:
+    /// later events wait in the queue until a shutdown abandons them.
     #[must_use]
     pub fn redact_event<F, Fut>(mut self, hook: F) -> Self
     where

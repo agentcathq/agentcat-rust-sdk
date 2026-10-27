@@ -1,11 +1,12 @@
 //! The delivery queue and its worker thread (C36, B-100 to B-105): what the worker posts and logs
 //! (TS's lines, retries after the configured delays, telemetry-only events never posted), the
 //! queue's limits (drop the oldest pending, at most `concurrency` in flight, a push that never
-//! blocks), `flush` and `shutdown` with their deadlines and the blocking twins, and the drain on
-//! the last drop, off and on the worker thread. Every test shrinks the budgets through
-//! [`DeliveryConfig`] and writes the worker's lines to a [`CapturedLines`], except
-//! `log_lines_are_written_by_the_worker`, which uses the process logger. The TS texts come from
-//! `queue.json` (`success_line_matches_ts` here; the retry cases run in
+//! blocks), `flush` and `shutdown` with their deadlines and the blocking twins, their edge cases
+//! (before the first event, twice, cancelled, after a timed-out shutdown, the stop's wait for the
+//! aborted tasks), and the drain on the last drop (`Queue::close`), off and on the worker thread.
+//! Every test shrinks the budgets through [`DeliveryConfig`] and writes the worker's lines to a
+//! [`CapturedLines`], except `log_lines_are_written_by_the_worker`, which uses the process logger.
+//! The TS texts come from `queue.json` (`success_line_matches_ts` here; the retry cases run in
 //! `pipeline::process::tests::queue_retry_vectors_match_ts`).
 use std::future::pending;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -22,6 +23,7 @@ use serde_json::{Map, Value, json};
 use tokio::runtime::{Builder, Handle, Runtime};
 use tokio::sync::{Semaphore, oneshot};
 
+use super::queue::{Kind, Queue, Reply, Worker};
 use super::{Delivery, DeliveryConfig, Observer, Publisher};
 use crate::client::AgentCat;
 use crate::config::{HookError, LogDestination, Options, UserIdentity};
@@ -709,7 +711,394 @@ fn blocking_twins_work_outside_a_runtime() {
     assert_eq!(publisher.finished(), 2);
 }
 
+// --------------------------------------------------------------------- lifecycle edge cases
+
+/// A deadline that no test reaches.
+const LONG: Duration = Duration::from_secs(60);
+
+/// A delivery for [`PROJECT`] with no handle around it, so a test can read its queue, that posts
+/// through `publisher` and writes its lines to the returned capture.
+fn bare_delivery(
+    publisher: &RecordingPublisher,
+    config: DeliveryConfig,
+) -> (Delivery, CapturedLines) {
+    let lines = CapturedLines::default();
+    let delivery = Delivery::with_writer(
+        PROJECT.to_owned(),
+        &Options::default(),
+        Arc::new(publisher.clone()),
+        None,
+        config,
+        lines.writer(),
+    );
+    (delivery, lines)
+}
+
+/// The state of the worker of `delivery`.
+fn worker_of(delivery: &Delivery) -> Worker {
+    delivery.shared.lock().worker
+}
+
+/// Awaits `request` (the future of a `flush` or a `shutdown`) on a customer's runtime with a
+/// timer and drops it after 20 ms, as a customer's timeout does; `true` when it was cancelled.
+fn cancel_after_20_ms(request: impl Future<Output = bool>) -> bool {
+    let runtime = Builder::new_current_thread().enable_time().build().unwrap();
+    runtime.block_on(async { tokio::time::timeout(ms(20), request).await.is_err() })
+}
+
+/// The lines of `lines` that are not success lines.
+fn other_lines(lines: &CapturedLines) -> Vec<String> {
+    lines
+        .lines()
+        .into_iter()
+        .filter(|line| !line.starts_with(SUCCESS))
+        .collect()
+}
+
+/// C36, C12: a `shutdown` that reaches its deadline stops the worker for good and answers
+/// `false`. A `flush` after it answers `true` at once, in both forms: the stop abandoned what was
+/// left, so nothing is left to wait for.
+#[test]
+fn flush_after_timed_out_shutdown_returns_true() {
+    let (publisher, _gate) = RecordingPublisher::gated();
+    let starts = publisher.starts();
+    let (agentcat, _lines) = handle(PROJECT, Options::default(), &publisher, None, fast());
+    push(&agentcat, job(PROJECT, "held"));
+    wait_starts(&starts, 1);
+    assert!(!agentcat.shutdown_blocking(ms(50)));
+
+    let started = Instant::now();
+    assert!(agentcat.flush_blocking(WAIT));
+    let no_timer = Builder::new_current_thread().build().unwrap();
+    assert!(no_timer.block_on(agentcat.flush(WAIT)));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(
+        publisher.finished(),
+        0,
+        "the attempt in flight was abandoned"
+    );
+}
+
+/// C36: the worker cannot tell a caller that stopped waiting from one that waits. A cancelled
+/// async `flush` (its future dropped after its first poll, here by the customer's timeout)
+/// leaves its request in the worker's waiting list until the queue and the in-flight events are
+/// empty (or its deadline passes); then the worker sends an answer that nobody reads and lets the
+/// request go. The test sees that moment through a probe: a request like the cancelled one, whose
+/// answer the test reads. The cancelled flush stops nothing: the queue takes the next event.
+#[test]
+fn cancelled_flush_leaves_waiting_list_when_worker_idles() {
+    let (publisher, gate) = RecordingPublisher::gated();
+    let starts = publisher.starts();
+    let (delivery, lines) = bare_delivery(&publisher, fast());
+    let delivery = Arc::new(delivery);
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), delivery.clone());
+    push(&agentcat, job(PROJECT, "a"));
+    wait_starts(&starts, 1);
+
+    assert!(
+        cancel_after_20_ms(agentcat.flush(LONG)),
+        "the customer's timeout cancels the flush"
+    );
+    let (probe, answer) = mpsc::channel();
+    assert_eq!(
+        delivery.request(Kind::Flush, LONG, Reply::Blocking(probe)),
+        None
+    );
+    push(&agentcat, job(PROJECT, "b"));
+    assert_eq!(
+        answer.recv_timeout(ms(100)),
+        Err(mpsc::RecvTimeoutError::Timeout),
+        "the request waits while the events are in flight"
+    );
+
+    gate.open();
+    assert_eq!(answer.recv_timeout(WAIT), Ok(true), "the worker is idle");
+    assert_eq!(
+        answer.recv_timeout(WAIT),
+        Err(mpsc::RecvTimeoutError::Disconnected),
+        "the worker let the request go"
+    );
+    let mut names = publisher.resource_names();
+    names.sort();
+    assert_eq!(names, ["a", "b"]);
+    assert_eq!(other_lines(&lines), Vec::<String>::new());
+}
+
+/// C36, C12: a cancelled async `shutdown` still shuts the handle down. Its first poll marks the
+/// queue shutting down, so a later event is dropped with TS's line. Its request waits in the
+/// worker's list like a flush's: once the event in flight ends, the worker stops with nothing left
+/// to abandon (no `Shutting down with` line) and answers every waiting request `true`, as the
+/// probe, a request like the cancelled one, shows. A later `flush` answers `true` at once.
+#[test]
+fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
+    let (publisher, gate) = RecordingPublisher::gated();
+    let starts = publisher.starts();
+    let (delivery, lines) = bare_delivery(&publisher, fast());
+    let delivery = Arc::new(delivery);
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), delivery.clone());
+    push(&agentcat, job(PROJECT, "a"));
+    wait_starts(&starts, 1);
+
+    assert!(
+        cancel_after_20_ms(agentcat.shutdown(LONG)),
+        "the customer's timeout cancels the shutdown"
+    );
+    let (probe, answer) = mpsc::channel();
+    assert_eq!(
+        delivery.request(Kind::Shutdown, LONG, Reply::Blocking(probe)),
+        None
+    );
+    push(&agentcat, job(PROJECT, "b"));
+    assert_eq!(
+        answer.recv_timeout(ms(100)),
+        Err(mpsc::RecvTimeoutError::Timeout),
+        "the request waits while the event is in flight"
+    );
+
+    gate.open();
+    assert_eq!(
+        answer.recv_timeout(WAIT),
+        Ok(true),
+        "the worker drained and stopped"
+    );
+    assert_eq!(
+        answer.recv_timeout(WAIT),
+        Err(mpsc::RecvTimeoutError::Disconnected),
+        "the worker let the request go"
+    );
+    let started = Instant::now();
+    assert!(agentcat.flush_blocking(WAIT));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(publisher.resource_names(), ["a"]);
+    assert_eq!(publisher.finished(), 1, "the event in flight was delivered");
+    assert_eq!(
+        other_lines(&lines),
+        ["Queue is shutting down, event dropped"]
+    );
+}
+
+/// C12, C36: `shutdown` is terminal, and a second call answers `true` at once in both forms and
+/// logs nothing: after a first one that drained, and after a first one that timed out and
+/// abandoned the event in flight.
+#[test]
+fn shutdown_twice_second_returns_true() {
+    let no_timer = Builder::new_current_thread().build().unwrap();
+
+    let publisher = RecordingPublisher::slow(ms(20));
+    let (agentcat, lines) = handle(PROJECT, Options::default(), &publisher, None, fast());
+    push(&agentcat, job(PROJECT, "drained"));
+    assert!(agentcat.shutdown_blocking(WAIT));
+    assert_eq!(publisher.finished(), 1);
+    let started = Instant::now();
+    assert!(agentcat.shutdown_blocking(WAIT));
+    assert!(no_timer.block_on(agentcat.shutdown(WAIT)));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    let lines = lines.lines();
+    assert_eq!(lines.len(), 1, "{lines:?}");
+    assert!(lines[0].starts_with(SUCCESS), "{lines:?}");
+
+    let (publisher, _gate) = RecordingPublisher::gated();
+    let starts = publisher.starts();
+    let (agentcat, lines) = handle(PROJECT, Options::default(), &publisher, None, fast());
+    push(&agentcat, job(PROJECT, "held"));
+    wait_starts(&starts, 1);
+    assert!(!agentcat.shutdown_blocking(ms(50)));
+    let started = Instant::now();
+    assert!(agentcat.shutdown_blocking(WAIT));
+    assert!(no_timer.block_on(agentcat.shutdown(WAIT)));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(publisher.finished(), 0);
+    assert_eq!(lines.lines(), Vec::<String>::new());
+}
+
+/// C36, C42: `flush` on a handle that has taken no event and no log line answers `true` at once
+/// in both forms and starts no thread: nothing was taken. The first event then starts the worker.
+#[test]
+fn flush_before_first_event_returns_true_without_thread() {
+    let publisher = RecordingPublisher::new();
+    let (delivery, lines) = bare_delivery(&publisher, fast());
+    let started = Instant::now();
+    assert!(delivery.flush_blocking(WAIT));
+    let no_timer = Builder::new_current_thread().build().unwrap();
+    assert!(no_timer.block_on(delivery.flush(WAIT)));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(worker_of(&delivery), Worker::Idle);
+    assert_eq!(lines.lines(), Vec::<String>::new());
+
+    delivery.event(job(PROJECT, "first"));
+    assert!(delivery.flush_blocking(WAIT));
+    assert!(matches!(worker_of(&delivery), Worker::Running(_)));
+    assert_eq!(publisher.resource_names(), ["first"]);
+}
+
+/// C36, C12: `shutdown` on a handle that has taken no event answers `true` at once in both forms
+/// and starts no thread. It is still terminal: a later event is dropped and starts no thread
+/// either, and a `flush` after it answers `true` at once.
+#[test]
+fn shutdown_before_first_event_returns_true_without_thread() {
+    let publisher = RecordingPublisher::new();
+    let (delivery, _lines) = bare_delivery(&publisher, fast());
+    let started = Instant::now();
+    assert!(delivery.shutdown_blocking(WAIT));
+    let no_timer = Builder::new_current_thread().build().unwrap();
+    assert!(no_timer.block_on(delivery.shutdown(WAIT)));
+    assert_eq!(worker_of(&delivery), Worker::Idle);
+
+    delivery.event(job(PROJECT, "after"));
+    assert!(delivery.flush_blocking(WAIT));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    assert_eq!(worker_of(&delivery), Worker::Idle);
+    assert!(publisher.attempts().is_empty());
+}
+
+/// C12, C42: TS logs `Queue is shutting down, event dropped` for an event after `shutdown`. On a
+/// handle whose worker never started, Rust drops that line with the event, and a log line after
+/// the shutdown too (`Queue::takes_lines`): a handle whose worker never starts writes nothing, and
+/// no thread starts to write a line. With a worker, the line is written
+/// (`shutdown_rejects_later_events`).
+#[test]
+fn shutting_down_line_dropped_when_worker_never_started() {
+    let publisher = RecordingPublisher::new();
+    let (delivery, lines) = bare_delivery(&publisher, fast());
+    assert!(delivery.shutdown_blocking(WAIT));
+    delivery.event(job(PROJECT, "after"));
+    delivery.log("a call-path line".to_owned());
+    {
+        let queue = delivery.shared.lock();
+        assert_eq!(queue.lines, Vec::<String>::new());
+        assert!(queue.pending.is_empty());
+        assert_eq!(queue.worker, Worker::Idle);
+    }
+    drop(delivery);
+    assert_eq!(lines.lines(), Vec::<String>::new());
+    assert!(publisher.attempts().is_empty());
+}
+
+/// Blocks its drop until the test lets it go, then sets its flag.
+#[derive(Debug)]
+struct HeldDrop {
+    release: mpsc::Receiver<()>,
+    dropped: Arc<AtomicBool>,
+}
+
+impl Drop for HeldDrop {
+    fn drop(&mut self) {
+        // A test that fails drops the sender, which lets the drop go too.
+        let _ = self.release.recv();
+        self.dropped.store(true, Ordering::SeqCst);
+    }
+}
+
+/// A publisher whose one attempt never ends and holds a [`HeldDrop`].
+#[derive(Debug)]
+struct HangsHolding {
+    held: Mutex<Option<HeldDrop>>,
+    starts: mpsc::Sender<()>,
+}
+
+impl Publisher for HangsHolding {
+    fn publish(&self, _request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>> {
+        let held = self.held.lock().unwrap().take();
+        let starts = self.starts.clone();
+        Box::pin(async move {
+            let _held = held;
+            let _ = starts.send(());
+            pending().await
+        })
+    }
+}
+
+/// C36, C37: the stop of a `shutdown` at its deadline aborts the event in flight and awaits its
+/// task before the worker answers, so the abandoned event's future, and what it holds (here an
+/// attempt; hooks and redaction tasks alike), is gone when the caller hears `false`. The test holds
+/// that future's drop: while it is held no answer comes, and the answer comes after the drop.
+/// Deterministic both ways: on the worker's current-thread runtime an aborted task's future is
+/// dropped only when the worker yields, so a stop that did not await would answer first.
+#[test]
+fn stop_awaits_aborted_tasks_before_answering() {
+    let dropped = Arc::new(AtomicBool::new(false));
+    let (release, released) = mpsc::channel();
+    let (starts_tx, starts) = mpsc::channel();
+    let publisher = HangsHolding {
+        held: Mutex::new(Some(HeldDrop {
+            release: released,
+            dropped: Arc::clone(&dropped),
+        })),
+        starts: starts_tx,
+    };
+    let delivery = Delivery::with_writer(
+        PROJECT.to_owned(),
+        &Options::default(),
+        Arc::new(publisher),
+        None,
+        fast(),
+        CapturedLines::default().writer(),
+    );
+    delivery.event(job(PROJECT, "held"));
+    wait_starts(&starts, 1);
+
+    let (reply, answer) = mpsc::channel();
+    assert_eq!(
+        delivery.request(Kind::Shutdown, ms(50), Reply::Blocking(reply)),
+        None
+    );
+    assert_eq!(
+        answer.recv_timeout(ms(300)),
+        Err(mpsc::RecvTimeoutError::Timeout),
+        "no answer while the aborted attempt's drop is held"
+    );
+    assert!(!dropped.load(Ordering::SeqCst));
+    release.send(()).unwrap();
+    assert_eq!(answer.recv_timeout(WAIT), Ok(false));
+    assert!(
+        dropped.load(Ordering::SeqCst),
+        "the aborted attempt was dropped before the answer"
+    );
+}
+
 // ------------------------------------------------------------------------------- last drop
+
+/// C36: `Queue::close`, the queue side of the last drop, marks the queue closed and shutting
+/// down in every state of the worker. A worker that runs gets a shutdown with the drain, and the
+/// caller waits for its answer only when that worker runs on another thread: on the worker thread
+/// nobody can wait, so nobody gets the answer. Without a running worker nothing was taken, so
+/// nothing is queued and nobody waits.
+#[test]
+fn close_waits_only_for_a_worker_on_another_thread() {
+    let here = std::thread::current().id();
+    let other = std::thread::spawn(|| std::thread::current().id())
+        .join()
+        .unwrap();
+    let cases = [
+        (Worker::Idle, None),
+        (Worker::Gone, None),
+        (Worker::Running(other), Some(true)),
+        (Worker::Running(here), Some(false)),
+    ];
+    for (worker, queued) in cases {
+        let mut queue = Queue::new();
+        queue.worker = worker;
+        let (answer, _receiver) = mpsc::channel();
+        let before = Instant::now();
+        let waits = queue.close(ms(300), answer);
+        assert_eq!(waits, queued == Some(true), "{worker:?}");
+        assert!(queue.closed && queue.shutting_down, "{worker:?}");
+        match (queued, queue.requests.as_slice()) {
+            (None, []) => {}
+            (Some(waits), [request]) => {
+                assert_eq!(request.kind, Kind::Shutdown, "{worker:?}");
+                assert!(request.deadline >= before + ms(300), "{worker:?}");
+                assert_eq!(
+                    matches!(request.reply, Reply::Blocking(_)),
+                    waits,
+                    "{worker:?}"
+                );
+                assert_eq!(matches!(request.reply, Reply::Nobody), !waits, "{worker:?}");
+            }
+            (_, requests) => panic!("{worker:?}: {requests:?}"),
+        }
+    }
+}
 
 /// R06, C36: when the last handle drops, `Drop` drains the queue within `drop_drain`: the events
 /// pushed before it are posted, and their lines written, when the drop returns.

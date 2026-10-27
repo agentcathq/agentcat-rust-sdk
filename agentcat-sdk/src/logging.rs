@@ -3,6 +3,11 @@
 //! The destination is process-wide and the first call of [`configure`] decides it. `File` appends
 //! `[<ISO time>] [sdk=… rust=… rmcp=…] <message>` lines to `<home>/agentcat.log`, one open per
 //! line, and ignores every error. `Tracing` emits `tracing` events with target `agentcat`.
+//!
+//! The delivery worker of each handle writes the lines (C42), so `Tracing` events come from the
+//! worker's thread: a subscriber that `tracing::subscriber::with_default` sets on another thread
+//! does not see them. The one exception is the line about a delivery thread that cannot be
+//! spawned, which the caller's thread writes.
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;

@@ -75,6 +75,12 @@ mod tests;
 /// # }
 /// ```
 ///
+/// A hook of [`Options`] that holds a clone of the handle makes a reference cycle: the handle
+/// holds its options, and the options hold the hook. The handle then never drops, so the drain
+/// of the last drop never runs. Call [`shutdown`](Self::shutdown) before the process ends, or let
+/// the hook capture only what it needs. A tool reaches the handle through
+/// [`CallContext::agentcat`](crate::CallContext::agentcat), so it needs no clone.
+///
 /// A drop on the delivery thread itself does not wait. A handle whose delivery thread never
 /// started has nothing to drain. The drain does not run at all after `std::process::exit` or a
 /// panic under `panic = "abort"`.
@@ -451,6 +457,12 @@ impl AgentCat {
     /// The SDK's delivery thread keeps the time, so the calling runtime needs no timer. Events
     /// still go out after a `false`. Use it before a short-lived process ends, or in a test.
     ///
+    /// It returns `true` at once when the handle has taken no event yet, and after a
+    /// [`shutdown`](Self::shutdown) has ended, also one that timed out: nothing is left to
+    /// deliver. Once polled, the wait stays with the delivery thread until the events are
+    /// delivered or `timeout` passes, also when the future is dropped first (for example by a
+    /// timeout).
+    ///
     /// ```no_run
     /// # async fn run(agentcat: agentcat_sdk::AgentCat) {
     /// use std::time::Duration;
@@ -466,6 +478,11 @@ impl AgentCat {
     /// Like [`flush`](Self::flush), then stops this handle for good: every event it takes from
     /// the call on is dropped, for all its clones. When `timeout` passes first, the events left
     /// are abandoned and it returns `false`.
+    ///
+    /// Once polled, the shutdown runs to its end, also when the future is dropped first (for
+    /// example by a timeout): the handle drops later events and stops once its events are
+    /// delivered or `timeout` passes. A second `shutdown` after the first has ended returns
+    /// `true` at once.
     ///
     /// Without it, the drop of the last clone runs the same shutdown with a 5 s timeout and
     /// blocks the dropping thread while it runs: see [dropping the last

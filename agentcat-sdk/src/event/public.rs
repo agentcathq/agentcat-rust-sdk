@@ -14,6 +14,9 @@ use crate::pipeline::TsEvent;
 /// (`id`, `session_id`, `project_id`, `event_type` and `timestamp`) when the hook changes them.
 ///
 /// Field values are JSON values, as the TypeScript SDK holds them.
+///
+/// To unit-test a `redact_event` hook, build an event with [`Event::default`], set the fields
+/// the hook reads, and call the hook with it.
 #[derive(Clone, Debug, PartialEq)]
 #[non_exhaustive]
 pub struct Event {
@@ -67,6 +70,49 @@ pub struct Event {
     pub tags: Option<BTreeMap<String, String>>,
     /// The properties of the event.
     pub properties: Option<Map<String, Value>>,
+}
+
+impl Default for Event {
+    /// An empty event: `id`, `project_id` and `event_type` are empty, `timestamp` is the Unix
+    /// epoch, and every other field is `None`. Set the fields a test needs:
+    ///
+    /// ```
+    /// use agentcat_sdk::Event;
+    /// use serde_json::json;
+    ///
+    /// let mut event = Event::default();
+    /// event.parameters = Some(json!({"api_key": "fake-secret-42"}));
+    /// # assert!(event.response.is_none());
+    /// ```
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            session_id: None,
+            project_id: String::new(),
+            event_type: String::new(),
+            timestamp: UNIX_EPOCH,
+            duration: None,
+            input_tokens: None,
+            output_tokens: None,
+            sdk_language: None,
+            agentcat_version: None,
+            server_name: None,
+            server_version: None,
+            client_name: None,
+            client_version: None,
+            identify_actor_given_id: None,
+            identify_actor_name: None,
+            identify_actor_data: None,
+            resource_name: None,
+            parameters: None,
+            response: None,
+            user_intent: None,
+            is_error: None,
+            error: None,
+            tags: None,
+            properties: None,
+        }
+    }
 }
 
 impl Event {

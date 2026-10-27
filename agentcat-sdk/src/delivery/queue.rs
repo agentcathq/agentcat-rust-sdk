@@ -4,7 +4,7 @@
 use std::collections::VecDeque;
 use std::mem;
 use std::sync::mpsc;
-use std::thread::ThreadId;
+use std::thread::{self, ThreadId};
 use std::time::{Duration, Instant};
 
 use tokio::sync::oneshot;
@@ -128,7 +128,7 @@ pub(super) struct Queue {
     pub(super) in_flight: usize,
     /// Set by `shutdown` and by the last drop: later jobs are dropped (C12).
     pub(super) shutting_down: bool,
-    /// Set by the last drop: the worker exits once it stopped.
+    /// Set by the last drop ([`Queue::close`]): the worker exits once it stopped.
     pub(super) closed: bool,
     /// The worker thread.
     pub(super) worker: Worker,
@@ -216,6 +216,26 @@ impl Queue {
                 None
             }
         }
+    }
+
+    /// Closes the queue for the last drop of its handle (C36): later jobs are dropped (C12), and
+    /// the worker exits once it stopped. A worker that runs gets a shutdown with `drain` as its
+    /// timeout. Its answer goes to `answer`, except when the caller is the worker thread itself,
+    /// which cannot wait for its own answer: then nobody gets it. `true` when the caller must wait
+    /// for the answer, that is when a worker runs on another thread. Without a running worker
+    /// nothing was taken, so nothing is left to drain.
+    pub(super) fn close(&mut self, drain: Duration, answer: mpsc::Sender<bool>) -> bool {
+        self.closed = true;
+        let on_worker = self.worker == Worker::Running(thread::current().id());
+        let reply = if on_worker {
+            Reply::Nobody
+        } else {
+            Reply::Blocking(answer)
+        };
+        let queued = self
+            .push_request(Request::new(Kind::Shutdown, drain, reply))
+            .is_none();
+        queued && !on_worker
     }
 
     /// Marks the worker gone and takes what it would have handled: the pending jobs and the

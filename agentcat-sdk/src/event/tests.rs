@@ -735,3 +735,64 @@ fn event_has_no_unknown_keys() {
     ts.insert("sessionId".to_owned(), json!(""));
     assert_eq!(super::Event::from_ts(&ts).session_id, None);
 }
+
+/// C49: `Event::default()` is the empty event a customer starts from to unit-test a
+/// `redact_event` hook: empty `id`, `project_id` and `event_type`, the Unix epoch as `timestamp`,
+/// and every other field `None`. The pattern names every field, so a new field must be added here.
+#[test]
+fn default_event_is_empty() {
+    let super::Event {
+        id,
+        session_id,
+        project_id,
+        event_type,
+        timestamp,
+        duration,
+        input_tokens,
+        output_tokens,
+        sdk_language,
+        agentcat_version,
+        server_name,
+        server_version,
+        client_name,
+        client_version,
+        identify_actor_given_id,
+        identify_actor_name,
+        identify_actor_data,
+        resource_name,
+        parameters,
+        response,
+        user_intent,
+        is_error,
+        error,
+        tags,
+        properties,
+    } = super::Event::default();
+    assert_eq!(
+        (id, project_id, event_type),
+        (String::new(), String::new(), String::new())
+    );
+    assert_eq!(timestamp, UNIX_EPOCH);
+    assert_eq!(duration, None);
+    assert_eq!((input_tokens, output_tokens), (None, None));
+    let texts = [
+        session_id,
+        sdk_language,
+        agentcat_version,
+        server_name,
+        server_version,
+        client_name,
+        client_version,
+        identify_actor_given_id,
+        identify_actor_name,
+        resource_name,
+    ];
+    assert_eq!(texts, [const { None }; 10]);
+    assert_eq!((identify_actor_data, properties), (None, None));
+    assert_eq!(
+        (parameters, response, user_intent, error),
+        (None, None, None, None)
+    );
+    assert_eq!(is_error, None);
+    assert_eq!(tags, None);
+}
