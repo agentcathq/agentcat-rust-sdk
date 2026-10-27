@@ -69,6 +69,11 @@ function stubbed(name, wrap, fn) {
   }
 }
 
+/** Whether a rename of `from` is the first step of moving `lockDir`: its record, or itself. */
+function movesLock(lockDir, from) {
+  return from === lockDir || from === join(lockDir, OWNER_FILE);
+}
+
 /** An error Windows gives for a rename while another process holds the file open. */
 function refused(code, from, to) {
   return Object.assign(new Error(`${code}: rename '${from}' -> '${to}'`), { code });
@@ -152,7 +157,7 @@ test("interleaving B (release during break) is deterministic", async () => {
   const broke = stubbed("renameSync", (rename) => {
     let done = false;
     return (from, to) => {
-      if (!done && from === lockDir && basename(to).startsWith(`${basename(lockDir)}.stale-`)) {
+      if (!done && movesLock(lockDir, from)) {
         done = true;
         owner.release(lockDir, judged.token);
         if (!existsSync(lockDir)) {
@@ -175,7 +180,7 @@ test("interleaving B (release during break) is deterministic", async () => {
   stubbed("renameSync", (rename) => {
     let done = false;
     return (from, to) => {
-      if (!done && from === lockDir2 && basename(to).startsWith(`${basename(lockDir2)}.done-`)) {
+      if (!done && movesLock(lockDir2, from)) {
         done = true;
         broke2 = breakStale(lockDir2, judged);
         if (!existsSync(lockDir2)) {
@@ -204,7 +209,7 @@ test("interleaving C (two breakers)", async () => {
   const broke = stubbed("renameSync", (rename) => {
     let done = false;
     return (from, to) => {
-      if (!done && from === lockDir) {
+      if (!done && movesLock(lockDir, from)) {
         done = true;
         secondBroke = second.breakStale(lockDir, judged);
         if (!existsSync(lockDir)) {
@@ -321,6 +326,40 @@ test("sweep removes .new-*, .stale-* and .done-* leftovers older than the stale 
   for (const path of [...young, ...others]) assert.equal(existsSync(path), true, `${path} was removed`);
 });
 
+test("a lock moves away while waiters keep reading its record (Windows)", async () => {
+  // Windows refuses to rename a directory while a file in it is open, and every waiter reads the
+  // owner record at each poll. Here a waiter always holds the record open while it is in place.
+  const owner = await otherProcess("windows-readers");
+  const readersHoldRecord = (rename) => (from, to) => {
+    if (existsSync(join(from, OWNER_FILE))) throw refused("EPERM", from, to);
+    rename(from, to);
+  };
+
+  // The owner releases its lock.
+  const lockDir = newLockDir();
+  plant(lockDir, { pid: process.pid, host: hostname(), token: "owner" });
+  stubbed("renameSync", readersHoldRecord, () => owner.release(lockDir, "owner"));
+  assert.equal(existsSync(lockDir), false, "the owner could not release its lock");
+
+  // A waiter breaks a stale lock.
+  const lockDir2 = newLockDir();
+  plant(lockDir2, { pid: deadPid(), host: hostname(), token: "dead" });
+  const judged = readOwner(lockDir2);
+  assert.equal(stubbed("renameSync", readersHoldRecord, () => breakStale(lockDir2, judged)), true);
+  assert.equal(existsSync(lockDir2), false);
+
+  // When the directory still cannot move, the record goes back: the lock stays whole. (The error is
+  // one that is not retried, so the test does not wait out the retries.)
+  const lockDir3 = newLockDir();
+  plant(lockDir3, { pid: process.pid, host: hostname(), token: "owner" });
+  const directoryStays = (rename) => (from, to) => {
+    if (from === lockDir3) throw Object.assign(new Error(`EXDEV: rename '${from}' -> '${to}'`), { code: "EXDEV" });
+    rename(from, to);
+  };
+  stubbed("renameSync", directoryStays, () => owner.release(lockDir3, "owner"));
+  assert.equal(readOwner(lockDir3)?.token, "owner");
+});
+
 test("a holder never removes a lock that is no longer its own", async () => {
   const lockDir = newLockDir();
   const other = { pid: process.pid, host: hostname(), token: "other" };
@@ -426,9 +465,14 @@ test("a rename that stays refused yields only to the same bytes", async () => {
   );
 });
 
-test("processes that find a stale lock at the same moment take it one at a time", async () => {
+/**
+ * Starts 8 processes that find a stale lock at the same moment and hold it in turn for 25 ms; checks
+ * that each held it once, one at a time, and that the lock is gone at the end. `nodeArgs` go before
+ * each process's script.
+ */
+async function takeTurns(nodeArgs = []) {
   const lockDir = newLockDir();
-  const log = join(scratch, "holders.log");
+  const log = join(scratch, `${basename(lockDir)}.holders.log`);
   plant(lockDir, { pid: deadPid(), host: hostname(), token: "dead" });
   const worker = `
     import { appendFileSync } from "node:fs";
@@ -448,7 +492,7 @@ test("processes that find a stale lock at the same moment take it one at a time"
     Array.from({ length: workers }, (_, id) => {
       const child = spawn(
         process.execPath,
-        ["--input-type=module", "-e", worker, lockDir, log, String(id), String(goAt)],
+        [...nodeArgs, "--input-type=module", "-e", worker, lockDir, log, String(id), String(goAt)],
         { stdio: ["ignore", "ignore", "pipe"] },
       );
       let stderr = "";
@@ -466,4 +510,31 @@ test("processes that find a stale lock at the same moment take it one at a time"
     assert.deepEqual([enter, lines[i + 1]], ["enter", `exit ${id}`], `holders overlap:\n${lines.join("\n")}`);
   }
   assert.equal(existsSync(lockDir), false);
+}
+
+test("processes that find a stale lock at the same moment take it one at a time", async () => {
+  await takeTurns();
+});
+
+test("processes take the lock one at a time where a lock cannot move while waiters read its record", async () => {
+  // Windows refuses to rename a directory while a file in it is open; with 5 ms polls, some waiter
+  // always has the record of the lock open (CI run 40582589401: 7 of 8 processes timed out).
+  const rule = join(scratch, "windows-rename-rule.mjs");
+  writeFileSync(
+    rule,
+    `
+    import fs from "node:fs";
+    import { join } from "node:path";
+    import { syncBuiltinESMExports } from "node:module";
+    const rename = fs.renameSync;
+    fs.renameSync = (from, to) => {
+      if (String(from).endsWith(".lock") && fs.existsSync(join(from, ${JSON.stringify(OWNER_FILE)}))) {
+        throw Object.assign(new Error(\`EPERM: rename '\${from}' -> '\${to}'\`), { code: "EPERM" });
+      }
+      rename(from, to);
+    };
+    syncBuiltinESMExports();
+    `,
+  );
+  await takeTurns(["--import", pathToFileURL(rule).href]);
 });

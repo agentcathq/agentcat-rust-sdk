@@ -3,13 +3,13 @@
 // A process takes the lock by renaming a directory that already holds its
 // whole owner record ({pid, host, token}) to the lock path; the rename fails
 // while a lock is there. So every lock has a record from its first moment; a
-// lock without a readable one is damaged (or left by an older version of this
-// file). While it holds the lock, the owner refreshes the time of the lock
-// directory (the heartbeat). A lock is stale when its owner is dead (isLive):
-// a dead pid; a record with another host name and an old lock (a lock restored
-// from another machine's CI cache, whose pid means nothing here; an owner on
-// this machine whose host name changed since, as macOS does, keeps its lock
-// fresh); or no readable record after `staleMs`.
+// lock without a readable one is on its way out (moveLock), damaged, or left
+// by an older version of this file. While it holds the lock, the owner
+// refreshes the time of the lock directory (the heartbeat). A lock is stale
+// when its owner is dead (isLive): a dead pid; a record with another host name
+// and an old lock (a lock restored from another machine's CI cache, whose pid
+// means nothing here; an owner on this machine whose host name changed since,
+// as macOS does, keeps its lock fresh); or no readable record after `staleMs`.
 //
 // A waiter breaks a stale lock only while it holds a claim on that very lock:
 // the file `break-<token of the judged owner>` inside it, which link() creates
@@ -23,8 +23,11 @@
 //
 // Windows refuses a rename or a link while another process (a virus scanner)
 // holds a file in it open: those steps run again after a delay (fsretry.mjs),
-// and a step that still fails leaves the lock to the next poll. The holder
-// sweeps what failed removals leave next to the lock.
+// and a step that still fails leaves the lock to the next poll. It also refuses
+// to rename a directory while any file in it is open, and every waiter reads
+// the owner record at each poll; so whoever moves a lock first moves its record
+// aside (moveLock). The holder sweeps what failed removals leave next to the
+// lock.
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
@@ -44,6 +47,9 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { BUSY, renameWithRetry, retryBusy } from "./fsretry.mjs";
 
 export const OWNER_FILE = "owner.json";
+
+/** The owner record's name while its lock moves away (moveLock). */
+const MOVING_FILE = "owner.moving";
 
 const DEFAULTS = { waitMs: 30 * 60_000, pollMs: 250, staleMs: 60_000 };
 
@@ -104,13 +110,13 @@ export function breakStale(lockDir, judged, staleMs = DEFAULTS.staleMs) {
   // `judged` now, the lock did not change in between, the claim is inside this
   // very lock, and no other process holds a claim on it: only this process
   // moves it. (A lock without a record carries no token to tell two of them
-  // apart; only a damaged or older lock lacks one.)
+  // apart; only a damaged or older lock, or one whose mover died, lacks one.)
   const found = readOwner(lockDir);
   const same = judged === null ? found === null : found?.token === judged.token;
   if (!same) return false; // another waiter broke it and took a new lock
   const grave = `${lockDir}.stale-${randomUUID()}`;
   try {
-    renameWithRetry(lockDir, grave);
+    moveLock(lockDir, grave);
   } catch (err) {
     if (err.code === "ENOENT" || IN_USE.has(err.code)) return false; // the claim stays: the next poll goes on
     throw err;
@@ -130,11 +136,45 @@ export function release(lockDir, token, staleMs = DEFAULTS.staleMs) {
   if (!claim(lockDir, `break-${token}`, staleMs)) return; // a breaker moves it
   const grave = `${lockDir}.done-${token}`;
   try {
-    renameWithRetry(lockDir, grave);
+    moveLock(lockDir, grave);
   } catch {
     return; // still in use: a waiter breaks it once this process has ended
   }
   removeTree(grave);
+}
+
+/**
+ * Renames the lock directory to `grave`. Windows refuses to rename a directory
+ * while a file in it is open, and every waiter reads the owner record at each
+ * poll. So the record first moves aside, inside the lock (Windows renames a
+ * file that others hold open, since Node opens files with delete sharing). A
+ * waiter then finds a fresh lock without a record, which it leaves alone
+ * (isLive), and the directory moves once the reads in progress have ended.
+ * When the directory cannot move, the record goes back and the error is thrown.
+ */
+function moveLock(lockDir, grave) {
+  const record = join(lockDir, OWNER_FILE);
+  const aside = join(lockDir, MOVING_FILE);
+  let moved = false;
+  try {
+    renameWithRetry(record, aside);
+    moved = true;
+    touchDir(lockDir); // fresh, so no waiter takes the lock without a record for a stale one
+  } catch (err) {
+    if (err.code !== "ENOENT") throw err; // ENOENT: a lock without a record, or none at all
+  }
+  try {
+    renameWithRetry(lockDir, grave);
+  } catch (err) {
+    if (moved) {
+      try {
+        renameWithRetry(aside, record);
+      } catch {
+        // the lock stays without a record: stale after staleMs
+      }
+    }
+    throw err;
+  }
 }
 
 /** Whether a process with this pid runs on this host. */
@@ -268,12 +308,16 @@ function parseRecord(text) {
 
 /** The heartbeat: refreshes the time of the lock while it holds the owner `token`. */
 function touch(lockDir, token) {
-  if (readOwner(lockDir)?.token !== token) return;
+  if (readOwner(lockDir)?.token === token) touchDir(lockDir);
+}
+
+/** Sets the time of `dir` to now, if it can. */
+function touchDir(dir) {
   const now = new Date();
   try {
-    utimesSync(lockDir, now, now);
+    utimesSync(dir, now, now);
   } catch {
-    // open elsewhere (Windows): the next beat comes well within staleMs
+    // open elsewhere (Windows): a rename inside it has set its time too, or the next beat comes
   }
 }
 

@@ -133,7 +133,11 @@ async fn refused_connection_is_retried() {
     let port = listener.local_addr().unwrap().port();
     drop(listener);
     let mut log = Vec::new();
-    let publisher = ApiPublisher::new(format!("http://127.0.0.1:{port}"), &mut log);
+    // Linux and macOS refuse the connection at once. Windows sends the SYN again first and reports
+    // the refusal after about 2 s, so the attempt timeout ends each attempt there, and the four
+    // attempts settle within `WAIT`.
+    let publisher =
+        ApiPublisher::with_attempt_timeout(format!("http://127.0.0.1:{port}"), ms(300), &mut log);
     let attempts = Arc::new(std::sync::atomic::AtomicUsize::new(0));
     let counting = CountingPublisher {
         inner: publisher,
