@@ -38,7 +38,8 @@
 //         server needed SIGKILL after SIGTERM, with --expect-drained a server exited
 //         without printing {"drained":true}, or the run failed (a negotiated version
 //         other than --lane; in a tracked run, a saveHandleAs that finds no handle or
-//         a ${NAME} with no saved value; in any run, a saveCursorAs without a nextCursor).
+//         a ${NAME} with no saved value; in any run, a saveCursorAs without a nextCursor
+//         or a ${NAME} in a cursor that no saveCursorAs saved).
 //         On a run failure every connected client is closed first.
 // Exit 2: bad arguments or scenario.
 import { spawn } from "node:child_process";
@@ -368,6 +369,15 @@ async function main() {
           ? Object.fromEntries(Object.entries(v).map(([k, x]) => [k, subst(x, where)]))
           : v;
 
+  const cursors = {};
+  // `${NAME}` in a listTools cursor becomes the cursor saved under NAME by saveCursorAs. With none, the
+  // run fails, tracked or not: the server would answer an unknown cursor with an error.
+  const cursorOf = (text, where) =>
+    text.replace(/\$\{(\w+)\}/g, (_, k) => {
+      if (cursors[k] !== undefined) return cursors[k];
+      throw new DriverFailure(`${where}: the cursor names ${k}, but no saveCursorAs saved it`);
+    });
+
   function handleFrom(result) {
     const sc = result?.structuredContent?.mcp_session?.session_id;
     if (sc) return sc;
@@ -446,7 +456,7 @@ async function main() {
         }
       } else if (step.op === "listTools") {
         const entry = { session: si, op: "listTools" };
-        if (step.cursor !== undefined) entry.request = { cursor: subst(step.cursor, where) };
+        if (step.cursor !== undefined) entry.request = { cursor: cursorOf(step.cursor, where) };
         // A paged scenario lists one page per step on both lanes: without a cursor, the v2 client's
         // listTools() follows every nextCursor itself and drops it, so the driver sends the request.
         const firstPageOnly = scenario.pageSize !== undefined && lane === "2026-07-28" && entry.request === undefined;
@@ -460,7 +470,7 @@ async function main() {
         if (step.saveCursorAs) {
           const next = entry.result?.nextCursor;
           if (typeof next !== "string") throw new DriverFailure(`${where}: no nextCursor for ${step.saveCursorAs}`);
-          vars[step.saveCursorAs] = next;
+          cursors[step.saveCursorAs] = next;
         }
         transcript.push(entry);
       } else {

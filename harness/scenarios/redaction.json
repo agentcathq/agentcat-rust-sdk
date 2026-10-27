@@ -2,6 +2,7 @@
   "name": "redaction",
   "projectId": "proj_HARNESS00000000000000000000",
   "options": {
+    "identify": { "returns": { "userId": "user-late", "userName": "Late User", "userData": { "plan": "late" } }, "sleepMs": 200 },
     "eventTags": { "returns": { "note": "SECRET_TOKEN" } },
     "eventProperties": { "returns": { "region": "SECRET_TOKEN" } },
     "redactSensitiveInformation": { "replace": "SECRET_TOKEN" },

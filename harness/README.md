@@ -151,8 +151,8 @@ values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot.
    second server sets the resource name of every event it sees to `canary`. It must exit 1.
    `node harness/src/l3-expect.mjs caught-event` checks that every driver passed, that no combination
    reports a delta difference (the hook runs after the call), and that every combination reports an
-   unruled event difference, each at `$.events[<n>].body.resource_name`. A canary that passes means the
-   event comparison has gone blind.
+   unruled event difference, each at `$.events[<n>].body.resource_name` with the value `canary` on the
+   second server. A canary that passes means the event comparison has gone blind.
 
 `l3-expect.mjs <none|caught|caught-call|caught-event> [matrix.json]` reads `harness/out/matrix.json` by
 default; exit 0 as expected, 1 not (one line per bad combination; a combination without `delta` or
@@ -205,7 +205,9 @@ development machine; the A/A and canary runs about 12 s each.
   and a `${NAME}` with no saved value, exit 1 with
   `driver: step <i> of session <s>: no session handle for <NAME>`. An untracked run issues no handles
   and keeps the `${NAME}` text literally. A `saveCursorAs` step whose result has no `nextCursor` exits 1
-  in every run: `driver: step <i> of session <s>: no nextCursor for <NAME>`.
+  in every run: `driver: step <i> of session <s>: no nextCursor for <NAME>`. A `${NAME}` in a `cursor`
+  that no `saveCursorAs` saved exits 1 in every run:
+  `driver: step <i> of session <s>: the cursor names <NAME>, but no saveCursorAs saved it`.
 - The `initialize` transcript entry of each session holds
   `{protocolVersion, serverInfo, capabilities, instructions}` as the client reports them, on both
   lanes (`null` for a part the server did not send).
@@ -509,7 +511,7 @@ Example (`scenarios/basic.json`):
 - Each session is a new client connection. `saveHandleAs` stores the `ses_` handle a result issued
   (from `structuredContent.mcp_session.session_id` or a `session_id: ses_...` text line); `${NAME}`
   in later arguments is replaced with it.
-- `listTools` takes an optional `cursor` (a string; `${NAME}` works) and an optional `saveCursorAs`, which
+- `listTools` takes an optional `cursor` (a string; `${NAME}` reads a cursor that `saveCursorAs` saved) and an optional `saveCursorAs`, which
   stores the result's `nextCursor` under that name (no `nextCursor`: exit 1, in every run).
 - `pageSize` (optional, a positive integer) starts the servers with `HARNESS_PAGE_SIZE`, so `tools/list`
   answers in pages ("Server protocol" above).
@@ -541,10 +543,10 @@ as `harness:<name>`:
 | `agent-tracking` | `enableAgentTracking`, `customContextDescription` | Calls with and without `agent_id` (a two-line value, a number, blanks), with minted, supplied and invalid handles; a call before any listing. |
 | `features-off` | `enableReportMissing: false`, `enableToolCallContext: false` | No `get_more_tools` and no `context` injection; a `context` argument that is not ours; a call to `get_more_tools`. |
 | `tracing-off` | `enableTracing: false` | Calls with `context`, and `own_context` with its own `context` (RD-29 on per-request TS servers); no handles, no mint-back, no mirror; `get_more_tools` answered by the SDK. |
-| `redaction` | `eventTags` and `eventProperties` return `SECRET_TOKEN` values, `redactSensitiveInformation` replace, `redactEvent` merge (`resourceName`, `sessionId`, `properties`) | Renamed resources and restored sessions on the call events; tags keep `SECRET_TOKEN` (string redaction skips them), and the merged `properties` replace the hook's whole value (no `region` key); the session-string custom event of `emit_custom` untouched by both hooks; the server-form custom event of `emit_custom_server` renamed but not string-redacted (K-03). |
+| `redaction` | `identify` returns a user after 200 ms, `eventTags` and `eventProperties` return `SECRET_TOKEN` values, `redactSensitiveInformation` replace, `redactEvent` merge (`resourceName`, `sessionId`, `properties`) | Renamed resources and restored sessions on the call events; the late identity on every call event, the `boom` error event included, and through the `redactEvent` merge; tags keep `SECRET_TOKEN` (string redaction skips them), and the merged `properties` replace the hook's whole value (no `region` key); the session-string custom event of `emit_custom` untouched by both hooks; the server-form custom event of `emit_custom_server` renamed but not string-redacted (K-03). |
 | `redact-drop` | `redactEvent` returns `null` | Every event that runs the hook is dropped: only the session-string custom event of `emit_custom` publishes. |
 | `hooks-fail` | `identify` throws after 200 ms, `eventTags` returns invalid tags (a bad key, a 33-character key, a number value, a newline in a value) and one valid tag, `eventProperties` throws | Calls in two sessions: no identity, no properties, only the valid tag. |
-| `concurrency` | `{}`, `"eventOrder": "multiset"` | A `parallel` step of 8 `echo` calls with one handle on the first session's client, at the same time as 2 calls on a second session. |
+| `concurrency` | `enableAgentTracking`, `"eventOrder": "multiset"` | A `parallel` step of 8 `echo` calls with one handle on the first session's client, at the same time as 2 calls on a second session, each call with its own `agent_id`. The actor half (a user per call) is the Rust test `fake::concurrent_calls_keep_their_own_session_agent_and_actor`: one `identify` profile cannot name a user per call. |
 | `pagination` | `{}`, `pageSize: 3` | Page 1, a call to a page-2 tool before page 2 is listed (K-01 against RD-12), page 2, the call again, page 3 and `own_context` on it (RD-12 on per-request TS servers). |
 | `custom-events` | `{}` | The session-string form (`emit_custom`) with and without a session, the server form (`emit_custom_server`) with and without a session, and invalid custom tags (all dropped, or one valid tag kept). |
 
@@ -591,7 +593,7 @@ same millisecond, a call (an event with a `duration` that is not a custom event:
 published during it) comes before the rest, a server-form custom event included (it has a `duration`,
 K-03, but encloses nothing); then by resource name, then by the normalized body with its IDs masked and its
 keys sorted, so a raw duration or a key order never decides a tie. The TS queue publishes events
-concurrently, so arrival order is noise. The `duration` step keeps a custom event published during a
+concurrently, so arrival order is noise. The call-first step keeps a custom event published during a
 tool call after the call event, also when both land in the same millisecond. A scenario with
 `"eventOrder": "multiset"` sorts on the masked normalized body alone.
 

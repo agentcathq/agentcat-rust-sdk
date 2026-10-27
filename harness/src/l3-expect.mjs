@@ -20,7 +20,8 @@
 //   caught-event  the event canary run (HARNESS_CANARY=event: a redact_event hook renames every event that
 //                 runs it): at least one combination, every driver exited 0, no delta difference at all
 //                 (delta.total 0: the hook runs after the call), and an unruled event difference in every
-//                 combination, each at an event's resource_name (EVENT_CANARY_PATH).
+//                 combination, each at an event's resource_name (EVENT_CANARY_PATH) with the canary's value
+//                 on the second server (EVENT_CANARY_NAME).
 // Exit 0: as expected. Exit 1: not as expected (one line per bad combination). Exit 2: bad arguments or an
 // unreadable matrix.json.
 import { dirname, join } from "node:path";
@@ -44,6 +45,9 @@ const callCanaryChange = (d) =>
 
 /** Where the event canary's differences sit: the resource name of an event. */
 export const EVENT_CANARY_PATH = /^\$\.events\[\d+\]\.body\.resource_name$/;
+
+/** The resource name the event canary gives every event of the second server (`b`, the Rust server with --env2). */
+const EVENT_CANARY_NAME = "canary";
 
 /** The modes, and the name of each in the report lines. */
 const MODES = { none: "A/A", caught: "canary", "caught-call": "call canary", "caught-event": "event canary" };
@@ -74,7 +78,9 @@ function problem(c, mode) {
     const diffs = c.eventDifferences ?? [];
     if (c.events.unexpected === 0 || diffs.length === 0) return `no unruled event difference: events ${JSON.stringify(c.events)}`;
     const elsewhere = diffs.filter((d) => typeof d.path !== "string" || !EVENT_CANARY_PATH.test(d.path));
-    return elsewhere.length === 0 ? undefined : `an event difference outside the canary paths: ${elsewhere[0].path}`;
+    if (elsewhere.length > 0) return `an event difference outside the canary paths: ${elsewhere[0].path}`;
+    const other = diffs.find((d) => d.b !== EVENT_CANARY_NAME);
+    return other === undefined ? undefined : `not the event canary's change at ${other.path}: a ${JSON.stringify(other.a)} b ${JSON.stringify(other.b)}`;
   }
   if (c.events.total !== 0) {
     const first = (c.eventDifferences ?? [])[0];

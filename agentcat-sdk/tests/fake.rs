@@ -2,7 +2,10 @@
 #![expect(clippy::expect_used, reason = "test helpers")]
 
 use agentcat_sdk::testing::Fake;
-use agentcat_sdk::{CustomEvent, HookError, Options, UserIdentity};
+use std::collections::BTreeSet;
+use std::time::Duration;
+
+use agentcat_sdk::{CustomEvent, HookError, Options, ToolCall, UserIdentity};
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{
     CallToolRequestParams, ClientCapabilities, Implementation, InitializeRequestParams,
@@ -138,4 +141,91 @@ async fn fake_runs_hooks_and_redaction() {
     assert_eq!(events.len(), 1);
     assert_eq!(events[0].identify_actor_given_id.as_deref(), Some("user_7"));
     assert_eq!(events[0].response, Some(json!("[redacted]")));
+}
+
+/// The call number in the `msg` of a call of the concurrency test below.
+fn call_number(call: &ToolCall) -> u64 {
+    call.arguments()
+        .and_then(|arguments| arguments.get("msg"))
+        .and_then(Value::as_str)
+        .and_then(|msg| msg.parse().ok())
+        .expect("msg is the call number")
+}
+
+/// TS's concurrency tests ("each event keeps its own `session_id`, `agent_id`, and actor under
+/// interleaving", B-029): ten calls at once, each with its own agent, each minting its own
+/// session, and an `identify` hook that names a user per call and answers in the reverse order
+/// of the calls. Each published event keeps the session, the agent and the actor of its own call.
+#[tokio::test]
+async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
+    const CALLS: u64 = 10;
+    let fake = Fake::new();
+    let options =
+        Options::default()
+            .enable_agent_tracking(true)
+            .identify(|call: ToolCall| async move {
+                let n = call_number(&call);
+                // The first call answers last, so the hooks of the calls interleave.
+                tokio::time::sleep(Duration::from_millis(20 * (CALLS - n))).await;
+                Ok::<_, HookError>(Some(UserIdentity::new(format!("user-{n}"))))
+            });
+    let client = connect(fake.agentcat("proj_1", options).track(Echo)).await;
+    let calls = (0..CALLS).map(|n| {
+        let client = &client;
+        async move {
+            let Value::Object(arguments) =
+                json!({"msg": n.to_string(), "session_id": "start", "agent_id": format!("agent-{n}")})
+            else {
+                unreachable!()
+            };
+            let result = client
+                .call_tool(CallToolRequestParams::new("echo").with_arguments(arguments))
+                .await
+                .expect("the call succeeds");
+            let mint_back = result.content[0].as_text().expect("the mint-back block").text.clone();
+            let session = mint_back
+                .lines()
+                .find_map(|line| line.strip_prefix("session_id: "))
+                .expect("the minted session")
+                .to_owned();
+            (n, session)
+        }
+    });
+    let sessions = futures::future::join_all(calls).await;
+    assert_eq!(
+        sessions
+            .iter()
+            .map(|(_, session)| session)
+            .collect::<BTreeSet<_>>()
+            .len(),
+        10,
+        "ten distinct sessions"
+    );
+
+    let events = fake.events().await;
+    assert_eq!(events.len(), 10);
+    let mut seen = BTreeSet::new();
+    for event in events {
+        let user = event
+            .identify_actor_given_id
+            .clone()
+            .expect("each call names its user");
+        let n: u64 = user
+            .strip_prefix("user-")
+            .and_then(|n| n.parse().ok())
+            .expect("user-<n>");
+        let tags = event.tags.clone().expect("the agent tags");
+        assert_eq!(
+            tags.get("agentcat_agent_id"),
+            Some(&format!("agent-{n}")),
+            "{event:?}"
+        );
+        let (_, session) = sessions
+            .iter()
+            .find(|(sent, _)| *sent == n)
+            .expect("call n ran");
+        assert_eq!(event.session_id.as_ref(), Some(session), "{event:?}");
+        seen.insert(n);
+    }
+    assert_eq!(seen.len(), 10, "one event per call");
 }

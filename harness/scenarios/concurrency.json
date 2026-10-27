@@ -1,7 +1,7 @@
 {
   "name": "concurrency",
   "projectId": "proj_HARNESS00000000000000000000",
-  "options": {},
+  "options": { "enableAgentTracking": true },
   "eventOrder": "multiset",
   "expectPublishes": 11,
   "sessions": [
@@ -17,16 +17,16 @@
         {
           "op": "parallel",
           "steps": [
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p1", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p2", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p3", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p4", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p5", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p6", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p7", "session_id": "${S1}" } },
-            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p8", "session_id": "${S1}" } },
-            { "op": "callTool", "name": "echo", "args": { "msg": "b1" } },
-            { "op": "callTool", "name": "echo", "args": { "msg": "b2" } }
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p1", "session_id": "${S1}", "agent_id": "agent-p1" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p2", "session_id": "${S1}", "agent_id": "agent-p2" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p3", "session_id": "${S1}", "agent_id": "agent-p3" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p4", "session_id": "${S1}", "agent_id": "agent-p4" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p5", "session_id": "${S1}", "agent_id": "agent-p5" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p6", "session_id": "${S1}", "agent_id": "agent-p6" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p7", "session_id": "${S1}", "agent_id": "agent-p7" } },
+            { "op": "callTool", "session": 0, "name": "echo", "args": { "msg": "p8", "session_id": "${S1}", "agent_id": "agent-p8" } },
+            { "op": "callTool", "name": "echo", "args": { "msg": "b1", "agent_id": "agent-b1" } },
+            { "op": "callTool", "name": "echo", "args": { "msg": "b2", "agent_id": "agent-b2" } }
           ]
         }
       ]

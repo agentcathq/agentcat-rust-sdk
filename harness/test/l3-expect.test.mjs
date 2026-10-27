@@ -166,11 +166,20 @@ test("caught-event: passes when every combination has unruled event differences 
   assert.match(res.stdout, /L3 event canary ok: 2 combination/);
 });
 
-test("caught-event: a delta difference, an event difference elsewhere, no unruled event difference or a failed driver fails", async (t) => {
+test("caught-event: a delta difference, an event difference elsewhere or with another value, no unruled event difference or a failed driver fails", async (t) => {
   const withDelta = { ...eventCaught("http"), delta: { total: 1, ruled: 1, unexpected: 0 } };
   for (const [doc, why] of [
     [[eventCaught("stdio"), withDelta], /basic http 2025-11-25: a delta difference: delta \{"total":1/],
     [[eventCaught("stdio", [RESOURCE_PATH, EVENT_PATH])], /an event difference outside the canary paths: \$\.events\[3\]\.body\.error\.type/],
+    // The right path, but not the canary's value on the second (Rust) server.
+    [
+      [eventCaught("stdio"), combo("http", { events: { total: 1, ruled: 0, unexpected: 1 }, eventDifferences: [{ path: RESOURCE_PATH, a: "echo", b: "renamed", ruledBy: [] }] })],
+      /basic http 2025-11-25: not the event canary's change at \$\.events\[0\]\.body\.resource_name: a "echo" b "renamed"/,
+    ],
+    [
+      [combo("stdio", { events: { total: 1, ruled: 0, unexpected: 1 }, eventDifferences: [{ path: RESOURCE_PATH, a: "canary", b: "echo", ruledBy: [] }] })],
+      /not the event canary's change at \$\.events\[0\]\.body\.resource_name: a "canary" b "echo"/,
+    ],
     [[eventCaught("stdio"), combo("http")], /basic http 2025-11-25: no unruled event difference/],
     [[eventCaught("stdio"), combo("http", { events: { total: 1, ruled: 1, unexpected: 0 } })], /no unruled event difference/],
     [[{ ...eventCaught("stdio"), exitCodes: { a: 1 } }], /driver exit/],

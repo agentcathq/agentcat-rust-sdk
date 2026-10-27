@@ -968,7 +968,7 @@ reason = "TS server-shape compatibility checks and their errors do not exist in 
 [[test]]
 key = "v1|src/tests/concurrency.test.ts|concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
 status = "ported"
-rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent"]
+rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent", "agentcat-sdk::fake::concurrent_calls_keep_their_own_session_agent_and_actor"]
 
 [[test]]
 key = "v1|src/tests/constants.test.ts|brand constants (wire literals) > emits the agentcat custom event type on the wire"
@@ -1695,7 +1695,7 @@ rust = ["agentcat-sdk::hooks::tests::hook_panic_does_not_reach_the_call", "agent
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > error-path events carry hook results resolved after the throw"
 status = "ported"
-rust = ["harness:basic"]
+rust = ["harness:redaction"]
 
 [[test]]
 key = "v1|src/tests/engine-callwrap.test.ts|deferred customer hooks > hanging resolveSessionId/eventTags/eventProperties do not delay the tool call"
@@ -5185,7 +5185,7 @@ rust = ["harness:agent-tracking"]
 [[test]]
 key = "v2|src/tests/v2/concurrency.test.ts|v2 concurrent tool calls do not clobber each other's attribution > each event keeps its own session_id, agent_id, and actor under interleaving"
 status = "ported"
-rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent"]
+rust = ["harness:concurrency", "agentcat-sdk::call::run::tests::concurrent_calls_are_independent", "agentcat-sdk::fake::concurrent_calls_keep_their_own_session_agent_and_actor"]
 
 [[test]]
 key = "v2|src/tests/v2/detect.test.ts|detectServer > describeSignals lists only true signals"

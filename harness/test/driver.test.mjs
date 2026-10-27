@@ -444,6 +444,13 @@ test("saveCursorAs on a result without nextCursor exits 1 with the step and the 
   assert.match(res.stderr, /^driver: step 0 of session 0: no nextCursor for P4$/m);
 });
 
+test("a ${NAME} in a cursor with no saved cursor exits 1 with the step and the name, in any run", { timeout: 120_000 }, async (t) => {
+  const path = sessionsOf(t, "unsavedcursor", [[{ op: "listTools", cursor: "${MISSING}" }]]);
+  const res = await fake(path, "unsavedcursor");
+  assert.equal(res.code, 1, res.stderr);
+  assert.match(res.stderr, /^driver: step 0 of session 0: the cursor names MISSING, but no saveCursorAs saved it$/m);
+});
+
 test("pageSize starts the server with HARNESS_PAGE_SIZE; without it the caller's value does not reach the server", { timeout: 120_000 }, async (t) => {
   const env = [{ op: "callTool", name: "env", args: {} }];
   let res = await fake(sessionsOf(t, "pagesize", [env], { pageSize: 3 }), "pagesize");
