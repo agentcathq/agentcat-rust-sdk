@@ -296,8 +296,8 @@ impl Publisher for Unusable {
         Box::pin(std::future::ready(Ok(())))
     }
 
-    fn unusable(&self) -> Option<String> {
-        Some("the HTTP client could not be built".to_owned())
+    fn prepare(&self, _log: &mut Vec<String>) -> Result<(), String> {
+        Err("the HTTP client could not be built".to_owned())
     }
 }
 
@@ -328,6 +328,56 @@ fn unusable_publisher_drops_the_event_at_once() {
         lines.lines(),
         ["Failed to deliver AgentCat event after retries: the HTTP client could not be built"]
     );
+}
+
+/// Design §6.7, C44: the real publisher builds its client on the worker thread, at the first
+/// event, not when the handle is built: the failing build here names the thread it ran on. A
+/// build that fails is logged once, and each event is then dropped at once with TS's final
+/// failure line (here with retry delays of 1 s and more, which a retry would show).
+#[test]
+fn failed_client_build_is_logged_once_by_the_worker() {
+    let publisher = super::http::ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |_| {
+        let thread = std::thread::current();
+        Err(format!(
+            "no TLS backend on {}",
+            thread.name().unwrap_or("?")
+        ))
+    });
+    let lines = CapturedLines::default();
+    let delivery = Delivery::with_writer(
+        PROJECT.to_owned(),
+        &Options::default(),
+        Arc::new(publisher),
+        None,
+        DeliveryConfig {
+            retry_delays: [ms(1_000), ms(2_000), ms(4_000)],
+            ..fast()
+        },
+        lines.writer(),
+    );
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), Arc::new(delivery));
+    assert!(agentcat.flush_blocking(WAIT));
+    assert!(lines.lines().is_empty(), "{:?}", lines.lines());
+
+    push(&agentcat, job(PROJECT, "first"));
+    push(&agentcat, job(PROJECT, "second"));
+    let started = Instant::now();
+    assert!(agentcat.flush_blocking(WAIT));
+    assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
+    let failed =
+        "Failed to deliver AgentCat event after retries: the HTTP client could not be built";
+    assert_eq!(
+        lines.lines(),
+        [
+            "Failed to build the HTTP client, events will not be sent: no TLS backend on \
+             agentcat-delivery",
+            failed,
+            failed,
+        ]
+    );
+    for (line, thread) in lines.entries() {
+        assert_eq!(thread.as_deref(), Some(WORKER_THREAD), "{line}");
+    }
 }
 
 /// TS sets an event's ID once, before `sendEvent`, so every attempt sends the same `evt_` ID and

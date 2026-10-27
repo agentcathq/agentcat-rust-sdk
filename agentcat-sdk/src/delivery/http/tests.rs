@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
-use super::ApiPublisher;
+use super::{ApiPublisher, NO_CLIENT};
 use crate::client::AgentCat;
 use crate::config::{MapEnv, Options, resolve_api_base_url};
 use crate::delivery::DeliveryConfig;
@@ -218,8 +218,8 @@ async fn accepted_json_body_is_success() {
 }
 
 /// C44: a build without a TLS feature logs one warning for an `https:` base URL, and none for an
-/// `http:` one. Runs only in that build (`cargo hack --each-feature` builds it, `cargo test
-/// --no-default-features` runs this).
+/// `http:` one. Runs only in that build: `scripts/check.sh` and the CI test job run
+/// `cargo nextest run -p agentcat-sdk --no-default-features`.
 #[cfg(not(any(feature = "rustls", feature = "native-tls")))]
 #[test]
 fn https_without_tls_feature_warns_once() {
@@ -232,20 +232,48 @@ fn https_without_tls_feature_warns_once() {
     assert!(log.is_empty(), "{log:?}");
 }
 
-/// C44: a client that failed to build gives one log line and a publisher that reports itself
-/// `unusable`. reqwest has no natural build failure here, so the test hands `from_client` an `Err`.
+/// Design §6.7: `new` builds no client. The first `prepare`, which the worker calls before an
+/// event's first attempt, builds it, and a client that builds logs nothing.
 #[test]
-fn failed_client_build_is_unusable() {
+fn client_is_built_at_first_use() {
     let mut log = Vec::new();
-    let publisher = ApiPublisher::from_client(
-        "http://127.0.0.1:9".to_owned(),
-        "agentcat-rust/test".to_owned(),
-        Err("no TLS backend".to_owned()),
-        &mut log,
+    let publisher = ApiPublisher::new("http://127.0.0.1:9".to_owned(), &mut log);
+    assert!(log.is_empty(), "{log:?}");
+    assert!(publisher.configuration.get().is_none(), "built by new");
+    assert_eq!(publisher.prepare(&mut log), Ok(()));
+    assert!(log.is_empty(), "{log:?}");
+    assert!(publisher.configuration.get().is_some_and(Option::is_some));
+}
+
+/// C44: a client that fails to build gives one log line, at its first use only, and a publisher
+/// that can never send: every `prepare` gives the reason for TS's final failure line. reqwest has
+/// no natural build failure here, so the test hands the publisher a build that fails.
+#[test]
+fn failed_client_build_logs_once_at_first_use() {
+    let publisher = ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |_| {
+        Err("no TLS backend".into())
+    });
+    let mut log = Vec::new();
+    assert_eq!(publisher.prepare(&mut log), Err(NO_CLIENT.to_owned()));
+    assert_eq!(
+        log,
+        ["Failed to build the HTTP client, events will not be sent: no TLS backend"]
     );
-    assert_eq!(log.len(), 1, "{log:?}");
-    assert!(log[0].contains("no TLS backend"), "{log:?}");
-    assert_eq!(publisher.unusable().as_deref(), Some(super::NO_CLIENT));
-    let working = ApiPublisher::new("http://127.0.0.1:9".to_owned(), &mut Vec::new());
-    assert_eq!(working.unusable(), None);
+    let mut log = Vec::new();
+    assert_eq!(publisher.prepare(&mut log), Err(NO_CLIENT.to_owned()));
+    assert!(log.is_empty(), "{log:?}");
+}
+
+/// C44: the attempt timeout reaches the build, and the default one is 10 s.
+#[test]
+fn build_gets_the_attempt_timeout() {
+    let publisher = ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |timeout| {
+        Err(format!("{timeout:?}"))
+    });
+    let mut log = Vec::new();
+    let _ = publisher.prepare(&mut log);
+    assert_eq!(
+        log,
+        ["Failed to build the HTTP client, events will not be sent: 10s"]
+    );
 }

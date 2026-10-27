@@ -27,6 +27,9 @@ pub(super) const THREAD_NAME: &str = "agentcat-delivery";
 /// TS's line after the fourth failed attempt of an event, before the error.
 const DELIVERY_FAILED: &str = "Failed to deliver AgentCat event after retries: ";
 
+/// The line when the worker's thread or its runtime cannot start, before the error.
+const START_FAILED: &str = "Failed to start the AgentCat delivery thread: ";
+
 /// What a handle's [`Delivery`](super::Delivery) and its worker share.
 pub(super) struct Shared {
     /// The project of the handle: the `projectId` of its tool-call events.
@@ -95,8 +98,9 @@ impl Shared {
 }
 
 /// Spawns the worker thread of `shared`, whose state a push set to starting. When the thread
-/// cannot be spawned, the worker is gone: what it held is dropped, nothing is written and later
-/// jobs are dropped.
+/// cannot be spawned, one line says so, written on the calling thread (the one line not written
+/// by a worker, as there is none), and the worker is gone: what it held is dropped and later jobs
+/// are dropped.
 pub(super) fn start(shared: &Arc<Shared>) {
     let worker = Arc::clone(shared);
     let spawned = thread::Builder::new()
@@ -111,7 +115,10 @@ pub(super) fn start(shared: &Arc<Shared>) {
                 queue.worker = Worker::Running(id);
             }
         }
-        Err(_) => shared.gone(),
+        Err(error) => {
+            shared.write(&format!("{START_FAILED}{error}"));
+            shared.gone();
+        }
     }
 }
 
@@ -124,18 +131,24 @@ impl Drop for Exit<'_> {
     }
 }
 
-/// The body of the worker thread: the loop on a current-thread runtime with the time and IO drivers (reqwest needs the IO driver).
+/// The body of the worker thread: the loop on a current-thread runtime with the time and IO
+/// drivers (reqwest needs the IO driver). When the runtime cannot be built, one line says so and
+/// the worker is gone.
 fn run_thread(shared: &Arc<Shared>) {
     let _exit = Exit(shared);
     for feature in json_features() {
         shared.write(&feature_warning(feature));
     }
-    let Ok(runtime) = Builder::new_current_thread()
+    let runtime = match Builder::new_current_thread()
         .enable_time()
         .enable_io()
         .build()
-    else {
-        return;
+    {
+        Ok(runtime) => runtime,
+        Err(error) => {
+            shared.write(&format!("{START_FAILED}{error}"));
+            return;
+        }
     };
     runtime.block_on(run(shared));
     // The runtime drops here, before `_exit`, with any task left on it.
@@ -283,16 +296,23 @@ async fn run_job(shared: Arc<Shared>, job: Job, _slot: Slot) {
 }
 
 /// Posts `event` as TS's `sendEvent` does (B-102): up to 4 attempts with one request, the same
-/// `evt_` ID each time (none when the publisher is `unusable`: only the final line). After each failure `Failed to send event <id>, retrying... [Error:
+/// `evt_` ID each time. After each failure `Failed to send event <id>, retrying... [Error:
 /// <text>]`, then the next of `retry_delays`; after the fourth `Failed to deliver AgentCat event
-/// after retries: <text>`; on success TS's metadata line ([`success_line`]).
+/// after retries: <text>`; on success TS's metadata line ([`success_line`]). The publisher is
+/// prepared first ([`Publisher::prepare`]), with its lines written; one that can never send gets
+/// no attempt, only the final line (C44).
 async fn post(shared: &Shared, event: &TsEvent) {
-    let request = publish_request(event);
-    let id = js::to_js_string(event.get("id"));
-    if let Some(reason) = shared.publisher.unusable() {
+    let mut log = Vec::new();
+    let prepared = shared.publisher.prepare(&mut log);
+    for line in &log {
+        shared.write(line);
+    }
+    if let Err(reason) = prepared {
         shared.write(&format!("{DELIVERY_FAILED}{reason}"));
         return;
     }
+    let request = publish_request(event);
+    let id = js::to_js_string(event.get("id"));
     let mut delays = shared.config.retry_delays.iter();
     loop {
         match shared.publisher.publish(request.clone()).await {
@@ -357,6 +377,7 @@ pub(super) fn json_features() -> Vec<&'static str> {
 /// The log line for a unified `serde_json` `feature` (R22).
 pub(super) fn feature_warning(feature: &str) -> String {
     format!(
-        "Warning: serde_json feature \"{feature}\" is enabled in this build; AgentCat token estimates and size checks may differ from the TypeScript SDK"
+        "Warning: serde_json feature \"{feature}\" is enabled in this build; AgentCat token \
+         estimates and size checks may differ from the TypeScript SDK"
     )
 }

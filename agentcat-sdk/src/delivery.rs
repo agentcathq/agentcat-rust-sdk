@@ -60,10 +60,14 @@ pub(crate) trait Publisher: Send + Sync + fmt::Debug + 'static {
     /// Posts `request` once: `Err` holds the text of the failure for TS's log lines.
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>>;
 
-    /// `Some(text)` when this publisher can never send (its HTTP client could not be built, C44):
-    /// the worker then makes no attempt and logs TS's final failure line with `text` at once.
-    fn unusable(&self) -> Option<String> {
-        None
+    /// Readies the publisher for the attempts of one event; the worker calls it on the delivery
+    /// thread before each event's first attempt, so a publisher can build its HTTP client there,
+    /// at first use (design §6.7), and push the lines about it to the log it is given, which the
+    /// worker writes. `Err(text)` when it can never send (its HTTP client could not be built,
+    /// C44): the worker then makes no attempt and logs TS's final failure line with `text` at
+    /// once.
+    fn prepare(&self, _log: &mut Vec<String>) -> Result<(), String> {
+        Ok(())
     }
 }
 

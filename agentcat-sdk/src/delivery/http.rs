@@ -2,13 +2,15 @@
 //!
 //! One attempt is one `publish_event` call on a `reqwest` client with a 5 s connect timeout, a
 //! per-attempt timeout (10 s) and the User-Agent `agentcat-rust/<crate version>`, which is also
-//! `Configuration::user_agent`. There is no API key. Any `Err` is a failed attempt whose text is
+//! `Configuration::user_agent`. There is no API key. The client is built lazily (design §6.7): the
+//! worker's first [`prepare`](Publisher::prepare) builds it, on the delivery thread, so building a
+//! handle loads no TLS roots on the caller's thread. Any `Err` is a failed attempt whose text is
 //! the error's `Display`; the worker retries it with TS's delays. A 2xx answer needs a JSON body
 //! under `application/json` (RD-37), or `agentcat-api` fails it. No `reqwest` or `agentcat-api`
 //! type leaves this module.
 use std::fmt;
 use std::future::ready;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 use std::time::Duration;
 
 use agentcat_api::apis::configuration::Configuration;
@@ -24,27 +26,42 @@ const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// The timeout of one attempt.
 const ATTEMPT_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// The User-Agent of every attempt, on the client and in the `Configuration`.
+const USER_AGENT: &str = concat!("agentcat-rust/", env!("CARGO_PKG_VERSION"));
+
 /// What an attempt reports when the client could not be built.
 const NO_CLIENT: &str = "the HTTP client could not be built";
 
+/// Builds the HTTP client with the given per-attempt timeout; `Err` holds the error's text.
+type BuildClient = fn(Duration) -> Result<reqwest::Client, String>;
+
 /// Posts events to `<base URL>/v1/public/events/`.
 pub(crate) struct ApiPublisher {
-    /// `None` when the client could not be built: every attempt then fails.
-    configuration: Option<Arc<Configuration>>,
+    base_url: String,
+    attempt_timeout: Duration,
+    /// [`build_client`], or a build that fails in a test.
+    build: BuildClient,
+    /// Set by the first use: `None` inside when the client could not be built, and every attempt
+    /// then fails.
+    configuration: OnceLock<Option<Arc<Configuration>>>,
 }
 
 impl fmt::Debug for ApiPublisher {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let client = match self.configuration.get() {
+            None => "not built",
+            Some(Some(_)) => "built",
+            Some(None) => "failed",
+        };
         f.debug_struct("ApiPublisher")
-            .field("ready", &self.configuration.is_some())
+            .field("client", &client)
             .finish_non_exhaustive()
     }
 }
 
 impl ApiPublisher {
-    /// A publisher for `base_url` with the default attempt timeout. Lines for the SDK's log (a
-    /// client that could not be built, an `https:` URL in a build without a TLS feature) go to
-    /// `log`.
+    /// A publisher for `base_url` with the default attempt timeout. It builds no client yet. The
+    /// line for an `https:` URL in a build without a TLS feature goes to `log`.
     pub(crate) fn new(base_url: String, log: &mut Vec<String>) -> Self {
         Self::with_attempt_timeout(base_url, ATTEMPT_TIMEOUT, log)
     }
@@ -55,62 +72,87 @@ impl ApiPublisher {
         attempt_timeout: Duration,
         log: &mut Vec<String>,
     ) -> Self {
-        #[cfg(not(any(feature = "rustls", feature = "native-tls")))]
-        if base_url
-            .trim_start()
-            .to_ascii_lowercase()
-            .starts_with("https:")
-        {
-            log.push(format!(
-                "Warning: agentcat-sdk was built without a TLS feature (rustls or native-tls), so events cannot be sent to {base_url}"
-            ));
+        log.extend(tls_warning(&base_url));
+        Self {
+            base_url,
+            attempt_timeout,
+            build: build_client,
+            configuration: OnceLock::new(),
         }
-        let user_agent = concat!("agentcat-rust/", env!("CARGO_PKG_VERSION")).to_owned();
-        let client = reqwest::Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .timeout(attempt_timeout)
-            .user_agent(user_agent.clone())
-            .build()
-            .map_err(|error| error.to_string());
-        Self::from_client(base_url, user_agent, client, log)
     }
 
-    /// The publisher over `client`, or, when it is an `Err`, one that cannot send (one line to
-    /// `log`).
-    fn from_client(
-        base_url: String,
-        user_agent: String,
-        client: Result<reqwest::Client, String>,
-        log: &mut Vec<String>,
-    ) -> Self {
-        let configuration = match client {
-            Ok(client) => Some(Arc::new(Configuration {
-                base_path: base_url,
-                user_agent: Some(user_agent),
-                client,
-                basic_auth: None,
-                oauth_access_token: None,
-                bearer_access_token: None,
-                api_key: None,
-            })),
-            Err(error) => {
-                log.push(format!(
-                    "Failed to build the HTTP client, events will not be sent: {error}"
-                ));
-                None
-            }
-        };
-        Self { configuration }
+    /// [`ApiPublisher::new`] whose client comes from `build`.
+    #[cfg(test)]
+    pub(super) fn with_build(base_url: String, build: BuildClient) -> Self {
+        Self {
+            build,
+            ..Self::new(base_url, &mut Vec::new())
+        }
+    }
+
+    /// The configuration of every attempt, built on the first call; `None` when the client could
+    /// not be built, which the first call logs to `log`.
+    fn configuration(&self, log: &mut Vec<String>) -> Option<&Arc<Configuration>> {
+        self.configuration
+            .get_or_init(|| match (self.build)(self.attempt_timeout) {
+                Ok(client) => Some(Arc::new(Configuration {
+                    base_path: self.base_url.clone(),
+                    user_agent: Some(USER_AGENT.to_owned()),
+                    client,
+                    basic_auth: None,
+                    oauth_access_token: None,
+                    bearer_access_token: None,
+                    api_key: None,
+                })),
+                Err(error) => {
+                    log.push(format!(
+                        "Failed to build the HTTP client, events will not be sent: {error}"
+                    ));
+                    None
+                }
+            })
+            .as_ref()
     }
 }
 
+/// The warning for an `https:` `base_url` in a build without a TLS feature, which cannot reach
+/// it (C44); `None` in a build with one.
+fn tls_warning(base_url: &str) -> Option<String> {
+    let https = base_url
+        .trim_start()
+        .to_ascii_lowercase()
+        .starts_with("https:");
+    (https && cfg!(not(any(feature = "rustls", feature = "native-tls")))).then(|| {
+        format!(
+            "Warning: agentcat-sdk was built without a TLS feature (rustls or native-tls), so \
+             events cannot be sent to {base_url}"
+        )
+    })
+}
+
+/// The client of every attempt (C44).
+fn build_client(attempt_timeout: Duration) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .connect_timeout(CONNECT_TIMEOUT)
+        .timeout(attempt_timeout)
+        .user_agent(USER_AGENT)
+        .build()
+        .map_err(|error| error.to_string())
+}
+
 impl Publisher for ApiPublisher {
-    fn unusable(&self) -> Option<String> {
-        self.configuration.is_none().then(|| NO_CLIENT.to_owned())
+    /// Builds the client on the first call (C44): a failed build gives one line to `log` and,
+    /// on this call and every later one, [`NO_CLIENT`].
+    fn prepare(&self, log: &mut Vec<String>) -> Result<(), String> {
+        match self.configuration(log) {
+            Some(_) => Ok(()),
+            None => Err(NO_CLIENT.to_owned()),
+        }
     }
 
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>> {
-        let Some(configuration) = self.configuration.clone() else {
+        // The worker calls `prepare` first, which logged a failed build.
+        let Some(configuration) = self.configuration(&mut Vec::new()).cloned() else {
             return Box::pin(ready(Err(NO_CLIENT.to_owned())));
         };
         Box::pin(async move {
