@@ -73,6 +73,8 @@
   {
     "path": "\\$\\.events\\[5\\]\\.body\\.error\\.message",
     "scenario": "features-off",
+    "ts": "Tool get_more_tools not found",
+    "rust": "tool not found",
     "reason": "features-off.json, the get_more_tools call with enableReportMissing false (an unknown tool): the message is the host's text, Tool get_more_tools not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
     "deviation": "RD-13"
   },
@@ -85,12 +87,16 @@
   {
     "path": "\\$\\.events\\[1[12]\\]\\.body\\.error\\.message",
     "scenario": "schemas",
+    "ts": "Tool nope not found",
+    "rust": "tool not found",
     "reason": "schemas.json, the two calls of the unknown tool nope: the message is the host's text, Tool nope not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
     "deviation": "RD-13"
   },
   {
     "path": "\\$\\.events\\[1[34]\\]\\.body\\.(?:response\\.content\\[0\\]\\.text|error\\.message)",
     "scenario": "schemas",
+    "ts": "Input validation error: Invalid arguments for tool echo: data/msg must be string",
+    "rust": "failed to deserialize parameters: invalid type: integer `5`, expected a string",
     "reason": "schemas.json, the two echo calls with msg 5: the isError result text, and the error message taken from it, are the host validator's text: ajv's from the TS v2 host library, serde's from rmcp (the transcripts differ the same way)",
     "deviation": "RD-13"
   },

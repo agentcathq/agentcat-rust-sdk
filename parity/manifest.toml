@@ -2858,9 +2858,11 @@ status = "n/a"
 category = "covered-by-vector:inject.json"
 reason = "inject.json case ts:handle-injection:output-absent; checked by agentcat-sdk::inject::tests::vectors_match_ts"
 
+# C19: one registry per AgentCat handle and inner handler type stands in for TS's registry per server object.
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > output registry accessors are keyed per server object"
-status = "todo"
+status = "ported"
+rust = ["agentcat-sdk::tracked::tests::registries_are_per_inner_type"]
 
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|outputSchema injection > skips complex outputSchema (oneOf/allOf/anyOf) and does not register"
@@ -2879,6 +2881,7 @@ key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning 
 status = "ported"
 rust = ["agentcat-sdk::call::run::tests::strict_tool_gets_stripped_arguments_after_listing", "agentcat-sdk::call::run::tests::record_fields_follow_b077"]
 
+# C19: one registry per AgentCat handle and inner handler type stands in for TS's registry per server object.
 [[test]]
 key = "v1|src/tests/handle-injection.test.ts|registry storage + request cloning > stores per server object"
 status = "ported"
@@ -5053,7 +5056,7 @@ reason = "truncate.json case test:after-sanitize; checked by agentcat-sdk::pipel
 key = "v1|src/tests/truncation.test.ts|truncateEvent - non-mutation > should not mutate the original event object"
 status = "n/a"
 category = "ts-host-only"
-reason = "Rust borrows the input"
+reason = "Rust's truncate_event takes the event by value and returns the truncated event, so no original that the caller keeps can change"
 
 [[test]]
 key = "v1|src/tests/truncation.test.ts|truncateEvent - response content text truncation > should truncate text content blocks exceeding 32KB"
