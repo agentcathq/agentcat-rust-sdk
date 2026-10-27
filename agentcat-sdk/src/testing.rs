@@ -1,7 +1,7 @@
 //! [`Fake`]: a test double that records what a tracked server publishes, so a customer's test can
 //! assert on it (C43, D41). Enable the `test-util` feature of the crate to use it.
 
-use std::fmt::Write as _;
+use std::fmt;
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
 
@@ -40,8 +40,16 @@ impl Observer for Recorder {
 ///
 /// A `Fake` is an instance, not a global: two fakes in one process see only their own handles.
 /// Clones share the record. Its handles are always on (they ignore `AGENTCAT_ENABLED`), never
-/// configure the process logger (so they never write `~/agentcat.log`) and use a publisher that
-/// never sends, so a test needs no network.
+/// configure the process logger and use a publisher that never sends, so a test needs no network.
+/// The log destination is process-wide and the first handle that configures it decides it, so the
+/// handles of a fake write no `~/agentcat.log` lines unless a handle built with [`AgentCat::new`]
+/// in the same process configured it: then their lines go there too.
+///
+/// A fake keeps a clone of each handle it built, so the last clone drops with the fake and the
+/// servers that hold one, and that drop drains as any handle does (see [dropping the last
+/// handle](AgentCat#dropping-the-last-handle)): for up to 5 s, and under `#[tokio::test]`, a
+/// current-thread runtime, an event that still needs a hook is dropped after that wait. The
+/// assertion methods flush first, so after them the drop has nothing left to wait for.
 ///
 /// ```
 /// # async fn run() {
@@ -59,7 +67,8 @@ impl Observer for Recorder {
 /// ```
 ///
 /// The assertion methods panic with a message that lists the recorded events' types and
-/// resource names.
+/// resource names, and says so when a handle did not finish delivering within the 5 s flush (a
+/// hook slower than that holds its event back).
 #[derive(Clone, Debug, Default)]
 pub struct Fake {
     recorder: Arc<Recorder>,
@@ -88,21 +97,29 @@ impl Fake {
     }
 
     /// Flushes every handle this fake built, for up to 5 s each, then returns the recorded events
-    /// in the order they finished.
+    /// in the order they finished. An event whose hooks take longer than that is not among them.
     pub async fn events(&self) -> Vec<Event> {
+        self.recorded().await.events
+    }
+
+    /// [`Fake::events`], and whether every handle finished delivering within [`FLUSH`].
+    async fn recorded(&self) -> Recorded {
         let handles: Vec<AgentCat> = self
             .handles
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone();
+        let mut settled = true;
         for handle in handles {
-            let _ = handle.flush(FLUSH).await;
+            settled &= handle.flush(FLUSH).await;
         }
-        self.recorder
+        let events = self
+            .recorder
             .events
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .clone()
+            .clone();
+        Recorded { events, settled }
     }
 
     /// Asserts that a tool call of the tool `tool_name` was tracked.
@@ -111,14 +128,14 @@ impl Fake {
     ///
     /// When no recorded tool-call event has that resource name.
     pub async fn assert_tracked(&self, tool_name: &str) {
-        let events = self.events().await;
-        let found = events
+        let recorded = self.recorded().await;
+        let found = recorded
+            .events
             .iter()
             .any(|e| e.event_type == TOOL_CALL && e.resource_name.as_deref() == Some(tool_name));
         assert!(
             found,
-            "expected a tracked call of tool `{tool_name}`, recorded: {}",
-            listing(&events)
+            "expected a tracked call of tool `{tool_name}`, {recorded}"
         );
     }
 
@@ -128,12 +145,15 @@ impl Fake {
     ///
     /// When the number of recorded tool-call events differs.
     pub async fn assert_tracked_count(&self, count: usize) {
-        let events = self.events().await;
-        let actual = events.iter().filter(|e| e.event_type == TOOL_CALL).count();
+        let recorded = self.recorded().await;
+        let actual = recorded
+            .events
+            .iter()
+            .filter(|e| e.event_type == TOOL_CALL)
+            .count();
         assert!(
             actual == count,
-            "expected {count} tracked tool calls, found {actual}, recorded: {}",
-            listing(&events)
+            "expected {count} tracked tool calls, found {actual}, {recorded}"
         );
     }
 
@@ -143,11 +163,10 @@ impl Fake {
     ///
     /// When any event was recorded.
     pub async fn assert_nothing_tracked(&self) {
-        let events = self.events().await;
+        let recorded = self.recorded().await;
         assert!(
-            events.is_empty(),
-            "expected nothing was tracked, recorded: {}",
-            listing(&events)
+            recorded.events.is_empty(),
+            "expected nothing was tracked, {recorded}"
         );
     }
 
@@ -157,32 +176,53 @@ impl Fake {
     ///
     /// When no recorded custom event has that resource name.
     pub async fn assert_custom_event_published(&self, resource_name: &str) {
-        let events = self.events().await;
-        let found = events
+        let recorded = self.recorded().await;
+        let found = recorded
+            .events
             .iter()
             .any(|e| e.event_type == CUSTOM && e.resource_name.as_deref() == Some(resource_name));
         assert!(
             found,
-            "expected a custom event `{resource_name}`, recorded: {}",
-            listing(&events)
+            "expected a custom event `{resource_name}`, {recorded}"
         );
     }
 }
 
-/// The types and resource names of `events`, such as `[mcp:tools/call echo, agentcat:custom x]`.
-fn listing(events: &[Event]) -> String {
-    let mut out = String::from("[");
-    for (i, e) in events.iter().enumerate() {
-        if i > 0 {
-            out.push_str(", ");
-        }
-        let _ = write!(
-            out,
-            "{} {}",
-            e.event_type,
-            e.resource_name.as_deref().unwrap_or("-")
-        );
-    }
-    out.push(']');
-    out
+/// What an assertion of a [`Fake`] saw: the recorded events and whether every handle finished
+/// delivering within [`FLUSH`].
+struct Recorded {
+    events: Vec<Event>,
+    settled: bool,
 }
+
+impl fmt::Display for Recorded {
+    /// The types and resource names of the events, such as `recorded: [mcp:tools/call echo,
+    /// agentcat:custom x]`, then a note when a flush timed out.
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("recorded: [")?;
+        for (i, e) in self.events.iter().enumerate() {
+            if i > 0 {
+                f.write_str(", ")?;
+            }
+            write!(
+                f,
+                "{} {}",
+                e.event_type,
+                e.resource_name.as_deref().unwrap_or("-")
+            )?;
+        }
+        f.write_str("]")?;
+        if !self.settled {
+            write!(
+                f,
+                " (a handle did not finish delivering within the {} s flush: an event whose hooks \
+                 take longer is not recorded yet)",
+                FLUSH.as_secs()
+            )?;
+        }
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests;
