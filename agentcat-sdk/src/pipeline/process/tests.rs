@@ -323,16 +323,22 @@ async fn string_redactor_panic_drops_event() {
 
 /// C38: both redaction hooks run on the job's runtime (the customer's), not on the runtime that
 /// runs `process` (the delivery worker's); the string hook runs once per string, in walk order.
+/// Each hook records the name of its thread: only the customer runtime's threads have the name
+/// `customer-runtime`, and the worker runtime runs on the test's own thread.
 #[test]
 fn string_redactor_runs_on_customer_runtime() {
+    const CUSTOMER_THREAD: &str = "customer-runtime";
+    type Seen = Arc<Mutex<Vec<(String, Option<String>)>>>;
     let customer = Builder::new_multi_thread()
         .worker_threads(1)
+        .thread_name(CUSTOMER_THREAD)
         .build()
         .unwrap();
     let worker = Builder::new_current_thread().enable_time().build().unwrap();
-    let seen: Arc<Mutex<Vec<(String, tokio::runtime::Id)>>> = Arc::default();
-    let record = |seen: &Arc<Mutex<Vec<(String, tokio::runtime::Id)>>>, what: String| {
-        seen.lock().unwrap().push((what, Handle::current().id()));
+    let seen: Seen = Arc::default();
+    let record = |seen: &Seen, what: String| {
+        let thread = std::thread::current().name().map(str::to_owned);
+        seen.lock().unwrap().push((what, thread));
     };
     let string_seen = Arc::clone(&seen);
     let event_seen = Arc::clone(&seen);
@@ -367,9 +373,13 @@ fn string_redactor_runs_on_customer_runtime() {
             "find the secret"
         ]
     );
-    assert_ne!(customer.handle().id(), worker.handle().id());
-    for (text, id) in &seen {
-        assert_eq!(*id, customer.handle().id(), "{text} ran on another runtime");
+    assert_ne!(std::thread::current().name(), Some(CUSTOMER_THREAD));
+    for (text, thread) in &seen {
+        assert_eq!(
+            thread.as_deref(),
+            Some(CUSTOMER_THREAD),
+            "{text} ran on another runtime"
+        );
     }
 }
 

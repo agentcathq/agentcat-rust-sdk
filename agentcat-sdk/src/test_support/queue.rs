@@ -31,9 +31,12 @@
 //! Requests compare as [`to_ts_model`] writes the Rust request and [`expected_requests`] the TS
 //! one: each `evt_` ID is `<evt>` and each minted session `<minted>` (as the generator masks
 //! them), the timestamp is compared to the millisecond, tags compare as a map (sorted keys: the
-//! Rust request holds them in a `HashMap`, RD-03), and a `userIntent` that is not a string is its
+//! Rust request holds them in a `HashMap`, RD-03), a `null` `userIntent` is omitted, as the Rust
+//! wire omits it (ruling P12), and any other `userIntent` that is not a string is its
 //! `JSON.stringify` text (RD-33).
+use std::collections::BTreeMap;
 use std::future::{pending, ready};
+use std::mem;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, PoisonError, mpsc};
 use std::time::{Duration, Instant};
@@ -426,10 +429,12 @@ const MODEL_FIELDS: [(&str, &str); 28] = [
     ("properties", "properties"),
 ];
 
-/// `tags` of `model`, when an object, with its keys sorted.
+/// `tags` of `model`, when an object, with its keys sorted (through a `BTreeMap`: `Map::sort_keys`
+/// is newer than the `serde_json` floor).
 fn sort_tags(model: &mut Map<String, Value>) {
     if let Some(Value::Object(tags)) = model.get_mut("tags") {
-        tags.sort_keys();
+        let sorted: BTreeMap<String, Value> = mem::take(tags).into_iter().collect();
+        *tags = sorted.into_iter().collect();
     }
 }
 
@@ -480,8 +485,9 @@ pub(crate) fn to_ts_model(request: &PublishEventRequest) -> Value {
     Value::Object(model)
 }
 
-/// The `requests` of `case`, compared as the module docs say: the tags sorted, a `userIntent` that
-/// is not a string as its `JSON.stringify` text (RD-33).
+/// The `requests` of `case`, compared as the module docs say: the tags sorted, a `null`
+/// `userIntent` omitted (ruling P12), any other `userIntent` that is not a string as its
+/// `JSON.stringify` text (RD-33).
 pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
     case["requests"]
         .as_array()
@@ -489,10 +495,14 @@ pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
         .iter()
         .map(|request| {
             let mut request = object(request.clone());
-            if let Some(intent) = request.get_mut("userIntent")
-                && !intent.is_string()
-            {
-                *intent = Value::String(js::stringify(intent));
+            match request.get_mut("userIntent") {
+                Some(Value::Null) => {
+                    request.remove("userIntent");
+                }
+                Some(intent) if !intent.is_string() => {
+                    *intent = Value::String(js::stringify(intent));
+                }
+                _ => {}
             }
             sort_tags(&mut request);
             Value::Object(request)
@@ -734,5 +744,41 @@ impl CapturedLines {
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()
+    }
+}
+
+mod tests {
+    use serde_json::{Value, json};
+
+    use super::{expected_requests, object};
+
+    /// Ruling P12, RD-33: a TS `null` `userIntent` leaves the expected request, as the Rust wire
+    /// omits it; any other value that is not a string becomes its `JSON.stringify` text; a string
+    /// stays as it is.
+    #[test]
+    fn expected_user_intent_follows_the_wire() {
+        let case = object(json!({
+            "requests": [
+                {"id": "<evt>", "userIntent": null},
+                {"id": "<evt>", "userIntent": ["a", 1]},
+                {"id": "<evt>", "userIntent": {"why": true}},
+                {"id": "<evt>", "userIntent": "plain"},
+                {"id": "<evt>"},
+            ],
+        }));
+        let intents: Vec<Option<Value>> = expected_requests(&case)
+            .iter()
+            .map(|request| request.get("userIntent").cloned())
+            .collect();
+        assert_eq!(
+            intents,
+            [
+                None,
+                Some(json!("[\"a\",1]")),
+                Some(json!("{\"why\":true}")),
+                Some(json!("plain")),
+                None,
+            ]
+        );
     }
 }

@@ -116,12 +116,19 @@ fn iso_millis_matches_to_iso_string() {
 
 /// A time outside chrono's range gives the epoch text, not a panic; a time before the epoch with
 /// a fraction cuts the milliseconds as `toISOString` does.
+///
+/// The far times exist only where `SystemTime` can hold them: on Windows it counts 100 ns ticks
+/// in a `u64`, so no `SystemTime` lies outside chrono's range and the far cases are skipped.
 #[test]
 fn iso_millis_out_of_range_does_not_panic() {
     let epoch = "1970-01-01T00:00:00.000Z";
     let far = Duration::from_secs(u64::MAX / 4);
-    assert_eq!(iso_millis(UNIX_EPOCH + far), epoch);
-    assert_eq!(iso_millis(UNIX_EPOCH - far), epoch);
+    if let Some(late) = UNIX_EPOCH.checked_add(far) {
+        assert_eq!(iso_millis(late), epoch);
+    }
+    if let Some(early) = UNIX_EPOCH.checked_sub(far) {
+        assert_eq!(iso_millis(early), epoch);
+    }
     assert_eq!(
         iso_millis(UNIX_EPOCH - Duration::from_micros(1500)),
         "1969-12-31T23:59:59.998Z"
