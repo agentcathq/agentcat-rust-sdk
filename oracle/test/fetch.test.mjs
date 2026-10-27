@@ -140,3 +140,21 @@ test("ORACLE_SHA overrides the locked SHA and everything keyed by it", () => {
     else process.env.ORACLE_SHA = before;
   }
 });
+
+test("corepack goes through the Windows shell as one command string", async () => {
+  // corepack is a .cmd shim on Windows, which starts only through a shell; an argument array with
+  // `shell: true` is deprecated (DEP0190, Node 24 and later).
+  const { spawnCommand } = await import("../src/fetch-ts.mjs");
+  const install = ["pnpm", "--ignore-workspace", "install", "--frozen-lockfile"];
+  assert.deepEqual(spawnCommand("corepack", install, "win32"), {
+    command: "corepack pnpm --ignore-workspace install --frozen-lockfile",
+    args: [],
+    shell: true,
+  });
+  assert.deepEqual(spawnCommand("corepack", install, "linux"), { command: "corepack", args: install, shell: false });
+  assert.deepEqual(spawnCommand("git", ["status"], "win32"), { command: "git", args: ["status"], shell: false });
+  // The shell would read these characters: such a word never reaches it.
+  for (const word of ["a b", "a&b", "a|b", "%PATH%", "a^b", '"a"', "a>b", "!a", "a=b", "a,b", "a;b", ""]) {
+    assert.throws(() => spawnCommand("corepack", ["pnpm", word], "win32"), /through the Windows shell/, word);
+  }
+});

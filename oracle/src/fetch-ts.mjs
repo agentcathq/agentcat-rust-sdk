@@ -14,13 +14,13 @@ import {
   readdirSync,
   readFileSync,
   realpathSync,
-  renameSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { basename, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { renameWithRetry } from "./fsretry.mjs";
 import { isAlive, withLock } from "./lock.mjs";
 import { lock, traceOverride, tsDir, tsDist } from "./paths.mjs";
 
@@ -91,7 +91,7 @@ async function ensure(force) {
     await verifyCheckout(dir, sha);
     const tmp = join(dir, `${MARKER}.tmp-${process.pid}`);
     writeFileSync(tmp, `${sha}\n`);
-    renameSync(tmp, join(dir, MARKER));
+    renameWithRetry(tmp, join(dir, MARKER));
   });
 }
 
@@ -134,7 +134,8 @@ async function cloneOrFetch(repo, sha, dir) {
     const tmp = `${dir}.tmp-${process.pid}-${randomUUID().slice(0, 8)}`;
     progress(`cloning ${repo} into ${dir}`);
     await git(null, ["clone", "--quiet", "--no-checkout", repo, tmp]);
-    renameSync(tmp, dir);
+    // Windows: a virus scanner may still hold files of the fresh clone open.
+    renameWithRetry(tmp, dir);
   }
   try {
     await git(dir, ["cat-file", "-e", `${sha}^{commit}`]);
@@ -232,10 +233,14 @@ function git(dir, args) {
  */
 export function run(cmd, args, cwd, extraEnv = {}) {
   return new Promise((resolve, reject) => {
-    // corepack is a .cmd shim on Windows, which only starts through a shell.
-    const shell = process.platform === "win32" && cmd === "corepack";
     const env = { ...childEnv(), ...extraEnv };
-    const child = spawn(cmd, args, { cwd, env, shell, stdio: ["ignore", "pipe", "pipe"] });
+    const spawned = spawnCommand(cmd, args);
+    const child = spawn(spawned.command, spawned.args, {
+      cwd,
+      env,
+      shell: spawned.shell,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     let stdout = "";
     let output = "";
     const keep = (text) => {
@@ -256,6 +261,23 @@ export function run(cmd, args, cwd, extraEnv = {}) {
       reject(new Error(`oracle: \`${[cmd, ...args].join(" ")}\` failed (${why}) in ${cwd}:\n${output}`));
     });
   });
+}
+
+/**
+ * How run() spawns `cmd` with `args` on `platform`: `{command, args, shell}` for spawn(). corepack is
+ * a .cmd shim on Windows, which starts only through a shell. There the whole command line is one
+ * string, because the shell only joins an argument array, unquoted (deprecated: DEP0190); so every
+ * word must be plain, without a character that cmd.exe or the .cmd shim reads (`=` splits batch
+ * arguments). Exported for its test.
+ */
+export function spawnCommand(cmd, args, platform = process.platform) {
+  if (platform !== "win32" || cmd !== "corepack") return { command: cmd, args, shell: false };
+  const words = [cmd, ...args];
+  const unsafe = words.find((word) => !/^[\w.@:/\\-]+$/.test(word));
+  if (unsafe !== undefined) {
+    throw new Error(`oracle: cannot pass ${JSON.stringify(unsafe)} through the Windows shell`);
+  }
+  return { command: words.join(" "), args: [], shell: true };
 }
 
 // stdout may be a protocol channel (the property-test server), so progress goes to stderr.

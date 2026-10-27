@@ -4,9 +4,12 @@
 // whole owner record ({pid, host, token}) to the lock path; the rename fails
 // while a lock is there. So every lock has a record from its first moment; a
 // lock without a readable one is damaged (or left by an older version of this
-// file). A lock is stale when its owner is dead: a dead pid on this host, any
-// pid from another host (a lock restored from another machine's CI cache), or
-// no readable record after `staleMs`.
+// file). While it holds the lock, the owner refreshes the time of the lock
+// directory (the heartbeat). A lock is stale when its owner is dead (isLive):
+// a dead pid; a record with another host name and an old lock (a lock restored
+// from another machine's CI cache, whose pid means nothing here; an owner on
+// this machine whose host name changed since, as macOS does, keeps its lock
+// fresh); or no readable record after `staleMs`.
 //
 // A waiter breaks a stale lock only while it holds a claim on that very lock:
 // the file `break-<token of the judged owner>` inside it, which link() creates
@@ -14,21 +17,31 @@
 // holds the owner it judged stale, and only then moves the lock away. A lock
 // that changed hands is never moved, not even for a moment: a holder's lock
 // stays on its path until the holder removes it, so nobody can take the path
-// meanwhile. The owner removes the lock only while it holds its own token.
+// meanwhile. The owner removes the lock only while it holds its own token and
+// that same claim, so the owner and a waiter that judged it stale never both
+// move it.
+//
+// Windows refuses a rename or a link while another process (a virus scanner)
+// holds a file in it open: those steps run again after a delay (fsretry.mjs),
+// and a step that still fails leaves the lock to the next poll. The holder
+// sweeps what failed removals leave next to the lock.
 import { randomUUID } from "node:crypto";
 import {
   existsSync,
   linkSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
-  renameSync,
   rmSync,
   statSync,
+  utimesSync,
   writeFileSync,
 } from "node:fs";
 import { hostname } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+
+import { BUSY, renameWithRetry, retryBusy } from "./fsretry.mjs";
 
 export const OWNER_FILE = "owner.json";
 
@@ -37,7 +50,15 @@ const DEFAULTS = { waitMs: 30 * 60_000, pollMs: 250, staleMs: 60_000 };
 // rename() errors that mean "a directory is in the way" or "in use": a lock is
 // there (POSIX: EEXIST, ENOTEMPTY; Windows: EPERM), or a file in the directory
 // is open (Windows: EPERM, EBUSY, EACCES). The caller tries again later.
-const IN_USE = new Set(["EEXIST", "ENOTEMPTY", "EPERM", "EBUSY", "EACCES"]);
+const IN_USE = new Set(["EEXIST", "ENOTEMPTY", ...BUSY]);
+
+// The token of this process's claims. A claim with it is this process's own, whatever pid it
+// holds: another process can have the same pid (in another pid namespace). One per module instance.
+const SELF = randomUUID();
+
+// What a lock leaves next to its path when a removal fails (Windows: a file in it is open):
+// staged directories (tryTake), broken locks (breakStale) and released ones (release).
+const LEFTOVERS = [".new-", ".stale-", ".done-"];
 
 /** Runs `fn` while holding the lock directory `lockDir`; waits up to `waitMs` for it. */
 export async function withLock(lockDir, fn, options = {}) {
@@ -49,16 +70,20 @@ export async function withLock(lockDir, fn, options = {}) {
     token = tryTake(lockDir);
     if (token) break;
     const owner = readOwner(lockDir);
-    if (isStale(lockDir, owner, staleMs) && breakStale(lockDir, owner, staleMs)) continue;
+    if (!isLive(owner, lockDir, staleMs) && breakStale(lockDir, owner, staleMs)) continue;
     if (Date.now() >= deadline) {
       throw new Error(`oracle: timed out waiting for ${lockDir}; delete it if no build is running`);
     }
     await sleep(pollMs);
   }
+  const heartbeat = setInterval(() => touch(lockDir, token), Math.max(1, Math.floor(staleMs / 4)));
+  heartbeat.unref();
   try {
+    sweep(lockDir, staleMs);
     return await fn();
   } finally {
-    release(lockDir, token);
+    clearInterval(heartbeat);
+    release(lockDir, token, staleMs);
   }
 }
 
@@ -74,7 +99,7 @@ export function readOwner(lockDir) {
  */
 export function breakStale(lockDir, judged, staleMs = DEFAULTS.staleMs) {
   if (judged === null && ageMs(lockDir) <= staleMs) return false;
-  if (!claim(lockDir, `break-${judged === null ? "none" : judged.token}`)) return false;
+  if (!claim(lockDir, `break-${judged === null ? "none" : judged.token}`, staleMs)) return false;
   // `judged` was read before the claim was made. So if the lock still holds
   // `judged` now, the lock did not change in between, the claim is inside this
   // very lock, and no other process holds a claim on it: only this process
@@ -85,13 +110,31 @@ export function breakStale(lockDir, judged, staleMs = DEFAULTS.staleMs) {
   if (!same) return false; // another waiter broke it and took a new lock
   const grave = `${lockDir}.stale-${randomUUID()}`;
   try {
-    renameSync(lockDir, grave);
+    renameWithRetry(lockDir, grave);
   } catch (err) {
-    if (err.code === "ENOENT" || IN_USE.has(err.code)) return false;
+    if (err.code === "ENOENT" || IN_USE.has(err.code)) return false; // the claim stays: the next poll goes on
     throw err;
   }
   removeTree(grave);
   return true;
+}
+
+/**
+ * Removes the lock if it still holds the owner `token`. First it takes the claim
+ * that a waiter which judged the lock stale takes (`break-<token>`); while a
+ * live waiter holds that claim, the waiter moves the lock and release leaves it.
+ * Exported for its test.
+ */
+export function release(lockDir, token, staleMs = DEFAULTS.staleMs) {
+  if (readOwner(lockDir)?.token !== token) return; // no longer ours
+  if (!claim(lockDir, `break-${token}`, staleMs)) return; // a breaker moves it
+  const grave = `${lockDir}.done-${token}`;
+  try {
+    renameWithRetry(lockDir, grave);
+  } catch {
+    return; // still in use: a waiter breaks it once this process has ended
+  }
+  removeTree(grave);
 }
 
 /** Whether a process with this pid runs on this host. */
@@ -111,7 +154,7 @@ function tryTake(lockDir) {
   mkdirSync(staged);
   try {
     writeFileSync(join(staged, OWNER_FILE), record(token));
-    renameSync(staged, lockDir);
+    renameWithRetry(staged, lockDir);
     return token;
   } catch (err) {
     if (IN_USE.has(err.code)) return null;
@@ -122,42 +165,64 @@ function tryTake(lockDir) {
 }
 
 /**
- * Makes this process the one breaker of the lock: creates `lockDir/<name>`
- * with this process's record, or finds it made by this process before. The
- * claim of a breaker that died (or ran on another host) passes on to
- * `<name>.<its token>`, which again only one process creates. Returns false
- * while another live process holds the claim, or when the lock is gone.
+ * Whether the owner or claim record `record` (null when unreadable) belongs to
+ * a live process. `path` is the lock directory or the claim file; its time
+ * gives the record's age.
  */
-function claim(lockDir, name) {
-  const mine = record(randomUUID());
+function isLive(record, path, staleMs) {
+  if (record === null) return ageMs(path) <= staleMs;
+  if (!isAlive(record.pid)) return false;
+  // Another host name: another machine (a CI cache restored here; the pid means
+  // nothing here), or this machine before a host rename (macOS). A live owner
+  // keeps its lock fresh and a breaker holds its claim for seconds, so only an
+  // old record is dead.
+  return record.host === hostname() || ageMs(path) <= staleMs;
+}
+
+/**
+ * Makes this process the one holder of the claim `lockDir/<name>`: creates it
+ * with this process's record, or finds it made by this process before (token
+ * SELF: breakStale and release run to their end before this process starts
+ * another one). The claim of a dead holder (isLive) passes on to
+ * `<name>.<its token>`, or to `<that file>.none` for an unreadable one, which
+ * again only one process creates. Returns false while another live process
+ * holds the claim, while a claim file cannot be read or made (Windows: open
+ * elsewhere), or when the lock is gone.
+ */
+function claim(lockDir, name, staleMs) {
+  const mine = record(SELF);
   const first = join(lockDir, name);
   const seen = new Set();
   for (let file = first; !seen.has(file); ) {
     seen.add(file);
     const made = createOnce(file, mine);
     if (made !== "exists") return made === "made";
-    const holder = readRecord(file);
-    if (holder === null) return false; // a damaged claim: leave the lock to a person
-    if (holder.host === hostname()) {
-      // breakStale runs to its end before this process starts another one.
-      if (holder.pid === process.pid) return true;
-      if (isAlive(holder.pid)) return false;
-    }
-    file = `${first}.${holder.token}`;
+    // A claim file is whole from its first moment (link), so every reader of
+    // its text decides the same; one that cannot read it now tries later.
+    const text = readText(file);
+    if (text === null) return false;
+    const holder = parseRecord(text);
+    if (holder?.token === SELF) return true;
+    if (isLive(holder, file, staleMs)) return false;
+    file = holder === null ? `${file}.none` : `${first}.${holder.token}`;
   }
   return false; // claims that point back to each other: damaged
 }
 
-/** Creates `file` with `text`, whole or not at all: "made", "exists" or "gone" (its directory). */
+/**
+ * Creates `file` with `text`, whole or not at all: "made", "exists", "gone"
+ * (its directory) or "busy" (Windows still refuses it after retries).
+ */
 function createOnce(file, text) {
   const tmp = `${file}.${randomUUID()}.tmp`;
   try {
-    writeFileSync(tmp, text);
-    linkSync(tmp, file);
+    retryBusy(() => writeFileSync(tmp, text));
+    retryBusy(() => linkSync(tmp, file));
     return "made";
   } catch (err) {
     if (err.code === "EEXIST") return "exists";
     if (err.code === "ENOENT") return "gone"; // the lock was removed or replaced meanwhile
+    if (BUSY.has(err.code)) return "busy";
     throw err;
   } finally {
     removeTree(tmp);
@@ -169,8 +234,23 @@ function record(token) {
 }
 
 function readRecord(file) {
+  const text = readText(file);
+  return text === null ? null : parseRecord(text);
+}
+
+/** The text of `file`, or null when it cannot be read now (missing, or open elsewhere on Windows). */
+function readText(file) {
   try {
-    const owner = JSON.parse(readFileSync(file, "utf8"));
+    return readFileSync(file, "utf8");
+  } catch {
+    return null;
+  }
+}
+
+/** The owner or claim record in `text`, or null when `text` is not a whole, valid one. */
+function parseRecord(text) {
+  try {
+    const owner = JSON.parse(text);
     if (
       Number.isInteger(owner?.pid) &&
       owner.pid > 0 &&
@@ -181,15 +261,40 @@ function readRecord(file) {
       return owner;
     }
   } catch {
-    // missing, empty or half-written
+    // empty or half-written
   }
   return null;
 }
 
-function isStale(lockDir, owner, staleMs) {
-  if (owner === null) return ageMs(lockDir) > staleMs;
-  if (owner.host !== hostname()) return true;
-  return !isAlive(owner.pid);
+/** The heartbeat: refreshes the time of the lock while it holds the owner `token`. */
+function touch(lockDir, token) {
+  if (readOwner(lockDir)?.token !== token) return;
+  const now = new Date();
+  try {
+    utimesSync(lockDir, now, now);
+  } catch {
+    // open elsewhere (Windows): the next beat comes well within staleMs
+  }
+}
+
+/**
+ * Removes the leftovers of `lockDir` (LEFTOVERS) that are older than `staleMs`.
+ * A younger one may still be in use: a staged directory right before its
+ * rename, or a moved lock while its remover runs.
+ */
+function sweep(lockDir, staleMs) {
+  const parent = dirname(lockDir);
+  const prefixes = LEFTOVERS.map((kind) => `${basename(lockDir)}${kind}`);
+  let entries;
+  try {
+    entries = readdirSync(parent);
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    const path = join(parent, entry);
+    if (prefixes.some((prefix) => entry.startsWith(prefix)) && ageMs(path) > staleMs) removeTree(path);
+  }
 }
 
 function ageMs(path) {
@@ -200,22 +305,11 @@ function ageMs(path) {
   }
 }
 
-function release(lockDir, token) {
-  if (readOwner(lockDir)?.token !== token) return; // no longer ours
-  const grave = `${lockDir}.done-${token}`;
-  try {
-    renameSync(lockDir, grave);
-  } catch {
-    return;
-  }
-  removeTree(grave);
-}
-
 /** Removes a file or directory that no process uses any more; what stays is litter, not a lock. */
 function removeTree(path) {
   try {
     rmSync(path, { recursive: true, force: true });
   } catch {
-    // Windows: a file in it is still open
+    // Windows: a file in it is still open (the holder sweeps it later)
   }
 }

@@ -9,9 +9,11 @@ on:
 permissions:
   contents: read
 
+# A new push to a pull request cancels its older run. Runs of pushes to rewrite and main always
+# finish, so every commit there keeps a finished run (C48).
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   CARGO_TERM_COLOR: always
@@ -61,6 +63,7 @@ jobs:
           tool: cargo-hack
       - run: cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
+  # Every push and pull request, on the three systems (C48).
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -68,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ github.event_name == 'push' && fromJSON('["ubuntu-latest"]') || fromJSON('["ubuntu-latest","macos-latest","windows-latest"]') }}
+        os: ["ubuntu-latest", "macos-latest", "windows-latest"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -81,6 +84,11 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
+      # The harness reference server has a branch for each system (its shutdown signal).
+      - run: cargo build -p harness-ref-server
+      # The oracle's build lock and its bundle builds, on each system's file semantics (Windows
+      # refuses a rename onto a file that another process holds open).
+      - run: node --test --test-concurrency=1 oracle/test/lock.test.mjs oracle/test/bundle.test.mjs
       - run: cargo nextest run --workspace --all-features
       # The tests that compile only without a TLS feature (C44's warning for an https: URL).
       - run: cargo nextest run -p agentcat-sdk --no-default-features
@@ -240,7 +248,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      versions: ${{ steps.list.outputs.versions }}
+      legs: ${{ steps.list.outputs.legs }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -248,8 +256,11 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
+      # [{"version": <rmcp>, "macros": <rmcp-macros>}, ...]: one leg per rmcp minor.
       - id: list
-        run: echo "versions=$(node scripts/rmcp-versions.mjs)" >> "$GITHUB_OUTPUT"
+        run: |
+          legs="$(node scripts/rmcp-versions.mjs)"
+          echo "legs=$legs" >> "$GITHUB_OUTPUT"
 
   rmcp:
     name: rmcp (${{ matrix.version }})
@@ -261,7 +272,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ${{ fromJSON(needs.rmcp-versions.outputs.versions) }}
+        include: ${{ fromJSON(needs.rmcp-versions.outputs.legs) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -275,9 +286,10 @@ jobs:
         with:
           tool: nextest
       - run: cargo update -p rmcp --precise ${{ matrix.version }}
-      # rmcp-macros keeps its locked version otherwise (it still satisfies the older rmcp's requirement);
-      # a version that does not exist makes this step fail.
-      - run: cargo update -p rmcp-macros --precise ${{ matrix.version }}
+      # rmcp-macros keeps its locked version otherwise (it still satisfies the older rmcp's requirement).
+      # The leg takes the highest rmcp-macros of the same minor (scripts/rmcp-versions.mjs): an rmcp
+      # patch can come without an rmcp-macros patch of the same number.
+      - run: cargo update -p rmcp-macros --precise ${{ matrix.macros }}
       - run: grep -A1 -E '^name = "rmcp(-macros)?"$' Cargo.lock
       - run: cargo nextest run -p agentcat-sdk --all-features
       - run: cargo nextest run -p agentcat-sdk --test rmcp_version

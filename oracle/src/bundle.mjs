@@ -3,7 +3,7 @@
 // that file. loadCore bundles the pure modules together, so they share one
 // instance of every module they import (one logging state); loadModule bundles
 // one module on its own.
-import { existsSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -11,6 +11,7 @@ import { pathToFileURL } from "node:url";
 import { build, transform, version as esbuildVersion } from "esbuild";
 
 import { ensureTs, verifyTs } from "./fetch-ts.mjs";
+import { renameWithRetry } from "./fsretry.mjs";
 import { isolateLogFile } from "./logs.mjs";
 import { bundleDir, tsDir } from "./paths.mjs";
 
@@ -76,14 +77,15 @@ async function buildCore() {
   await ensureTs();
   const entry = { stdin: { contents: CORE_ENTRY, resolveDir: tsDir(), sourcefile: "oracle-core.js", loader: "js" } };
   const names = [...CORE_MODULES, ...CORE_ENGINE_MODULES, `sdk=${CORE_SDK_ENTRY}`];
-  const mod = await bundle("core", `core: ${names.join(" ")} KSUID`, entry);
+  const mod = await bundle(bundleDir(), "core", `core: ${names.join(" ")} KSUID`, entry);
   isolateLogFile(mod);
   return mod;
 }
 
 /**
  * Imports `src/modules/<name>.ts` (or `src/thirdparty/ksuid/index.js` for
- * "ksuid") of the pinned TS SDK, bundled into `<bundleDir>/<name>.mjs`.
+ * "ksuid") of the pinned TS SDK, bundled into `<dir>/<name>.mjs` (by default
+ * `dir` is bundleDir(); the test of parallel builds passes an empty one).
  *
  * In the SDK's own files (under `src/`), `import.meta.url`, `.dirname` and
  * `.filename` name the source file, as when Node runs it in place, so
@@ -91,15 +93,16 @@ async function buildCore() {
  * Bundled dependencies keep their code unchanged: in them, `import.meta.url`
  * is the bundle's URL. loadCore's bundle is built the same way.
  */
-export async function loadModule(name) {
+export async function loadModule(name, { dir = bundleDir() } = {}) {
   if (typeof name !== "string" || !/^[A-Za-z0-9_-]+$/.test(name)) {
     throw new Error(`oracle: invalid TS module name ${JSON.stringify(name)}`);
   }
-  let pending = loaded.get(name);
+  const key = join(dir, name);
+  let pending = loaded.get(key);
   if (!pending) {
-    pending = load(name);
-    loaded.set(name, pending);
-    pending.catch(() => loaded.delete(name));
+    pending = load(dir, name);
+    loaded.set(key, pending);
+    pending.catch(() => loaded.delete(key));
   }
   return pending;
 }
@@ -110,18 +113,18 @@ function source(name) {
     : join(tsDir(), "src", "modules", `${name}.ts`);
 }
 
-async function load(name) {
+async function load(dir, name) {
   await ensureTs();
   const entry = source(name);
   if (!existsSync(entry)) {
     throw new Error(`oracle: the TS SDK has no module "${name}" (${entry} does not exist)`);
   }
-  return bundle(name, relative(tsDir(), entry), { entryPoints: [entry] });
+  return bundle(dir, name, relative(tsDir(), entry), { entryPoints: [entry] });
 }
 
-/** Builds `<bundleDir>/<out>.mjs` from `entryOptions` unless it is current, then imports it. */
-async function bundle(out, entryName, entryOptions) {
-  const file = join(bundleDir(), `${out}.mjs`);
+/** Builds `<dir>/<out>.mjs` from `entryOptions` unless it is current, then imports it. */
+async function bundle(dir, out, entryName, entryOptions) {
+  const file = join(dir, `${out}.mjs`);
   const head = stamp(entryName);
   if (!isCurrent(file, head)) {
     const result = await build({
@@ -138,11 +141,13 @@ async function bundle(out, entryName, entryOptions) {
     // Every later process reuses the bundle, so the clone must still be clean
     // now, after the build, not only when ensureTs() ran.
     await verifyTs();
-    mkdirSync(bundleDir(), { recursive: true });
-    // Write then rename, so a concurrent or interrupted run never leaves half a file.
+    mkdirSync(dir, { recursive: true });
+    // Write then rename, so a concurrent or interrupted run never leaves half a file. Processes
+    // that build at once write the same bytes. Windows refuses the rename while another process
+    // holds the file in place open; renameWithRetry then keeps that copy.
     const tmp = `${file}.tmp-${process.pid}`;
     writeFileSync(tmp, head + result.outputFiles[0].text);
-    renameSync(tmp, file);
+    renameWithRetry(tmp, file);
   }
   return import(pathToFileURL(file).href);
 }
