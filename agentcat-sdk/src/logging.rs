@@ -34,7 +34,7 @@ impl Logger {
     pub(crate) fn write(&self, message: &str) {
         match self.destination {
             LogDestination::Tracing => emit(message),
-            _ => self.write_file(message),
+            LogDestination::File => self.write_file(message),
         }
     }
 
