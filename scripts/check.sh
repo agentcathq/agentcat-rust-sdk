@@ -74,6 +74,8 @@ done
 
 # test (R07 in a build of the SDK alone: another workspace member could turn the feature on)
 cargo nextest run --workspace --all-features
+# the tests that compile only without a TLS feature (C44's warning for an https: URL)
+cargo nextest run -p agentcat-sdk --no-default-features
 cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
 cargo run -q -p xtask -- parity

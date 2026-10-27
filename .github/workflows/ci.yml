@@ -82,6 +82,8 @@ jobs:
         with:
           tool: nextest
       - run: cargo nextest run --workspace --all-features
+      # The tests that compile only without a TLS feature (C44's warning for an https: URL).
+      - run: cargo nextest run -p agentcat-sdk --no-default-features
       # R07 in a build of the SDK alone: in a workspace build, another member could turn on
       # serde_json/preserve_order for it (Cargo unifies features).
       - run: cargo test -p agentcat-sdk --all-features --test json_key_order
