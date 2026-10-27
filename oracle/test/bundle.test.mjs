@@ -19,23 +19,23 @@ after(() => rmSync(scratch, { recursive: true, force: true }));
 const CHILD = `
   import { setTimeout as sleep } from "node:timers/promises";
   const { loadModule } = await import(${JSON.stringify(BUNDLE_MODULE)});
-  const [dir, goAt] = process.argv.slice(1);
+  const [dir, goAt, retry] = process.argv.slice(1);
   await sleep(Math.max(0, Number(goAt) - Date.now()));
-  const tokens = await loadModule("tokenEstimate", { dir });
+  const tokens = await loadModule("tokenEstimate", { dir, retry: JSON.parse(retry) });
   if (tokens.estimateInputTokens({ n: 1.0 }) !== 2) throw new Error("the bundle gives a wrong result");
 `;
 
 /**
  * Starts `children` processes that load the tokenEstimate bundle from `dir` at the same moment;
- * resolves with their exit codes and stderr. `nodeArgs` go before the script.
+ * resolves with their exit codes and stderr. `nodeArgs` go before the script; `retry` is the retry
+ * budget of each rename (fsretry.mjs), by default the oracle's own.
  */
-async function buildInParallel(dir, children, nodeArgs = []) {
+async function buildInParallel(dir, children, { nodeArgs = [], retry = {} } = {}) {
   const goAt = Date.now() + 1500; // every child has started and imported bundle.mjs by then
   return Promise.all(
     Array.from({ length: children }, () => {
-      const proc = spawn(process.execPath, [...nodeArgs, "--input-type=module", "-e", CHILD, dir, String(goAt)], {
-        stdio: ["ignore", "ignore", "pipe"],
-      });
+      const args = [...nodeArgs, "--input-type=module", "-e", CHILD, dir, String(goAt), JSON.stringify(retry)];
+      const proc = spawn(process.execPath, args, { stdio: ["ignore", "ignore", "pipe"] });
       let stderr = "";
       proc.stderr.setEncoding("utf8").on("data", (text) => {
         stderr += text;
@@ -64,7 +64,8 @@ test("parallel bundle builds converge", async () => {
 test("parallel bundle builds converge where a rename onto a bundle in place is refused", async () => {
   // Windows refuses a rename onto a file that another process holds open; here every rename onto
   // a bundle that is already in place is refused, so each child that comes second keeps the copy
-  // in place and removes its own (renameWithRetry, after its retries: about 6.4 s).
+  // in place and removes its own (renameWithRetry, after its retries). The retries wait 50 and
+  // 100 ms here, so the waits of the test (1.5 s to start, then these) stay under 3 s.
   await ensureTs();
   const dir = join(scratch, "refused");
   const refuse = join(scratch, "refuse-rename.mjs");
@@ -85,7 +86,10 @@ test("parallel bundle builds converge where a rename onto a bundle in place is r
     syncBuiltinESMExports();
     `,
   );
-  const exits = await buildInParallel(dir, 6, ["--import", pathToFileURL(refuse).href]);
+  const exits = await buildInParallel(dir, 6, {
+    nodeArgs: ["--import", pathToFileURL(refuse).href],
+    retry: { attempts: 3, delayMs: 50 },
+  });
   assertAllExited(exits);
   assert.ok(exits.some(({ stderr }) => stderr.includes("refused")), "no child came second: the race was not run");
   assert.deepEqual(readdirSync(dir), ["tokenEstimate.mjs"]);

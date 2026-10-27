@@ -17,9 +17,9 @@
 // holds the owner it judged stale, and only then moves the lock away. A lock
 // that changed hands is never moved, not even for a moment: a holder's lock
 // stays on its path until the holder removes it, so nobody can take the path
-// meanwhile. The owner removes the lock only while it holds its own token and
-// that same claim, so the owner and a waiter that judged it stale never both
-// move it.
+// meanwhile. The owner removes the lock only while it holds that same claim
+// and, with the claim, still finds its own token in the lock; so the owner and
+// a waiter that judged it stale never both move it.
 //
 // Windows refuses a rename or a link while another process (a virus scanner)
 // holds a file in it open: those steps run again after a delay (fsretry.mjs),
@@ -134,6 +134,11 @@ export function breakStale(lockDir, judged, staleMs = DEFAULTS.staleMs) {
 export function release(lockDir, token, staleMs = DEFAULTS.staleMs) {
   if (readOwner(lockDir)?.token !== token) return; // no longer ours
   if (!claim(lockDir, `break-${token}`, staleMs)) return; // a breaker moves it
+  // As in breakStale: a breaker can move this lock and a waiter take the path
+  // between the first read and the claim. Only if the lock still holds `token`
+  // now is the claim inside this process's own lock. (A claim made in the new
+  // lock goes away with that lock.)
+  if (readOwner(lockDir)?.token !== token) return;
   const grave = `${lockDir}.done-${token}`;
   try {
     moveLock(lockDir, grave);

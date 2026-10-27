@@ -86,6 +86,8 @@ async function buildCore() {
  * Imports `src/modules/<name>.ts` (or `src/thirdparty/ksuid/index.js` for
  * "ksuid") of the pinned TS SDK, bundled into `<dir>/<name>.mjs` (by default
  * `dir` is bundleDir(); the test of parallel builds passes an empty one).
+ * `retry` is the retry budget of the bundle's rename (renameWithRetry's
+ * options; the test of a refused rename shrinks it).
  *
  * In the SDK's own files (under `src/`), `import.meta.url`, `.dirname` and
  * `.filename` name the source file, as when Node runs it in place, so
@@ -93,14 +95,14 @@ async function buildCore() {
  * Bundled dependencies keep their code unchanged: in them, `import.meta.url`
  * is the bundle's URL. loadCore's bundle is built the same way.
  */
-export async function loadModule(name, { dir = bundleDir() } = {}) {
+export async function loadModule(name, { dir = bundleDir(), retry } = {}) {
   if (typeof name !== "string" || !/^[A-Za-z0-9_-]+$/.test(name)) {
     throw new Error(`oracle: invalid TS module name ${JSON.stringify(name)}`);
   }
   const key = join(dir, name);
   let pending = loaded.get(key);
   if (!pending) {
-    pending = load(dir, name);
+    pending = load(dir, name, retry);
     loaded.set(key, pending);
     pending.catch(() => loaded.delete(key));
   }
@@ -113,17 +115,20 @@ function source(name) {
     : join(tsDir(), "src", "modules", `${name}.ts`);
 }
 
-async function load(dir, name) {
+async function load(dir, name, retry) {
   await ensureTs();
   const entry = source(name);
   if (!existsSync(entry)) {
     throw new Error(`oracle: the TS SDK has no module "${name}" (${entry} does not exist)`);
   }
-  return bundle(dir, name, relative(tsDir(), entry), { entryPoints: [entry] });
+  return bundle(dir, name, relative(tsDir(), entry), { entryPoints: [entry] }, retry);
 }
 
-/** Builds `<dir>/<out>.mjs` from `entryOptions` unless it is current, then imports it. */
-async function bundle(dir, out, entryName, entryOptions) {
+/**
+ * Builds `<dir>/<out>.mjs` from `entryOptions` unless it is current, then imports it. `retry`
+ * goes to renameWithRetry.
+ */
+async function bundle(dir, out, entryName, entryOptions, retry) {
   const file = join(dir, `${out}.mjs`);
   const head = stamp(entryName);
   if (!isCurrent(file, head)) {
@@ -147,7 +152,7 @@ async function bundle(dir, out, entryName, entryOptions) {
     // holds the file in place open; renameWithRetry then keeps that copy.
     const tmp = `${file}.tmp-${process.pid}`;
     writeFileSync(tmp, head + result.outputFiles[0].text);
-    renameWithRetry(tmp, file);
+    renameWithRetry(tmp, file, retry);
   }
   return import(pathToFileURL(file).href);
 }

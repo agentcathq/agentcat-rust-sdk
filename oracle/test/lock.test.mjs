@@ -194,6 +194,25 @@ test("interleaving B (release during break) is deterministic", async () => {
   assert.equal(broke2, false, "a breaker moved a lock that its owner was releasing");
   assert.equal(waiterTook2, false, "the path was free while the owner released");
   assert.equal(existsSync(lockDir2), false);
+
+  // B3: O reads its record; then, before O claims, K breaks O's lock and W takes the path.
+  const lockDir3 = newLockDir();
+  plant(lockDir3, judged);
+  let broke3;
+  stubbed("readFileSync", (read) => {
+    let done = false;
+    return (file, ...rest) => {
+      const text = read(file, ...rest);
+      if (!done && file === join(lockDir3, OWNER_FILE)) {
+        done = true;
+        broke3 = breakStale(lockDir3, judged);
+        plant(lockDir3, waiter);
+      }
+      return text;
+    };
+  }, () => owner.release(lockDir3, judged.token));
+  assert.equal(broke3, true, "the breaker moves the lock it judged");
+  assert.equal(readOwner(lockDir3)?.token, waiter.token, "the owner moved the lock the waiter took after it");
 });
 
 test("interleaving C (two breakers)", async () => {
