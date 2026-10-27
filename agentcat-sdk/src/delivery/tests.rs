@@ -824,13 +824,15 @@ fn cancelled_flush_leaves_waiting_list_when_worker_idles() {
     assert_eq!(other_lines(&lines), Vec::<String>::new());
 }
 
-/// C36, C12: a cancelled async `shutdown` still shuts the handle down. Its first poll marks the
-/// queue shutting down, so a later event is dropped with TS's line. Its request waits in the
-/// worker's list like a flush's: once the event in flight ends, the worker stops with nothing left
-/// to abandon (no `Shutting down with` line) and answers every waiting request `true`, as the
-/// probe, a request like the cancelled one, shows. A later `flush` answers `true` at once.
-#[test]
-fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
+/// A delivery for [`PROJECT`] whose attempts wait for the returned gate, with a handle around it
+/// that shares it, after its first event, `a`, started its attempt.
+fn handle_with_held_attempt() -> (
+    AgentCat,
+    Arc<Delivery>,
+    RecordingPublisher,
+    queue::Gate,
+    CapturedLines,
+) {
     let (publisher, gate) = RecordingPublisher::gated();
     let starts = publisher.starts();
     let (delivery, lines) = bare_delivery(&publisher, fast());
@@ -838,34 +840,52 @@ fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
     let agentcat = AgentCat::with_sink(PROJECT, Options::default(), delivery.clone());
     push(&agentcat, job(PROJECT, "a"));
     wait_starts(&starts, 1);
+    (agentcat, delivery, publisher, gate, lines)
+}
 
+/// C36, C12: a cancelled async `shutdown` still shuts the handle down. Only the cancelled
+/// shutdown can mark the queue or stop the worker here: the probes are flushes.
+///
+/// - Its first poll marks the queue shutting down, so the next event, `b`, is dropped with TS's
+///   line before any probe exists.
+/// - Its request stays in the worker's waiting list. With a deadline no test reaches, the worker
+///   drains the event in flight, stops once it is idle with nothing left to abandon (no `Shutting
+///   down with` line), and answers the probe `true`; a later `flush` answers `true` at once.
+/// - With a short deadline, the worker stops at that deadline and abandons the event in flight:
+///   the probe, whose own deadline no test reaches, gets `false` while the attempt is still held,
+///   which only the cancelled request's deadline can give.
+#[test]
+fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
+    let (agentcat, delivery, publisher, gate, lines) = handle_with_held_attempt();
     assert!(
         cancel_after_20_ms(agentcat.shutdown(LONG)),
         "the customer's timeout cancels the shutdown"
     );
+    push(&agentcat, job(PROJECT, "b"));
+    {
+        let queue = delivery.shared.lock();
+        assert!(
+            queue.shutting_down,
+            "the cancelled shutdown marked the queue"
+        );
+        assert_eq!(
+            queue.pending.len() + queue.in_flight,
+            1,
+            "only `a` is queued: `b` was dropped"
+        );
+    }
     let (probe, answer) = mpsc::channel();
     assert_eq!(
-        delivery.request(Kind::Shutdown, LONG, Reply::Blocking(probe)),
+        delivery.request(Kind::Flush, LONG, Reply::Blocking(probe)),
         None
     );
-    push(&agentcat, job(PROJECT, "b"));
     assert_eq!(
         answer.recv_timeout(ms(100)),
         Err(mpsc::RecvTimeoutError::Timeout),
-        "the request waits while the event is in flight"
+        "the probe waits while the event is in flight"
     );
-
     gate.open();
-    assert_eq!(
-        answer.recv_timeout(WAIT),
-        Ok(true),
-        "the worker drained and stopped"
-    );
-    assert_eq!(
-        answer.recv_timeout(WAIT),
-        Err(mpsc::RecvTimeoutError::Disconnected),
-        "the worker let the request go"
-    );
+    assert_eq!(answer.recv_timeout(WAIT), Ok(true), "the worker drained");
     let started = Instant::now();
     assert!(agentcat.flush_blocking(WAIT));
     assert!(started.elapsed() < ms(500), "{:?}", started.elapsed());
@@ -875,6 +895,26 @@ fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
         other_lines(&lines),
         ["Queue is shutting down, event dropped"]
     );
+
+    let (agentcat, delivery, publisher, gate, lines) = handle_with_held_attempt();
+    assert!(
+        cancel_after_20_ms(agentcat.shutdown(ms(200))),
+        "the customer's timeout cancels the shutdown"
+    );
+    let (probe, answer) = mpsc::channel();
+    assert_eq!(
+        delivery.request(Kind::Flush, LONG, Reply::Blocking(probe)),
+        None
+    );
+    assert_eq!(
+        answer.recv_timeout(WAIT),
+        Ok(false),
+        "the worker stopped at the cancelled shutdown's deadline"
+    );
+    gate.open();
+    assert!(agentcat.flush_blocking(WAIT));
+    assert_eq!(publisher.finished(), 0, "the event in flight was abandoned");
+    assert_eq!(other_lines(&lines), Vec::<String>::new());
 }
 
 /// C12, C36: `shutdown` is terminal, and a second call answers `true` at once in both forms and
