@@ -11,88 +11,41 @@ Plan 3 closed or moved every item carried to it. The moved items are below, mark
 
 ## Plan 4 (delivery and lifecycle)
 
-- The mock API keeps parsed JSON only, so `1` and `1.0` and integers above 2^53 look the same. Keep the raw body
-  text for the event comparison and C04.
-- The stdio exit wait is bounded by the MCP SDK's `close()` (SIGTERM after 2 s), not by `settleTimeoutMs`. With
-  RD-09 and R06 (5 s drain), a draining Rust server can be killed. Design the stdio close path.
-- An HTTP reference server that ignores SIGTERM only gets a stderr line, and the run still exits 0. Enforce the
-  protocol when the Rust server must drain on SIGTERM.
-- Found while writing plan 2: build the TS event shape (`pipeline::TsEvent`) in TS's in-memory key order. The
-  order decides which of two strings of equal length the last-resort cut of the size guard takes first. Record
-  that order from a TS probe.
-- Found while writing plan 2: run the async string-redaction hook through `pipeline::redact::redact_strings` in
-  two passes (collect the strings with a recording closure, await the hook for each in order, replay the results).
-  `redact_strings` is the only definition of the walk order and the protected keys; do not copy its rules.
-- Found while writing plan 2: `handles::new_event_id()` returns `None` where TS throws. Drop the event with TS's
-  delivery-failure log line.
-- Moved from plan 2: `scripts/check.sh` runs `cargo deny check`, and the CI deny action adds `--all-features`.
-  Add it when the crate gets features.
+Plan 4 closed every item carried to it. Each item and the commit that closed it:
 
-- From the plan 2 final review: the wire body. `assert_js_eq` compares `js::stringify` on both sides, so no plan 2
-  test catches a serializer that uses `serde_json::to_vec`. That serializer writes `1.0`, `-0.0`, exact integers
-  above 2^53, and index-like keys of `tags` and `properties` in insertion order; TS writes `1`, `0`, rounded
-  integers, and index keys first. Build the body with `js::stringify` rules, or record an RD.
-- From the plan 2 final review: the size guard measures `js::stringify` bytes, so the body that the SDK sends must
-  be that same text.
-- From the plan 2 final review: TS merges the sanitize and truncate results into the event with `Object.assign`;
-  Rust replaces the map. The two are equal only while no stage removes a key. Pin it with a test when the queue
-  composes the stages.
-- From the plan 2 final review: the event `timestamp` string must have the exact `toISOString` form (three
-  millisecond digits and `Z`).
-- From plan 2 (performance): `truncate_event` copies the event in `limit_fields` and again for each depth in
-  `normalize_fields`, and `byte_size` writes the whole event as text only to count its bytes (up to about 20
-  encodings of a 400 KB event). `js::own_entries` allocates a `Vec` for each object. Pass the event by value, count
-  bytes with a writer, and give `own_entries` a path that does not allocate.
-- From plan 2 (RD-24): Rust's restore keeps a top-level `__proto__` key of an event hook's result, so its strings
-  reach the customer's redactor; TS turns that key into the prototype and never redacts them. A typed event has no
-  such key; keep it that way, or record the extra redactor calls in RD-24.
-
-- From plan 3, because events are compared in plan 4: `extra-headers-only` in `harness/src/normalize.mjs` hides D06
-  (every header verbatim) and D34 (the shape of `extra`). Keep every header except a named volatile set, keep the
-  key set of `extra`, keep `requestInfo.url` (its text differs from TS's WHATWG `URL.href`: RD-31, pending), and
-  record the known shape difference as an RD-07 ruling. The
-  `extra` key order differs from TS v1 (`_meta` before `requestId`), and `request.params` puts `_meta` last
-  where B-082 says "as received" (rmcp's own client sends it first): align each, or name it in RD-07.
-- From plan 3, because events are compared in plan 4: RD-04: a Rust timestamp with zero milliseconds becomes
-  `<bad-timestamp:…>` about once per 1000 events. Add an optional-ruling flag or a class token for RFC 3339 without
-  a fraction.
-- From plan 3, because events are compared in plan 4: placeholders do not tell derived `ses_` IDs from minted
-  ones; the event sort tie-breaker uses the raw duration (sort on the normalized body); the same-millisecond sort
-  limit needs a line in the scenario-authoring rules.
-- From plan 3: build `parameters.request` in TS's key order, recorded from a TS probe.
-- From plan 3: the event builder drops rmcp's `resultType: "complete"` from `CallRecord.response` (TS events have
-  none).
-- From plan 3: insert `CallContext` on the `AGENTCAT_ENABLED=false` pass-through too (C29).
-- From plan 3: hook settling reads `CallRecord.pending`; it must abort or bound a hook that never finishes (today
-  it stays a detached task). Document that a panicking hook prints through the process panic hook.
-- From plan 3: `capture_error` renders the backtrace on the tool's task when `RUST_BACKTRACE` or
-  `RUST_LIB_BACKTRACE` is set. Keep the `Backtrace` and render it in the delivery pipeline.
-- From plan 3: the Rust reference server's `emit_custom` publishes a custom event, and its
-  `redactSensitiveInformation` profile key reaches the SDK option. It passes `AGENTCAT_API_URL` to the SDK as the API
-  base URL (the TS servers' second guard; the `#[expect(dead_code)]` on `Startup.api_url` does not fire if this is
-  forgotten), and its HTTP modes drain the SDK queue on SIGTERM before they exit (today they exit at once).
-- From plan 3: `harness/src/matrix.mjs` stops passing `--expect-publishes 0` for tracked Rust runs.
-- From plan 3: `harness/rulings.json` holds delta rulings only. When event rulings for `diff.mjs` join, split the
-  file or make the full-matrix unused-ruling check count only rulings that can match `$.delta.*`
-  (`matrix.mjs`).
-- From plan 3: the feature-unification self-check (it logs when serde_json's `arbitrary_precision` or
-  `float_roundtrip` is on in a customer build).
-- From plan 3: check the four unused `cargo deny` licenses again after reqwest and rustls join, and remove each
-  license that is still unused.
-- From the plan 3 final review: build the `ToolCall` snapshot only when a hook is set. Today `start_hooks`
-  (`call/run.rs`) clones the arguments, the `_meta` and the whole `RequestContext` on every traced call; take the
-  check early, because this is the hot path.
-- From the plan 3 final review: a drop guard, so that a call whose future a customer wrapper drops (a timeout,
-  a `select!`) still sends its record. Today the record goes to the sink only when the call completes or panics.
-- From the plan 3 final review: a second harness canary that perturbs the call path (mint-back or mirror). The
-  canary proves only that the gate sees listing changes, and the reference tools ignore unknown keys, so strip
-  regressions are pinned only by Rust unit tests.
-- From the plan 3 owner batch (R27): with `enableTracing: false`, strip the injected `session_id`, `agent_id` and
-  `context` before the tool runs (RD-29), learning the schema as the traced path does (`get_tool`, registry,
-  rebuild, heuristic) so that a tool's own `context` stays; record nothing. Update the RD-29 rulings' reasons if
-  the harness difference changes.
-- From the plan 3 owner batch (R27): relax `capture_error`'s bound to `E: Error + ?Sized + 'static` and say in its
-  rustdoc that a `dyn` error records the `dyn` type name.
+| Item | Closed by |
+|---|---|
+| The mock API keeps the raw body text | `6b26850` (`rawBody`, normalizer rule `number-source`) |
+| The stdio close path and the 2 s SIGTERM | `a160f4c` (the server drains on EOF and SIGTERM), `6b26850` (the drained line) |
+| An HTTP server that ignores SIGTERM | `6b26850` (a server that needs SIGKILL fails the run) |
+| `TsEvent` key order from a TS probe | `a675047` (`event_order.json`), `f763849` |
+| Async string redaction in two passes through `redact_strings` | `1b84def` |
+| `new_event_id()` `None` drops the event with the delivery-failure line | `1b84def` |
+| `cargo deny check --all-features` | `a160f4c` |
+| The wire body with `js::stringify` rules, or an RD | `1b84def` (C40, RD-32) |
+| The size guard measures the sent text | `1b84def` (C40: the guard measures the in-memory event, as TS does) |
+| The `Object.assign` merge pinned by a test | `1b84def` (`assign_keeps_keys_the_stage_dropped`) |
+| The timestamp in `toISOString` form | `d10583d`, `79d9d98` (`js::iso_millis`), `f763849` |
+| Performance of truncation, `byte_size` and `own_entries` | `556168d` |
+| RD-24 and the typed event | `d10583d`, `1b84def` (C39) |
+| `extra-headers-only` hides D06 and D34; `extra` and `_meta` order | `6b26850`, `04ff41c` (`extra-projection`, pinned RD-07 rulings); `a675047`, `f763849` (orders, RD-07) |
+| RD-04 whole-second timestamps | `6b26850` (`timestamp-class`) |
+| Derived and minted placeholders, the sort tie-breaker, the same-millisecond line | `6b26850`; `04ff41c` (the driver waits for the next millisecond, C46) |
+| `parameters.request` key order from a TS probe | `a675047`, `f763849` (RD-07) |
+| Drop `resultType` from the response | `f763849` |
+| `CallContext` on the `AGENTCAT_ENABLED=false` pass-through | `41e3e30` (C45) |
+| Hook settling bounds or aborts a hook; hook panics documented | `f763849` (C37), `6345d82` (unsettled hooks aborted with their event) |
+| Render the backtrace in the pipeline | `f763849` |
+| The reference server: `emit_custom`, the redaction option, the API URL, the HTTP drain | `a160f4c` |
+| `matrix.mjs` stops passing `--expect-publishes 0` for Rust | `a160f4c` |
+| Split `rulings.json` for event rulings | `6b26850` (`rulings-events.json`) |
+| The feature-unification self-check | `556168d` |
+| Unused `cargo deny` licenses | `a160f4c` |
+| Build `ToolCall` only when a hook is set | `41e3e30` |
+| A drop guard for a dropped call future | `41e3e30` (C41, RD-34) |
+| A call-path canary | `3cb757b`, `6cf2416` (`HARNESS_CANARY=call` and `event`) |
+| R27: strip the injected arguments with tracing off | `41e3e30`, `8bdfc0b` (RD-29) |
+| R27: `capture_error` accepts `?Sized` errors | `d10583d` |
 
 ## Plan 5 (finish)
 
