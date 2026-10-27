@@ -49,6 +49,35 @@ mod tests;
 /// ```
 ///
 /// Its `Debug` output shows the project ID and the options only.
+///
+/// # Dropping the last handle
+///
+/// A handle delivers its events from its own thread, which the first event or log line starts.
+/// When the last clone drops (the [`Tracked`] servers hold clones too) while that thread runs,
+/// the drop runs [`shutdown`](Self::shutdown) with a 5 s timeout and blocks the dropping thread
+/// until the delivery thread answers: at most about 5 s, less when the events finish sooner. The
+/// events that have not finished at the deadline are dropped.
+///
+/// The hooks of [`Options`] (`resolve_session_id`, `identify`, `event_tags`, `event_properties`,
+/// `redact_sensitive_information` and `redact_event`) run on the tokio runtime of the tool call.
+/// On a current-thread runtime, such as `#[tokio::main(flavor = "current_thread")]`, a drop on
+/// the runtime's thread blocks its only thread, so no hook can run during the wait: an event that
+/// still needs a hook waits for the whole 5 s and is then dropped. Call `shutdown(timeout).await`
+/// before the runtime ends, while the hooks can still run:
+///
+/// ```no_run
+/// # async fn run(agentcat: agentcat_sdk::AgentCat) {
+/// use std::time::Duration;
+///
+/// // ... serve until the client goes away ...
+/// let delivered = agentcat.shutdown(Duration::from_secs(5)).await;
+/// # let _ = delivered;
+/// # }
+/// ```
+///
+/// A drop on the delivery thread itself does not wait. A handle whose delivery thread never
+/// started has nothing to drain. The drain does not run at all after `std::process::exit` or a
+/// panic under `panic = "abort"`.
 #[derive(Clone)]
 pub struct AgentCat {
     inner: Arc<Inner>,
@@ -438,8 +467,10 @@ impl AgentCat {
     /// the call on is dropped, for all its clones. When `timeout` passes first, the events left
     /// are abandoned and it returns `false`.
     ///
-    /// Without it, the drop of the last clone runs the same shutdown with a 5 s timeout.
-    /// `std::process::exit` and a panic under `panic = "abort"` skip that drain.
+    /// Without it, the drop of the last clone runs the same shutdown with a 5 s timeout and
+    /// blocks the dropping thread while it runs: see [dropping the last
+    /// handle](AgentCat#dropping-the-last-handle). `std::process::exit` and a panic under
+    /// `panic = "abort"` skip that drain.
     pub async fn shutdown(&self, timeout: Duration) -> bool {
         self.inner.sink.shutdown(timeout).await
     }
@@ -461,6 +492,12 @@ impl AgentCat {
 /// Wraps `handler` with a new [`AgentCat`] handle for `project_id`: the one-line setup for a
 /// server with one handler, such as a stdio server. The handle is [`AgentCat::new`]'s, so
 /// `AGENTCAT_ENABLED` turns it off in the same way.
+///
+/// The returned server holds the only clone of the handle, so its drop drains the events and can
+/// block the dropping thread for up to 5 s: see [dropping the last
+/// handle](AgentCat#dropping-the-last-handle). On a current-thread runtime, clone the handle with
+/// [`Tracked::agentcat`] before you serve, and call its [`shutdown`](AgentCat::shutdown) before
+/// the runtime ends.
 ///
 /// ```no_run
 /// use agentcat_sdk::{Options, track};

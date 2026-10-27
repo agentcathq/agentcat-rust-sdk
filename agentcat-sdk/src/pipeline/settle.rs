@@ -97,10 +97,12 @@ impl fmt::Display for SessionMintFailed {
 /// - The `event_tags` result goes through [`validate_tags`] when it settles, with TS's line for
 ///   each tag it drops.
 ///
-/// A hook pushes its lines when it settles, so hooks that settle at different times log in that
-/// order, and hooks that settle together log in TS's order: `resolveSessionId`, `identify`,
-/// `eventTags`, `eventProperties`. Runs on a runtime with the time driver; the hook tasks may run
-/// on another runtime. Dropping the future aborts the hook tasks it has not settled.
+/// The lines are in the order `settle` sees the hooks settle. Hooks that settled before `settle`
+/// first polls them, or between two of its polls, log in TS's label order (`resolveSessionId`,
+/// `identify`, `eventTags`, `eventProperties`), whatever order they finished in. TS logs each
+/// failure when it happens, even for an event its queue never takes. Runs on a runtime with the
+/// time driver; the hook tasks may run on another runtime. Dropping the future aborts the hook
+/// tasks it has not settled.
 pub(crate) async fn settle(
     mut hooks: PendingHooks,
     budget: Duration,

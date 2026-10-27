@@ -11,7 +11,7 @@ use crate::pipeline::TsEvent;
 /// An event as `AgentCat` publishes it, as the hook of
 /// [`Options::redact_event`](crate::Options::redact_event) sees it. The hook may change any
 /// field. It cannot add a field that events do not have, and the SDK restores the system fields
-/// (the ID, the project, the event type and the timestamp) when the hook changes them.
+/// (`id`, `session_id`, `project_id`, `event_type` and `timestamp`) when the hook changes them.
 ///
 /// Field values are JSON values, as the TypeScript SDK holds them.
 #[derive(Clone, Debug, PartialEq)]
@@ -33,7 +33,7 @@ pub struct Event {
     pub input_tokens: Option<u32>,
     /// The estimated tokens of the response.
     pub output_tokens: Option<u32>,
-    /// The language of the SDK: `rust`.
+    /// The language of the SDK: `"Rust"`.
     pub sdk_language: Option<String>,
     /// The version of the SDK.
     pub agentcat_version: Option<String>,
