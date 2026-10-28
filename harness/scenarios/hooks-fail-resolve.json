@@ -1,0 +1,29 @@
+{
+  "name": "hooks-fail-resolve",
+  "projectId": "proj_HARNESS00000000000000000000",
+  "options": {
+    "resolveSessionId": { "throws": "resolve failed" },
+    "identify": { "throws": "identify failed", "sleepMs": 200 },
+    "eventTags": { "returns": { "bad key!": "dropped", "abcdefghijklmnopqrstuvwxyz0123456": "dropped", "count": 5, "multi": "line\nbreak", "team": "core" } },
+    "eventProperties": { "throws": "properties failed" }
+  },
+  "expectPublishes": 5,
+  "sessions": [
+    {
+      "client": { "name": "harness-client-a", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "first" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "second" } },
+        { "op": "callTool", "name": "boom", "args": {} }
+      ]
+    },
+    {
+      "client": { "name": "harness-client-b", "version": "2.0.0" },
+      "steps": [
+        { "op": "callTool", "name": "echo", "args": { "msg": "other session" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "other session again" } }
+      ]
+    }
+  ]
+}

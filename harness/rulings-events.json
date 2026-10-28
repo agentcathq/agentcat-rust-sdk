@@ -215,6 +215,14 @@
     "deviation": "RD-06"
   },
   {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "hooks-fail-resolve",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
     "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
     "scenario": "hooks-fail",
     "ts": "<stack:string>",
@@ -223,11 +231,27 @@
     "deviation": "RD-06"
   },
   {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "hooks-fail-resolve",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
     "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
     "scenario": "hooks-fail",
     "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
     "rust": "<absent>",
     "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "hooks-fail-resolve",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
     "deviation": "RD-06"
   },
   {
