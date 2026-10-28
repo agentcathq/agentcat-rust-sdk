@@ -16,11 +16,14 @@ need() { # need <install command> <probe command...>
 }
 host="$(rustc -vV | sed -n 's/^host: //p')"
 has_toolchain() { rustup toolchain list | grep -Eq "^$1-$host( |$)"; }
+has_component() { rustup component list --installed | grep -Eq "^$1-$host$"; }
 need "cargo install cargo-nextest --locked" cargo nextest --version
 need "cargo install cargo-hack --locked" cargo hack --version
 need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --version
 need "cargo install cargo-deny --locked" cargo deny --version
 need "cargo install cargo-public-api@0.52.0 --locked" cargo public-api --version
+need "cargo install cargo-llvm-cov@0.9.1 --locked" cargo llvm-cov --version
+need "rustup component add llvm-tools-preview" has_component 'llvm-tools(-preview)?'
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'
@@ -87,6 +90,11 @@ cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
 cargo run -q -p xtask -- parity --final
 cargo run -q -p xtask -- rmcp-canary
+
+# coverage (C52): at least 90 % of the crate's lines and 95 % of the pure modules' lines, test files left out
+cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)' \
+  --json --summary-only --output-path target/coverage.json
+cargo run -q -p xtask -- coverage target/coverage.json
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features

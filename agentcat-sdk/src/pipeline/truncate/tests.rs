@@ -313,6 +313,39 @@ fn compare(event: &TsEvent) {
     assert_matches_ts(&actual, &ts, "truncateEvent");
 }
 
+/// The last resort cuts strings inside an array as TS does. `properties` is not normalized, so a
+/// list of long strings there is still whole when the size guard runs: the budget reaches all
+/// three strings, each ends in `"..."`, and the event fits.
+#[test]
+fn size_guard_cuts_long_strings_inside_an_array() {
+    let list: Vec<String> = ["a", "b", "c"].iter().map(|c| c.repeat(60_000)).collect();
+    let event = json!({
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "properties": {"list": list},
+    });
+    let event = event.as_object().cloned().unwrap();
+    compare(&event);
+    let truncated = truncate_event(event).unwrap();
+    let items = truncated["properties"]["list"].as_array().unwrap();
+    assert_eq!(items.len(), 3);
+    for item in items {
+        let text = item.as_str().unwrap();
+        assert!(
+            text.len() < 60_000 && text.ends_with("..."),
+            "{}",
+            text.len()
+        );
+    }
+    assert!(
+        size_of(&truncated) <= super::MAX_EVENT_BYTES,
+        "{}",
+        size_of(&truncated)
+    );
+}
+
 /// The object at `key` of `map`, made an empty object first when it is absent or not an object.
 fn object_at<'a>(map: &'a mut Map<String, Value>, key: &str) -> &'a mut Map<String, Value> {
     let slot = map.entry(key).or_insert_with(|| json!({}));

@@ -62,7 +62,7 @@ mod tests;
 const ANSWER_GRACE: Duration = Duration::from_millis(100);
 
 /// Makes one attempt to post one event.
-pub(crate) trait Publisher: Send + Sync + fmt::Debug + 'static {
+pub(crate) trait Publisher: Send + Sync + 'static {
     /// Posts `request` once: `Err` holds the text of the failure for TS's log lines.
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>>;
 
@@ -119,19 +119,9 @@ impl Default for DeliveryConfig {
     }
 }
 
-/// The delivery queue of one handle and its worker (see the module docs). Its `Debug` output
-/// shows the project ID and the configuration only.
+/// The delivery queue of one handle and its worker (see the module docs).
 pub(crate) struct Delivery {
     shared: Arc<Shared>,
-}
-
-impl fmt::Debug for Delivery {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("Delivery")
-            .field("project_id", &self.shared.project_id)
-            .field("config", &self.shared.config)
-            .finish_non_exhaustive()
-    }
 }
 
 impl Delivery {

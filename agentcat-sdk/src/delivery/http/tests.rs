@@ -196,7 +196,6 @@ async fn refused_connection_is_retried() {
 }
 
 /// Counts the attempts that reach an inner publisher.
-#[derive(Debug)]
 struct CountingPublisher {
     inner: ApiPublisher,
     attempts: Arc<std::sync::atomic::AtomicUsize>,

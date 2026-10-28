@@ -8,7 +8,6 @@
 //! the error's `Display`; the worker retries it with TS's delays. A 2xx answer needs a JSON body
 //! under `application/json` (RD-37), or `agentcat-api` fails it. No `reqwest` or `agentcat-api`
 //! type leaves this module.
-use std::fmt;
 use std::future::ready;
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
@@ -44,19 +43,6 @@ pub(crate) struct ApiPublisher {
     /// Set by the first use: `None` inside when the client could not be built, and every attempt
     /// then fails.
     configuration: OnceLock<Option<Arc<Configuration>>>,
-}
-
-impl fmt::Debug for ApiPublisher {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let client = match self.configuration.get() {
-            None => "not built",
-            Some(Some(_)) => "built",
-            Some(None) => "failed",
-        };
-        f.debug_struct("ApiPublisher")
-            .field("client", &client)
-            .finish_non_exhaustive()
-    }
 }
 
 impl ApiPublisher {

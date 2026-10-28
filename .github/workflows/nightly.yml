@@ -4,7 +4,8 @@ name: Nightly
 # once this file reaches main. The push trigger runs it on rewrite when the oracle, the harness or the
 # workflow files change (R-14). A scheduled or dispatched run fails on drift and opens or updates the
 # `ts-drift` issue. A push run never opens an issue: it reports drift as a warning and fails only when
-# a job crashes (the drift job itself, or the Rust suite).
+# a job crashes (the drift job itself, the Rust suite, or the branch coverage run, whose percentage is
+# a report and never a failure).
 on:
   schedule:
     - cron: "0 6 * * *"
@@ -226,6 +227,36 @@ jobs:
       - run: cargo nextest run --workspace --all-features --no-fail-fast
         env:
           PROPTEST_CASES: "10000"
+
+  # Branch coverage of the SDK crate (C52), test files left out, on the nightly toolchain that `--branch`
+  # needs. Report only: the run summary shows the percentage against its target of 85 %, and the
+  # percentage never fails the run. The line floors run on every push (ci.yml, job `coverage`).
+  coverage-branch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: nightly
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # The crate's unit tests spawn the JS oracle.
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest,cargo-llvm-cov@0.9.1
+      - run: >-
+          cargo +nightly llvm-cov nextest -p agentcat-sdk --all-features --branch
+          --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)'
+          --json --summary-only --output-path target/coverage-branch.json
+      - name: Branch coverage in the run summary
+        run: |
+          jq -r '.data[0].totals.branches
+            | "Branch coverage of agentcat-sdk: \(.covered) of \(.count) branches, \((.percent * 10 | floor) / 10) % (target 85 %, report only)."' \
+            target/coverage-branch.json | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Opens or updates the one open `ts-drift` issue (scheduled and dispatched runs). A push run only
   # prints the findings: drift is a warning there, a crashed job a failure.

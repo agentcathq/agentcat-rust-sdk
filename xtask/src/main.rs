@@ -14,8 +14,12 @@
 //! `agentcat-sdk/public-api.txt` and an allowlist of crates (see [`public_api`]);
 //! `cargo run -p xtask -- package-list` checks the files of the published package.
 //!
+//! `cargo run -p xtask -- coverage <summary.json>` checks the line coverage floors of
+//! `agentcat-sdk` on an llvm-cov summary (see [`coverage`]).
+//!
 //! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
 //! `cargo nextest run --workspace`).
+pub mod coverage;
 pub mod parity;
 pub mod public_api;
 pub mod rmcp_canary;
@@ -27,7 +31,7 @@ use std::process::{Command, ExitCode};
 
 use parity::{Report, Status};
 
-const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary | public-api [--bless] | package-list";
+const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -64,6 +68,14 @@ fn main() -> ExitCode {
     if args.first().map(String::as_str) == Some("package-list") {
         let (code, lines) = public_api::run_package_list(&args[1..], &workspace_root());
         for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("coverage") {
+        let (code, table, problems) = coverage::run(&args[1..]);
+        print_text(&table);
+        for line in &problems {
             report_error(line);
         }
         return ExitCode::from(code);
@@ -163,7 +175,7 @@ fn print_report(report: &Report, final_gate: bool) {
 
 #[expect(
     clippy::print_stdout,
-    reason = "xtask prints the blocks for the caller to append"
+    reason = "xtask prints the blocks for the caller to append and the coverage table"
 )]
 fn print_text(text: &str) {
     print!("{text}");

@@ -12,8 +12,9 @@ Install these tools:
 - The cargo tools of the gate:
   `cargo install cargo-nextest cargo-hack cargo-minimal-versions cargo-deny --locked`
 - The cargo tools of the public API, coverage and mutation checks:
-  `cargo install cargo-public-api@0.52.0 cargo-llvm-cov cargo-mutants --locked`. cargo-public-api runs on
-  the nightly toolchain. cargo-llvm-cov also needs `rustup component add llvm-tools-preview`.
+  `cargo install cargo-public-api@0.52.0 cargo-llvm-cov@0.9.1 cargo-mutants --locked`.
+  cargo-public-api runs on the nightly toolchain. cargo-llvm-cov also needs
+  `rustup component add llvm-tools-preview`.
   After an intended change to the public API, run `cargo run -p xtask -- public-api --bless`.
   An rmcp bump changes the `Tracked` `ServerHandler` lines of the snapshot, so it needs a new bless.
 - Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.

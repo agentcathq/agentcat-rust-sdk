@@ -164,6 +164,31 @@ jobs:
       - run: cargo run -q -p xtask -- package-list
       - run: cargo publish -p agentcat-sdk --dry-run --allow-dirty
 
+  # Line coverage floors (C52): at least 90 % of the crate's lines and 95 % of the pure modules' lines,
+  # test files left out. The nightly reports branch coverage.
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # The crate's unit tests spawn the JS oracle.
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest,cargo-llvm-cov@0.9.1
+      - run: >-
+          cargo llvm-cov nextest -p agentcat-sdk --all-features
+          --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)'
+          --json --summary-only --output-path target/coverage.json
+      - run: cargo run -q -p xtask -- coverage target/coverage.json
+
   deny:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -354,7 +379,7 @@ jobs:
 
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, api, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp]
+    needs: [fmt, clippy, hack, test, msrv, docs, api, coverage, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

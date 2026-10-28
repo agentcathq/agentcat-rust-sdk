@@ -320,9 +320,11 @@ enum Step {
     Index(usize),
 }
 
-/// A string the last resort can cut: where it is, and its length in UTF-16 units.
+/// A string the last resort can cut: where it is (under the event's `key`, at `path` below it),
+/// and its length in UTF-16 units.
 #[derive(Debug)]
 struct Candidate {
+    key: String,
     path: Vec<Step>,
     length: usize,
 }
@@ -343,14 +345,12 @@ fn cut_longest_strings(mut event: TsEvent) -> TsEvent {
         let mut candidates = Vec::new();
         let mut path = Vec::new();
         for (key, value) in js::own_entries(&event) {
-            path.push(Step::Key(key.clone()));
-            collect_long_strings(value, &mut path, &mut candidates);
-            path.pop();
+            collect_long_strings(key, value, &mut path, &mut candidates);
         }
         candidates.sort_by_key(|candidate| Reverse(candidate.length));
         let mut remaining = size - MAX_EVENT_BYTES + BUFFER_BYTES;
         let mut cut_any = false;
-        for Candidate { path, length } in candidates {
+        for Candidate { key, path, length } in candidates {
             if remaining == 0 {
                 break;
             }
@@ -358,7 +358,7 @@ fn cut_longest_strings(mut event: TsEvent) -> TsEvent {
             if reduction < MIN_REDUCTION {
                 continue;
             }
-            if let Some(Value::String(text)) = value_at(&mut event, &path) {
+            if let Some(Value::String(text)) = value_at(&mut event, &key, &path) {
                 *text = cut(text, length - reduction);
                 remaining -= reduction;
                 cut_any = true;
@@ -371,15 +371,16 @@ fn cut_longest_strings(mut event: TsEvent) -> TsEvent {
     event
 }
 
-/// Pushes each string longer than [`MIN_CUT_LENGTH`] UTF-16 units in `value` (at `path`) to
-/// `out`, in JavaScript order: array items by index, object entries in [`js::own_entries`]
-/// order.
-fn collect_long_strings(value: &Value, path: &mut Vec<Step>, out: &mut Vec<Candidate>) {
+/// Pushes each string longer than [`MIN_CUT_LENGTH`] UTF-16 units in `value` (at `path` under
+/// the event's `key`) to `out`, in JavaScript order: array items by index, object entries in
+/// [`js::own_entries`] order.
+fn collect_long_strings(key: &str, value: &Value, path: &mut Vec<Step>, out: &mut Vec<Candidate>) {
     match value {
         Value::String(text) => {
             let length = js::utf16_len(text);
             if length > MIN_CUT_LENGTH {
                 out.push(Candidate {
+                    key: key.to_owned(),
                     path: path.clone(),
                     length,
                 });
@@ -388,14 +389,14 @@ fn collect_long_strings(value: &Value, path: &mut Vec<Step>, out: &mut Vec<Candi
         Value::Array(items) => {
             for (index, item) in items.iter().enumerate() {
                 path.push(Step::Index(index));
-                collect_long_strings(item, path, out);
+                collect_long_strings(key, item, path, out);
                 path.pop();
             }
         }
         Value::Object(map) => {
-            for (key, item) in js::own_entries(map) {
-                path.push(Step::Key(key.clone()));
-                collect_long_strings(item, path, out);
+            for (name, item) in js::own_entries(map) {
+                path.push(Step::Key(name.clone()));
+                collect_long_strings(key, item, path, out);
                 path.pop();
             }
         }
@@ -403,17 +404,13 @@ fn collect_long_strings(value: &Value, path: &mut Vec<Step>, out: &mut Vec<Candi
     }
 }
 
-/// The value at `path` in `event`, if there is one.
-fn value_at<'a>(event: &'a mut TsEvent, path: &[Step]) -> Option<&'a mut Value> {
-    let (Step::Key(first), rest) = path.split_first()? else {
-        return None;
-    };
-    let mut at = event.get_mut(first)?;
-    for step in rest {
-        at = match (step, at) {
-            (Step::Key(key), Value::Object(map)) => map.get_mut(key)?,
-            (Step::Index(index), Value::Array(items)) => items.get_mut(*index)?,
-            _ => return None,
+/// The value at `path` under the event's `key`, if there is one.
+fn value_at<'a>(event: &'a mut TsEvent, key: &str, path: &[Step]) -> Option<&'a mut Value> {
+    let mut at = event.get_mut(key)?;
+    for step in path {
+        at = match step {
+            Step::Key(name) => at.get_mut(name.as_str())?,
+            Step::Index(index) => at.get_mut(*index)?,
         };
     }
     Some(at)

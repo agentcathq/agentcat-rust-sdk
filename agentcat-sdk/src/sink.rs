@@ -2,7 +2,6 @@
 //! and each assembled event, and the lifecycle calls `flush` and `shutdown`. The delivery queue
 //! ([`Delivery`](crate::delivery::Delivery)) is the sink of a handle that publishes.
 
-use std::fmt;
 use std::future::{Future, ready};
 use std::pin::Pin;
 use std::time::Duration;
@@ -17,7 +16,7 @@ pub(crate) type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 /// events assembled elsewhere (custom events), and answers `flush` and `shutdown`. Each method
 /// returns at once, except the blocking twins, which block the calling thread for at most their
 /// timeout and a little more.
-pub(crate) trait Sink: Send + Sync + fmt::Debug {
+pub(crate) trait Sink: Send + Sync {
     /// Takes one log line.
     fn log(&self, message: String);
 

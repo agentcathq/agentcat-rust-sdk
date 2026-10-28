@@ -8,7 +8,7 @@ use serde_json::{Map, Value, json};
 
 use super::{
     EVENT_HOOK_FIELD, PROTECTED_FIELDS, RESTORED_FIELDS, STRING_HOOK_FIELD, apply_event_redaction,
-    redact_strings,
+    redact_strings, visit_strings,
 };
 use crate::pipeline::TsEvent;
 use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
@@ -280,6 +280,13 @@ fn redact_input() -> impl Strategy<Value = TsEvent> {
         })
 }
 
+/// An event of up to 6 [`walk_key`]s with [`walk_value`]s: protected names, `timestamp` and `""`
+/// at the top level and below it, nested objects and arrays, and every JSON type.
+fn walk_event() -> impl Strategy<Value = TsEvent> {
+    prop::collection::vec((walk_key(), walk_value()), 0..=6)
+        .prop_map(|entries| entries.into_iter().collect())
+}
+
 /// A map of up to 8 entries whose keys are mostly the event's keys (the restored ones, the
 /// hook fields, other fields) and whose values are [`json_value`]s or timestamps.
 fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
@@ -309,6 +316,24 @@ proptest! {
         throw_at in prop::option::weighted(0.2, 1usize..=12),
     ) {
         compare_redact(&event, throw_at);
+    }
+
+    /// C38: the async string hook gets the strings of [`visit_strings`] and gives its results to
+    /// [`redact_strings`] in that order, so the two walks must visit the same strings in the
+    /// same order. Fed those results in visit order, `redact_strings` builds the same event as
+    /// with the redactor called inside the walk, and uses every result.
+    #[test]
+    fn visit_strings_matches_redact_strings_call_order(
+        event in prop_oneof![redact_input(), walk_event()],
+    ) {
+        let mut visited = Vec::new();
+        visit_strings(&event, |text| visited.push(text.to_owned()));
+        let (direct, calls) = redact(&event, None);
+        prop_assert_eq!(&visited, &calls);
+        let mut results = visited.iter().map(|text| format!("[R:{text}]"));
+        let replayed = redact_strings(&event, |_| results.next().ok_or(0_usize));
+        prop_assert_eq!(replayed, direct);
+        prop_assert_eq!(results.next(), None);
     }
 
     #[test]
