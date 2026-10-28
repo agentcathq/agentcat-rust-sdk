@@ -26,7 +26,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import { serializeMessage } from "@modelcontextprotocol/sdk/shared/stdio.js";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(HERE, "..", "..");
+export const ROOT = join(HERE, "..", "..");
 
 /** The project ID of every example run. */
 export const PROJECT_ID = "proj_examples";
@@ -77,13 +77,13 @@ export function exampleEnv({ mockUrl, home, port }) {
 }
 
 /** The path of the built example binary. */
-function exampleBinary(name) {
+export function exampleBinary(name) {
   const target = process.env.CARGO_TARGET_DIR || join(ROOT, "target");
   return join(target, "debug", "examples", `${name}${process.platform === "win32" ? ".exe" : ""}`);
 }
 
 /** Runs a command to completion; resolves with its exit code. Its output goes to stderr. */
-function runToEnd(cmd, args) {
+export function runToEnd(cmd, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(cmd, args, { cwd: ROOT, stdio: ["ignore", process.stderr, process.stderr] });
     child.once("error", reject);
@@ -106,7 +106,7 @@ function freePort() {
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Starts the mock API; resolves with its URL and a stop function. */
-async function startMock() {
+export async function startMock() {
   const child = spawn(process.execPath, [join(HERE, "mock-api.mjs"), "0"], { stdio: ["ignore", "pipe", "inherit"] });
   const line = await new Promise((resolve, reject) => {
     child.once("error", reject);
@@ -139,7 +139,7 @@ async function waitForPort(port, ms) {
  * status and the time of the exit, which the check needs. It reads stdout line by line: a line that is not
  * a JSON-RPC message goes to `onBadLine` and not to the client.
  */
-class ChildTransport {
+export class ChildTransport {
   constructor(child, onBadLine) {
     this.child = child;
     this.onBadLine = onBadLine;

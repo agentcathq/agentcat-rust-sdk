@@ -304,6 +304,27 @@ For `hooks` it also asserts the values of the hooks (`demo-user`, the `example` 
 `EXAMPLES_CHECK_VERBOSE=1` prints the time of the exit. `test/examples-check.test.mjs` tests the check
 against a fake example (`test/fixtures/example-fake.mjs`).
 
+## Demo
+
+`harness/demo/run.mjs` runs one fixed scenario (`harness/demo/scenario.json`) through the `hooks` example (Rust)
+and through `harness/demo/ts-server.mjs` (the same tools and options on the TS SDK at the pinned commit), over
+stdio with the TS client. The scenario has two sessions: `tools/list`, `add` with intent text, two `echo` calls
+(one holds `secret-token`) and `fail` in the first, and one `echo` in the second. The `echo` tool publishes one
+custom event per call, so the dashboard shows three custom events.
+
+```sh
+node harness/demo/run.mjs --mock
+```
+
+`--mock` sends to the local mock API, with the TS server under the egress guard. It is part of the gate. It fails
+unless each server publishes and both publish the same event count and event types, and it prints the counts as
+one JSON line.
+
+`--prod --project <id>` is for maintainers only. It sends to the default AgentCat API, for the project
+"Testing" only, with no egress guard. It refuses any other project, and it refuses when `CI` is set; both
+refusals happen before any server starts. Never run it from CI. It writes the session IDs and the run time to
+`harness/out/demo/sessions.json`.
+
 ## Publish contract (L4)
 
 Every body a reference server publishes must be one the AgentCat backend accepts.

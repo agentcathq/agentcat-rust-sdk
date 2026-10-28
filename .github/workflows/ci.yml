@@ -264,6 +264,9 @@ jobs:
           for example in stdio streamable_http hooks; do
             node harness/src/examples-check.mjs "$example"
           done
+      # The dashboard demo (C58) against the local mock API: both servers publish the same events.
+      - name: Dashboard demo (mock)
+        run: node harness/demo/run.mjs --mock
 
   # L3: the MCP-wire delta of the Rust reference server against TS v2 (harness/README.md, "The L3 gate").
   harness-l3:

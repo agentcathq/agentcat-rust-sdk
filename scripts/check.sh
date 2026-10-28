@@ -55,6 +55,8 @@ cargo build -p agentcat-sdk --examples --all-features
 for example in stdio streamable_http hooks; do
   node harness/src/examples-check.mjs "$example"
 done
+# the dashboard demo (C58) against the local mock API: both servers publish the same events (never --prod)
+node harness/demo/run.mjs --mock
 
 # harness-l3 (the Rust reference server is built above): the MCP-wire delta and the published events
 # against TS v2 on every scenario, transport and lane (every tracked Rust server must drain); an A/A run
