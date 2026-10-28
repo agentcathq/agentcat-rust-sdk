@@ -166,12 +166,12 @@ development machine; the A/A and canary runs about 12 s each.
 
 ### driver.mjs
 
-`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>`
+`node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-sse|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>`
 
 - `label` tags the output files (letters, digits, `_`, `-`). The lane is not in the file name: give
   runs on different lanes different labels.
 - The driver starts the mock API, then the server as `<server cmd...> stdio` (once per scenario
-  session), `<server cmd...> http 0` or `<server cmd...> http-stateless 0`.
+  session), `<server cmd...> http 0`, `<server cmd...> http-sse 0` or `<server cmd...> http-stateless 0`.
 - `--lane` names the client's protocol lane; any other value exits 2:
   - `2025-11-25` (default): the official TS client 1.31 (`@modelcontextprotocol/sdk`), with the
     `initialize` handshake.
@@ -315,6 +315,7 @@ differences listed in "The Rust reference server" below.
 |---|---|
 | argv `stdio` | MCP over stdio. stdout carries JSON-RPC only. The server exits when stdin closes. One tracked server per connection. A server that serves 2026-07-28 picks the era from the opening message (`ts-v2.mjs`: `serveStdio`). |
 | argv `http <port>` | Stateful streamable HTTP on `127.0.0.1:<port>` (0: any free port), path `/mcp`. A request without a known `mcp-session-id` gets a new transport and a new tracked server (`initialize` creates the session; anything else is rejected by the transport). One tracked server per MCP session. A 2026-07-28 request (it carries the per-request `_meta` envelope; the protocol has no sessions) gets a fresh tracked server per request (`ts-v2.mjs`: `createMcpHandler`). |
+| argv `http-sse <port>` | As `http`, with SSE responses (C59): TS `enableJsonResponse: false` (`ts-v2.mjs` also `createMcpHandler`'s `responseMode: "sse"`), Rust `with_json_response(false)`, rmcp's default. The default most customers keep. It runs every scenario that runs on `http`, on both lanes. |
 | argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. A 2026-07-28 request is served as in `http` mode. |
 | HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. Rust: `http-stateless`, and 2026-07-28 requests in either mode, answer JSON. In `http` mode, a 2025-era POST gets rmcp's SSE stream (a priming event, then one event per JSON-RPC message), because rmcp serves JSON only without session mode. |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
@@ -385,9 +386,10 @@ Build it with `cargo build -p harness-ref-server`. The harness tests and `matrix
 the CI job `oracle-harness` build it before the harness tests.
 
 - `src/main.rs`: the command line, the environment and the modes. `stdio` serves one tracked server
-  (`AgentCat::track`) for the connection. `http` serves rmcp's `StreamableHttpService` with a
+  (`AgentCat::track`) for the connection. `http` and `http-sse` serve rmcp's `StreamableHttpService` with a
   `LocalSessionManager` and `legacy_session_mode(true)`, `http-stateless` with
-  `legacy_session_mode(false)`, both with `json_response(true)`. rmcp honors `json_response` only
+  `legacy_session_mode(false)`; `http` and `http-stateless` use `json_response(true)`, `http-sse` uses
+  `json_response(false)`. rmcp honors `json_response` only
   where it serves a request without a session: in `http-stateless`, and for 2026-07-28 requests in
   either mode. Each MCP session or request gets a fresh tracked server from one shared `AgentCat`
   handle. rmcp serves 2026-07-28 requests and `server/discover` itself in every mode (over HTTP, a
@@ -407,7 +409,7 @@ the CI job `oracle-harness` build it before the harness tests.
 
 Where it differs from the TS servers:
 
-- `http` mode answers each 2025-era POST with an SSE stream, not one JSON body: a priming event
+- `http` mode answers each 2025-era POST with an SSE stream, not one JSON body (`http-sse` does so on both servers): a priming event
   (`data:` empty, `id`, `retry: 3000`), then one event per JSON-RPC message. In rmcp 3.7.0,
   `json_response` takes effect only when `legacy_session_mode` is false; the session path always
   answers with an SSE stream. The driver's clients read both. `http-stateless` and 2026-07-28
@@ -509,7 +511,7 @@ Example (`scenarios/basic.json`):
 
 - `expectPublishes` is a number, or an object when the counts differ, keyed by
   `<transport>@<lane>` (for example `http@2026-07-28`) or by transport (`stdio`, `http`,
-  `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`. Any other key exits 2.
+  `http-sse`, `http-stateless`). The driver takes `<transport>@<lane>`, then `<transport>`. Any other key exits 2.
 - The driver exits 2 on a key it does not know at the top level of the scenario, in a session
   (`client`, `steps`) or in a step (`listTools`: `op`, `cursor`, `saveCursorAs`; `callTool`: `op`,
   `name`, `args`, `saveHandleAs`; `parallel`: `op`, `steps`; a step inside `parallel`: the `callTool`
@@ -633,7 +635,7 @@ digits, `_` and `-` makes the rulings file malformed (exit 2); one that names no
 `matrix.mjs` exit 2.
 
 A delta or event ruling may also carry `"transports"` and `"lanes"`: each a non-empty array of names, transports
-from `stdio`, `http` and `http-stateless`, lanes from `2025-11-25` and `2026-07-28`. `matrix.mjs` then
+from `stdio`, `http`, `http-sse` and `http-stateless`, lanes from `2025-11-25` and `2026-07-28`. `matrix.mjs` then
 applies the ruling only to the combinations whose transport is in `transports` and whose lane is in
 `lanes` (an absent field means every one), so a difference that TS shows on some transports or lanes
 only is ruled there and nowhere else. A run that leaves out the ruling's scenario, all its transports or

@@ -5,6 +5,7 @@
 //
 // usage: node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v1.mjs stdio
 //        ... ts-v1.mjs http <port>             stateful streamable HTTP, one tracked server per MCP session
+//        ... ts-v1.mjs http-sse <port>         as http, with SSE responses (enableJsonResponse false)
 //        ... ts-v1.mjs http-stateless <port>   no session ID, one tracked server per request
 // HTTP modes print one ready line on stdout: {"ready": true, "url": "http://127.0.0.1:<port>/mcp"}.
 // env:   AGENTCAT_API_URL    mock API base URL (required; http://127.0.0.1, localhost or [::1] only)
@@ -127,14 +128,14 @@ if (mode === "stdio") {
   // answer 405.
   const sessions = new Map();
   const handle =
-    mode === "http"
+    mode === "http" || mode === "http-sse"
       ? async (req, res) => {
           const sid = req.headers["mcp-session-id"];
           let transport = typeof sid === "string" ? sessions.get(sid) : undefined;
           if (!transport) {
             const created = new StreamableHTTPServerTransport({
               sessionIdGenerator: () => randomUUID(),
-              enableJsonResponse: true,
+              enableJsonResponse: mode === "http",
               onsessioninitialized: (id) => sessions.set(id, created),
             });
             created.onclose = () => {

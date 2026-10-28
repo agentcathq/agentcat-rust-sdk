@@ -3,10 +3,10 @@
 // or streamable HTTP, following a JSON scenario file. The server under test is
 // a black box: the TS and Rust reference servers run under the same driver.
 //
-// usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless>
+// usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-sse|http-stateless>
 //          [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>
 //   label      output file tag, e.g. "ts" or "rust"
-//   transport  the server is started as `<server cmd...> stdio`, `... http 0` or `... http-stateless 0`
+//   transport  the server is started as `<server cmd...> stdio`, `... http 0`, `... http-sse 0` or `... http-stateless 0`
 //   --lane     the client's protocol lane: 2025-11-25 (default; the v1 client, initialize
 //              handshake) or 2026-07-28 (the v2 client, versionNegotiation "auto"). A session
 //              that negotiates another version fails the run (exit 1).
@@ -63,14 +63,14 @@ import { normalizeRun } from "./normalize.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(HERE, "..", "out");
-const TRANSPORTS = ["stdio", "http", "http-stateless"];
+const TRANSPORTS = ["stdio", "http", "http-stateless", "http-sse"];
 // 2025-11-25: the official TS client 1.31 (@modelcontextprotocol/sdk).
 // 2026-07-28: the v2 client (@modelcontextprotocol/client) with versionNegotiation
 // "auto", as connectV2Client in the TS repo's src/tests/e2e-http/lanes.ts.
 const LANES = ["2025-11-25", "2026-07-28"];
 const PUBLISH_PATH = "/v1/public/events/";
 const USAGE =
-  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>";
+  "usage: node harness/src/driver.mjs <scenario.json> <label> <stdio|http|http-sse|http-stateless> [--lane 2025-11-25|2026-07-28] [--expect-publishes <n>] [--expect-drained] -- <server cmd...>";
 /** The line a tracked Rust server prints on stderr once its drain succeeded. */
 const DRAINED_LINE = '{"drained":true}';
 

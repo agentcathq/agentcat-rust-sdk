@@ -380,7 +380,7 @@ test("the Rust server refuses a non-local AGENTCAT_API_URL with exit 2", async (
   const [cmd, ...args] = RUST_SERVER;
   // The third URL's host is api.agentcat.com (127.0.0.1 is its user name); the last case leaves it unset.
   const urls = ["https://api.agentcat.com", "http://localhost.example.com", "http://127.0.0.1@api.agentcat.com", undefined];
-  for (const mode of [["stdio"], ["http", "0"], ["http-stateless", "0"]]) {
+  for (const mode of [["stdio"], ["http", "0"], ["http-sse", "0"], ["http-stateless", "0"]]) {
     for (const url of urls) {
       const res = await run(cmd, [...args, ...mode], { env: rustEnv(t, { AGENTCAT_API_URL: url }) });
       assert.equal(res.code, 2, `${mode[0]} ${url}: ${res.stderr}`);

@@ -219,8 +219,8 @@ test("a whole-matrix run fails on an event ruling that matched nothing and names
   });
   assert.equal(res.code, 1, res.stdout + res.stderr);
   const summary = readJson(join(OUT, "matrix.json"));
-  // Every scenario file, on 3 transports and 2 lanes.
-  const combinations = readdirSync(join(HARNESS, "scenarios")).filter((f) => f.endsWith(".json")).length * 3 * 2;
+  // Every scenario file, on 4 transports and 2 lanes.
+  const combinations = readdirSync(join(HARNESS, "scenarios")).filter((f) => f.endsWith(".json")).length * 4 * 2;
   assert.equal(summary.length, combinations);
   assert.ok(summary.every((e) => e.events.total === 0 && e.delta.total === 0), JSON.stringify(summary.map((e) => [e.events, e.delta])));
   assert.equal(res.stdout.match(/^ok /gm)?.length, combinations, res.stdout);

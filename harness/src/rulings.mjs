@@ -16,7 +16,7 @@ import { readFileSync } from "node:fs";
 export const SCENARIO_NAME = /^[A-Za-z0-9_-]+$/;
 
 /** The transports of the matrix (driver.mjs runs each). */
-export const TRANSPORTS = ["stdio", "http", "http-stateless"];
+export const TRANSPORTS = ["stdio", "http", "http-stateless", "http-sse"];
 
 /** The protocol lanes of the matrix (driver.mjs --lane). */
 export const LANES = ["2025-11-25", "2026-07-28"];

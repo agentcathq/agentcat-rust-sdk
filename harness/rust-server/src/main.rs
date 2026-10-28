@@ -7,13 +7,15 @@
 //!                                           exits when stdin closes
 //! harness-ref-server http <port>            stateful streamable HTTP on 127.0.0.1:<port>/mcp, one
 //!                                           tracked server per MCP session
+//! harness-ref-server http-sse <port>        as `http`, with SSE responses (rmcp's default,
+//!                                           `with_json_response(false)`)
 //! harness-ref-server http-stateless <port>  streamable HTTP without sessions, one tracked server
 //!                                           per request
 //! ```
 //!
 //! rmcp serves 2026-07-28 requests and `server/discover` itself, in every mode; over HTTP each
 //! 2026-07-28 request gets a fresh tracked server. Every tracked server comes from one shared
-//! [`AgentCat`] handle. HTTP modes answer in JSON response mode, print one ready line on stdout
+//! [`AgentCat`] handle. HTTP modes answer in JSON response mode (`http-sse`: SSE), print one ready line on stdout
 //! (`{"ready":true,"url":"http://127.0.0.1:<port>/mcp"}`) and exit on SIGTERM.
 //!
 //! Environment: `AGENTCAT_API_URL` (required, `http://` on `127.0.0.1`, `localhost` or `[::1]`),
@@ -75,8 +77,12 @@ enum Mode {
     /// MCP over stdio.
     Stdio,
     /// Streamable HTTP on `127.0.0.1:<port>` (0: any free port), with MCP sessions unless
-    /// `stateless`.
-    Http { port: u16, stateless: bool },
+    /// `stateless`; POSTs answer in JSON unless `sse`.
+    Http {
+        port: u16,
+        stateless: bool,
+        sse: bool,
+    },
 }
 
 /// What the command line and the environment configure.
@@ -187,21 +193,22 @@ fn page_size(text: Option<&str>) -> Result<Option<usize>, Refusal> {
 }
 
 /// The mode of argv: `stdio` (also with no argument), `http [<port>]` or
-/// `http-stateless [<port>]`; a missing port is 0.
+/// `http-sse [<port>]` or `http-stateless [<port>]`; a missing port is 0.
 fn mode(args: &[OsString]) -> Result<Mode, Refusal> {
     let usage = || {
         Refusal::named(format_args!(
-            "usage: {NAME} stdio | http <port> | http-stateless <port>"
+            "usage: {NAME} stdio | http <port> | http-sse <port> | http-stateless <port>"
         ))
     };
     let args: Vec<&str> = args
         .iter()
         .map(|arg| arg.to_str().ok_or_else(usage))
         .collect::<Result<_, _>>()?;
-    let (stateless, port) = match args.as_slice() {
+    let (stateless, sse, port) = match args.as_slice() {
         [] | ["stdio"] => return Ok(Mode::Stdio),
-        ["http", port @ ..] => (false, port),
-        ["http-stateless", port @ ..] => (true, port),
+        ["http", port @ ..] => (false, false, port),
+        ["http-sse", port @ ..] => (false, true, port),
+        ["http-stateless", port @ ..] => (true, false, port),
         _ => return Err(usage()),
     };
     let port = match port {
@@ -213,7 +220,11 @@ fn mode(args: &[OsString]) -> Result<Mode, Refusal> {
             .ok_or_else(|| Refusal::named(format_args!("bad port {port}")))?,
         _ => return Err(usage()),
     };
-    Ok(Mode::Http { port, stateless })
+    Ok(Mode::Http {
+        port,
+        stateless,
+        sse,
+    })
 }
 
 /// Whether `text` is an `http://` URL on `127.0.0.1`, `localhost` or `[::1]`
@@ -276,18 +287,32 @@ async fn serve(startup: Startup, tools: Tools) -> ExitCode {
             }
         }
         (Mode::Stdio, None) => serve_stdio(RefServer::new(tools, None)).await,
-        (Mode::Http { port, stateless }, Some(agentcat)) => {
+        (
+            Mode::Http {
+                port,
+                stateless,
+                sse,
+            },
+            Some(agentcat),
+        ) => {
             let handle = agentcat.clone();
             let target = custom(agentcat);
             let tracked = move || handle.track(RefServer::new(tools.clone(), target.clone()));
             if call_canary {
-                serve_http(port, stateless, move || Ok(CallCanary(tracked()))).await
+                serve_http(port, stateless, sse, move || Ok(CallCanary(tracked()))).await
             } else {
-                serve_http(port, stateless, move || Ok(tracked())).await
+                serve_http(port, stateless, sse, move || Ok(tracked())).await
             }
         }
-        (Mode::Http { port, stateless }, None) => {
-            serve_http(port, stateless, move || {
+        (
+            Mode::Http {
+                port,
+                stateless,
+                sse,
+            },
+            None,
+        ) => {
+            serve_http(port, stateless, sse, move || {
                 Ok(RefServer::new(tools.clone(), None))
             })
             .await
@@ -331,7 +356,7 @@ async fn serve_stdio<S: ServerHandler>(server: S) -> ExitCode {
 /// Serves rmcp's streamable HTTP service on `127.0.0.1:<port>/mcp` until SIGTERM arrives. Each
 /// MCP session (stateful, `legacy_session_mode(true)`) or each request (stateless, and every
 /// 2026-07-28 request) gets a server from `factory`.
-async fn serve_http<S, F>(port: u16, stateless: bool, factory: F) -> ExitCode
+async fn serve_http<S, F>(port: u16, stateless: bool, sse: bool, factory: F) -> ExitCode
 where
     S: ServerHandler,
     F: Fn() -> Result<S, std::io::Error> + Send + Sync + 'static,
@@ -353,7 +378,7 @@ where
     };
     let config = StreamableHttpServerConfig::default()
         .with_legacy_session_mode(!stateless)
-        .with_json_response(true);
+        .with_json_response(!sse);
     let service =
         StreamableHttpService::new(factory, Arc::new(LocalSessionManager::default()), config);
     let router = if stateless {
@@ -466,21 +491,32 @@ mod tests {
             mode_of(&["http", "0"]),
             Ok(Mode::Http {
                 port: 0,
-                stateless: false
+                stateless: false,
+                sse: false
             })
         );
         assert_eq!(
             mode_of(&["http-stateless", "8080"]),
             Ok(Mode::Http {
                 port: 8080,
-                stateless: true
+                stateless: true,
+                sse: false
+            })
+        );
+        assert_eq!(
+            mode_of(&["http-sse", "0"]),
+            Ok(Mode::Http {
+                port: 0,
+                stateless: false,
+                sse: true
             })
         );
         assert_eq!(
             mode_of(&["http"]),
             Ok(Mode::Http {
                 port: 0,
-                stateless: false
+                stateless: false,
+                sse: false
             })
         );
         for bad in [&["stdio", "1"][..], &["sse"], &["http", "1", "2"]] {

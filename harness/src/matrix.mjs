@@ -7,7 +7,7 @@
 //   --servers     two names from ts-v1, ts-v2, rust (default ts-v2,rust). `rust` runs HARNESS_RUST_SERVER,
 //                 else target/debug/harness-ref-server; a missing binary exits 2 before any driver starts.
 //   --scenarios   names resolved as harness/scenarios/<name>.json (default: every scenario file)
-//   --transports  default stdio,http,http-stateless
+//   --transports  default stdio,http,http-stateless,http-sse
 //   --lanes       default 2025-11-25,2026-07-28
 //   --jobs        drivers running at the same time (default 4)
 //   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json; no

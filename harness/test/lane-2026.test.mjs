@@ -135,7 +135,7 @@ test("2026-07-28: the tracked Rust server negotiates the lane on stdio and HTTP"
 
 test("ts-v2 refuses a non-local AGENTCAT_API_URL with exit 2", async (t) => {
   const [cmd, ...args] = TS_V2_SERVER;
-  for (const mode of [["stdio"], ["http", "0"], ["http-stateless", "0"]]) {
+  for (const mode of [["stdio"], ["http", "0"], ["http-sse", "0"], ["http-stateless", "0"]]) {
     for (const url of ["https://api.agentcat.com", "http://localhost.example.com"]) {
       const res = await run(cmd, [...args, ...mode], {
         env: {

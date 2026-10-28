@@ -10,6 +10,7 @@
 //                                              both eras (serveStdio), one tracked server per connection
 //        ... ts-v2.mjs http <port>             2026-07-28: one tracked server per request (createMcpHandler);
 //                                              2025 era: stateful, one tracked server per MCP session
+//        ... ts-v2.mjs http-sse <port>         as http, with SSE responses (enableJsonResponse false; createMcpHandler responseMode "sse")
 //        ... ts-v2.mjs http-stateless <port>   2026-07-28 as above; 2025 era: one tracked server per request
 // HTTP modes print one ready line on stdout: {"ready": true, "url": "http://127.0.0.1:<port>/mcp"}.
 // env:   as ts-v1.mjs (AGENTCAT_API_URL, HARNESS_PROJECT_ID, HARNESS_OPTIONS, HARNESS_NO_TRACK, HOME)
@@ -99,19 +100,19 @@ if (mode === "stdio") {
   // Every exchange answers in JSON response mode.
   const modern = createMcpHandler(buildServer, {
     legacy: "reject",
-    responseMode: "json",
+    responseMode: mode === "http-sse" ? "sse" : "json",
     onerror: (err) => process.stderr.write(`${NAME}: ${err?.message ?? err}\n`),
   });
   const sessions = new Map();
   const legacy =
-    mode === "http"
+    mode === "http" || mode === "http-sse"
       ? async (request) => {
           const sid = request.headers.get("mcp-session-id");
           let transport = sid === null ? undefined : sessions.get(sid);
           if (!transport) {
             const created = new WebStandardStreamableHTTPServerTransport({
               sessionIdGenerator: () => randomUUID(),
-              enableJsonResponse: true,
+              enableJsonResponse: mode === "http",
               onsessioninitialized: (id) => sessions.set(id, created),
             });
             created.onclose = () => {

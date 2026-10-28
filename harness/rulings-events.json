@@ -19,7 +19,7 @@
   },
   {
     "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
-    "transports": ["http"],
+    "transports": ["http", "http-sse"],
     "lanes": ["2025-11-25"],
     "ts": "http,mcpReq,sessionId",
     "rust": "requestId,requestInfo,sessionId",
@@ -37,7 +37,7 @@
   },
   {
     "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
-    "transports": ["http", "http-stateless"],
+    "transports": ["http", "http-sse", "http-stateless"],
     "lanes": ["2026-07-28"],
     "ts": "http,mcpReq",
     "rust": "_meta,requestId,requestInfo",
@@ -142,7 +142,7 @@
   {
     "path": "\\$\\.events\\[3\\]\\.body\\.response\\.content\\[0\\]\\.text",
     "scenario": "pagination",
-    "transports": ["http"],
+    "transports": ["http", "http-sse"],
     "lanes": ["2026-07-28"],
     "ts": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
     "rust": "the tool's own context",
@@ -152,7 +152,7 @@
   {
     "path": "\\$\\.events\\[3\\]\\.body\\.(?:response\\.isError|is_error)",
     "scenario": "pagination",
-    "transports": ["http"],
+    "transports": ["http", "http-sse"],
     "lanes": ["2026-07-28"],
     "ts": true,
     "rust": "<absent>",
@@ -162,7 +162,7 @@
   {
     "path": "\\$\\.events\\[3\\]\\.body\\.error",
     "scenario": "pagination",
-    "transports": ["http"],
+    "transports": ["http", "http-sse"],
     "lanes": ["2026-07-28"],
     "ts": {
       "message": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
@@ -175,7 +175,7 @@
   {
     "path": "\\$\\.events\\[3\\]\\.body\\.output_tokens",
     "scenario": "pagination",
-    "transports": ["http"],
+    "transports": ["http", "http-sse"],
     "lanes": ["2026-07-28"],
     "ts": 31,
     "rust": 7,

@@ -34,8 +34,8 @@ function isLocalHttpUrl(text) {
  */
 export function startup(name) {
   const [mode = "stdio", portArg] = process.argv.slice(2);
-  if (!["stdio", "http", "http-stateless"].includes(mode) || (mode === "stdio" && portArg !== undefined)) {
-    fail(name, `usage: ${name}.mjs stdio | http <port> | http-stateless <port>`);
+  if (!["stdio", "http", "http-stateless", "http-sse"].includes(mode) || (mode === "stdio" && portArg !== undefined)) {
+    fail(name, `usage: ${name}.mjs stdio | http <port> | http-stateless <port> | http-sse <port>`);
   }
   const port = Number(portArg ?? 0);
   if (mode !== "stdio" && !(Number.isInteger(port) && port >= 0 && port <= 65535)) fail(name, `bad port ${portArg}`);
