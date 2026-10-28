@@ -20,6 +20,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 
+import { compareEvents, compareTools } from "./compare.mjs";
 import { ChildTransport, PROJECT_ID as MOCK_PROJECT_ID, ROOT, exampleBinary, exampleEnv, runToEnd, startMock } from "../src/examples-check.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -72,6 +73,7 @@ const blocks = (result) => (result.content ?? []).filter((b) => b.type === "text
 async function drive({ label, command, env, scenario }) {
   const failures = [];
   const sessions = [];
+  let tools = [];
   const fail = (text) => failures.push(`${label}: ${text}`);
   const child = spawn(command[0], command.slice(1), { env, stdio: ["pipe", "pipe", "pipe"] });
   const spawnFailure = new Promise((_, reject) => child.once("error", reject));
@@ -85,7 +87,7 @@ async function drive({ label, command, env, scenario }) {
       let sessionId; // each session starts without an ID; the first answer issues one
       for (const step of session.steps) {
         if (step.list) {
-          const { tools } = await client.listTools();
+          tools = (await client.listTools()).tools;
           const names = tools.map((tool) => tool.name).sort();
           if (!["add", "echo", "fail"].every((name) => names.includes(name))) fail(`tools/list names ${JSON.stringify(names)}`);
           continue;
@@ -118,25 +120,14 @@ async function drive({ label, command, env, scenario }) {
     if (child.exitCode === null && child.signalCode === null) child.kill("SIGKILL");
     if (failures.length > 0 && stderrText) process.stderr.write(`--- stderr of ${label} ---\n${stderrText}\n`);
   }
-  return { failures, sessions };
+  return { failures, sessions, tools };
 }
 
-/** The publishes the mock holds, as `{ count, types }` (types: event type -> count). */
+/** The publishes the mock holds, and how many other requests it saw. */
 async function readPublishes(mockUrl) {
   const requests = await (await fetch(`${mockUrl}/__requests`)).json();
   const publishes = requests.filter((r) => r.method === "POST" && r.path === "/v1/public/events/");
-  const types = {};
-  for (const request of publishes) {
-    const type = request.body?.eventType ?? request.body?.event_type ?? "unknown";
-    types[type] = (types[type] ?? 0) + 1;
-  }
-  return {
-    count: publishes.length,
-    types: Object.fromEntries(Object.entries(types).sort()),
-    stray: requests.length - publishes.length,
-    leaked: publishes.some((r) => r.rawBody.includes("secret-token")),
-    redacted: publishes.some((r) => r.rawBody.includes("[REDACTED]")),
-  };
+  return { requests: publishes, stray: requests.length - publishes.length };
 }
 
 async function main() {
@@ -168,14 +159,12 @@ async function main() {
   try {
     for (const server of servers) {
       if (mock) await fetch(`${mock.url}/__reset`, { method: "POST" });
-      const { failures: found, sessions } = await drive({ ...server, env, scenario });
+      const { failures: found, sessions, tools } = await drive({ ...server, env, scenario });
       failures.push(...found);
-      results[server.label] = { sessions };
+      results[server.label] = { sessions, tools };
       if (mock) {
         Object.assign(results[server.label], await readPublishes(mock.url));
-        if (results[server.label].count === 0) failures.push(`${server.label}: the mock received no publish`);
-        if (results[server.label].leaked) failures.push(`${server.label}: a publish still holds secret-token`);
-        if (!results[server.label].redacted) failures.push(`${server.label}: no publish holds [REDACTED]`);
+        if (results[server.label].requests.length === 0) failures.push(`${server.label}: the mock received no publish`);
         if (results[server.label].stray > 0) failures.push(`${server.label}: the mock received ${results[server.label].stray} request(s) that are not publishes`);
       }
     }
@@ -186,9 +175,19 @@ async function main() {
 
   if (mode === "mock") {
     const { rust, ts } = results;
-    if (rust.count !== ts.count) failures.push(`event counts differ: rust ${rust.count}, ts ${ts.count}`);
-    if (JSON.stringify(rust.types) !== JSON.stringify(ts.types)) failures.push(`event types differ: rust ${JSON.stringify(rust.types)}, ts ${JSON.stringify(ts.types)}`);
-    process.stdout.write(`${JSON.stringify({ rust: { count: rust.count, types: rust.types }, ts: { count: ts.count, types: ts.types } })}\n`);
+    const secretSteps = scenario.sessions.flatMap((x) => x.steps).filter((step) => JSON.stringify(step.arguments ?? {}).includes("secret-token")).length;
+    failures.push(...compareTools(rust.tools, ts.tools));
+    const compared = compareEvents({ rust, ts, secretSteps });
+    failures.push(...compared.failures);
+    const summarize = (r) => {
+      const types = {};
+      for (const request of r.requests) {
+        const type = request.body?.eventType ?? request.body?.event_type ?? "unknown";
+        types[type] = (types[type] ?? 0) + 1;
+      }
+      return { count: r.requests.length, types: Object.fromEntries(Object.entries(types).sort()) };
+    };
+    process.stdout.write(`${JSON.stringify({ rust: summarize(rust), ts: summarize(ts), compared: compared.compared, tools: rust.tools.length })}\n`);
   } else if (failures.length === 0) {
     mkdirSync(dirname(OUT_FILE), { recursive: true });
     const record = { runAt: new Date().toISOString(), project, rust: results.rust.sessions, ts: results.ts.sessions };

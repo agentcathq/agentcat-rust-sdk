@@ -316,9 +316,30 @@ custom event per call, so the dashboard shows three custom events.
 node harness/demo/run.mjs --mock
 ```
 
-`--mock` sends to the local mock API, with the TS server under the egress guard. It is part of the gate. It fails
-unless each server publishes and both publish the same event count and event types, and it prints the counts as
-one JSON line.
+`--mock` sends to the local mock API. It is part of the gate. The TS server runs under the egress guard
+(`node --import`). The Rust child is protected by the mock URL alone: a node `--import` guard cannot cover a
+Rust process, so run.mjs refuses to start it without an `AGENTCAT_API_URL` that points at the mock. It prints one
+JSON line with the counts, the number of events compared and the number of tools. It exits 1 unless all of these hold:
+
+- Each server answers every scenario call as the scenario expects, and exits 0 within 10 s of the stdin close.
+- Every stdout line of each server is JSON-RPC.
+- The mock receives publishes from each server, and no other request.
+- `tools/list` of the two servers has the same tools, with the same descriptions and input schemas (key order
+  ignored).
+- The two servers publish the same events. Events are paired after sorting, and these fields must match: event
+  type, tool or resource name, user ID and name, tags, `properties.source`, `properties.redacted_by`, `isError`,
+  the error type and message, and the session (as the number of the session the client saw).
+- No publish holds `secret-token`, and exactly as many publishes hold `[REDACTED]` as the scenario has calls that
+  send the secret.
+
+Two differences are known. RD-39 (pending, owner batch R29): the first call of a session cannot give the TS
+custom event its session, so the TS custom event of the `echo` in the second session has no session and the Rust
+one has it. The comparison expects exactly this, once: it fails if the difference disappears or moves. The
+dashboard therefore shows one TS custom event outside any session. The second difference is not an RD: the error
+of `fail`. The Rust SDK records `platform: "rust"` and the type `core::io::error::Error`; the TS SDK records
+`platform: "javascript"`, a stack and frames. The platform, stack and frames are the SDK's own and the comparison
+leaves them out. The type is only the example's choice: `ts-server.mjs` sets `error.name` to the Rust type text,
+because the TS SDK records `error.name` as the type.
 
 `--prod --project <id>` is for maintainers only. It sends to the default AgentCat API, for the project
 "Testing" only, with no egress guard. It refuses any other project, and it refuses when `CI` is set; both

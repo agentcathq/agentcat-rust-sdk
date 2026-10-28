@@ -22,14 +22,20 @@ const agentcat = await loadAgentCat();
 
 const text = (value) => ({ content: [{ type: "text", text: value }] });
 
+const DRAFT = "https://json-schema.org/draft/2020-12/schema";
+
 // The schemas that rmcp derives from the argument structs of hooks.rs.
 const SCHEMAS = {
   add: {
+    $schema: DRAFT,
     type: "object",
-    properties: { a: { type: "number", description: "The first number." }, b: { type: "number", description: "The second number." } },
+    properties: {
+      a: { description: "The first number.", type: "number", format: "double" },
+      b: { description: "The second number.", type: "number", format: "double" },
+    },
     required: ["a", "b"],
   },
-  echo: { type: "object", properties: { text: { type: "string", description: "The text to send back." } }, required: ["text"] },
+  echo: { $schema: DRAFT, type: "object", properties: { text: { description: "The text to send back.", type: "string" } }, required: ["text"] },
   fail: { type: "object", properties: {} },
 };
 
@@ -67,7 +73,12 @@ function buildServer() {
 
   // Always fails. The SDK records the error that the handler throws, as capture_error does in hooks.rs.
   reg("fail", "Always fails", async () => {
-    throw new Error("the record does not exist");
+    const error = new Error("the record does not exist");
+    // capture_error records the Rust type of the error, "core::io::error::Error" for the io::Error of hooks.rs.
+    // The TS SDK records error.name as the type, so the example sets it. The platform, the stack and the frames
+    // stay the SDK's own (README, "Demo").
+    error.name = "core::io::error::Error";
+    throw error;
   });
 
   agentcat.track(server, projectId, {
