@@ -47,6 +47,7 @@ use tokio::runtime::Handle;
 use tokio::sync::Semaphore;
 use tokio::task::JoinHandle;
 
+use super::json::object;
 use super::vectors;
 use crate::config::{HookError, Options, UserIdentity};
 use crate::delivery::{LineWriter, Publisher};
@@ -73,14 +74,6 @@ pub(crate) fn case(name: &str) -> Map<String, Value> {
         .into_iter()
         .find(|case| vectors::name(case) == name)
         .unwrap_or_else(|| panic!("queue.json has no case {name}"))
-}
-
-/// The JSON object `value`.
-fn object(value: Value) -> Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
-    }
 }
 
 // ------------------------------------------------------------------------------- hook outcomes

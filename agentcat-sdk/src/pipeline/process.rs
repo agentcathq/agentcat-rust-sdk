@@ -6,14 +6,13 @@
 //! `publish_custom_event`) ran on, not on the delivery worker's (C38, C14). Without that runtime,
 //! or when the hook's task panics or is cancelled, the event is dropped with the stage's line
 //! (RD-36). The hook's task is aborted when the pipeline is dropped before it ends.
-use std::convert::Infallible;
 use std::time::Duration;
 
 use serde_json::Value;
 use tokio::runtime::Handle;
 
 use super::TsEvent;
-use super::redact::{apply_event_redaction, redact_strings};
+use super::redact::{apply_event_redaction, redact_strings, visit_strings};
 use super::sanitize::sanitize_event;
 use super::settle::{apply, failure_message, settle};
 use super::truncate::truncate_event;
@@ -164,10 +163,11 @@ async fn redact_event(
 }
 
 /// `event` with each string the walk of [`redact_strings`] visits replaced by what the string
-/// `hook` gives for it (C38). [`redact_strings`] alone decides which strings and in what order:
-/// one walk collects them, one task on `runtime` awaits the hook on each in that order and stops
-/// at its first error, and a second walk puts the results in. `Err` holds why it could not run (no
-/// runtime, the hook's error, the task's panic or cancellation).
+/// `hook` gives for it (C38). The walk's own rule decides which strings and in what order:
+/// [`visit_strings`] collects them from the borrowed event, one task on `runtime` awaits the hook
+/// on each in that order and stops at its first error, and [`redact_strings`] puts the results in.
+/// `Err` holds why it could not run (no runtime, the hook's error, the task's panic or
+/// cancellation).
 async fn redact_event_strings(
     hook: &StringRedactor,
     event: &TsEvent,
@@ -175,10 +175,7 @@ async fn redact_event_strings(
 ) -> Result<TsEvent, String> {
     let runtime = runtime.ok_or_else(|| NO_RUNTIME.to_owned())?;
     let mut strings = Vec::new();
-    let Ok(_) = redact_strings(event, |text| {
-        strings.push(text.to_owned());
-        Ok::<_, Infallible>(String::new())
-    });
+    visit_strings(event, |text| strings.push(text.to_owned()));
     let hook = hook.clone();
     let task = AbortOnDrop::new(runtime.spawn(async move {
         let mut redacted = Vec::with_capacity(strings.len());

@@ -43,13 +43,14 @@ impl Observer for Recorder {
 /// configure the process logger and use a publisher that never sends, so a test needs no network.
 /// The log destination is process-wide and the first handle that configures it decides it, so the
 /// handles of a fake write no `~/agentcat.log` lines unless a handle built with [`AgentCat::new`]
-/// in the same process configured it: then their lines go there too.
+/// or [`AgentCat::from_env`] in the same process configured it: then their lines go there too.
 ///
 /// A fake keeps a clone of each handle it built, so the last clone drops with the fake and the
 /// servers that hold one, and that drop drains as any handle does (see [dropping the last
 /// handle](AgentCat#dropping-the-last-handle)): for up to 5 s, and under `#[tokio::test]`, a
 /// current-thread runtime, an event that still needs a hook is dropped after that wait. The
-/// assertion methods flush first, so after them the drop has nothing left to wait for.
+/// assertion methods flush first, so after them the drop has nothing left to wait for, unless a
+/// flush timed out: the events that flush left wait for the drop.
 ///
 /// ```
 /// # async fn run() {

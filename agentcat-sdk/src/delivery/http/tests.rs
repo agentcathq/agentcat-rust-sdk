@@ -12,7 +12,8 @@ use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
 use super::{ApiPublisher, NO_CLIENT};
 use crate::client::AgentCat;
-use crate::config::{MapEnv, Options, resolve_api_base_url};
+use crate::config::Options;
+use crate::config::env::{MapEnv, resolve_api_base_url};
 use crate::delivery::DeliveryConfig;
 use crate::delivery::Publisher;
 use crate::test_support::rmcp::{Sample, connect};

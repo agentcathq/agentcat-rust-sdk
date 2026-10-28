@@ -8,11 +8,12 @@ use std::time::{Duration, SystemTime};
 
 use rmcp::ServerHandler;
 
+use crate::config::Options;
 #[cfg(test)]
-use crate::config::MapEnv;
-use crate::config::{AGENTCAT_PROJECT_ID, Env, Options, sdk_enabled};
+use crate::config::env::MapEnv;
+use crate::config::env::{AGENTCAT_PROJECT_ID, Env, sdk_enabled};
 #[cfg(not(test))]
-use crate::config::{ProcessEnv, resolve_api_base_url};
+use crate::config::env::{ProcessEnv, resolve_api_base_url};
 use crate::custom::{CustomEvent, publish_string};
 #[cfg(feature = "test-util")]
 use crate::delivery::Observer;

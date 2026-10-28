@@ -1,5 +1,6 @@
 //! Helpers shared by the crate's unit tests: the JS oracle, the markers of the strict JSON
-//! encoding, the vector loader and the proptest strategies.
+//! encoding, the vector loader, the proptest strategies and JSON helpers.
+pub(crate) mod json;
 pub(crate) mod markers;
 pub(crate) mod oracle;
 pub(crate) mod queue;

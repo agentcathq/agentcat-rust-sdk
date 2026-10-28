@@ -15,7 +15,7 @@ use rmcp::model::{
 };
 use rmcp::service::{MaybeSendFuture, RequestContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 use tokio::runtime::{Builder, Handle};
 
 use super::{Redactors, assign, process};
@@ -31,19 +31,12 @@ use crate::js;
 use crate::pipeline::TsEvent;
 use crate::pipeline::truncate::MAX_EVENT_BYTES;
 use crate::sink::Sink;
+use crate::test_support::json::object;
 use crate::test_support::rmcp::{RecordingSink, Sample, connect};
 use crate::test_support::{assert_js_eq, queue, vectors};
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
-
-/// The JSON object `value`.
-fn object(value: Value) -> Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
-    }
-}
 
 /// A tool-call event as `from_call` builds it, whose strings hold `secret` outside the protected
 /// fields.

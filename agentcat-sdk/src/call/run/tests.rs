@@ -16,7 +16,7 @@ use futures::FutureExt;
 use rmcp::model::{
     CallToolRequest, CallToolRequestParams, CallToolResponse, CallToolResult, ClientCapabilities,
     ClientRequest, Implementation, InitializeRequestParams, InitializeResult, InputResponses,
-    JsonObject, ListToolsResult, PaginatedRequestParams, ProtocolVersion, RequestMetaObject,
+    ListToolsResult, PaginatedRequestParams, ProtocolVersion, RequestMetaObject,
     ServerCapabilities, ServerResult, Tool,
 };
 use rmcp::service::{MaybeSendFuture, RequestContext, RoleClient, RunningService, ServiceError};
@@ -39,6 +39,7 @@ use crate::handles::{
 };
 use crate::hooks::snapshots_built;
 use crate::inject::{InjectConfig, InjectState, build_injected_list};
+use crate::test_support::json::object;
 use crate::test_support::rmcp::{
     ContextEcho, MRTR_STATE, Mrtr, PAGED_CURSOR, Paged, Probe, RecordingSink, Sample, SilentPaged,
     bare_context, connect,
@@ -69,14 +70,6 @@ fn recording(options: Options) -> (AgentCat, Arc<RecordingSink>) {
 /// The defaults with agent tracking on, so tools get `session_id`, `agent_id` and `context`.
 fn tracking() -> Options {
     Options::default().enable_agent_tracking(true)
-}
-
-/// The JSON object `value`.
-fn object(value: Value) -> JsonObject {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
-    }
 }
 
 /// The request for the tool `name` with the arguments `arguments`.

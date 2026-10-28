@@ -144,17 +144,82 @@ fn millis(duration: Duration) -> Value {
 }
 
 /// The data fields that both forms write after the session, in TS's order up to `userIntent`.
-fn put_payload(
-    event: &mut TsEvent,
+struct Payload {
     resource_name: Option<String>,
     parameters: Option<Value>,
     response: Option<Value>,
     message: Option<String>,
-) {
+}
+
+/// Writes `payload` into `event`, in TS's order up to `userIntent`.
+fn put_payload(event: &mut TsEvent, payload: Payload) {
+    let Payload {
+        resource_name,
+        parameters,
+        response,
+        message,
+    } = payload;
     put(event, "resourceName", resource_name.map(Value::String));
     put(event, "parameters", parameters);
     put(event, "response", response);
     put(event, "userIntent", message.map(Value::String));
+}
+
+/// A [`CustomEvent`] that passed the checks of both forms ([`accept`]), taken apart once.
+struct Accepted {
+    /// The event's own session, when it is not empty.
+    session_id: Option<String>,
+    payload: Payload,
+    duration: Option<Duration>,
+    is_error: Option<bool>,
+    error: Option<Value>,
+    tags: Option<Map<String, Value>>,
+    properties: Option<Map<String, Value>>,
+}
+
+/// The checks both forms make before they build anything: `Ok(None)` on a handle that
+/// `AGENTCAT_ENABLED` turned off (C45), else `event` taken apart.
+///
+/// # Errors
+///
+/// [`Error::ProjectIdRequired`] for an empty `project_id` on a handle that is on.
+fn accept(
+    agentcat: &AgentCat,
+    project_id: &str,
+    event: CustomEvent,
+) -> Result<Option<Accepted>, Error> {
+    if !agentcat.inner().enabled {
+        return Ok(None);
+    }
+    if project_id.is_empty() {
+        return Err(Error::ProjectIdRequired);
+    }
+    let CustomEvent {
+        session_id,
+        resource_name,
+        parameters,
+        response,
+        message,
+        duration,
+        is_error,
+        error,
+        tags,
+        properties,
+    } = event;
+    Ok(Some(Accepted {
+        session_id: session_id.filter(|own| !own.is_empty()),
+        payload: Payload {
+            resource_name,
+            parameters,
+            response,
+            message,
+        },
+        duration,
+        is_error,
+        error,
+        tags,
+        properties,
+    }))
 }
 
 /// The customer's `tags` and `properties`, last in the event: `tags` is the key with the valid
@@ -209,27 +274,10 @@ pub(crate) fn publish_string(
     event: CustomEvent,
     now: SystemTime,
 ) -> Result<(), Error> {
-    if !agentcat.inner().enabled {
+    let Some(event) = accept(agentcat, project_id, event)? else {
         return Ok(());
-    }
-    if project_id.is_empty() {
-        return Err(Error::ProjectIdRequired);
-    }
-    let CustomEvent {
-        session_id: own_session,
-        resource_name,
-        parameters,
-        response,
-        message,
-        duration,
-        is_error,
-        error,
-        tags,
-        properties,
-    } = event;
-    let session = own_session
-        .filter(|own| !own.is_empty())
-        .unwrap_or_else(|| session_id.to_owned());
+    };
+    let session = event.session_id.unwrap_or_else(|| session_id.to_owned());
 
     let mut log = Vec::new();
     let mut ts = TsEvent::new();
@@ -237,11 +285,11 @@ pub(crate) fn publish_string(
     ts.insert("projectId".to_owned(), Value::String(project_id.to_owned()));
     ts.insert("eventType".to_owned(), Value::from(CUSTOM_EVENT_TYPE));
     ts.insert("timestamp".to_owned(), Value::String(js::iso_millis(now)));
-    put_payload(&mut ts, resource_name, parameters, response, message);
-    put(&mut ts, "duration", duration.map(millis));
-    put(&mut ts, "isError", is_error.map(Value::Bool));
-    put(&mut ts, "error", error);
-    put_metadata(&mut ts, tags, properties, &mut log);
+    put_payload(&mut ts, event.payload);
+    put(&mut ts, "duration", event.duration.map(millis));
+    put(&mut ts, "isError", event.is_error.map(Value::Bool));
+    put(&mut ts, "error", event.error);
+    put_metadata(&mut ts, event.tags, event.properties, &mut log);
 
     let job = EventJob {
         event: ts,
@@ -276,33 +324,16 @@ pub(crate) fn publish_server(
     created: SystemTime,
     published: SystemTime,
 ) -> Result<(), Error> {
-    if !agentcat.inner().enabled {
+    let Some(event) = accept(agentcat, project_id, event)? else {
         return Ok(());
-    }
-    if project_id.is_empty() {
-        return Err(Error::ProjectIdRequired);
-    }
-    let CustomEvent {
-        session_id: own_session,
-        resource_name,
-        parameters,
-        response,
-        message,
-        duration,
-        is_error,
-        error,
-        tags,
-        properties,
-    } = event;
+    };
     let mut log = Vec::new();
-    let session = own_session
-        .filter(|own| !own.is_empty())
-        .unwrap_or_else(|| {
-            log.push(NO_SESSION_WARNING.to_owned());
-            String::new()
-        });
+    let session = event.session_id.unwrap_or_else(|| {
+        log.push(NO_SESSION_WARNING.to_owned());
+        String::new()
+    });
     let mut custom = TsEvent::new();
-    put_metadata(&mut custom, tags, properties, &mut log);
+    put_metadata(&mut custom, event.tags, event.properties, &mut log);
 
     let shared = agentcat.inner();
     if !shared.options.tracing() {
@@ -310,7 +341,8 @@ pub(crate) fn publish_server(
         return Ok(());
     }
 
-    let duration = duration
+    let duration = event
+        .duration
         .filter(|given| !given.is_zero())
         .unwrap_or_else(|| published.duration_since(created).unwrap_or_default());
     let text = |value: &str| Value::String(value.to_owned());
@@ -348,9 +380,9 @@ pub(crate) fn publish_server(
             .map(text),
     );
     ts.insert("identifyActorData".to_owned(), Value::Object(Map::new()));
-    put_payload(&mut ts, resource_name, parameters, response, message);
-    put(&mut ts, "isError", is_error.map(Value::Bool));
-    put(&mut ts, "error", error);
+    put_payload(&mut ts, event.payload);
+    put(&mut ts, "isError", event.is_error.map(Value::Bool));
+    put(&mut ts, "error", event.error);
     ts.extend(custom);
 
     let job = EventJob {

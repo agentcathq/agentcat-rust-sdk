@@ -77,15 +77,38 @@ enum Level {
 /// `redactEvent` of TS gives it (module docs). `redact` gets the strings in TS's call order; the
 /// first `Err` stops the walk and is returned.
 ///
-/// This is the one definition of which strings are redacted and in what order. A caller with an
-/// async hook runs it twice: once to collect the strings (a `redact` that records each one and
-/// gives it back), then, after awaiting the hook on each string in order and stopping at its
-/// first error, once more with a `redact` that gives the hook's results in that order.
+/// [`walked`] is the one definition of which strings are redacted; this walk and
+/// [`visit_strings`] both visit objects in [`js::own_entries`] order and arrays by index. A caller
+/// with an async hook collects the strings with [`visit_strings`], awaits the hook on each string
+/// in order and stops at its first error, then runs this walk with a `redact` that gives the
+/// hook's results in that order.
 pub(crate) fn redact_strings<E>(
     event: &TsEvent,
     mut redact: impl FnMut(&str) -> Result<String, E>,
 ) -> Result<TsEvent, E> {
     redact_object(event, Level::Event, &mut redact)
+}
+
+/// Gives `visit` each string of `event` that [`redact_strings`] passes to its `redact`, in the
+/// same order, borrowed from `event`: no copy of the event is built.
+pub(crate) fn visit_strings<'a>(event: &'a TsEvent, mut visit: impl FnMut(&'a str)) {
+    visit_object(event, Level::Event, &mut visit);
+}
+
+/// How the walk treats the value under `key` of an object at `level`: `None` keeps the value as
+/// it is (a protected key of the top level, or the event's `timestamp` string); otherwise the
+/// walk enters the value, and an object in it is at the level given.
+fn walked(level: Level, key: &str, value: &Value) -> Option<Level> {
+    let top = level != Level::Nested;
+    let kept = (top && PROTECTED_FIELDS.contains(&key))
+        || (level == Level::Event && key == "timestamp" && value.is_string());
+    if kept {
+        None
+    } else if top && key.is_empty() {
+        Some(Level::EmptyPath)
+    } else {
+        Some(Level::Nested)
+    }
 }
 
 /// `object` at `level` with its strings redacted, its keys in [`js::own_entries`] order.
@@ -97,20 +120,11 @@ fn redact_object<E, F>(
 where
     F: FnMut(&str) -> Result<String, E>,
 {
-    let top = level != Level::Nested;
     let mut out = Map::with_capacity(object.len());
     for (key, value) in js::own_entries(object) {
-        let kept = (top && PROTECTED_FIELDS.contains(&key.as_str()))
-            || (level == Level::Event && key == "timestamp" && value.is_string());
-        let value = if kept {
-            value.clone()
-        } else {
-            let child = if top && key.is_empty() {
-                Level::EmptyPath
-            } else {
-                Level::Nested
-            };
-            redact_value(value, child, redact)?
+        let value = match walked(level, key, value) {
+            None => value.clone(),
+            Some(child) => redact_value(value, child, redact)?,
         };
         out.insert(key.clone(), value);
     }
@@ -134,6 +148,35 @@ where
         Value::Object(map) => Value::Object(redact_object(map, level, redact)?),
         other => other.clone(),
     })
+}
+
+/// Gives `visit` the strings of `object` at `level` that [`redact_object`] redacts, in its order.
+fn visit_object<'a, F>(object: &'a Map<String, Value>, level: Level, visit: &mut F)
+where
+    F: FnMut(&'a str),
+{
+    for (key, value) in js::own_entries(object) {
+        if let Some(child) = walked(level, key, value) {
+            visit_value(value, child, visit);
+        }
+    }
+}
+
+/// Gives `visit` the strings of `value` that [`redact_value`] redacts, in its order.
+fn visit_value<'a, F>(value: &'a Value, level: Level, visit: &mut F)
+where
+    F: FnMut(&'a str),
+{
+    match value {
+        Value::String(text) => visit(text),
+        Value::Array(items) => {
+            for item in items {
+                visit_value(item, Level::Nested, visit);
+            }
+        }
+        Value::Object(map) => visit_object(map, level, visit),
+        Value::Null | Value::Bool(_) | Value::Number(_) => {}
+    }
 }
 
 /// The event after the customer's event-level hook, as the `applyEventRedaction` of TS leaves

@@ -28,9 +28,9 @@
 //!   in-flight events are empty or the deadline passes, and a cancelled `shutdown` still shuts
 //!   the handle down.
 //! - The last drop of the handle runs that shutdown with `drop_drain` (5 s) and waits for the
-//!   worker's answer on a `std::sync::mpsc` channel, for at most `drop_drain` and 100 ms more, so it
-//!   never waits on the caller's runtime; the worker then exits. A drop on the worker thread itself
-//!   does not wait. `std::process::exit` and `panic = "abort"` skip the drain.
+//!   worker's answer on a `std::sync::mpsc` channel, for at most `drop_drain` and 100 ms more, so
+//!   it never waits on the caller's runtime; the worker then exits. A drop on the worker thread
+//!   itself does not wait. `std::process::exit` and `panic = "abort"` skip the drain.
 use std::fmt;
 use std::future::ready;
 use std::sync::{Arc, mpsc};

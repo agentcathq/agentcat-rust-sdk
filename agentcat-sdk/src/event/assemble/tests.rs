@@ -5,7 +5,7 @@ use std::backtrace::Backtrace;
 use std::time::{Duration, UNIX_EPOCH};
 
 use rmcp::model::{CallToolResult, ContentBlock, InputRequiredResult};
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 
 use super::{from_call, render_backtrace};
 use crate::config::UserIdentity;
@@ -14,16 +14,9 @@ use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
 use crate::pipeline::settle::{HookResults, apply};
 use crate::pipeline::{TOOL_CALL_KEYS, TsEvent};
+use crate::test_support::json::object;
 use crate::test_support::rmcp::{assert_credentials_hidden, bare_context, credential_parts};
 use crate::test_support::vectors;
-
-/// The JSON object `value`.
-fn object(value: Value) -> Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
-    }
-}
 
 /// The record of a call that worked, every field set: a supplied session, a client, a server,
 /// tokens, an intent and rmcp's result of the tool (with its `resultType: "complete"`).

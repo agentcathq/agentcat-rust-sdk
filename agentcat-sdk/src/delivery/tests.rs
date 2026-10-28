@@ -19,7 +19,7 @@ use rmcp::ServerHandler;
 use rmcp::ServiceExt;
 use rmcp::model::{CallToolRequestParams, ClientCapabilities, Implementation};
 use rmcp::model::{InitializeRequestParams, ProtocolVersion};
-use serde_json::{Map, Value, json};
+use serde_json::json;
 use tokio::runtime::{Builder, Handle, Runtime};
 use tokio::sync::{Semaphore, oneshot};
 
@@ -32,6 +32,7 @@ use crate::hooks::PendingHooks;
 use crate::logging;
 use crate::pipeline::TsEvent;
 use crate::sink::{BoxFuture, Sink};
+use crate::test_support::json::object;
 use crate::test_support::queue::{
     self, CapturedLines, DropSignal, MOCK_FAILURE, RecordingPublisher,
 };
@@ -63,14 +64,6 @@ fn fast() -> DeliveryConfig {
         retry_delays: [ms(10), ms(20), ms(40)],
         hook_budget: ms(50),
         drop_drain: ms(1_000),
-    }
-}
-
-/// The JSON object `value`.
-fn object(value: Value) -> Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
     }
 }
 

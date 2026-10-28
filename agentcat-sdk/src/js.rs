@@ -131,13 +131,23 @@ fn write_number(out: &mut impl fmt::Write, number: &Number) -> fmt::Result {
 /// other keys in insertion order. `serde_json`'s `preserve_order` map keeps insertion order.
 pub(crate) fn own_entries(object: &Map<String, Value>) -> OwnEntries<'_> {
     // The common case, an object without an index-like key, is its map's own iterator: no
-    // allocation.
-    if !object.keys().any(|key| array_index(key).is_some()) {
-        return OwnEntries::Insertion(object.iter());
-    }
-    let mut indices = Vec::new();
+    // allocation. Each key is checked once: the scan stops at the first index-like key, the
+    // entries before it are the first of the other keys, and the loop goes on after it.
+    let mut rest = object.iter();
+    let mut before = 0;
+    let first = loop {
+        let Some(entry) = rest.next() else {
+            return OwnEntries::Insertion(object.iter());
+        };
+        if let Some(index) = array_index(entry.0) {
+            break (index, entry);
+        }
+        before += 1;
+    };
+    let mut indices = vec![first];
     let mut others = Vec::with_capacity(object.len());
-    for entry in object {
+    others.extend(object.iter().take(before));
+    for entry in rest {
         match array_index(entry.0) {
             Some(index) => indices.push((index, entry)),
             None => others.push(entry),

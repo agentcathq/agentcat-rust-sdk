@@ -1,9 +1,10 @@
 //! `Options`: each setter changes its own getter only, and an empty custom description means the
 //! default one (B-004). B-004's default values are pinned by the harness profile `{}`, not here.
-use super::{
-    AGENTCAT_API_URL, AGENTCAT_ENABLED, DEFAULT_API_BASE_URL, Env, LogDestination, MCPCAT_API_URL,
-    MapEnv, Options, ProcessEnv, resolve_api_base_url, sdk_enabled,
+use super::env::{
+    AGENTCAT_API_URL, AGENTCAT_ENABLED, DEFAULT_API_BASE_URL, Env, MCPCAT_API_URL, MapEnv,
+    ProcessEnv, resolve_api_base_url, sdk_enabled,
 };
+use super::{LogDestination, Options};
 use crate::constants::DEFAULT_CONTEXT_PARAMETER_DESCRIPTION;
 use crate::event::Event;
 

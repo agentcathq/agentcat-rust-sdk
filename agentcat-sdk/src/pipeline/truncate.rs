@@ -116,15 +116,15 @@ impl fmt::Display for TruncateError {
 /// slice (see [`limit_string`] and [`limit_frames`]).
 pub(crate) fn truncate_event(mut event: TsEvent) -> Result<TsEvent, TruncateError> {
     limit_fields(&mut event)?;
-    let limited = event;
+    let limited = take_normalized_fields(&mut event);
     let mut depth = MAX_DEPTH;
     loop {
-        let candidate = normalize_fields(&limited, depth);
-        if byte_size(&candidate) <= MAX_EVENT_BYTES {
-            return Ok(candidate);
+        normalize_fields(&mut event, &limited, depth);
+        if byte_size(&event) <= MAX_EVENT_BYTES {
+            return Ok(event);
         }
         if depth == 1 {
-            return Ok(cut_longest_strings(candidate));
+            return Ok(cut_longest_strings(event));
         }
         depth -= 1;
     }
@@ -263,21 +263,28 @@ fn spread_ends(text: &str, half: usize) -> Value {
     Value::Array(items)
 }
 
-/// `event` with each of [`NORMALIZED_FIELDS`] that is present and not `null` normalized at
-/// `depth` with the default breadth and string limits. An array `response` stays an array
-/// (RD-25).
-fn normalize_fields(event: &TsEvent, depth: usize) -> TsEvent {
-    event
-        .iter()
-        .map(|(key, value)| {
-            let value = if NORMALIZED_FIELDS.contains(&key.as_str()) && !value.is_null() {
-                normalize(value, depth, MAX_BREADTH, MAX_STRING_LENGTH)
-            } else {
-                value.clone()
-            };
-            (key.clone(), value)
+/// Takes each of [`NORMALIZED_FIELDS`] that is present and not `null` out of `event`, with its
+/// key, and leaves `null` in its place until [`normalize_fields`] sets it. So the size guard
+/// normalizes the field-limited values at every depth without a copy of the event.
+fn take_normalized_fields(event: &mut TsEvent) -> Vec<(&'static str, Value)> {
+    NORMALIZED_FIELDS
+        .into_iter()
+        .filter_map(|key| {
+            let value = event.get_mut(key).filter(|value| !value.is_null())?;
+            Some((key, std::mem::take(value)))
         })
         .collect()
+}
+
+/// Sets each field of `limited` (from [`take_normalized_fields`]) in `event` to its value
+/// normalized at `depth` with the default breadth and string limits, in the field's place. An
+/// array `response` stays an array (RD-25).
+fn normalize_fields(event: &mut TsEvent, limited: &[(&str, Value)], depth: usize) {
+    for (key, value) in limited {
+        if let Some(field) = event.get_mut(*key) {
+            *field = normalize(value, depth, MAX_BREADTH, MAX_STRING_LENGTH);
+        }
+    }
 }
 
 /// A `fmt::Write` sink that counts the UTF-8 bytes written and keeps none of them.

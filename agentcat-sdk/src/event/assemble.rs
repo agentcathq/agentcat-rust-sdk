@@ -51,7 +51,7 @@ pub(crate) struct EventJob {
 impl fmt::Debug for EventJob {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("EventJob")
-            .field("event", &redact_event(&self.event))
+            .field("event", &debug_redacted(&self.event))
             .field("hooks", &self.hooks)
             .field("hook_mode", &self.hook_mode)
             .field("runtime", &self.runtime.is_some())
@@ -63,7 +63,7 @@ impl fmt::Debug for EventJob {
 }
 
 /// `event` for `Debug` output: its `parameters.extra` through [`redact_extra`].
-fn redact_event(event: &TsEvent) -> TsEvent {
+fn debug_redacted(event: &TsEvent) -> TsEvent {
     let mut event = event.clone();
     if let Some(extra) = event.get_mut("parameters").and_then(|p| p.get_mut("extra")) {
         *extra = redact_extra(extra);

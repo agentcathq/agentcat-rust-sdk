@@ -137,7 +137,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let options = &shared.options;
     let intercept = options.report_missing() && request.name == GET_MORE_TOOLS_NAME;
     if !options.tracing() {
-        return untraced(tracked, request, context, intercept).await;
+        return unrecorded(tracked, request, context, intercept, Unrecorded::Untraced).await;
     }
 
     let started_at = SystemTime::now();
@@ -156,7 +156,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
             "Warning: AgentCat tracing failed for tool {}, falling back to original handler - Error: could not generate a session ID",
             request.name
         ));
-        return degraded(tracked, request, context, intercept).await;
+        return unrecorded(tracked, request, context, intercept, Unrecorded::Degraded).await;
     };
 
     let client = client_identity(&context);
@@ -344,39 +344,41 @@ async fn start_hooks(
     pending
 }
 
-/// A call with tracing off (B-022 step 2, R27, RD-29): the intercept is answered; any other call
-/// learns the tool's schema as a traced call does ([`learn_schema`]: `get_tool`, the registry, a
-/// rebuild, else TS's heuristic) and goes to the handler without the injected arguments, so a
-/// tool's own `context` stays, and with a [`CallContext`] without a session or an agent. Nothing
-/// is recorded, and learning the schema writes no log line ([`SchemaLogs::Silent`], P16).
-async fn untraced<H: ServerHandler>(
-    tracked: &Tracked<H>,
-    request: CallToolRequestParams,
-    context: RequestContext<RoleServer>,
-    intercept: bool,
-) -> Result<CallToolResponse, ErrorData> {
-    if intercept {
-        let shared = tracked.agentcat().inner();
-        return Ok(answer_report_missing(shared, &request).into());
-    }
-    let schema = learn_schema(tracked, &request.name, &context, SchemaLogs::Silent).await;
-    let request = stripped(request, schema.entry.as_ref());
-    forward(tracked, request, context).await
+/// The two paths of a call that is not recorded, which differ only in the arguments a call that is
+/// not intercepted hands to the handler.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Unrecorded {
+    /// Tracing is off (B-022 step 2, R27, RD-29): the call learns the tool's schema as a traced
+    /// call does ([`learn_schema`]: `get_tool`, the registry, a rebuild, else TS's heuristic) and
+    /// goes without the injected arguments, so a tool's own `context` stays. Learning the schema
+    /// writes no log line ([`SchemaLogs::Silent`], P16).
+    Untraced,
+    /// No session ID could be issued (B-022 step 9): the call goes with its raw arguments, as in
+    /// TS (K-05).
+    Degraded,
 }
 
-/// The degraded path, when no session ID could be issued (B-022 step 9): the intercept is
-/// answered, and any other call goes to the handler with its raw arguments, as in TS (K-05), and a
-/// [`CallContext`] without a session or an agent. Nothing is recorded.
-async fn degraded<H: ServerHandler>(
+/// A call that is not recorded, on the `path` it takes: the intercept is answered; any other call
+/// goes to the handler with the arguments of `path` and a [`CallContext`] without a session or an
+/// agent. Nothing is recorded.
+async fn unrecorded<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
     context: RequestContext<RoleServer>,
     intercept: bool,
+    path: Unrecorded,
 ) -> Result<CallToolResponse, ErrorData> {
     if intercept {
         let shared = tracked.agentcat().inner();
         return Ok(answer_report_missing(shared, &request).into());
     }
+    let request = match path {
+        Unrecorded::Untraced => {
+            let schema = learn_schema(tracked, &request.name, &context, SchemaLogs::Silent).await;
+            stripped(request, schema.entry.as_ref())
+        }
+        Unrecorded::Degraded => request,
+    };
     forward(tracked, request, context).await
 }
 

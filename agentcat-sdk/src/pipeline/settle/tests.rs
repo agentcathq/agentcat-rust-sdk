@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use serde_json::{Map, Value, json};
+use serde_json::{Value, json};
 use tokio::time::Instant;
 
 use super::{HookResults, apply, settle};
@@ -18,6 +18,7 @@ use crate::handles::{derive_session_id, is_valid_session_id};
 use crate::hooks::PendingHooks;
 use crate::js;
 use crate::pipeline::TsEvent;
+use crate::test_support::json::object;
 use crate::test_support::queue::{self, Task, returns, throws};
 use crate::test_support::{assert_js_eq, vectors};
 
@@ -40,14 +41,6 @@ fn hangs_watched<T: Send + 'static>(dropped: &Arc<AtomicBool>) -> Task<T> {
         let _flag = flag;
         pending::<Result<Option<T>, HookError>>().await
     })
-}
-
-/// The JSON object `value`.
-fn object(value: Value) -> Map<String, Value> {
-    match value {
-        Value::Object(object) => object,
-        other => panic!("{other} is not an object"),
-    }
 }
 
 /// A tool-call event as `from_call` leaves it, in TS key order, with the session `session` (`""`

@@ -7,7 +7,8 @@ use std::time::Duration;
 use rmcp::ServerHandler;
 
 use super::{AgentCat, NO_PROJECT_WARNING, Transport, track};
-use crate::config::{AGENTCAT_ENABLED, AGENTCAT_PROJECT_ID, MapEnv, Options};
+use crate::config::Options;
+use crate::config::env::{AGENTCAT_ENABLED, AGENTCAT_PROJECT_ID, MapEnv};
 use crate::context::CallContext;
 use crate::custom::CustomEvent;
 use crate::delivery::DeliveryConfig;
