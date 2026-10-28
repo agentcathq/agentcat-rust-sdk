@@ -43,8 +43,8 @@ exclude_globs = [
 
 # Mutants dropped by name: each one is equivalent (no test can observe it in this build), for the reason
 # above its entry. A pattern is matched against the name that `cargo mutants --list` prints
-# (`<file>:<line>:<col>: <change>`); a pattern names a line only where one function holds two mutants with
-# the same text.
+# (`<file>:<line>:<col>: <change>`); a pattern names a column only where one function holds two mutants with
+# the same text, so that it still matches after a line move.
 exclude_re = [
   # `--all-features` turns a TLS feature on, so `tls_warning` returns `None` in this build whatever the URL.
   # The warning of a build without one is pinned by `https_without_tls_feature_warns_once`, which runs in
@@ -70,9 +70,12 @@ exclude_re = [
   # unchanged, so sending a `null` `response` or `parameters` through them changes nothing.
   'agentcat-sdk/src/pipeline/sanitize\.rs:\d+:\d+: replace match guard !value\.is_null\(\) with true in sanitize_event$',
   # An array of exactly `MAX_STACK_FRAMES` (50) frames: its first 25 and its last 25 are the whole array,
-  # so cutting it gives it back unchanged. The line pins the array's comparison; the string's comparison
-  # below it in `limit_frames` changes the result (a string becomes an array) and stays mutated.
-  'agentcat-sdk/src/pipeline/truncate\.rs:230:48: replace > with >= in limit_frames$',
+  # so cutting it gives it back unchanged. The column (48) picks the array's comparison; the string's
+  # comparison below it in `limit_frames` (column 37) changes the result (a string becomes an array) and
+  # stays mutated. A line move keeps the column. Only an edit of the array's line itself can move its `>`
+  # to another column; that line is then in the diff, so the diff gate tests the mutant and fails on it as
+  # missed until the column here is updated.
+  'agentcat-sdk/src/pipeline/truncate\.rs:\d+:48: replace > with >= in limit_frames$',
   # A compile-time assertion that `Tracked<H>` is `Send + Sync + 'static`: the `const fn` runs only in a
   # `const` item, so emptying its body changes no run-time behavior.
   'agentcat-sdk/src/tracked\.rs:\d+:\d+: replace tracked with \(\)$',

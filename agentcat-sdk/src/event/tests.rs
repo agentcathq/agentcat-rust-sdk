@@ -286,8 +286,8 @@ fn extra_non_utf8_header_is_lossy() {
 
 /// D34: the URL of an origin-form request is `http://<Host><path and query>`; an absolute request
 /// URI is the URL as it is, whatever the `Host` header says. An authority-form target (a
-/// `CONNECT` request) has an authority but no scheme, so it is not an absolute URI: its URL comes
-/// from the `Host` header too, with the root path.
+/// `CONNECT` request) has an authority but no scheme, so it is not the absolute request URI of the
+/// `request_url` rustdoc: its URL comes from the `Host` header too, with the root path.
 #[test]
 fn extra_url_from_host() {
     let origin = parts("/mcp?x=1&y=%20", &[("host", b"example.com:8080")]);

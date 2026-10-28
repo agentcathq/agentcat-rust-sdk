@@ -425,8 +425,9 @@ fn own_entries_fast_path_keeps_order() {
     assert_eq!(own_entries(&Map::new()).count(), 0);
 }
 
-/// `OwnEntries` is an `ExactSizeIterator`, so its `size_hint` is exact on both paths, before and
-/// while it is consumed: `len` is the number of entries left.
+/// No decision: this pins a Rust contract, `ExactSizeIterator` (its `size_hint` is exact and `len`
+/// is the number of entries left), which `OwnEntries`, the iterator of C04's key order, implements.
+/// It holds on both paths, before and while the iterator is consumed.
 #[test]
 fn own_entries_len_is_exact() {
     for text in [r#"{"b":1,"a":2,"c":3}"#, r#"{"b":1,"10":2,"2":3}"#] {

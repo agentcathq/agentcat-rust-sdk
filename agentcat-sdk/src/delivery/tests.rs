@@ -613,9 +613,9 @@ fn flush_waits_for_in_flight() {
     thread.join().unwrap();
 }
 
-/// A timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about a century
-/// ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for the queue
-/// to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
+/// C36, D43: a timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about
+/// a century ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for
+/// the queue to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
 #[test]
 fn unbounded_timeout_waits_for_the_queue() {
     const YEAR: u64 = 365 * 24 * 60 * 60;

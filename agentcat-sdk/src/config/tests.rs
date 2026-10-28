@@ -270,9 +270,10 @@ fn map_env_has_a_home_only_when_given() {
     );
 }
 
-/// `ProcessEnv` reads the real environment: a variable that nobody sets is `None`, one that the
-/// test runner sets for every test process (`CARGO_PKG_NAME`, as cargo and nextest do) has its
-/// value, and the home directory is the user's, an absolute path (the log file's directory).
+/// D36, D44, C42: `ProcessEnv`, where `AGENTCAT_PROJECT_ID`, `AGENTCAT_ENABLED` and the home
+/// directory of `<home>/agentcat.log` come from, reads the real environment: a variable that nobody
+/// sets is `None`, one that the test runner sets for every test process (`CARGO_PKG_NAME`, as cargo
+/// and nextest do) has its value, and the home directory is the user's, an absolute path.
 #[test]
 fn process_env_reads_the_process() {
     assert_eq!(ProcessEnv.var("AGENTCAT_SDK_TEST_NEVER_SET"), None);

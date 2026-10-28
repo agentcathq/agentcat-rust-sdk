@@ -287,9 +287,9 @@ async fn forwards_every_method() {
     tracked.cancel().await.unwrap();
 }
 
-/// `accepted_subscription_filter`, which rmcp asks for a `subscriptions/listen` request, is the
-/// wrapped handler's own answer: the filter the [`Probe`] accepts, and none from a handler that
-/// keeps rmcp's default.
+/// C01, design §6.2 (every other method forwards unchanged): `accepted_subscription_filter`, which
+/// rmcp asks for a `subscriptions/listen` request, is the wrapped handler's own answer: the filter
+/// the [`Probe`] accepts, and none from a handler that keeps rmcp's default.
 #[test]
 fn accepted_subscription_filter_is_forwarded() {
     /// A handler with rmcp's default methods only.

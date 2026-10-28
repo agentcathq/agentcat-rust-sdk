@@ -1716,9 +1716,9 @@ async fn completed_call_is_recorded_once() {
     }
 }
 
-/// The fault path of the finish (`callWrap.ts:325-329`: a throw logs the warning and returns the
-/// customer's result without publishing): a discarded record goes to the sink neither as it is
-/// nor as cancelled by the guard's drop, and its log line does.
+/// C41, the guard's log-not-send contract (`RecordGuard::discard`): a discarded record goes to the
+/// sink neither as it is nor as cancelled by the guard's drop, and the log line it is given does.
+/// The line is the test's own; this does not cover the warning text that `finish` builds.
 #[tokio::test]
 async fn discarded_record_is_logged_not_sent() {
     let (agentcat, sink) = recording(Options::default());

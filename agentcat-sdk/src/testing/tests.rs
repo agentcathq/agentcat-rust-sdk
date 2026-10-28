@@ -42,8 +42,8 @@ fn recorded_names_the_flush_timeout_when_a_flush_timed_out() {
     assert_eq!(settled.to_string(), "recorded: []");
 }
 
-/// The listing names each recorded event by its type and its resource name (`-` without one),
-/// separated by a comma and a space.
+/// C43: the listing of the fake's failure messages names each recorded event by its type and its
+/// resource name (`-` without one), separated by a comma and a space.
 #[test]
 fn recorded_lists_each_event() {
     let call = Event {

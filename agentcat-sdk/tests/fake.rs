@@ -131,7 +131,7 @@ async fn failing_assert_tracked_panics_with_tool_name() {
     fake.assert_tracked("missing").await;
 }
 
-/// A failing `assert_custom_event_published` names the event it looked for and lists what was
+/// C43: a failing `assert_custom_event_published` names the event it looked for and lists what was
 /// recorded; a tool call with that resource name is not a custom event.
 #[tokio::test]
 #[should_panic(expected = "expected a custom event `echo`, recorded: [mcp:tools/call echo]")]
@@ -142,9 +142,9 @@ async fn failing_assert_custom_event_published_names_it() {
     fake.assert_custom_event_published("echo").await;
 }
 
-/// A failing assertion says when a handle did not finish delivering. The call's event waits for
-/// an `identify` hook that never settles; a shutdown 20 ms in, with a 50 ms timeout, abandons it
-/// while the assertion's flush waits, so that flush answers `false`.
+/// C43: a failing assertion says when a handle did not finish delivering. The call's event waits
+/// for an `identify` hook that never settles; a shutdown 20 ms in, with a 50 ms timeout, abandons
+/// it while the assertion's flush waits, so that flush answers `false`.
 #[tokio::test]
 #[should_panic(expected = "recorded: [] (a handle did not finish delivering within the 5 s flush")]
 async fn failing_assertion_notes_an_unfinished_delivery() {
