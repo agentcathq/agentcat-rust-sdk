@@ -27,8 +27,9 @@ from django.test import TestCase
 from apps.analytics.models.events import Event, ProcessResult, SqsMessage, process_event
 from apps.core.models import Organization, Project, User
 
-CAPTURES = [p for p in (os.environ.get("CAPTURE_FILES") or os.environ["CAPTURE_FILE"]).split(":") if p]
+CAPTURES = list(dict.fromkeys(p for p in (os.environ.get("CAPTURE_FILES") or os.environ["CAPTURE_FILE"]).split(":") if p))
 PUBLISH_PATH = "/v1/public/events/"
+ZERO_PUBLISH_SCENARIO = "tracing-off"  # the one scenario that expects 0 publishes
 
 
 def _is_local_host(host):
@@ -107,20 +108,27 @@ class TestIngestCapture(TestCase):
             with open(path, encoding="utf-8") as f:
                 requests = json.load(f)
             bodies = [r["body"] for r in requests if r["method"] == "POST" and r["path"] == PUBLISH_PATH]
-            if not bodies:
-                empty.append(os.path.basename(path))  # a scenario that expects 0 publishes (tracing-off)
+            # The captures hold no scenario field: it is the file name's part before the first dot.
+            name = os.path.basename(path)
+            if name.split(".", 1)[0] == ZERO_PUBLISH_SCENARIO:
+                self.assertEqual(len(bodies), 0, f"{name}: this scenario must publish nothing")
+                empty.append(name)
+            else:
+                self.assertGreater(len(bodies), 0, f"no publish bodies in {name}")
             sent.extend((path, i, b) for i, b in enumerate(bodies))
         self.assertGreater(len(sent), 0, "no publish bodies in any capture file")
-        for n, (path, i, body) in enumerate(sent):
+        replayed = []
+        for path, i, body in sent:
             body = dict(body)
             for k in ("project_id", "projectId"):
                 if k in body:
                     body[k] = self.project.id
-            sent[n] = (path, i, body)
+            replayed.append((path, i, body))
             msg = SqsMessage(body=json.dumps(body), id=f"m_{body['id']}", receipt_handle="h")
             label = f"{os.path.basename(path)} body {i}: {body.get('event_type')} {body.get('resource_name')}"
             self.assertEqual(process_event(msg), ProcessResult.SUCCESS, label)
         stored = Event.objects.filter(project_id=self.project.id)
+        sent = replayed
         self.assertEqual(stored.count(), len(sent))
         by_id = {e.id: e for e in stored}
         for path, i, body in sent:

@@ -66,8 +66,11 @@ Run from the repository root:
 node harness/src/matrix.mjs
 
 # 2 to 6. Replay the Rust tracked captures.
-harness/ingest/replay.sh harness/out/*.rust-*.raw.json
+harness/ingest/replay.sh harness/out/*.rust-20??-??-??-t.*.raw.json
 ```
+
+The glob matches exactly the Rust tracked captures of the run (label `rust-<lane>-t`: no
+untracked `-u` and no `-t-b` files): 104 files for 13 scenarios, 4 transports and 2 lanes.
 
 `replay.sh <capture.raw.json>...` takes one or more capture files. It resolves them to absolute
 paths and passes them to the test in `CAPTURE_FILES` (colon-separated; `CAPTURE_FILE` with one path
@@ -84,6 +87,7 @@ also after a failed step:
 
 Expected: a line `INGESTED <n> bodies OK from <m> files`, a line `EVENT TYPES {...}` and `1 passed`.
 The test fails on any body that is not `ProcessResult.SUCCESS` and names the file and the body index.
+Every file must hold a publish body, except the `tracing-off` files, which must hold none. The same path given twice counts once.
 `RESULTS.md` records the last full run.
 
 To replay one run of one scenario, pass its file: `harness/ingest/replay.sh harness/out/basic.ts.stdio.raw.json`.
