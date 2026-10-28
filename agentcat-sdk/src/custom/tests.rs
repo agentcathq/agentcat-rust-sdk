@@ -1,7 +1,7 @@
 //! `CustomEvent`: each setter stores its own field and no other (B-009), and the two
 //! `publish_custom_event` forms build TS's event (C11, C16, C47, K-03).
 use std::future::ready;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
 use agentcat_api::models::PublishEventRequest;
@@ -20,8 +20,10 @@ use crate::config::{HookError, Options};
 use crate::context::CallContext;
 use crate::delivery::{Delivery, DeliveryConfig};
 use crate::error::Error;
-use crate::event::{ClientIdentity, Event};
+use crate::event::assemble::EventJob;
+use crate::event::{CallRecord, ClientIdentity, Event};
 use crate::js;
+use crate::sink::Sink;
 use crate::test_support::queue::{self, CapturedLines, RecordingPublisher};
 use crate::test_support::rmcp::{Sample, connect};
 
@@ -561,6 +563,47 @@ fn queue_drop_line_comes_before_published_line() {
         lines.lines()[before..],
         [
             "Queue is shutting down, event dropped",
+            "Published custom event for session ses_1 with type 'agentcat:custom'"
+        ]
+    );
+}
+
+/// A sink that keeps its calls in order and has no `event_then_log` of its own.
+#[derive(Default)]
+struct OrderSink(Mutex<Vec<String>>);
+
+impl Sink for OrderSink {
+    fn log(&self, message: String) {
+        self.0.lock().unwrap().push(message);
+    }
+
+    fn record(&self, _record: CallRecord) {
+        self.0.lock().unwrap().push("record".to_owned());
+    }
+
+    fn event(&self, job: EventJob) {
+        let event_type = job.event.get("eventType").and_then(Value::as_str);
+        self.0
+            .lock()
+            .unwrap()
+            .push(format!("event {}", event_type.unwrap_or("-")));
+    }
+}
+
+/// TS's `publishCustomEvent` logs its `Published` line after the queue's `add` (`index.ts:444-450`):
+/// a sink without its own `event_then_log` takes the event, then the line, through the trait's
+/// default.
+#[test]
+fn default_event_then_log_hands_the_event_then_the_line() {
+    let sink = Arc::new(OrderSink::default());
+    let agentcat = AgentCat::with_sink("proj_handle", Options::default(), sink.clone());
+    agentcat
+        .publish_custom_event("ses_1", "proj", CustomEvent::new())
+        .expect("queued");
+    assert_eq!(
+        *sink.0.lock().unwrap(),
+        [
+            "event agentcat:custom",
             "Published custom event for session ses_1 with type 'agentcat:custom'"
         ]
     );

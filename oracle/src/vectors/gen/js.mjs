@@ -222,6 +222,9 @@ function isoCases() {
     "2024-02-29": Date.UTC(2024, 1, 29, 23, 59, 59, 999),
     "year-2000": Date.UTC(2000, 0, 1, 0, 0, 0, 1),
     "before-1970": -1,
+    // A whole second before the epoch, and a time more than a second before it with a fraction.
+    "before-1970-whole-second": -1000,
+    "before-1970-1500ms": -1500,
     "year-9999": Date.UTC(9999, 11, 31, 23, 59, 59, 999),
   };
   const cases = Object.entries(times).map(([label, ms]) => ({

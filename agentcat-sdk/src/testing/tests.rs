@@ -2,6 +2,7 @@
 use std::time::{Duration, Instant};
 
 use super::{FLUSH, Fake, Recorded};
+use crate::event::Event;
 
 /// C43: a fake that built no handle has nothing to flush and nothing recorded. `events` answers
 /// at once with no events, the record counts as settled, and `assert_nothing_tracked` passes.
@@ -39,4 +40,27 @@ fn recorded_names_the_flush_timeout_when_a_flush_timed_out() {
         settled: true,
     };
     assert_eq!(settled.to_string(), "recorded: []");
+}
+
+/// The listing names each recorded event by its type and its resource name (`-` without one),
+/// separated by a comma and a space.
+#[test]
+fn recorded_lists_each_event() {
+    let call = Event {
+        event_type: "mcp:tools/call".to_owned(),
+        resource_name: Some("echo".to_owned()),
+        ..Event::default()
+    };
+    let custom = Event {
+        event_type: "agentcat:custom".to_owned(),
+        ..Event::default()
+    };
+    let recorded = Recorded {
+        events: vec![call, custom],
+        settled: true,
+    };
+    assert_eq!(
+        recorded.to_string(),
+        "recorded: [mcp:tools/call echo, agentcat:custom -]"
+    );
 }

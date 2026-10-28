@@ -282,6 +282,18 @@ fn https_without_tls_feature_warns_once() {
     assert!(log.is_empty(), "{log:?}");
 }
 
+/// C44: a build with a TLS feature can reach an `https:` base URL, so it logs no warning for one,
+/// as for an `http:` one. Runs in the builds with a TLS feature, the default included.
+#[cfg(any(feature = "rustls", feature = "native-tls"))]
+#[test]
+fn https_with_tls_feature_does_not_warn() {
+    for base_url in ["https://api.example.test", "http://127.0.0.1:9"] {
+        let mut log = Vec::new();
+        let _ = ApiPublisher::new(base_url.to_owned(), &mut log);
+        assert!(log.is_empty(), "{base_url}: {log:?}");
+    }
+}
+
 /// Design §6.7: `new` builds no client. The first `prepare`, which the worker calls before an
 /// event's first attempt, builds it, and a client that builds logs nothing.
 #[test]

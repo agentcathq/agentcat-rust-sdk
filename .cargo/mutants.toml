@@ -1,5 +1,12 @@
 # cargo-mutants 27.1.0 configuration (C53). Every exclusion below gives its reason; the published crate
 # has no `mutants` dependency and no `#[mutants::skip]` attribute.
+#
+# Counts (a timed-out mutant counts as detected; the score is detected of viable mutants):
+# - Before (Task 14's nightly push run 40666991218, commit 93899e3): 1014 mutants: 780 caught, 48 missed,
+#   13 timed out, 173 unviable; 94.3 % detected ((780 + 13) / 841), 92.7 % caught.
+# - After (Task 15): the 10 equivalent mutants of `exclude_re` dropped and a test for each of the other 38,
+#   all 38 caught by `cargo mutants --iterate` on top of the run above: 1004 mutants: 818 caught, 0 missed,
+#   13 timed out, 173 unviable; 100 % detected (831 / 831), 98.4 % caught.
 
 # The nextest runner, as in the test jobs.
 test_tool = "nextest"
@@ -34,6 +41,39 @@ exclude_globs = [
   "agentcat-sdk/src/**/tests.rs",
 ]
 
-# Mutants dropped by name. Each entry needs a reason; there are none yet. Task 15 adds an entry only for a
-# mutant that no test can observe (an equivalent mutant).
-exclude_re = []
+# Mutants dropped by name: each one is equivalent (no test can observe it in this build), for the reason
+# above its entry. A pattern is matched against the name that `cargo mutants --list` prints
+# (`<file>:<line>:<col>: <change>`); a pattern names a line only where one function holds two mutants with
+# the same text.
+exclude_re = [
+  # `--all-features` turns a TLS feature on, so `tls_warning` returns `None` in this build whatever the URL.
+  # The warning of a build without one is pinned by `https_without_tls_feature_warns_once`, which runs in
+  # the `--no-default-features` test run.
+  'agentcat-sdk/src/delivery/http\.rs:\d+:\d+: replace tls_warning -> Option<String> with None$',
+  # The workspace turns neither `arbitrary_precision` nor `float_roundtrip` on (R22), so the probe of
+  # `json_features` finds no feature and returns an empty Vec in this build
+  # (`json_features_empty_in_this_build`).
+  # (A basic string: the pattern holds a `'`.)
+  "agentcat-sdk/src/delivery/worker\\.rs:\\d+:\\d+: replace json_features -> Vec<&'static str> with vec!\\[\\]$",
+  # `remainder << 32` has no bit in the low 32 bits and `u64::from(*word)` none above them, so `|` and `^`
+  # give the same value.
+  'agentcat-sdk/src/handles/ksuid\.rs:\d+:\d+: replace \| with \^ in base62$',
+  # The two checks of the canonical form only spare a parse: `str::parse::<u32>` rejects every key they
+  # let through by mistake. With `<=`, an 11-digit key overflows `u32`; with `||`, a key with a non-digit
+  # after its first digit is not a number.
+  'agentcat-sdk/src/js\.rs:\d+:\d+: replace < with <= in array_index$',
+  'agentcat-sdk/src/js\.rs:\d+:\d+: replace && with \|\| in array_index$',
+  # A key of the event with the same rank as the new key is the new key itself, which the early return
+  # handles, so no present key has an equal rank and `>=` finds the same place as `>`.
+  'agentcat-sdk/src/pipeline/mod\.rs:\d+:\d+: replace > with >= in set_field$',
+  # The `!value.is_null()` guards copy TS's `!= null` checks, but both sanitizers give `null` back
+  # unchanged, so sending a `null` `response` or `parameters` through them changes nothing.
+  'agentcat-sdk/src/pipeline/sanitize\.rs:\d+:\d+: replace match guard !value\.is_null\(\) with true in sanitize_event$',
+  # An array of exactly `MAX_STACK_FRAMES` (50) frames: its first 25 and its last 25 are the whole array,
+  # so cutting it gives it back unchanged. The line pins the array's comparison; the string's comparison
+  # below it in `limit_frames` changes the result (a string becomes an array) and stays mutated.
+  'agentcat-sdk/src/pipeline/truncate\.rs:230:48: replace > with >= in limit_frames$',
+  # A compile-time assertion that `Tracked<H>` is `Send + Sync + 'static`: the `const fn` runs only in a
+  # `const` item, so emptying its body changes no run-time behavior.
+  'agentcat-sdk/src/tracked\.rs:\d+:\d+: replace tracked with \(\)$',
+]

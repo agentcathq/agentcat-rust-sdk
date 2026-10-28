@@ -270,9 +270,18 @@ fn map_env_has_a_home_only_when_given() {
     );
 }
 
-/// `ProcessEnv` reads the real environment: a variable that nobody sets is `None`.
+/// `ProcessEnv` reads the real environment: a variable that nobody sets is `None`, one that the
+/// test runner sets for every test process (`CARGO_PKG_NAME`, as cargo and nextest do) has its
+/// value, and the home directory is the user's, an absolute path (the log file's directory).
 #[test]
 fn process_env_reads_the_process() {
     assert_eq!(ProcessEnv.var("AGENTCAT_SDK_TEST_NEVER_SET"), None);
-    let _home = ProcessEnv.home_dir();
+    assert_eq!(
+        ProcessEnv.var("CARGO_PKG_NAME").as_deref(),
+        Some(env!("CARGO_PKG_NAME"))
+    );
+    let home = ProcessEnv
+        .home_dir()
+        .expect("the test process has a home directory");
+    assert!(home.is_absolute(), "{}", home.display());
 }

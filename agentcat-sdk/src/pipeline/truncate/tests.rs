@@ -346,6 +346,36 @@ fn size_guard_cuts_long_strings_inside_an_array() {
     );
 }
 
+/// The last resort cuts a string whose reduction is exactly [`MIN_REDUCTION`](super::MIN_REDUCTION)
+/// units, as TS does: the cut of the long string leaves a budget of that many bytes, which the
+/// short string spends, and the event fits.
+#[test]
+fn size_guard_cuts_at_the_minimum_reduction() {
+    let event_with = |long: usize, short: usize| {
+        let event = json!({
+            "id": "evt_1",
+            "sessionId": "ses_1",
+            "eventType": "mcp:tools/call",
+            "timestamp": "2025-01-15T12:00:00.000Z",
+            "properties": {"long": "a".repeat(long), "short": "b".repeat(short)},
+        });
+        event.as_object().cloned().unwrap()
+    };
+    let short = 200;
+    let base = size_of(&event_with(0, 0));
+    // The excess plus the buffer is half the long string plus the minimum reduction.
+    let long =
+        2 * (super::MAX_EVENT_BYTES - super::BUFFER_BYTES + super::MIN_REDUCTION - base - short);
+    let event = event_with(long, short);
+    compare(&event);
+    let truncated = truncate_event(event).unwrap();
+    assert_eq!(
+        truncated["properties"]["short"],
+        format!("{}...", "b".repeat(short - super::MIN_REDUCTION))
+    );
+    assert!(size_of(&truncated) <= super::MAX_EVENT_BYTES);
+}
+
 /// The object at `key` of `map`, made an empty object first when it is absent or not an object.
 fn object_at<'a>(map: &'a mut Map<String, Value>, key: &str) -> &'a mut Map<String, Value> {
     let slot = map.entry(key).or_insert_with(|| json!({}));

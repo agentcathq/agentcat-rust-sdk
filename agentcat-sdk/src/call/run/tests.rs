@@ -23,6 +23,7 @@ use rmcp::service::{MaybeSendFuture, RequestContext, RoleClient, RunningService,
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 use serde_json::{Value, json};
 
+use super::RecordGuard;
 use crate::call::{error_data_error, report_missing, result_error};
 use crate::client::AgentCat;
 use crate::config::Options;
@@ -1713,6 +1714,27 @@ async fn completed_call_is_recorded_once() {
             "{name}"
         );
     }
+}
+
+/// The fault path of the finish (`callWrap.ts:325-329`: a throw logs the warning and returns the
+/// customer's result without publishing): a discarded record goes to the sink neither as it is
+/// nor as cancelled by the guard's drop, and its log line does.
+#[tokio::test]
+async fn discarded_record_is_logged_not_sent() {
+    let (agentcat, sink) = recording(Options::default());
+    let tracked = agentcat.track(Sample);
+    tracked
+        .call_tool(params("echo", json!({"msg": "hi"})), bare_context(None))
+        .await
+        .unwrap();
+    let record = only_record(&sink);
+    let line = "Warning: AgentCat post-handler processing failed for tool echo; returning the customer's result untouched - test".to_owned();
+    RecordGuard::new(record, sink.as_ref(), tokio::time::Instant::now()).discard(line.clone());
+    assert!(
+        sink.take_records().is_empty(),
+        "a discarded record is not sent"
+    );
+    assert_eq!(sink.logs().last(), Some(&line));
 }
 
 /// [`CallContext`] reads: `None` for an empty session.

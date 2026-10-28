@@ -287,6 +287,27 @@ async fn forwards_every_method() {
     tracked.cancel().await.unwrap();
 }
 
+/// `accepted_subscription_filter`, which rmcp asks for a `subscriptions/listen` request, is the
+/// wrapped handler's own answer: the filter the [`Probe`] accepts, and none from a handler that
+/// keeps rmcp's default.
+#[test]
+fn accepted_subscription_filter_is_forwarded() {
+    /// A handler with rmcp's default methods only.
+    struct Plain;
+    impl ServerHandler for Plain {}
+
+    let mut filter = SubscriptionFilter::new();
+    filter.tools_list_changed = Some(true);
+    filter.resource_subscriptions = Some(vec!["file:///greeting.txt".to_owned()]);
+    let tracked = track(Probe, "", Options::default());
+    assert_eq!(
+        tracked.accepted_subscription_filter(&filter),
+        Some(filter.clone())
+    );
+    let plain = track(Plain, "", Options::default());
+    assert_eq!(plain.accepted_subscription_filter(&filter), None);
+}
+
 #[test]
 fn tracked_debug_names_the_inner_type() {
     /// A handler without a `Debug` impl.

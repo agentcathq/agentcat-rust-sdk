@@ -16,6 +16,7 @@ use serde_json::{Map, Value, json};
 use super::{ToolCall, fire};
 use crate::client::AgentCat;
 use crate::config::{HookError, Options};
+use crate::constants::META_PROTOCOL_VERSION_KEY;
 use crate::event::CallRecord;
 use crate::handles::SessionSource;
 use crate::sink::Sink;
@@ -157,6 +158,27 @@ async fn tool_call_debug_hides_credentials() {
     }
 }
 
+/// C28 and the getters' docs: the snapshot gives the protocol version the request's `_meta` names
+/// and the `mcp-session-id` of a streamable HTTP request, each as sent.
+#[tokio::test(flavor = "current_thread")]
+async fn tool_call_reads_protocol_version_and_transport_session() {
+    let mut context = bare_context(None);
+    context
+        .meta
+        .insert(META_PROTOCOL_VERSION_KEY.to_owned(), json!("2025-11-25"));
+    let request = http::Request::builder()
+        .method("POST")
+        .uri("/mcp")
+        .header("host", "localhost:8080")
+        .header("mcp-session-id", "transport-session-1")
+        .body(())
+        .expect("valid parts");
+    context.extensions.insert(request.into_parts().0);
+    let call = ToolCall::new(&params("echo", json!({})), &context, None);
+    assert_eq!(call.protocol_version(), Some("2025-11-25"));
+    assert_eq!(call.transport_session_id(), Some("transport-session-1"));
+}
+
 #[tokio::test(flavor = "current_thread")]
 async fn hooks_fire_in_ts_order() {
     let log = Log::default();
@@ -222,6 +244,32 @@ async fn hooks_fire_before_the_tool_runs() {
     call(&client, "anything", json!({})).await;
     assert_eq!(labels(&log), ["identify", "eventTags", "tool"]);
     client.cancel().await.unwrap();
+}
+
+/// B-022 step 7: each hook set alone also makes its first poll before the tool runs, as TS calls
+/// every hook before the tool.
+#[tokio::test(flavor = "current_thread")]
+async fn each_hook_alone_fires_before_the_tool_runs() {
+    for label in [
+        "resolveSessionId",
+        "identify",
+        "eventTags",
+        "eventProperties",
+    ] {
+        let log = Log::default();
+        let options = Options::default();
+        let options = match label {
+            "resolveSessionId" => options.resolve_session_id(labelled(&log, label)),
+            "identify" => options.identify(labelled(&log, label)),
+            "eventTags" => options.event_tags(labelled(&log, label)),
+            _ => options.event_properties(labelled(&log, label)),
+        };
+        let agentcat = AgentCat::with_sink("", options, Arc::new(RecordingSink::default()));
+        let client = connect(agentcat.track(Recorder(Arc::clone(&log))), "c").await;
+        call(&client, "anything", json!({})).await;
+        assert_eq!(labels(&log), [label, "tool"], "{label}");
+        client.cancel().await.unwrap();
+    }
 }
 
 /// B-026: the call returns while all four hooks hang, in hook mode (`resolve_session_id` set), so

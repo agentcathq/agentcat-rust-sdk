@@ -23,8 +23,8 @@ use serde_json::json;
 use tokio::runtime::{Builder, Handle, Runtime};
 use tokio::sync::{Semaphore, oneshot};
 
-use super::queue::{Kind, Queue, Reply, Worker};
-use super::{Delivery, DeliveryConfig, Observer, Publisher};
+use super::queue::{Kind, Queue, Reply, Request, Worker};
+use super::{Delivery, DeliveryConfig, LineWriter, Observer, Publisher};
 use crate::client::AgentCat;
 use crate::config::{HookError, LogDestination, Options, UserIdentity};
 use crate::event::assemble::EventJob;
@@ -458,6 +458,27 @@ fn minted_session(request: &PublishEventRequest) -> Option<String> {
     request.session_id.clone().flatten()
 }
 
+/// TS's success line names the actor with `${event.identifyActorGivenId || "anonymous"}`
+/// (`eventQueue.ts:231`): an empty given ID, which JavaScript reads as false, is `anonymous`.
+#[test]
+fn success_line_names_an_empty_actor_anonymous() {
+    let publisher = RecordingPublisher::new();
+    let (delivery, lines) = bare_delivery(&publisher, fast());
+    let mut empty_actor = job(PROJECT, "empty-actor");
+    empty_actor
+        .event
+        .insert("identifyActorGivenId".to_owned(), json!(""));
+    delivery.event(empty_actor);
+    assert!(delivery.flush_blocking(WAIT));
+    let success: Vec<String> = lines
+        .lines()
+        .into_iter()
+        .filter(|line| line.starts_with(SUCCESS))
+        .collect();
+    assert_eq!(success.len(), 1, "{success:?}");
+    assert!(success[0].ends_with(" ms | anonymous"), "{}", success[0]);
+}
+
 // -------------------------------------------------------------------------------- the queue
 
 /// B-100: a push onto `max_pending` pending events drops the oldest pending one, not the one in
@@ -590,6 +611,27 @@ fn flush_waits_for_in_flight() {
     assert_eq!(answer.recv_timeout(WAIT), Ok(true));
     assert_eq!(publisher.finished(), 1);
     thread.join().unwrap();
+}
+
+/// A timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about a century
+/// ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for the queue
+/// to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
+#[test]
+fn unbounded_timeout_waits_for_the_queue() {
+    const YEAR: u64 = 365 * 24 * 60 * 60;
+    let before = Instant::now();
+    let request = Request::new(Kind::Flush, Duration::MAX, Reply::Nobody);
+    let ahead = request.deadline.duration_since(before);
+    assert!(
+        Duration::from_secs(99 * YEAR) <= ahead && ahead <= Duration::from_secs(101 * YEAR),
+        "{ahead:?}"
+    );
+
+    let publisher = RecordingPublisher::slow(ms(20));
+    let (agentcat, _lines) = handle(PROJECT, Options::default(), &publisher, None, fast());
+    push(&agentcat, job(PROJECT, "a"));
+    assert!(agentcat.flush_blocking(Duration::MAX));
+    assert_eq!(publisher.finished(), 1);
 }
 
 /// R06, C36, review focus 1: with an event held by a hook that hangs, `flush` returns `false` at
@@ -1091,6 +1133,54 @@ fn stop_awaits_aborted_tasks_before_answering() {
         dropped.load(Ordering::SeqCst),
         "the aborted attempt was dropped before the answer"
     );
+}
+
+/// C36: a worker thread that ends by a panic (here in its line writer) is gone, as `Exit` and
+/// `Shared::gone` say: the event it held is dropped and never posted, the `flush` that waited is
+/// answered `false` at once, not at its deadline, and a later request gets `false` at once (the
+/// module docs: both forms give `false` when the worker is gone).
+#[test]
+fn worker_that_panics_is_gone() {
+    let (entered, writing) = mpsc::channel();
+    let (release, released) = mpsc::channel::<()>();
+    let released = Mutex::new(released);
+    let writer: LineWriter = Arc::new(move |line: &str| {
+        let _ = entered.send(());
+        let _ = released.lock().unwrap().recv_timeout(WAIT);
+        panic!("the line writer fails on {line:?}");
+    });
+    let publisher = RecordingPublisher::new();
+    let delivery = Delivery::with_writer(
+        PROJECT.to_owned(),
+        &Options::default(),
+        Arc::new(publisher.clone()),
+        None,
+        fast(),
+        writer,
+    );
+    delivery.log("first line".to_owned());
+    writing
+        .recv_timeout(WAIT)
+        .expect("the worker writes the line");
+    // The worker is in the writer: the event and the flush wait in the queue.
+    delivery.event(job(PROJECT, "held"));
+    let (reply, answer) = mpsc::channel();
+    assert_eq!(
+        delivery.request(Kind::Flush, LONG, Reply::Blocking(reply)),
+        None
+    );
+    release.send(()).unwrap();
+
+    assert_eq!(answer.recv_timeout(WAIT), Ok(false));
+    assert_eq!(worker_of(&delivery), Worker::Gone);
+    assert!(
+        delivery.shared.lock().pending.is_empty(),
+        "the event is dropped"
+    );
+    let started = Instant::now();
+    assert!(!delivery.flush_blocking(LONG));
+    assert!(started.elapsed() < WAIT, "{:?}", started.elapsed());
+    assert!(publisher.attempts().is_empty());
 }
 
 // ------------------------------------------------------------------------------- last drop

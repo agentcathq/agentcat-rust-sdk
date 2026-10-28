@@ -424,3 +424,21 @@ fn own_entries_fast_path_keeps_order() {
     assert_eq!(keys, ["2", "10", "4294967294", "b", "a"]);
     assert_eq!(own_entries(&Map::new()).count(), 0);
 }
+
+/// `OwnEntries` is an `ExactSizeIterator`, so its `size_hint` is exact on both paths, before and
+/// while it is consumed: `len` is the number of entries left.
+#[test]
+fn own_entries_len_is_exact() {
+    for text in [r#"{"b":1,"a":2,"c":3}"#, r#"{"b":1,"10":2,"2":3}"#] {
+        let object: Value = serde_json::from_str(text).unwrap();
+        let mut entries = own_entries(object.as_object().unwrap());
+        for left in (0..=3).rev() {
+            assert_eq!(entries.size_hint(), (left, Some(left)), "{text}");
+            assert_eq!(entries.len(), left, "{text}");
+            if left > 0 {
+                assert!(entries.next().is_some(), "{text}");
+            }
+        }
+        assert_eq!(entries.next(), None, "{text}");
+    }
+}
