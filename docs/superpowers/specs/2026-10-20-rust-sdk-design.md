@@ -348,7 +348,7 @@ manifest point to these IDs.
 | RD-36 | Redaction hooks always have the event loop. | Without a tokio runtime the event is dropped with TS's stage line (C38). | Hooks run on the customer's runtime (C14). |
 | RD-37 | A 2xx answer with any JSON body is a success. | `agentcat-api` also needs `Content-Type: application/json`; otherwise the attempt fails and is retried. | The `agentcat-api` response model. |
 | RD-38 | The server form of `publishCustomEvent` takes the client fields from the host server's `getClientVersion()` (K-03). The TS v2 host seeds that value from the 2026-07-28 request envelope only on a per-request HTTP server instance; a 2026-07-28 stdio connection has no `initialize`, so its server-form custom events have no `clientName` or `clientVersion` (tool-call events there have them, from the envelope). | `CallContext::publish_custom_event` takes the call's client on every transport (C16, the B-085 ladder: the envelope's `clientInfo`, then `initialize`'s). | Owner ruling R28: the call's client is the better record. Found by the harness (`custom-events.json` and `redaction.json` on stdio at 2026-07-28). |
-| RD-39 | The server form of `publishCustomEvent`, called from a tool handler on the first call of a session, cannot be given the session: the handler cannot see the `ses_` ID that the SDK issues until the response. The custom event of that call has no session. | `CallContext::session_id()` returns the session the call resolves to, including the one issued on the first call, so the custom event carries it. | Status `pending` (owner batch R29). Found by the demo (Task 17): the TS custom event of the second session's `echo` has no session. |
+| RD-39 | The server form of `publishCustomEvent`, called from a tool handler on the first call of a session, cannot be given the session: the handler cannot see the `ses_` ID that the SDK issues until the response. The custom event of that call has no session. | `CallContext::session_id()` returns the session the call resolves to, including the one issued on the first call, so the custom event carries it. | Owner ruling R29: the event stays in the Actor's session. Found by the demo (Task 17): the TS custom event of the second session's `echo` has no session, and the dashboard puts it in an anonymous session of its own ([demo report](../../demo/2026-10-dashboard-demo.md)). |
 
 The builder adds a row for every new difference the harness finds. A forced difference gets its reason. An unforced
 difference gets a provisional ruling (marked `pending` in the register, and in `rulings.json` once a harness scenario reaches it), and work continues;
@@ -408,15 +408,16 @@ progress, entries may be `todo`; the final gate requires zero `todo`.
 
 Dashboard demo (R12): an example server tracked into project "Testing" on the prod API runs a fixed scenario; the
 same scenario runs through the TS SDK; the events are read back with the AgentCat MCP server tools
-(`search_sessions`, `get_session`, `get_events`) and compared. The demo report goes into the PR.
+(`search_sessions`, `get_session`, `get_events`) and compared. The demo report goes into the PR
+([`../../demo/2026-10-dashboard-demo.md`](../../demo/2026-10-dashboard-demo.md)).
 
 CI gates (C17). One aggregate `all-green` job collects them; making it a required check needs repository admin
-rights, so that setting is the owner's step. Every push to `rewrite` runs the gates below on Linux; the final PR and
-the nightly run add macOS and Windows and the full harness matrix. The mutation gate compares against the previous
-green commit of `rewrite` (not `main`, which is an empty root commit):
+rights, so that setting is the owner's step. Every push and pull request runs the gates below; the test job runs on
+Linux, macOS and Windows, and the other jobs, the full harness matrix included, run on Linux (C48). The mutation gate
+compares against the newest green commit that the pushed commit descends from (C53):
 
 1. `cargo fmt --check`; clippy `--all-targets --all-features -D warnings`; `cargo hack` clippy per feature.
-2. Tests (nextest) and doctests on stable and on Rust 1.88 (macOS and Windows on the PR and nightly).
+2. Tests (nextest) and doctests on stable (Linux, macOS and Windows) and on Rust 1.88 (Linux).
 3. `cargo minimal-versions check`; docs with `--cfg docsrs -D warnings`; `cargo deny check`.
 4. `cargo public-api` snapshot diff and an external-types allowlist (C08).
 5. `cargo package --list` / `cargo publish --dry-run`; all examples build; stdio and HTTP examples run against the
@@ -425,8 +426,8 @@ green commit of `rewrite` (not `main`, which is an empty root commit):
    schema validation.
 7. Parity manifest check.
 8. Line coverage ≥ 90 % overall and ≥ 95 % for the pure modules (`cargo llvm-cov`).
-9. `cargo mutants` on the diff against the previous green commit: zero missed mutants in core modules; any skip
-   needs a written reason.
+9. `cargo mutants` on the diff against the newest green ancestor (C53): zero missed mutants (a timeout counts as
+   detected); every exclusion needs a written reason.
 10. rmcp legs (R25): every rmcp 3.x minor at its latest patch, read from crates.io at run time, on every push and
     pull request, each with a test that proves which rmcp version compiled.
 11. Workflow hygiene: actions pinned by SHA, least-privilege `permissions:`.
@@ -436,7 +437,8 @@ the forwarded-method canary; the TS drift sweep (vectors, test list and harness 
 updates one issue on any difference; proptest at 10 000 cases; a build against the newest `agentcat-api`
 (warning only).
 
-Local only: the ingest replay (R14) and the dashboard demo (R12).
+Local only: the ingest replay (R14) and the dashboard demo's `--prod` run (R12); its `--mock` run is part of the
+gate (C58).
 
 ## 12. Suggested milestones
 

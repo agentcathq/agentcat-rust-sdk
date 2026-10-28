@@ -332,14 +332,14 @@ JSON line with the counts, the number of events compared and the number of tools
 - No publish holds `secret-token`, and exactly as many publishes hold `[REDACTED]` as the scenario has calls that
   send the secret.
 
-Two differences are known. RD-39 (pending, owner batch R29): the first call of a session cannot give the TS
-custom event its session, so the TS custom event of the `echo` in the second session has no session and the Rust
-one has it. The comparison expects exactly this, once: it fails if the difference disappears or moves. The
-dashboard therefore shows one TS custom event outside any session. The second difference is not an RD: the error
-of `fail`. The Rust SDK records `platform: "rust"` and the type `core::io::error::Error`; the TS SDK records
-`platform: "javascript"`, a stack and frames. The platform, stack and frames are the SDK's own and the comparison
-leaves them out. The type is only the example's choice: `ts-server.mjs` sets `error.name` to the Rust type text,
-because the TS SDK records `error.name` as the type.
+Two differences are known. RD-39 (owner ruling R29: the Rust event keeps its session): the first call of a session
+cannot give the TS custom event its session, so the TS custom event of the `echo` in the second session has no
+session and the Rust one has it. The comparison expects exactly this, once: it fails if the difference disappears or
+moves. The dashboard therefore shows the TS custom event in an anonymous session of its own. The second difference
+is not an RD: the error of `fail`. The Rust SDK records `platform: "rust"` and the type `core::io::error::Error`;
+the TS SDK records `platform: "javascript"`, a stack and frames. The platform, stack and frames are the SDK's own
+and the comparison leaves them out. The type is only the example's choice: `ts-server.mjs` sets `error.name` to the
+Rust type text, because the TS SDK records `error.name` as the type.
 
 `--prod --project <id>` is for maintainers only. It sends to the default AgentCat API, for the project
 "Testing" only, with no egress guard. Two independent guards refuse it, both before any server starts:

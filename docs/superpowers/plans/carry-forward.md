@@ -49,129 +49,106 @@ Plan 4 closed every item carried to it. Each item and the commit that closed it:
 
 ## Plan 5 (finish)
 
-- `agentcat-sdk/Cargo.toml` has no `homepage`; add it with the publish metadata.
-- `ci.yml`'s `cancel-in-progress: true` also cancels runs on `main`. Cancel only PR runs once the mutation gate
-  needs the previous green commit.
-- Windows: the clone-directory rename needs a retry under antivirus, and `shell: true` with an argument array
-  warns DEP0190 on Node 24 and later. From plan 2: `oracle/src/lock.mjs` throws on EPERM, EBUSY or EACCES in the
-  break path instead of retrying (lines 158-161), the write-then-rename of a fresh directory can fail again and
-  again under antivirus (113-114, 137, 163), and release gives up after one failed rename (206-210).
-- The msrv job runs nextest only. Add `cargo test --workspace --doc` on 1.88 before the README doctests land.
-- `harness/src/contract/extract-schema.mjs` does not compile its output with the validator's strict ajv
-  settings.
-- Ingest replay README: list `corepack pnpm install` and the first-run oracle build as prerequisites; reword the
-  HOME isolation claim (a new HOME hides only HOME-resolved configuration); say precisely that the DNS guard
-  covers call-time lookups through the socket module; note that `poetry install` runs with the real HOME.
-- After the final PR merges (R21): dispatch the nightly once, so the issue-filing path runs for real.
-- From plan 2, lock robustness (`oracle/src/lock.mjs`): the claim holder is identified by pid (compare tokens
-  instead); an unreadable claim after a power loss blocks breakers forever; nothing sweeps `.new-*`, `.stale-*` and
-  `.done-*` leftovers; only interleaving A has a deterministic test; `isStale` treats a changed host name as another
-  host (macOS).
-- From plan 2, vector tooling (`oracle/src/vectors/write.mjs`, `oracle/src/strict-json.mjs`): a hole in `cases`
-  gives a `TypeError`, not a named error; a cyclic value overflows the stack with no path; extra array properties
-  are dropped silently; `$repeat` outside `input` is not rejected; the generator path is hard-coded although
-  `genDir` is a parameter; `writeAll` writes files before it checks later sets; tests miss the Set and class
-  instance throws, the exact bits of `1e23` and `2**53+2`, and a mulberry32 known answer. A generator that sets a
-  `deviation` other than RD-24 must not reuse the JSON round trip of `gen/normalize.mjs` and `gen/sanitize.mjs`.
-- From plan 2, oracle tooling: `GIT_REDIRECTS` (`oracle/test/fetch.test.mjs`) duplicates `DROPPED_ENV`
-  (`fetch-ts.mjs`); the `oracle-log-*` temp directory leaks on SIGINT or SIGTERM (`logs.mjs`); no test covers an
-  absent trace or the trace calls of `run.mjs`, `list-tests.mjs` and `driver.mjs`; `captureLogs` resets the sink to
-  `null`, not to the earlier sink; `loadModule` bundles are not log-isolated (say so in its doc);
-  `server.test.mjs:63` reuses request id 5.
-- From plan 2, `xtask parity`: the `UnclaimedVectorCase` text does not say whether the entry is missing, `todo` or
-  another category; a key repeated inside one case's `ts_test` is accepted; no repository-level test covers the
-  link problems; the case names written in `covered-by-vector` reasons are not checked against the vector files.
-- From plan 2, Rust test support: `OracleError`'s `Debug` puts the stack on one line; oracle error messages hold
-  the whole reply line, with no cap; `bmp_string` has a small modulo bias on its any-BMP part.
-- From plan 2, vector and test coverage: no vector for a key above the `u32` range (`"4294967296"`); the case name
-  `stringify:float-one` holds an integer; `constants/tests.rs:288` uses `unwrap_or_default` on the case input and
-  reloads the vector file per lookup; the KSUID tests' prefix list differs from TS and 10 distinct event IDs are not
-  checked; the `from_parts` proptest almost never reaches the out-of-range margins; `gen/handles.mjs` holds raw
-  invisible characters (use `\uXXXX`); an exhaustive `toLowerCase` vector would pin the sentinel equivalence across
-  ICU versions; an infallible KSUID encoder would remove an unreachable `Option` branch in `derive_session_id`; the
-  tokens divisor test does not assert 3.5; the tags proptest rarely reaches the 50-tag cap or the 200-unit limit
-  with astral characters; the normalize RD-24 check derives its expected value from `normalize` and
-  `test:same-object-twice` needs a comment; truncation has no RD-24 case and no astral case in the last-resort
-  cut, its tests repeat the `"[MaxProperties ~]"` literal, and two `expect` messages in `check_rd27` lack the case
-  name; the sanitize proptest needs a comment on the inputs it leaves out, and `ts_event` does not enforce that it
-  never makes a `toString` or `__proto__` key; `sanitize_parameters` also walks `structuredContent` (rename);
-  redaction has no fixed case for a `""` key inside an array element, and its tests type the hook-field and
-  restored-field lists again instead of importing them.
-- Owner ruling R26 (2026-10-22): write the Rust pages for docs.agentcat.com. The site is Mintlify, in
-  `agentcathq/agentcat-ui` under `apps/docs`. Add a Rust tab next to TypeScript, Python and Go in `quickstart.mdx`
-  and in every `sdk/*.mdx` page that shows code (custom events, debug mode, tags and properties, identifying
-  users, missing tools, stateless servers, tool-call context). Open it as a pull request to that repository; the
-  owner approves it at that time.
+Plan 5 closed every item carried to it, except the two that stay open by design: the nightly dispatch after the
+merge (an owner step in the PR) and the egress-guard watch item (second pass). Each item and the commit that
+closed it:
 
-- From plan 3: document that a tracked server needs a tokio runtime with the time driver (C32); that rmcp's
-  `local` feature is not supported (C27); that Cargo feature unification can turn on serde_json's
-  `arbitrary_precision` or `float_roundtrip` in a customer build (number text and RD-23 change with it); and that
-  axum's `nest_service` strips the path prefix from `requestInfo.url`.
-- From plan 3 (watch item): the egress guard does not cover worker threads, native addons or `dns.resolve*`.
-  Revisit if TS main moves test work to worker threads.
-- From plan 3: the harness reference server's `cfg(not(unix))` branch (`harness/rust-server/src/main.rs`) has been
-  built only on Linux; the final PR's macOS and Windows runs (C17) build it.
-- From the plan 3 final review: document (or cap) the registry (C19). It is per handle and handler type, keyed by
-  tool name and never pruned, so it grows with per-tenant tool names; and on a server without `get_tool`, one
-  session's listing sets the strip set of another session's calls.
-- From the plan 3 final review: the CI `rmcp (<version>)` legs pin `rmcp-macros` to the exact rmcp version, so an
-  rmcp patch without a matching `rmcp-macros` patch fails its leg (it fails closed). The remedy: take the highest
-  `rmcp-macros` of the same minor.
+| Item | Closed by |
+|---|---|
+| `homepage` in the publish metadata | `122d0a5` |
+| `cancel-in-progress` only for pull-request runs | `dbe456d` (C48), `037e731` (a concurrency group per pushed commit) |
+| Windows: clone rename retry, DEP0190, the `lock.mjs` break path, write-then-rename, release rename | `dbe456d`, `2bff859`, `037e731` |
+| Nightly Windows failure: the parallel `bundle.mjs` rename race (run 40495080931) | `dbe456d`, `037e731` |
+| The msrv job runs the doctests | `122d0a5` |
+| `extract-schema.mjs` strict ajv compile | `8fa455a` |
+| Ingest replay README wording and prerequisites | `c2fa434` |
+| Dispatch the nightly once after the merge (R21) | Open: an owner step after the merge, listed in the PR |
+| `lock.mjs` robustness (token, unreadable claim, sweep, interleavings, host name) | `dbe456d`, `2bff859`, `037e731` |
+| Vector tooling (`write.mjs`, `strict-json.mjs`, the generator rule) | `8fa455a` |
+| Oracle tooling (`GIT_REDIRECTS`, temp directory, traces, `captureLogs`, `loadModule` doc, request ID) | `8fa455a` |
+| `xtask parity` (unclaimed text, repeated key, repository test, case names) | `ec38289` |
+| Rust test support (`OracleError` `Debug`, message cap, `bmp_string` bias) | `d71246c` |
+| Plan 2 vector and test coverage list | `d71246c` |
+| R26 docs.agentcat.com pages | agentcat-ui draft PR #265 (`7429ed0`; draft until the crates.io release, C57) |
+| Plan 3 docs: time driver, `local`, feature unification, `nest_service` | `122d0a5` (the crate guide's known limits) |
+| Egress guard and worker threads (watch item) | Open: no TS change requires it; moved to the second pass |
+| `cfg(not(unix))` reference server built on macOS and Windows | `dbe456d` (C48 builds it on each system) |
+| Registry growth and the cross-session strip set (C19) | `122d0a5` (documented) |
+| `rmcp-macros` pin of the rmcp legs | `dbe456d` (the highest `rmcp-macros` of the same minor) |
+| Lifecycle hardening (redaction budget, edge cases, `stop` test, `Queue::close`) | `3afd086`, `9086ec4` (C50: no budget, documented) |
+| `Event` constructor | `3afd086` (C49) |
+| Oracle child stderr leak | `d71246c` |
+| Docs: a hook that holds an `AgentCat` clone, `with_default` on another thread | `3afd086` |
+| Plan 4 test gaps | `e353183` |
+| Plan 4 code items (config split, `fn object`, duplicates, copies, clones) | `00c504a` (speed and allocation benchmarks: second pass) |
+| Plan 4 parity mapping (hanging hooks, rebuild-on-demand, re-resolve per request) | `ec38289` |
+| Plan 4 oracle generators (`queue.mjs`, `bundle.mjs` doc) | `8fa455a` |
+| Plan 4 harness list | `b029b63`, `8a05578` |
+| serde_json floor probes at 1.0.127 | `e353183` |
+| CI with Windows and macOS before the PR | `dbe456d` (every push runs on three systems) |
+| Fix-wave residuals (`redact_event` name, `testing.rs` sentences, `delivery.rs:24`) | `00c504a` |
 
-- From the plan 4 final review (lifecycle hardening, one task): a redaction hook has no time budget, so five hung
-  `redact_event` or `redact_sensitive_information` hooks stop delivery for that handle (TS parity); document it on
-  both options, or add a budget that drops the event (never publishes it unredacted) with a log line. Pin the
-  lifecycle edge cases with tests and doc lines: `flush` after a `shutdown` that timed out answers `true`; a
-  cancelled async `flush` or `shutdown` stays in the worker's waiting list until the worker is idle; on a handle
-  whose worker never started, the C12 "shutting down" line is dropped (`delivery/queue.rs`, `takes_lines`); `shutdown`
-  twice; `flush` or `shutdown` before the first event. Add a deterministic test that `stop` awaits the aborted tasks
-  before it answers (`worker.rs`), and a `Queue::close` method so `Delivery::drop` stops reaching into the queue
-  state (`delivery.rs`).
-- From the plan 4 final review: a customer cannot build an `Event` to unit-test a `redact_event` closure (it is
-  `#[non_exhaustive]` with no constructor); add `Event::default()` or a `test-util` constructor.
-- From the plan 4 final review: the `node` oracle child of the Rust tests (`test_support/oracle.rs`) inherits the
-  test's stderr and is never killed or awaited, the likely source of an occasional nextest "leaky" test. Pipe its
-  stderr and relay it, or kill it from a guard.
-- From the plan 4 final review: document that a hook closure that holds an `AgentCat` clone makes a reference
-  cycle, so the handle never drops and the last-drop drain never runs; and that the worker's `tracing` events do
-  not reach a subscriber set with `with_default` on another thread.
-- From plan 4 (tests): `from_ts` has no test for wrong-typed values (non-string tag values, a fractional or negative
-  duration, tokens above `u32::MAX`, `null`, an unparsable timestamp); `logging/tests.rs` `no_home_is_silent`
-  asserts nothing, `temp_home` never removes its directories, and the "caches the prefix" parity entry maps to a
-  test that does not check caching; no test of the event-ID failure line (`process.rs`, needs a seam); no unit test
-  of the real `Transport::process` path; no single test runs a failed-build publisher through the worker; no test of
-  `Fake::events()` with zero handles, a failing `assert_tracked`, or an empty project on telemetry-only events; no
-  direct proptest of `byte_size(event) == js::stringify(event).len()`; `queue_drop_line_comes_before_published_line`
-  polls with a bounded sleep; the `Echo` tool of `tests/fake.rs` has no await, so only the hook phase of the
-  concurrency test overlaps (TS also delays the tool).
-- From plan 4 (code): `config.rs` is about 560 lines (the environment lookup can move to `config/env.rs`); the test
-  helper `fn object` is defined in six test files; `publish_string` and `publish_server` repeat a ten-field
-  destructure and the empty-project check; the untraced and degraded paths repeat the intercept branch
-  (`call/run.rs`); the collect pass copies the untruncated event about three times (`process.rs`);
-  `normalize_fields` clones the event once per depth and `own_entries` scans keys twice on its slow path, and no
-  speed or allocation measurement exists.
-- From plan 4 (parity mapping): `manifest.toml` "hanging resolveSessionId/eventTags/eventProperties do not delay the
-  tool call" maps to a test that hangs only `identify` and `eventTags`; the three `rebuild-on-demand` keys cite
-  `harness:pagination`, where RD-12 rules the rebuild; the three identity "re-resolve per request" keys are `todo`.
-  Plan 5 brings `todo` to zero.
-- From plan 4 (oracle generators): `queue.mjs` says its event input is built as `callWrap` builds it, but its error
-  is `{message, platform}` and it skips the protocol tags; it advances the mock clock once after one `setImmediate`
-  and `recorder.settled()` has no watchdog; the generator tests do not check family content; `bundle.mjs` still says
-  "Imports the pure modules".
-- From plan 4 (harness): the stdio transport's SIGKILL is not detected (C46 says any server; Rust stdio is caught
-  only through the missing drained line); `exitDeadline` in `driver.mjs` covers both the client close and the
-  SIGTERM wait, so its message overstates the server's time; no test of an HTTP server that exits cleanly without
-  the drained line, and the drained and environment tests do not run on the 2026-07-28 lane; rust-against-rust A/A
-  runs print informational `EVENT UNUSED RULING` lines; `loadRulings` accepts pin keys in a delta rulings file
-  (refuse them with exit 2); `callCanaryChange` compares truncated summary text; no unit test runs the reference
-  server's `redactEvent` hook, and no scenario uses `throws`; two README lines (the `diff.mjs` wrapping, "falls back
-  to the `duration`").
-- From plan 4: the serde_json feature self-check's float probes were proven on serde_json 1.0.154 only; prove them
-  at the floor (1.0.127).
-- From the plan 4 final review: plans 3 and 4 were verified on Linux only, because GitHub Actions has refused to
-  start jobs since `b78ca55` (billing). Before the PR, run the full CI once, with the Windows and macOS test jobs
-  (a Windows-only test panic slipped past the Linux gate in plan 4).
-- From the plan 4 fix-wave re-review: `event/assemble.rs` has a private `redact_event` that only prepares `Debug`
-  output (rename it); `testing.rs` says that after the `Fake`'s flushes "the drop has nothing left to wait for",
-  which is false after a flush that timed out, and names only `AgentCat::new` as a call that sets the log
-  destination (`AgentCat::from_env` does too); `delivery.rs:24` is a doc line of 101 columns.
+## Second pass
+
+The first pass ends with plan 5. These items are left for the second pass (R04: the exporters, remote
+diagnostics and the crates.io release). The plan 5 reviews and the final review found the minors; the final
+review sorted them. Line numbers are as of `7cd430f` and can drift.
+
+Scope of the second pass, from the decisions:
+
+- The exporters (OTLP, Datadog, Sentry, PostHog) and remote SDK diagnostics (R04, C05, D07, D18, D45, D48-D50, P5).
+- The crates.io release with trusted publishing and release-plz (R04, D67, design §8 row 43). The release names
+  the version in `CHANGELOG.md` (C56) and takes the agentcat-ui draft PR #265 out of draft (C57).
+- Speed and allocation measurements of the event pipeline (from plan 4).
+- Watch item: the egress guard does not cover worker threads, native addons or `dns.resolve*`. Revisit if TS main
+  moves test work to worker threads (from plan 3).
+
+Harness, oracle and CI:
+
+- `tryTake` can wait up to 6.35 s on Windows; `bundle.test.mjs` uses a wall-clock barrier (use a ready/go
+  handshake); an `rmSync` failure leaves `.tmp` files in the cache; a failed release keeps the lock for
+  the owner's lifetime.
+- `refused_connection_is_retried` passes by its 300 ms timeout on Windows: rename it or split it by system.
+- The oracle child's stderr relay stops at the first non-UTF-8 line, so the child can block on a full pipe (use a
+  lossy `read_until` loop).
+- Duplicated test helpers (`proto_renamed`, `dropKey`).
+- The hard-coded count of 57 needs a comment on why it is pinned; `wireForm` turns non-plain objects into
+  `{}` (guard on a plain-object check); a deviation rule found by a regex scan (a behavioral test is sturdier);
+  `captureLogs` interleaves overlapping captures (document it); weak family-content checks in
+  `queue.test`; the `settled()` loop spins after the watchdog rejects (add a hung-case test); the
+  `writeAll` test reads the committed `queue.json`.
+- The harness README names A/A as a user of the TS rulings; the close-deadline test can take 2 s;
+  the sibling of the v2 auto-probe is not watched (name the limit in a comment); on the 2025 lane, `http` and
+  `http-sse` share one path (say so in the README); the raw 2026 POST headers are not tied to the driver
+ .
+- A dying example child waits for the 60 s timeout; the session note is copied into four examples and
+  nothing checks its text.
+- The mutation gate: the diff of a merge commit, duplicate rmcp legs, shards on every push, the upload on a
+  timeout (the base part was fixed before the merge).
+- `ts-server.mjs` hard-codes `core::io::error::Error`: add a comment.
+- `check.sh`'s preflight skips the stable toolchain.
+- The `docs` and `minimal-versions` CI jobs use a floating nightly (final review, declined: pre-existing).
+- `scripts/rmcp-versions.mjs:7` names `agentcat-ai/agentcat-rust-sdk` in its User-Agent (final review, declined:
+  pre-existing).
+
+Parity manifest and `xtask`:
+
+- `manifest.toml` reason wording at line 1609, the inconsistency of lines 5742 and 1790, and a header
+  note that harness keys name no transport.
+- `parity.rs` doc and text nits, and a lenient reason check that lets a wrong reason pass.
+- `xtask public_api` nits.
+
+SDK docs and tests:
+
+- No `Worker::Starting` row in the worker tests; "deterministic both ways" overstates; the phase-1 doc
+  says the worker "stops once idle".
+- An unrecorded doc line, and an unused `PartialEq`/`Eq` derive; the `config/env.rs` doc omits `home_dir`
+ .
+- `js.rs:97` is 102 columns; comment lines over 100 columns; `lib.rs:326` wrap, array-index keys, and
+  `AgentCat` written as code.
+- `bmp_string`'s inflation is not documented; the tags proptest reaches the 50-tag cap only by chance (add a
+  fixed case at 50 tags).
+- The floor-probe proof is not recorded.
+- A test doc's analogy is wrong, and "and type" is not exercised.
+- The network-audit instruction and the "m files" wording of the ingest README.
+- The docs-site tag-key rule omits `$` (agentcat-ui).
