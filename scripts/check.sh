@@ -98,11 +98,13 @@ cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(
 cargo run -q -p xtask -- coverage target/coverage.json
 
 # mutants (C53): no surviving mutant in the lines that differ from origin/rewrite (scripts/mutants-base.sh). The
-# diff holds the working tree, so uncommitted changes count. An empty diff, or one with no mutable SDK source,
+# diff compares the working tree with the merge base, so uncommitted changes to tracked files and to files
+# staged with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
+# (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source,
 # finds no mutant and passes. CI runs the same gate against the last green commit of the branch.
 mkdir -p target
 git diff "$(git merge-base "$(scripts/mutants-base.sh)" HEAD)" > target/mutants.diff
-cargo mutants --in-diff target/mutants.diff
+scripts/mutants-run.sh --in-diff target/mutants.diff
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features

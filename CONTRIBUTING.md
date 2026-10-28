@@ -54,12 +54,13 @@ response mode, the default of `rmcp`). Run it with `node harness/src/matrix.mjs`
 `harness/README.md` describes the harness.
 
 The mutation check runs `cargo mutants --in-diff` (cargo-mutants 27.1.0) on the lines that differ from
-`origin/rewrite`, including uncommitted changes. A mutant is a small change to the SDK source, such as
-`>` to `>=`. A mutant that the tests do not catch is missed, and one missed mutant fails the check. CI
+`origin/rewrite`, including uncommitted changes to tracked or staged files. A mutant is a small change to the SDK source, such as
+`>` to `>=`. A mutant that the tests do not catch is missed, and one missed mutant fails the check. A mutant that
+times out counts as detected. CI
 uses the diff since the last commit of the same branch with a green CI run. The nightly run mutates the
-whole crate in 8 shards and fails below 90 % caught. The settings are in `.cargo/mutants.toml`. To run it
+whole crate in 8 shards and fails below 90 % detected (caught or timed out). The settings are in `.cargo/mutants.toml`. To run it
 by hand, run `scripts/mutants-base.sh`, then `git diff <base> > target/mutants.diff`, then
-`cargo mutants --in-diff target/mutants.diff`. Read `mutants.out/missed.txt` for the missed mutants.
+`scripts/mutants-run.sh --in-diff target/mutants.diff`. Read `mutants.out/missed.txt` for the missed mutants.
 
 For a shorter loop, run one part, for example `cargo test`, `cargo nextest run --workspace` or
 `corepack pnpm --filter harness test`.

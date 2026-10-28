@@ -290,12 +290,7 @@ jobs:
       - name: Mutants of shard ${{ matrix.shard }} of 8
         shell: bash
         run: |
-          code=0
-          cargo mutants --shard "${{ matrix.shard }}/8" || code=$?
-          case "$code" in
-            0 | 2 | 3) ;;
-            *) echo "cargo mutants exited $code"; exit "$code" ;;
-          esac
+          MUTANTS_OK_CODES="0 2 3" scripts/mutants-run.sh --shard "${{ matrix.shard }}/8"
       - if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -303,8 +298,8 @@ jobs:
           path: mutants.out
           retention-days: 14
 
-  # Merges the shards' outcomes.json and fails below 90 % caught of the viable mutants. Viable: not
-  # unviable (the mutant builds). A timeout counts as viable and not as caught.
+  # Merges the shards' outcomes.json and fails below 90 % detected of the viable mutants. Detected: caught
+  # or timed out (a timeout counts as detected, C53 ruling). Viable: not unviable (the mutant builds).
   mutants-score:
     needs: mutants-full
     if: always()
@@ -330,10 +325,10 @@ jobs:
           jq -s '{caught: (map(.caught) | add), missed: (map(.missed) | add), timeout: (map(.timeout) | add), unviable: (map(.unviable) | add)}' \
             shards/mutants-shard-*/outcomes.json > score.json
           jq -r '. as $s | ($s.caught + $s.missed + $s.timeout) as $viable
-            | (if $viable == 0 then 100 else ($s.caught * 1000 / $viable | floor) / 10 end) as $pct
-            | "Mutation score: \($s.caught) caught, \($s.missed) missed, \($s.timeout) timeout, \($s.unviable) unviable; \($pct) % caught of \($viable) viable (floor 90 %)."' \
+            | (if $viable == 0 then 100 else (($s.caught + $s.timeout) * 1000 / $viable | floor) / 10 end) as $pct
+            | "Mutation score: \($s.caught) caught, \($s.missed) missed, \($s.timeout) timeout, \($s.unviable) unviable; \($pct) % detected (caught or timeout) of \($viable) viable (floor 90 %)."' \
             score.json | tee -a "$GITHUB_STEP_SUMMARY"
-          jq -e '(.caught + .missed + .timeout) as $v | $v == 0 or (.caught * 100 / $v >= 90)' score.json > /dev/null
+          jq -e '(.caught + .missed + .timeout) as $v | $v == 0 or ((.caught + .timeout) * 100 / $v >= 90)' score.json > /dev/null
 
   # The SDK tests and the rmcp canary against rmcp's git `main`, through a [patch.crates-io] added at run
   # time (the repository is not changed). A failure means rmcp main changed; it feeds no other job.

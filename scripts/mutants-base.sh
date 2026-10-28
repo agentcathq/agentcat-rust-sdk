@@ -31,9 +31,14 @@ if [ "${GITHUB_ACTIONS:-}" = true ]; then
     branch="${GITHUB_REF_NAME:?GITHUB_REF_NAME is not set}"
   fi
   # Newest first. The current run is not a success yet, but a re-run of an older attempt can be listed: skip it.
-  sha="$(gh api "repos/${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}/actions/workflows/ci.yml/runs" \
+  # A gh failure (rate limit, 403, outage) stops the script: the parent-commit fallback is only for a branch
+  # with no green run (an empty answer), never for an error.
+  if ! sha="$(gh api "repos/${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is not set}/actions/workflows/ci.yml/runs" \
     -X GET -f branch="$branch" -f status=success -f per_page=30 \
-    --jq "first(.workflow_runs[] | select(.id != ${GITHUB_RUN_ID:-0}) | .head_sha) // empty")" || sha=""
+    --jq "first(.workflow_runs[] | select(.id != ${GITHUB_RUN_ID:-0}) | .head_sha) // empty")"; then
+    echo "mutants-base: the gh api call failed; stopping, because the gate cannot tell whether the branch has a green run" >&2
+    exit 1
+  fi
   if [ -z "$sha" ]; then
     echo "mutants-base: no successful ci.yml run on branch $branch; using the parent commit" >&2
     parent
