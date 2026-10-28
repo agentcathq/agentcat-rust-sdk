@@ -123,10 +123,13 @@ const RESOURCE_PATH = "$.events[0].body.resource_name";
 
 const MINT_TS = 'add {"type":"text","text":"[session_id issued — see this tool\'s session_id parameter description]\\nsession_id: <ses#1>\\nT...';
 const MINT_RUST = MINT_TS.replace("[session_id issued", "[session_id lssued");
-const callCaught = (transport, paths = [MINT_PATH]) =>
+// The entries of a matrix run carry the whole text beside the clipped one (delta.mjs compareDeltas).
+const MINT_TS_FULL = `${MINT_TS.slice(0, -3)}ail of the mint-back text, past the clip"}`;
+const MINT_RUST_FULL = MINT_TS_FULL.replace("[session_id issued", "[session_id lssued");
+const callCaught = (transport, paths = [MINT_PATH], extra = {}) =>
   combo(transport, {
     delta: { total: paths.length, ruled: 0, unexpected: paths.length },
-    differences: paths.map((path) => ({ path, ts: MINT_TS, rust: MINT_RUST, ruledBy: [] })),
+    differences: paths.map((path) => ({ path, ts: MINT_TS, rust: MINT_RUST, tsText: MINT_TS_FULL, rustText: MINT_RUST_FULL, ruledBy: [], ...extra })),
   });
 const eventCaught = (transport, paths = [RESOURCE_PATH]) =>
   combo(transport, {
@@ -157,6 +160,17 @@ test("caught-call: a difference elsewhere, an event difference, no unruled diffe
     const res = await check(t, "caught-call", doc);
     assert.equal(res.code, 1, res.stdout + res.stderr);
     assert.match(res.stderr, why);
+  }
+});
+
+test("caught-call: compares the whole text, so a change past the clipped summary fails", async (t) => {
+  // The clipped summaries look like the canary's change alone; the full text has a second change in its tail.
+  const tail = callCaught("stdio", [MINT_PATH], { rustText: MINT_RUST_FULL.replace("past the clip", "past the clipped part") });
+  const noText = callCaught("http", [MINT_PATH], { tsText: undefined, rustText: undefined });
+  for (const doc of [[tail], [noText]]) {
+    const res = await check(t, "caught-call", doc);
+    assert.equal(res.code, 1, res.stdout + res.stderr);
+    assert.match(res.stderr, /: not the call canary's change at \$\.delta\.transcript\[2\]\.result\.content\[0\]/);
   }
 });
 

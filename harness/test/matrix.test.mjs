@@ -155,6 +155,13 @@ test("A/A of ts-v2 on basic, stdio, 2025-11-25 has one combination and no delta 
   assert.match(res.stdout, /^ok .*basic.*stdio.*2025-11-25/m);
 });
 
+test("a Rust A/A run skips the TS-versus-Rust rulings: it prints no ruling line at all", { timeout: 300_000 }, async () => {
+  const res = await matrix(["--servers", "rust,rust", "--scenarios", "basic", "--transports", "stdio", "--lanes", "2025-11-25"]);
+  assert.equal(res.code, 0, res.stdout + res.stderr);
+  assert.doesNotMatch(res.stdout, /RULING/);
+  assert.doesNotMatch(res.stdout, /^EVENT /m);
+});
+
 // ---------------------------------------------------------------------------
 // Task 12: the event comparison.
 // ---------------------------------------------------------------------------

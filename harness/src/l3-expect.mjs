@@ -39,9 +39,13 @@ export const CALL_CANARY_PATH = /^\$\.delta\.transcript\[\d+\]\.result(?:\.conte
 const MINT_BACK = "[session_id issued";
 const CHANGED = "[session_id lssued";
 
-/** Whether delta difference `d` shows the call canary's change alone: same text but for the mint-back start. */
+/**
+ * Whether delta difference `d` shows the call canary's change alone: the same whole text but for the
+ * mint-back start. It compares `tsText` and `rustText`, which hold every value whole; `ts` and `rust` are
+ * clipped for the report and would hide a second change in the tail.
+ */
 const callCanaryChange = (d) =>
-  typeof d.ts === "string" && d.ts.includes(MINT_BACK) && d.rust === d.ts.replace(MINT_BACK, CHANGED);
+  typeof d.tsText === "string" && d.tsText.includes(MINT_BACK) && d.rustText === d.tsText.replace(MINT_BACK, CHANGED);
 
 /** Where the event canary's differences sit: the resource name of an event. */
 export const EVENT_CANARY_PATH = /^\$\.events\[\d+\]\.body\.resource_name$/;

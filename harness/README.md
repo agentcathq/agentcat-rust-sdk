@@ -119,9 +119,12 @@ rulings (these start with `EVENT `).
 Rulings: `rulings.json` holds the delta rulings for Rust against TS (`delta.mjs`, `--rulings`), and
 `rulings-events.json` the event rulings (`--event-rulings`). When both servers are TS, the defaults are
 `rulings-ts.json` and `rulings-events-ts.json` (A/A runs and the nightly drift sweep, so a Rust ruling never
-counts as unused there). Both kinds take the same scope keys (`scenario`, `transports`, `lanes`) and the
+counts as unused there). An A/A run (two equal server names) has no default rulings at all: they are about
+TS against Rust, so it prints no `UNUSED RULING` line; a file named with `--rulings` or `--event-rulings`
+still applies. Both kinds take the same scope keys (`scenario`, `transports`, `lanes`) and the
 same checks; the whole matrix fails on an unused ruling of either kind. An event ruling can also pin the
-values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot.
+values it allows (`ts`, `rust`, `rustKeys`, see Rulings); a delta ruling cannot, and a delta rulings file
+with one of those keys exits 2.
 
 ### The L3 gate
 
@@ -217,10 +220,13 @@ development machine; the A/A and canary runs about 12 s each.
   1. waits until the mock holds at least `expectPublishes` publish requests (POST
      `/v1/public/events/`) and no request of any kind arrived for `quietMs`, or until
      `settleTimeoutMs` passes;
-  2. closes the clients and waits, up to `settleTimeoutMs`, for the servers to exit: a stdio server
-     must exit when its stdin closes (the stdio client transport sends SIGTERM after 2 s, then
-     SIGKILL); an HTTP server gets SIGTERM, then SIGKILL at the limit, and a server that needs the
-     SIGKILL fails the run (exit 1, with or without `--expect-drained`);
+  2. closes the clients and waits, up to `settleTimeoutMs`, for them to close (a client close that
+     takes longer fails the run: `the client close did not finish within <n> ms`), then gives an HTTP
+     server SIGTERM and waits up to `settleTimeoutMs` more (`the server did not exit within <n> ms of
+     SIGTERM; killing it`, then SIGKILL). A stdio server must exit when its stdin closes (the stdio
+     client transport sends SIGTERM after 2 s, then SIGKILL; the driver reads the exit signal of the
+     process, `needed SIGKILL`). A server that needs the SIGKILL, over either transport, fails the
+     run (exit 1, with or without `--expect-drained`);
   3. keeps the mock open until no request arrived for `quietMs` (at most `settleTimeoutMs`), then
      takes the snapshot. A publish sent on client close or during a shutdown drain is counted.
 - It then validates every publish body against the publish contract (`contract/`, below). In
@@ -230,7 +236,7 @@ development machine; the A/A and canary runs about 12 s each.
   A run with no publish body passes the contract only when the scenario expects 0 publishes.
   `ts_sha` in `report.json` is the TS commit the run used: `oracle/oracle.lock`, or `ORACLE_SHA`
   when it is set (the driver then writes a trace line to stderr). `drained` lists, per server
-  process, whether it printed `{"drained":true}`; `killed` says whether the HTTP server needed SIGKILL.
+  process, whether it printed `{"drained":true}`; `killed` says whether a server needed SIGKILL.
 - Exit 0 when the snapshot holds exactly `expectPublishes` publish requests and no other request,
   the contract is `"ok"`, no server needed SIGKILL and, with `--expect-drained`, every server printed
   the drained line. Exit 1 when the count differs, when any other request reached the mock (listed in
@@ -242,8 +248,9 @@ development machine; the A/A and canary runs about 12 s each.
 `node harness/src/diff.mjs <a.normalized.json> <b.normalized.json> [--rulings <file>]`
 
 The structural diff is the one of `src/events.mjs`. Object keys compare unordered; arrays compare in
-order, and arrays of different length give one entry per element (`<missing>` on the shorter side). Each ordered-check violation in either
-document is a diff entry, even when both documents share it. Output lines:
+order, and arrays of different length give one entry per element (`<missing>` on the shorter side).
+Each ordered-check violation in either document is a diff entry, even when both documents share it.
+Output lines:
 
 - `DIFF  <path>: <a> != <b>` for a difference no ruling matches;
 - `RULED <RD-xx> <path>: <a> != <b>` for a difference a ruling matches (its path, and its pinned values
@@ -524,8 +531,8 @@ Example (`scenarios/basic.json`):
   time ("Normalized document" below).
 - The driver starts each request in a later millisecond than the previous answer ("driver.mjs" above),
   so the events of two steps never share a millisecond. Two events of one step (a call and the custom
-  events it publishes) can: their order then falls back to the call-first step, the resource name and
-  the body (below), so a step must not publish two events whose order matters unless the scenario compares
+  events it publishes) can: the call-first step, the resource name and the body decide their order
+  (below), so a step must not publish two events whose order matters unless the scenario compares
   events as a multiset.
 - No number in a scenario may be a decimal with more than 15 significant digits: the Rust SDK reads
   such a decimal without `float_roundtrip`, and it can become the neighboring `f64` (RD-23).
@@ -545,7 +552,7 @@ as `harness:<name>`:
 | `tracing-off` | `enableTracing: false` | Calls with `context`, and `own_context` with its own `context` (RD-29 on per-request TS servers); no handles, no mint-back, no mirror; `get_more_tools` answered by the SDK. |
 | `redaction` | `identify` returns a user after 200 ms, `eventTags` and `eventProperties` return `SECRET_TOKEN` values, `redactSensitiveInformation` replace, `redactEvent` merge (`resourceName`, `sessionId`, `properties`) | Renamed resources and restored sessions on the call events; the late identity on every call event, the `boom` error event included, and through the `redactEvent` merge; tags keep `SECRET_TOKEN` (string redaction skips them), and the merged `properties` replace the hook's whole value (no `region` key); the session-string custom event of `emit_custom` untouched by both hooks; the server-form custom event of `emit_custom_server` renamed but not string-redacted (K-03). |
 | `redact-drop` | `redactEvent` returns `null` | Every event that runs the hook is dropped: only the session-string custom event of `emit_custom` publishes. |
-| `hooks-fail` | `identify` throws after 200 ms, `eventTags` returns invalid tags (a bad key, a 33-character key, a number value, a newline in a value) and one valid tag, `eventProperties` throws | Calls in two sessions: no identity, no properties, only the valid tag. |
+| `hooks-fail` | `resolveSessionId` throws, `identify` throws after 200 ms, `eventTags` returns invalid tags (a bad key, a 33-character key, a number value, a newline in a value) and one valid tag, `eventProperties` throws | Calls in two clients: each call is its own silently minted session (a throwing `resolveSessionId` mints, and hook mode injects no `session_id`, so the steps keep no handles), no identity, no properties, only the valid tag. TS publishes 5 events on every transport and lane. |
 | `concurrency` | `enableAgentTracking`, `"eventOrder": "multiset"` | A `parallel` step of 8 `echo` calls with one handle on the first session's client, at the same time as 2 calls on a second session, each call with its own `agent_id`. The actor half (a user per call) is the Rust test `fake::concurrent_calls_keep_their_own_session_agent_and_actor`: one `identify` profile cannot name a user per call. |
 | `pagination` | `{}`, `pageSize: 3` | Page 1, a call to a page-2 tool before page 2 is listed (K-01 against RD-12), page 2, the call again, page 3 and `own_context` on it (RD-12 on per-request TS servers). |
 | `custom-events` | `{}` | The session-string form (`emit_custom`) with and without a session, the server form (`emit_custom_server`) with and without a session, and invalid custom tags (all dropped, or one valid tag kept). |

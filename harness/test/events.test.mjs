@@ -6,7 +6,7 @@ import { test } from "node:test";
 
 import { compareEvents } from "../src/events.mjs";
 import { loadRulings, matchRulings, rulingLines, rulingsFor } from "../src/rulings.mjs";
-import { HARNESS, diff, tempDir, writeJson } from "./support.mjs";
+import { HARNESS, diff, run, tempDir, writeJson } from "./support.mjs";
 
 const KEYS_PATH = "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>";
 const META_PATH = "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.request\\.params\\._meta";
@@ -125,6 +125,34 @@ test("loadRulings rejects a rustKeys that is not a non-empty string or not a val
   ]) {
     assert.throws(() => rulingsOf(t, [{ ...base, rustKeys }]), message, JSON.stringify(rustKeys));
   }
+});
+
+test("loadRulings refuses pin keys when pins are off, as in a delta rulings file", (t) => {
+  const base = { path: "\\$\\.x", reason: "test", deviation: "RD-90" };
+  const file = (extra) => writeJson(join(tempDir(t), "rulings.json"), [{ ...base, ...extra }]);
+  for (const extra of [{ ts: "a" }, { rust: "b" }, { rustKeys: "k.*" }]) {
+    const key = Object.keys(extra)[0];
+    assert.throws(() => loadRulings(file(extra), failNow, { pins: false }), new RegExp(`\\[0\\]: "${key}" pins a value, which only an event ruling can do`), key);
+    assert.equal(loadRulings(file(extra), failNow).length, 1, `${key}: pins stay allowed by default`);
+  }
+  assert.equal(loadRulings(file({}), failNow, { pins: false }).length, 1);
+});
+
+test("delta.mjs and matrix.mjs exit 2 on a pin key in a delta rulings file; matrix.mjs takes it in an event rulings file", async (t) => {
+  const dir = tempDir(t);
+  const pinned = writeJson(join(dir, "rulings.json"), [{ path: "\\$\\.x", reason: "test", deviation: "RD-90", ts: "a" }]);
+  const empty = writeJson(join(dir, "empty.normalized.json"), { transcript: [] });
+  let res = await run(process.execPath, [join(HARNESS, "src", "delta.mjs"), empty, empty, empty, empty, "--rulings", pinned]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /"ts" pins a value/);
+  const matrix = join(HARNESS, "src", "matrix.mjs");
+  res = await run(process.execPath, [matrix, "--servers", "ts-v2,ts-v2", "--rulings", pinned]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /"ts" pins a value/);
+  // The same file as event rulings loads (the run then fails at the missing scenario below, not at the pin).
+  res = await run(process.execPath, [matrix, "--servers", "ts-v2,ts-v2", "--scenarios", "no-such", "--event-rulings", pinned]);
+  assert.equal(res.code, 2, res.stdout + res.stderr);
+  assert.match(res.stderr, /unknown scenario/);
 });
 
 test("the ruling line shows the pinned values", (t) => {

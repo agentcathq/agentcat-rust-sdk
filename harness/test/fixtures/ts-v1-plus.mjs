@@ -6,6 +6,8 @@
 //   FIXTURE_INVALID_PUBLISH=1  one publish at startup that breaks the publish contract
 //                              (no project_id, session_id a number)
 //   FIXTURE_IGNORE_SIGTERM=1   ignore SIGTERM (HTTP: the driver must SIGKILL the server)
+//   FIXTURE_STAY_ALIVE_MS=<ms> stay alive for <ms>, then exit 0, even after stdin ends; with
+//                              FIXTURE_IGNORE_SIGTERM the stdio client transport has to SIGKILL the server
 // Every request goes to the local mock (AGENTCAT_API_URL); the guard is loaded first.
 import "../../src/egress-guard.mjs";
 
@@ -48,5 +50,8 @@ if (process.env.FIXTURE_LATE_PUBLISH === "1") {
 // A SIGTERM listener that does nothing: Node no longer exits on the signal, and the TS SDK's own handler
 // does not re-raise it while another listener is installed.
 if (process.env.FIXTURE_IGNORE_SIGTERM === "1") process.on("SIGTERM", () => {});
+
+// A timer that keeps the process alive; the server exits 0 when it fires.
+if (process.env.FIXTURE_STAY_ALIVE_MS !== undefined) setTimeout(() => process.exit(0), Number(process.env.FIXTURE_STAY_ALIVE_MS));
 
 await import("../../src/servers/ts-v1.mjs");

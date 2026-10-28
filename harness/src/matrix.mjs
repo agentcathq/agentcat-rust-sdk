@@ -10,13 +10,15 @@
 //   --transports  default stdio,http,http-stateless
 //   --lanes       default 2025-11-25,2026-07-28
 //   --jobs        drivers running at the same time (default 4)
-//   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json. A
+//   --rulings     default harness/rulings-ts.json when both servers are TS, else harness/rulings.json; no
+//                 default in an A/A run (two equal server names), and a delta rulings file may not pin
+//                 values (`ts`, `rust`, `rustKeys`; exit 2). A
 //                 ruling with "scenario", "transports" or "lanes" applies only to the combinations they name;
 //                 one whose scenario, transports or lanes are not in this run is neither reported nor counted
 //                 as unused. A "scenario" that names no scenario file exits 2, and so does an unknown
 //                 transport or lane name (rulings.mjs).
 //   --event-rulings  default harness/rulings-events-ts.json when both servers are TS, else
-//                 harness/rulings-events.json: the rulings of the event comparison, scoped and checked as the
+//                 harness/rulings-events.json (none in an A/A run): the rulings of the event comparison, scoped and checked as the
 //                 delta rulings are.
 //   --env2        an environment variable for every run of the second server (untracked and tracked),
 //                 e.g. HARNESS_CANARY=1 for the L3 canary run; may be repeated
@@ -147,8 +149,8 @@ async function main() {
   if (!Number.isInteger(jobs) || jobs < 1) usage(`--jobs needs a positive integer, got ${JSON.stringify(opts.jobs)}`);
   const bothTs = names.every((n) => n.startsWith("ts-"));
   /** A rulings file, checked: a ruling's scenario must name a scenario file. */
-  const rulingsFrom = (path) => {
-    const rulings = loadRulings(path, usage);
+  const rulingsFrom = (path, pins) => {
+    const rulings = loadRulings(path, usage, { pins });
     for (const r of rulings) {
       if (r.scenario !== undefined && !existsSync(join(scenarioDir, `${r.scenario}.json`))) {
         usage(`${path}: the ruling ${r.deviation} names the scenario ${JSON.stringify(r.scenario)}: no ${join(scenarioDir, `${r.scenario}.json`)}`);
@@ -158,9 +160,15 @@ async function main() {
     // reported, not counted.
     return rulings.filter((r) => rulingInRun(r, { scenarios, transports, lanes }));
   };
-  const active = rulingsFrom(opts.rulings ? resolve(opts.rulings) : join(HARNESS, bothTs ? "rulings-ts.json" : "rulings.json"));
+  // An A/A run (the same server twice) compares a server with itself: the default rulings are about TS against
+  // Rust, so they stay out of it and print no UNUSED RULING lines. A file named with --rulings or
+  // --event-rulings is used as given.
+  const same = names[0] === names[1];
+  const defaultFile = (file) => (same ? undefined : join(HARNESS, file));
+  const active = rulingsFrom(opts.rulings ? resolve(opts.rulings) : defaultFile(bothTs ? "rulings-ts.json" : "rulings.json"), false);
   const activeEvents = rulingsFrom(
-    opts.eventRulings ? resolve(opts.eventRulings) : join(HARNESS, bothTs ? "rulings-events-ts.json" : "rulings-events.json"),
+    opts.eventRulings ? resolve(opts.eventRulings) : defaultFile(bothTs ? "rulings-events-ts.json" : "rulings-events.json"),
+    true,
   );
   const commands = names.map(serverCommand);
   const whole = !opts.scenarios && !opts.transports && !opts.lanes;
@@ -170,7 +178,6 @@ async function main() {
   for (const scenario of scenarios) for (const transport of transports) for (const lane of lanes) combos.push({ scenario, transport, lane });
 
   // Four drivers per combination: server index 0 or 1, untracked or tracked.
-  const same = names[0] === names[1];
   const runs = [];
   for (const combo of combos) {
     combo.runs = [];

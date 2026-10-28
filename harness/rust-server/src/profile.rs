@@ -673,6 +673,42 @@ mod tests {
         assert!(redactor(throws)("x".to_owned()).await.is_err());
     }
 
+    #[tokio::test]
+    async fn redact_event_hook_runs() {
+        let hook = |spec: Value| event_redactor(event_behavior(&spec).expect("behavior"));
+        let mut event = Event::default();
+        event.resource_name = Some("echo".to_owned());
+        event.event_type = "mcp:tools/call".to_owned();
+
+        let merged = hook(serde_json::json!({"merge": {
+            "resourceName": "renamed", "sessionId": "ses_merged", "userIntent": "why", "properties": {"a": 1}
+        }}))(event.clone())
+        .await
+        .expect("merge")
+        .expect("the merge keeps the event");
+        assert_eq!(merged.resource_name.as_deref(), Some("renamed"));
+        assert_eq!(merged.session_id.as_deref(), Some("ses_merged"));
+        assert_eq!(merged.user_intent, Some(Value::String("why".to_owned())));
+        assert_eq!(
+            merged.properties,
+            Some(Map::from_iter([("a".to_owned(), serde_json::json!(1))]))
+        );
+        // A field the merge leaves out stays as it was.
+        assert_eq!(merged.event_type, "mcp:tools/call");
+
+        assert!(
+            hook(serde_json::json!({"returns": null}))(event.clone())
+                .await
+                .expect("drop")
+                .is_none()
+        );
+        assert!(
+            hook(serde_json::json!({"throws": "no"}))(event)
+                .await
+                .is_err()
+        );
+    }
+
     #[test]
     fn a_profile_that_is_not_an_object_or_has_an_unknown_key_is_refused() {
         assert_eq!(error("[]"), "must be a JSON object");

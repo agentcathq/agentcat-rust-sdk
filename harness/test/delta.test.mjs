@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { join } from "node:path";
 import { test } from "node:test";
 
-import { transcriptDelta } from "../src/delta.mjs";
+import { compareDeltas, transcriptDelta } from "../src/delta.mjs";
 import { HARNESS, run, tempDir, writeJson } from "./support.mjs";
 
 const DELTA = join(HARNESS, "src", "delta.mjs");
@@ -147,4 +147,15 @@ test("bad arguments exit 2", async (t) => {
   assert.equal((await cli(["only-one"])).code, 2);
   const paths = files(t, doc({}), doc({}), doc({}), doc({}));
   assert.equal((await cli(paths, ["--rulings"])).code, 2);
+});
+
+test("a delta entry keeps the whole text of each side beside the clipped summary", () => {
+  const long = "x".repeat(300);
+  const ts = [{ op: "add", path: "$.delta.p", value: { text: long } }];
+  const rust = [{ op: "add", path: "$.delta.p", value: { text: `${long}!` } }];
+  const [e] = compareDeltas(ts, rust);
+  assert.ok(e.ts.length < 150 && e.ts.endsWith("..."), e.ts);
+  assert.equal(e.tsText, `add ${JSON.stringify({ text: long })}`);
+  assert.equal(e.rustText, `add ${JSON.stringify({ text: `${long}!` })}`);
+  assert.equal(compareDeltas([], rust)[0].tsText, "<none>");
 });

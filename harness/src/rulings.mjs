@@ -63,7 +63,15 @@ export function readJson(path, fail) {
   }
 }
 
-export function loadRulings(path, fail) {
+/** The keys that pin a value; only an event ruling carries values to pin. */
+const PIN_KEYS = ["ts", "rust", "rustKeys"];
+
+/**
+ * Loads and checks a rulings file. `pins: false` (a delta rulings file: delta.mjs, matrix.mjs --rulings)
+ * refuses the keys that pin values, `ts`, `rust` and `rustKeys`: a delta difference carries no values, so
+ * such a ruling would never match.
+ */
+export function loadRulings(path, fail, { pins = true } = {}) {
   if (path === undefined) return [];
   const list = readJson(path, fail);
   if (!Array.isArray(list)) fail(`${path}: must be a JSON array`);
@@ -72,6 +80,8 @@ export function loadRulings(path, fail) {
     if (r === null || typeof r !== "object" || Array.isArray(r)) fail(`${where}: must be an object`);
     const extra = Object.keys(r).filter((k) => !KEYS.includes(k));
     if (extra.length > 0) fail(`${where}: unknown key ${JSON.stringify(extra[0])}`);
+    const pinned = pins ? undefined : PIN_KEYS.find((k) => Object.hasOwn(r, k));
+    if (pinned !== undefined) fail(`${where}: "${pinned}" pins a value, which only an event ruling can do`);
     if (Object.hasOwn(r, "pending") && typeof r.pending !== "boolean") fail(`${where}: "pending" must be a boolean`);
     if (Object.hasOwn(r, "scenario") && (typeof r.scenario !== "string" || !SCENARIO_NAME.test(r.scenario))) {
       fail(`${where}: "scenario" must be a scenario name (letters, digits, _ and -)`);

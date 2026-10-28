@@ -24,8 +24,9 @@
 // After the steps, the driver closes the clients, waits for the servers to exit
 // and keeps the mock open for a final quiet window before it counts. The servers'
 // stderr is piped through the driver's stderr; report.json records per server
-// process whether it printed {"drained":true} (`drained`) and whether an HTTP
-// server needed SIGKILL after SIGTERM (`killed`).
+// process whether it printed {"drained":true} (`drained`) and whether a server
+// needed SIGKILL (`killed`: an HTTP server after the driver's SIGTERM, a stdio server after the client
+// transport's own close sequence).
 // Every publish body is then validated against harness/contract/publish-event.schema.json
 // (src/contract/validate.mjs); report.json records the result as `contract` and the
 // number of bodies checked as `contractChecked`, and the TS commit of the oracle
@@ -34,8 +35,9 @@
 // Exit 0: exactly expectPublishes publishes, no other request reached the mock,
 //         the contract holds (every publish body is valid), no server needed
 //         SIGKILL and, with --expect-drained, every server printed {"drained":true}.
-// Exit 1: the count differs, another request arrived, the contract fails, an HTTP
-//         server needed SIGKILL after SIGTERM, with --expect-drained a server exited
+// Exit 1: the count differs, another request arrived, the contract fails, a server
+//         needed SIGKILL (HTTP: after SIGTERM; stdio: the transport's own kill), the client
+//         close did not finish within settleTimeoutMs, with --expect-drained a server exited
 //         without printing {"drained":true}, or the run failed (a negotiated version
 //         other than --lane; in a tracked run, a saveHandleAs that finds no handle or
 //         a ${NAME} with no saved value; in any run, a saveCursorAs without a nextCursor
@@ -264,8 +266,24 @@ function watchStderr(stream, where) {
 
 /** The stderr of every server process the driver started (stdio: one per session; HTTP: one). */
 const stderrWatches = [];
-/** Whether an HTTP server needed SIGKILL after SIGTERM. */
+/** Whether a server needed SIGKILL, and whether it was the HTTP server (after the driver's SIGTERM). */
 let killed = false;
+let killedHttp = false;
+/** The process of every stdio server the driver started: {where, process}. */
+const stdioServers = [];
+
+/**
+ * Remembers the process behind a connected stdio client transport, so the run can tell whether the
+ * transport had to SIGKILL it (the transport ends stdin, waits 2 s, sends SIGTERM, waits 2 s, then sends
+ * SIGKILL). The transports keep the process in a private field, `_process`; there is no public handle to it.
+ */
+function watchStdioProcess(transport, where) {
+  const child = transport._process;
+  if (child === undefined || typeof child.kill !== "function") {
+    throw new DriverFailure(`${where}: the stdio client transport no longer keeps its process in _process; update watchStdioProcess`);
+  }
+  stdioServers.push({ where, process: child });
+}
 
 const children = [];
 /** Every connected client, so a failed run can close them (a stdio client ends the server it spawned). */
@@ -330,6 +348,7 @@ async function main() {
       setVersion?.(version);
     };
     await client.connect(t);
+    if (transport === "stdio") watchStdioProcess(t, `the server of session ${si}`);
     return client;
   }
 
@@ -347,6 +366,7 @@ async function main() {
     // The probe sibling of "auto" discards its own stderr; this is the session's server.
     if (transport === "stdio") stderrWatches.push(watchStderr(t.stderr, `the server of session ${si}`));
     await client.connect(t);
+    if (transport === "stdio") watchStdioProcess(t, `the server of session ${si}`);
     // "auto" falls back to initialize when the server does not prove the
     // 2026-07-28 era; the transcript keeps what was negotiated.
     negotiated.protocolVersion = client.getNegotiatedProtocolVersion();
@@ -503,17 +523,26 @@ async function main() {
   // 2. Close the clients and wait (bounded) for the servers to exit, so a
   // publish sent on client close or during the shutdown drain is counted.
   // A stdio server exits when its stdin closes (the SDK's stdio client
-  // transport waits 2 s, then sends SIGTERM); an HTTP server gets SIGTERM.
-  const exitDeadline = Date.now() + settleTimeoutMs;
-  await within(Promise.all(clients.map((c) => c.close().catch(() => {}))), exitDeadline);
+  // transport waits 2 s, then sends SIGTERM, waits 2 s, then sends SIGKILL); an
+  // HTTP server gets SIGTERM. Each wait has its own budget and its own message.
+  const closeFinished = await within(Promise.all(clients.map((c) => c.close().catch(() => {}))), Date.now() + settleTimeoutMs);
+  if (!closeFinished) {
+    process.stderr.write(`driver: the client close did not finish within ${settleTimeoutMs} ms\n`);
+  }
   if (httpChild && isRunning(httpChild)) {
     httpChild.kill("SIGTERM");
-    if (!(await within(exited(httpChild), exitDeadline))) {
+    if (!(await within(exited(httpChild), Date.now() + settleTimeoutMs))) {
       process.stderr.write(`driver: the server did not exit within ${settleTimeoutMs} ms of SIGTERM; killing it\n`);
       httpChild.kill("SIGKILL");
+      killedHttp = true;
       killed = true;
     }
   }
+  // A stdio transport sends its SIGKILL without waiting for the exit: wait for it, then read the signal.
+  await within(Promise.all(stdioServers.map((s) => exited(s.process))), Date.now() + settleTimeoutMs);
+  const killedStdio = stdioServers.filter((s) => s.process.signalCode === "SIGKILL");
+  for (const s of killedStdio) process.stderr.write(`driver: ${s.where} needed SIGKILL\n`);
+  if (killedStdio.length > 0) killed = true;
   // Every server has exited (or been killed): read the rest of its stderr.
   await within(Promise.all(stderrWatches.map((w) => w.ended)), Date.now() + settleTimeoutMs);
   // 3. Keep the mock open for a final quiet window, then take the snapshot.
@@ -563,10 +592,10 @@ async function main() {
     process.stderr.write(`driver: ${contract.length} publish body/bodies fail the contract (harness/contract/publish-event.schema.json):\n`);
     for (const line of formatInvalid(contract)) process.stderr.write(`driver: ${line}\n`);
   }
-  if (killed) process.stderr.write("driver: the server needed SIGKILL after SIGTERM\n");
+  if (killedHttp) process.stderr.write("driver: the server needed SIGKILL after SIGTERM\n");
   const undrained = expectDrained ? stderrWatches.filter((w) => !w.drained) : [];
   for (const w of undrained) process.stderr.write(`driver: ${w.where} exited without printing ${DRAINED_LINE}\n`);
-  return publishes === expected && nonPublishRequests === 0 && contract === "ok" && !killed && undrained.length === 0 ? 0 : 1;
+  return publishes === expected && nonPublishRequests === 0 && contract === "ok" && !killed && closeFinished && undrained.length === 0 ? 0 : 1;
 }
 
 main().then(

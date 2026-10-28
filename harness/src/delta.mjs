@@ -97,7 +97,10 @@ export function documentDelta(untracked, tracked) {
   return ops;
 }
 
-const show = (ops) => (ops.length === 0 ? "<none>" : ops.map((o) => (Object.hasOwn(o, "value") ? `${o.op} ${clip(o.value)}` : o.op)).join("; "));
+/** The ops as text; `shorten` renders a value (clipped for a report line, whole for a comparison). */
+const show = (ops, shorten = clip) =>
+  ops.length === 0 ? "<none>" : ops.map((o) => (Object.hasOwn(o, "value") ? `${o.op} ${shorten(o.value)}` : o.op)).join("; ");
+const whole = (value) => JSON.stringify(value) ?? "undefined";
 
 function byPath(ops) {
   const map = new Map();
@@ -106,7 +109,9 @@ function byPath(ops) {
 }
 
 /**
- * One entry per path whose ops differ: {path, ts, rust, ruledBy}. `ts` and `rust` are the ops as text;
+ * One entry per path whose ops differ: {path, ts, rust, tsText, rustText, ruledBy}. `ts` and `rust` are the
+ * ops as text, each value clipped for a report line; `tsText` and `rustText` are the same text with every
+ * value whole (l3-expect.mjs compares them);
  * `ruledBy` lists the RD ids of the rulings that match the path (each hit counts in the ruling's `matched`).
  */
 export function compareDeltas(ts, rust, rulings = []) {
@@ -117,7 +122,7 @@ export function compareDeltas(ts, rust, rulings = []) {
     const x = a.get(path) ?? [];
     const y = b.get(path) ?? [];
     if (canon(x) === canon(y)) continue;
-    entries.push({ path, ts: show(x), rust: show(y), ruledBy: matchRulings(rulings, path).map((r) => r.deviation) });
+    entries.push({ path, ts: show(x), rust: show(y), tsText: show(x, whole), rustText: show(y, whole), ruledBy: matchRulings(rulings, path).map((r) => r.deviation) });
   }
   return entries;
 }
@@ -156,7 +161,7 @@ function main() {
     rulingsPath = rest[1];
   }
   const [tsU, tsT, rustU, rustT] = paths.map((p) => readJson(p, usage));
-  const rulings = loadRulings(rulingsPath, usage);
+  const rulings = loadRulings(rulingsPath, usage, { pins: false });
   const entries = compareDeltas(documentDelta(tsU, tsT), documentDelta(rustU, rustT), rulings);
   const { ruled, unexpected } = printEntries(entries, (line) => process.stdout.write(line));
   for (const line of rulingLines(rulings)) process.stdout.write(line);
