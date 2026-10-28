@@ -96,6 +96,56 @@ fn temp_home_is_removed_on_drop() {
     assert!(!dir.exists(), "{dir:?}");
 }
 
+/// Checks that `text` is the entries of `messages` in order, each `[<ISO time>] <prefix>
+/// <message>\n` as TS's `writeToLog` writes it, line breaks inside a message included.
+fn assert_entries(text: &str, messages: &[&str]) {
+    let mut rest = text;
+    for message in messages {
+        // `[`, the 24-byte time, `] `, the prefix, a space, the message and the line break.
+        let length = 1 + 24 + 2 + prefix().len() + 1 + message.len() + 1;
+        let entry = rest
+            .get(..length)
+            .unwrap_or_else(|| panic!("an entry for {message:?} in {text:?}"));
+        let line = entry
+            .strip_suffix('\n')
+            .expect("the entry ends with a line break");
+        assert!(is_line(line, message), "{entry:?}");
+        rest = &rest[length..];
+    }
+    assert!(rest.is_empty(), "nothing after the entries: {rest:?}");
+}
+
+/// TS's edge-runtime "should not throw when called" (C42): writing `Test message`, an empty
+/// message and `Special chars: \n\t\r` returns normally, and the file gets each entry whole, in
+/// TS's `[<ISO time>] <prefix> <message>` form, the empty message and the control characters
+/// included.
+#[test]
+fn write_returns_normally_and_keeps_each_message_whole() {
+    let messages = ["Test message", "", "Special chars: \n\t\r"];
+    let home = temp_home("whole");
+    let logger = Logger::new(LogDestination::File, Some(home.path().to_path_buf()));
+    for message in messages {
+        logger.write(message);
+    }
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("log file");
+    assert_entries(&text, &messages);
+}
+
+/// TS's edge-runtime "should handle rapid successive calls" (C42): 100 writes in a row, `Message
+/// 0` to `Message 99`, each land as one entry, in order.
+#[test]
+fn rapid_successive_writes_all_land_in_order() {
+    let messages: Vec<String> = (0..100).map(|i| format!("Message {i}")).collect();
+    let home = temp_home("rapid");
+    let logger = Logger::new(LogDestination::File, Some(home.path().to_path_buf()));
+    for message in &messages {
+        logger.write(message);
+    }
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("log file");
+    let messages: Vec<&str> = messages.iter().map(String::as_str).collect();
+    assert_entries(&text, &messages);
+}
+
 /// TS's "caches the prefix so repeated logging stays consistent": the prefix is built once, so
 /// each call gives the same text at the same address, and two lines in a row carry that prefix.
 #[test]

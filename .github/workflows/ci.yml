@@ -203,7 +203,7 @@ jobs:
         with:
           tool: nextest
       - run: node --test "scripts/*.test.mjs"
-      - run: cargo run -q -p xtask -- parity
+      - run: cargo run -q -p xtask -- parity --final
 
   # L3: the MCP-wire delta of the Rust reference server against TS v2 (harness/README.md, "The L3 gate").
   harness-l3:

@@ -261,6 +261,42 @@ async fn hooks_never_delay_the_call() {
     client.cancel().await.unwrap();
 }
 
+/// B-026, TS's "hanging resolveSessionId/eventTags/eventProperties do not delay the tool call":
+/// with no `identify` hook, the call returns while those three hooks hang, and the record holds the
+/// three unsettled tasks and no `identify` task.
+#[tokio::test(flavor = "current_thread")]
+async fn hanging_session_tags_and_properties_hooks_do_not_delay_call() {
+    let options = Options::default()
+        .resolve_session_id(|_call| pending::<Result<Option<String>, HookError>>())
+        .event_tags(|_call| pending::<Result<Option<Map<String, Value>>, HookError>>())
+        .event_properties(|_call| pending::<Result<Option<Map<String, Value>>, HookError>>());
+    let (client, sink) = serve(options).await;
+    let result = tokio::time::timeout(
+        Duration::from_secs(2),
+        client.call_tool(params("echo", json!({"msg": "hi"}))),
+    )
+    .await
+    .expect("the call returns while the three hooks hang")
+    .expect("the call works");
+    assert!(texts(&result).contains(&"hi"), "{result:?}");
+
+    let record = only_record(&sink);
+    let pending = &record.pending;
+    assert!(pending.identify.is_none(), "no identify hook, no task");
+    let session = pending
+        .resolve_session_id
+        .as_ref()
+        .expect("session started");
+    let tags = pending.event_tags.as_ref().expect("tags started");
+    let properties = pending
+        .event_properties
+        .as_ref()
+        .expect("properties started");
+    assert!(!session.is_finished());
+    assert!(!tags.is_finished() && !properties.is_finished());
+    client.cancel().await.unwrap();
+}
+
 #[tokio::test(flavor = "current_thread")]
 async fn hook_panic_does_not_reach_the_call() {
     let options = Options::default()

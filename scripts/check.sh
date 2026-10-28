@@ -78,7 +78,7 @@ cargo nextest run --workspace --all-features
 cargo nextest run -p agentcat-sdk --no-default-features
 cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
-cargo run -q -p xtask -- parity
+cargo run -q -p xtask -- parity --final
 cargo run -q -p xtask -- rmcp-canary
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)

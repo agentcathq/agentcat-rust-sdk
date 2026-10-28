@@ -132,6 +132,26 @@ fn with_handles(own: Value) -> Value {
     Value::Object(arguments)
 }
 
+/// TS's `sid(label)` (`test-utils.ts`): a well-formed session ID, `ses_` and the letters and digits
+/// of `label` padded with `0` to 27.
+fn sid(label: &str) -> String {
+    let body: String = label
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .chain(std::iter::repeat('0'))
+        .take(27)
+        .collect();
+    format!("ses_{body}")
+}
+
+/// Whether `result` starts with a mint-back block, TS's `mintBackOf`: a first text block that
+/// begins `[session_id`.
+fn has_mint_back(result: &CallToolResult) -> bool {
+    texts(result)
+        .first()
+        .is_some_and(|text| text.starts_with("[session_id"))
+}
+
 /// The arguments a [`Paged`] tool answered with: its structured content without the mirror.
 fn paged_arguments(result: &CallToolResult) -> Value {
     let mut structured = result
@@ -317,6 +337,49 @@ async fn strict_tool_without_get_tool_rebuilds_registry() {
     assert_eq!(sink.take_records().len(), 2);
 }
 
+/// RD-12, TS's `rebuild-on-demand` scenario (the per-request lanes of the e2e-http v1 and v2
+/// matrices) and era-2026's "rebuild-on-demand serves calls on instances that never listed": a
+/// fresh handle on a server without `get_tool` gets a call before any listing, with the defaults,
+/// no `session_id` and the context `rebuild on demand`. The registry is rebuilt, the call mints a
+/// `ses_` session and answers the mint-back first, the record keeps that session, the tool name
+/// and the intent, and the tool gets its own argument only (the rebuild restored the strip). A
+/// second fresh handle, as the next per-request instance, rebuilds too and keeps that session with
+/// no mint-back (track-lowlevel's "rebuilds registries on demand when tools/call arrives before
+/// any tools/list").
+#[tokio::test]
+async fn rebuild_on_demand_mints_and_records_the_call() {
+    let (agentcat, sink) = recording(Options::default());
+    let client = connect(agentcat.track(Paged), "cold").await;
+    let arguments = json!({"x": "cold start", "context": "rebuild on demand"});
+    let result = call(&client, "alpha", arguments).await;
+    assert!(
+        sink.logs().iter().any(|line| line == REBUILT),
+        "{:?}",
+        sink.logs()
+    );
+    let record = only_record(&sink);
+    assert_eq!(record.resolution.session_source, SessionSource::Minted);
+    let session = record.resolution.session_id.clone();
+    assert!(session.starts_with("ses_"), "{session}");
+    let block = mint_back(&record);
+    assert!(block.contains(&format!("session_id: {session}")), "{block}");
+    assert_eq!(texts(&result).first(), Some(&block.as_str()));
+    assert_eq!(record.resource_name, "alpha");
+    assert_eq!(record.user_intent, Some(json!("rebuild on demand")));
+    assert_eq!(paged_arguments(&result), json!({"x": "cold start"}));
+
+    let (agentcat, sink) = recording(Options::default());
+    let client = connect(agentcat.track(Paged), "next instance").await;
+    let arguments = json!({"x": "warm", "session_id": session, "context": "rebuild on demand"});
+    let result = call(&client, "alpha", arguments).await;
+    assert!(sink.logs().iter().any(|line| line == REBUILT), "rebuilt");
+    let record = only_record(&sink);
+    assert_eq!(record.resolution.session_source, SessionSource::Supplied);
+    assert_eq!(record.resolution.session_id, session);
+    assert_eq!(texts(&result), [json!({"x": "warm"}).to_string()]);
+    assert_eq!(paged_arguments(&result), json!({"x": "warm"}));
+}
+
 /// B-027, B-051, B-069: a listing that never answers bounds the call at 5 s; the call goes on
 /// with the heuristic strip, and with no listing ever recorded the mirror gate is open.
 #[tokio::test]
@@ -462,6 +525,48 @@ async fn composed_tool_gets_the_same_arguments_on_every_path() {
     }
 }
 
+/// TS's composed-schema tests (`handles-integration.test.ts`, B-039, K-07): `union_tool`'s `oneOf`
+/// input schema gets no injected parameter (none under `properties`, both `oneOf` branches kept),
+/// yet nobody declared `session_id`, so the name is the SDK's: a call without one mints a session
+/// and answers the mint-back first, tagged `minted`; a call that echoes a well-formed session is
+/// honored, `supplied` and not `foreign`, with no mint-back.
+#[tokio::test]
+async fn composed_tool_mints_and_honors_an_issued_session() {
+    let (agentcat, sink) = recording(Options::default());
+    let client = connect(agentcat.track(Composed(false)), "composed").await;
+    let tools = client.list_all_tools().await.expect("the listing works");
+    let schema = &listed(&tools, "union_tool")["inputSchema"];
+    let properties = schema.get("properties");
+    assert!(
+        properties.is_none_or(|p| p.get("session_id").is_none()),
+        "{schema}"
+    );
+    assert_eq!(
+        schema["oneOf"].as_array().map(Vec::len),
+        Some(2),
+        "{schema}"
+    );
+
+    let result = call(&client, "union_tool", json!({"kind": "a", "a": "x"})).await;
+    let record = only_record(&sink);
+    assert_eq!(record.resolution.session_source, SessionSource::Minted);
+    let block = mint_back(&record);
+    assert!(block.starts_with("[session_id issued"), "{block}");
+    assert_eq!(texts(&result).first(), Some(&block.as_str()));
+    let issued = &record.resolution.session_id;
+    assert!(block.contains(&format!("session_id: {issued}")), "{block}");
+    assert_eq!(record.tags[SESSION_SOURCE_TAG], "minted");
+
+    let echoed = sid("union");
+    let arguments = json!({"kind": "b", "b": 2, "session_id": echoed});
+    let result = call(&client, "union_tool", arguments).await;
+    assert!(!has_mint_back(&result), "{result:?}");
+    let record = only_record(&sink);
+    assert_eq!(record.resolution.session_source, SessionSource::Supplied);
+    assert_eq!(record.resolution.session_id, echoed);
+    assert_eq!(record.tags[SESSION_SOURCE_TAG], "supplied");
+}
+
 /// RD-12, K-01: a tool on page 2 that declares its own `context` keeps it after page 1 is listed
 /// again, because the registry merges pages; TS's heuristic strip would remove it.
 #[tokio::test]
@@ -559,6 +664,71 @@ async fn mint_back_for_minted_and_invalid_only() {
     assert_eq!(record.resolution.session_source, SessionSource::Supplied);
     assert_eq!(record.resolution.session_id, session);
     assert_eq!(texts(&supplied), ["hi"]);
+}
+
+/// TS's `resolveHandles` "agent tracking is OFF by default — omitted option resolves no agent id"
+/// (`enableAgentTracking` defaults to `false`; B-031 step 3): with the default options, a call
+/// that sends an `agent_id` still mints a session and resolves no agent: no agent ID on the
+/// record, no agent tags, and a mint-back without an `agent_id` line.
+#[tokio::test]
+async fn default_options_resolve_no_agent() {
+    let (agentcat, sink) = recording(Options::default());
+    let client = connect(agentcat.track(Sample), "defaults").await;
+    let arguments = json!({"msg": "hi", "agent_id": "agt_ignored"});
+    let result = call(&client, "echo", arguments).await;
+    let record = only_record(&sink);
+    assert_eq!(record.resolution.session_source, SessionSource::Minted);
+    assert_eq!(record.resolution.agent_id, None);
+    assert!(
+        !record.tags.contains_key("agentcat_agent_id"),
+        "{:?}",
+        record.tags
+    );
+    assert!(!record.tags.contains_key("agentcat_agent_id_source"));
+    let block = mint_back(&record);
+    assert!(!block.contains("agent_id"), "{block}");
+    assert_eq!(texts(&result).first(), Some(&block.as_str()));
+}
+
+/// TS's "strips registry-scoped args before the original handler, keeps raw on the event"
+/// (`engine-callwrap.test.ts`), and "strips injected params before the customer handler; event
+/// keeps them", "echoed handles are reused verbatim with no mint-back" and "callback receives
+/// stripped args; supplied handles reused silently" (`handles-integration.test.ts`); B-050,
+/// B-056: with agent tracking on, a call that echoes a well-formed `session_id`, an `agent_id` and
+/// a `context` reaches the tool with its own argument only and gets no mint-back, before a listing
+/// (the rebuild) and after one. The record keeps the session and the agent verbatim, tagged
+/// `supplied`, the context as the intent, and the arguments as sent in its request.
+#[tokio::test]
+async fn supplied_handles_are_stripped_for_the_tool_and_kept_on_the_record() {
+    let session = sid("fixed");
+    let agent = "opus-4.80-1m|claude-code|k3n9x";
+    let sent = json!({"x": "hi", "session_id": session, "agent_id": agent, "context": "why"});
+    for listed in [false, true] {
+        let (agentcat, sink) = recording(tracking());
+        let client = connect(agentcat.track(Paged), "supplied").await;
+        if listed {
+            client.list_all_tools().await.expect("the listing works");
+        }
+        let result = call(&client, "alpha", sent.clone()).await;
+        assert_eq!(
+            paged_arguments(&result),
+            json!({"x": "hi"}),
+            "listed: {listed}"
+        );
+        assert!(!has_mint_back(&result), "listed: {listed}: {result:?}");
+        let record = only_record(&sink);
+        assert_eq!(record.resolution.session_source, SessionSource::Supplied);
+        assert_eq!(record.resolution.session_id, session);
+        assert_eq!(record.resolution.agent_id.as_deref(), Some(agent));
+        assert_eq!(record.tags[SESSION_SOURCE_TAG], "supplied");
+        assert_eq!(record.tags["agentcat_agent_id"], agent);
+        assert_eq!(record.tags["agentcat_agent_id_source"], "supplied");
+        assert_eq!(record.user_intent, Some(json!("why")));
+        assert_eq!(
+            record.request["params"]["arguments"], sent,
+            "listed: {listed}"
+        );
+    }
 }
 
 /// A hand-written server without `get_tool` whose tools answer structured content: `plain` (an
@@ -726,6 +896,67 @@ async fn get_more_tools_answered_and_recorded() {
     );
     assert!(!record.is_error);
     assert_eq!(sink.logs()[before..], [line]);
+}
+
+/// TS's report-missing "should maintain task continuity when calling `report_missing` between other
+/// tools" and "should handle multiple missing tool reports in the same task" (B-046, B-056): an
+/// agent that echoes one well-formed `session_id` on every call, `get_more_tools` included, gets
+/// no mint-back, and every record keeps that session, `supplied`, in the order of the calls, each
+/// with its own tool and context.
+#[tokio::test]
+async fn supplied_session_holds_across_get_more_tools_calls() {
+    let session = sid("report_missing_continuity");
+    let (agentcat, sink) = recording(Options::default());
+    let client = connect(agentcat.track(Sample), "continuity").await;
+    let calls = [
+        ("echo", "Adding first todo to test task continuity"),
+        (GET_MORE_TOOLS_NAME, "Importing data from spreadsheets"),
+        (GET_MORE_TOOLS_NAME, "Need to validate imported data"),
+        (GET_MORE_TOOLS_NAME, "Process large datasets"),
+        ("echo", "Listing todos after reporting missing tool"),
+    ];
+    for (name, context) in calls {
+        let mut arguments = json!({"context": context, "session_id": session});
+        if name == "echo" {
+            arguments["msg"] = json!("First todo");
+        }
+        let result = call(&client, name, arguments).await;
+        assert!(!has_mint_back(&result), "{name}: {result:?}");
+    }
+    let records = sink.take_records();
+    assert_eq!(records.len(), calls.len());
+    for (record, (name, context)) in records.iter().zip(calls) {
+        assert_eq!(record.resource_name, name);
+        assert_eq!(record.resolution.session_source, SessionSource::Supplied);
+        assert_eq!(record.resolution.session_id, session, "{context}");
+        assert_eq!(record.user_intent, Some(json!(context)));
+    }
+}
+
+/// TS's report-missing "should track `get_more_tools` across different sessions" (B-046, B-055):
+/// two tracked servers, each with its own connection, each answering a `get_more_tools` call that
+/// sends no `session_id`, record two different minted sessions, each with its own context.
+#[tokio::test]
+async fn get_more_tools_mints_a_session_per_connection() {
+    let mut sessions = Vec::new();
+    let contexts = [
+        ("first", "Need OAuth integration tool"),
+        ("second", "Need OAuth2 authentication tool"),
+    ];
+    for (name, context) in contexts {
+        let (agentcat, sink) = recording(Options::default());
+        let client = connect(agentcat.track(Sample), name).await;
+        let arguments = json!({"context": context});
+        call(&client, GET_MORE_TOOLS_NAME, arguments.clone()).await;
+        let record = only_record(&sink);
+        assert_eq!(record.resource_name, GET_MORE_TOOLS_NAME);
+        assert_eq!(record.resolution.session_source, SessionSource::Minted);
+        assert!(record.resolution.session_id.starts_with("ses_"), "{name}");
+        assert_eq!(record.request["params"]["arguments"], arguments);
+        assert_eq!(record.user_intent, Some(json!(context)));
+        sessions.push(record.resolution.session_id);
+    }
+    assert_ne!(sessions[0], sessions[1]);
 }
 
 /// The text the customer's own `get_more_tools` of [`OwnMore`] answers.

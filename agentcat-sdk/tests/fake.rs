@@ -3,6 +3,8 @@
 
 use agentcat_sdk::testing::Fake;
 use std::collections::BTreeSet;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
 
 use agentcat_sdk::{CustomEvent, HookError, Options, ToolCall, UserIdentity};
@@ -261,4 +263,59 @@ async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
         seen.insert(n);
     }
     assert_eq!(seen.len(), 10, "one event per call");
+}
+
+/// TS's "re-resolves identity per request so a changed identity lands on the next event" (v1 and
+/// v2) and `resolveIdentity`'s "runs on every call — no caching between calls" (B-084): the
+/// `identify` hook runs on every call, so when it names a new user on its second call, the second
+/// event carries that user. The identities are TS's; there is no `identify` event (B-078).
+#[tokio::test]
+async fn identify_re_resolves_per_call() {
+    let fake = Fake::new();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counter = calls.clone();
+    let options = Options::default().identify(move |_call| {
+        let n = counter.fetch_add(1, Ordering::SeqCst);
+        async move {
+            let (id, name, seat) = if n == 0 {
+                ("event-user-a", "First", "a")
+            } else {
+                ("event-user-b", "Second", "b")
+            };
+            let Value::Object(data) = json!({"seat": seat}) else {
+                unreachable!()
+            };
+            Ok::<_, HookError>(Some(UserIdentity::new(id).user_name(name).user_data(data)))
+        }
+    });
+    let client = connect(fake.agentcat("proj_1", options).track(Echo)).await;
+    for msg in ["First call", "Second call"] {
+        echo(&client, msg).await;
+    }
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+
+    let events = fake.events().await;
+    assert_eq!(
+        events.len(),
+        2,
+        "two tool calls, no identify event: {events:?}"
+    );
+    let expected = [
+        ("First call", "event-user-a", "First", "a"),
+        ("Second call", "event-user-b", "Second", "b"),
+    ];
+    for (msg, id, name, seat) in expected {
+        let event = events
+            .iter()
+            .find(|event| {
+                let parameters = event.parameters.as_ref().expect("parameters");
+                parameters["request"]["params"]["arguments"]["msg"] == msg
+            })
+            .unwrap_or_else(|| panic!("the event of {msg:?}"));
+        assert_eq!(event.event_type, "mcp:tools/call");
+        assert_eq!(event.identify_actor_given_id.as_deref(), Some(id), "{msg}");
+        assert_eq!(event.identify_actor_name.as_deref(), Some(name), "{msg}");
+        let data = event.identify_actor_data.clone().map(Value::Object);
+        assert_eq!(data, Some(json!({"seat": seat})), "{msg}");
+    }
 }

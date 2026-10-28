@@ -481,6 +481,45 @@ async fn get_tool_leaves_the_listing_logs_intact() {
     assert_eq!(sink.logs(), expected);
 }
 
+/// The `session_id` conflict lines `sink` holds for the [`Sample`] tool `own_session`.
+fn conflict_lines(sink: &RecordingSink) -> usize {
+    let start = "ERROR: Tool \"own_session\" already declares a 'session_id' parameter.";
+    sink.logs()
+        .iter()
+        .filter(|line| line.starts_with(start))
+        .count()
+}
+
+/// TS's `getReportedConflicts` "returns a stable set per key, and independent sets for different
+/// keys" (C19: the set lives in the registry of a handle and an inner type, TS's per-server
+/// key): listing again through the same handle, also through a second `track` of the same type,
+/// does not log the conflict again, and another handle has its own set and logs it once.
+#[tokio::test]
+async fn conflict_reports_are_kept_per_handle_and_type() {
+    let (first, first_sink) = recording_handle();
+    all_tools(&connect(first.track(Sample), "first").await).await;
+    assert_eq!(conflict_lines(&first_sink), 1, "{:?}", first_sink.logs());
+    all_tools(&connect(first.track(Sample), "first again").await).await;
+    assert_eq!(
+        conflict_lines(&first_sink),
+        1,
+        "the same set: no second line"
+    );
+
+    let (second, second_sink) = recording_handle();
+    all_tools(&connect(second.track(Sample), "second").await).await;
+    assert_eq!(
+        conflict_lines(&second_sink),
+        1,
+        "another handle, its own set"
+    );
+    assert_eq!(
+        conflict_lines(&first_sink),
+        1,
+        "and the first set is untouched"
+    );
+}
+
 /// The request for the tool `name` with the arguments `arguments`, an object.
 fn call_params(name: &str, arguments: Value) -> CallToolRequestParams {
     let Value::Object(arguments) = arguments else {

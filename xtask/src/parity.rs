@@ -124,6 +124,16 @@ pub enum Problem {
         /// The vector file name (`<stem>.json`).
         file: String,
     },
+    /// A `covered-by-vector` entry whose reason names a case that the vector file it names the
+    /// case for does not have (the reason format is in the header of `parity/manifest.toml`).
+    UnknownReasonCase {
+        /// The manifest key.
+        key: String,
+        /// The vector file name the reason gives (`<stem>.json`).
+        file: String,
+        /// The case name the reason gives.
+        case: String,
+    },
     /// A vector case whose `ts_test` names a key whose entry is not
     /// `covered-by-vector:<that file>`.
     UnclaimedVectorCase {
@@ -132,6 +142,17 @@ pub enum Problem {
         /// The case name.
         case: String,
         /// The TS test key in `ts_test`.
+        key: String,
+        /// What the manifest holds for the key.
+        entry: EntryState,
+    },
+    /// A vector case whose `ts_test` lists the same key more than once.
+    RepeatedVectorKey {
+        /// The vector file name (`<stem>.json`).
+        file: String,
+        /// The case name.
+        case: String,
+        /// The repeated TS test key.
         key: String,
     },
     /// A manifest entry whose key is not in the TS test list.
@@ -174,6 +195,44 @@ pub enum Problem {
     },
 }
 
+/// What the manifest holds for the key of an unclaimed vector case.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum EntryState {
+    /// No entry: no manifest entry has the key, or only a stale or a duplicate one.
+    Missing,
+    /// A `todo` entry.
+    Todo,
+    /// A `ported` entry.
+    Ported,
+    /// An `n/a` entry with another category, as written (empty when it has none).
+    NotApplicable(String),
+}
+
+impl fmt::Display for EntryState {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Missing => f.write_str("is missing"),
+            Self::Todo => f.write_str("is todo"),
+            Self::Ported => f.write_str("is ported"),
+            Self::NotApplicable(category) => write!(f, "is n/a with category {category:?}"),
+        }
+    }
+}
+
+impl EntryState {
+    /// The state of `entry`, a manifest entry that does not claim the case.
+    fn of(entry: Option<&Entry>) -> Self {
+        match entry.map(|entry| (entry.status, &entry.category)) {
+            None => Self::Missing,
+            Some((Status::Todo, _)) => Self::Todo,
+            Some((Status::Ported, _)) => Self::Ported,
+            Some((Status::NotApplicable, category)) => {
+                Self::NotApplicable(category.clone().unwrap_or_default())
+            }
+        }
+    }
+}
+
 impl fmt::Display for Problem {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -200,11 +259,26 @@ impl fmt::Display for Problem {
                 "missing vector case: {key}: no case in {VECTORS_DIR}/{file} lists it in \
                  ts_test; add the case to the generator or change the category"
             ),
-            Self::UnclaimedVectorCase { file, case, key } => write!(
+            Self::UnknownReasonCase { key, file, case } => write!(
+                f,
+                "unknown vector case: {key}: the reason names case {case:?} of {file}, but \
+                 {VECTORS_DIR}/{file} has no such case; fix the reason"
+            ),
+            Self::UnclaimedVectorCase {
+                file,
+                case,
+                key,
+                entry,
+            } => write!(
                 f,
                 "unclaimed vector case: {VECTORS_DIR}/{file} case {case:?} pins {key}, whose \
-                 entry is not n/a with category covered-by-vector:{file}; fix the entry or \
-                 the generator"
+                 entry {entry}; make it n/a with category covered-by-vector:{file}, or fix the \
+                 generator"
+            ),
+            Self::RepeatedVectorKey { file, case, key } => write!(
+                f,
+                "repeated key: {VECTORS_DIR}/{file} case {case:?} lists {key} more than once in \
+                 ts_test; fix the generator"
             ),
             Self::Stale(key) => write!(f, "stale: {key}: no such TS test; remove the entry"),
             Self::DanglingRust { key, test } => {
@@ -544,6 +618,7 @@ pub fn check(
     let mut seen = BTreeSet::new();
     let mut previous: Option<(usize, &str)> = None;
     let mut claims: BTreeMap<&str, &str> = BTreeMap::new();
+    let mut entries: BTreeMap<&str, &Entry> = BTreeMap::new();
     let mut problems = Vec::new();
     for entry in &manifest.tests {
         let key = &entry.key;
@@ -555,6 +630,7 @@ pub fn check(
             problems.push(Problem::Stale(key.clone()));
             continue;
         }
+        entries.insert(key.as_str(), entry);
         if let Some(&index) = ts_index.get(key.as_str()) {
             if let Some((before, previous_key)) = previous
                 && index < before
@@ -578,11 +654,12 @@ pub fn check(
                 check_not_applicable(entry, vectors, divergences, &mut problems);
                 if let Some(file) = vector_file(entry) {
                     claims.insert(key.as_str(), file);
+                    check_reason_cases(entry, vectors, &mut problems);
                 }
             }
         }
     }
-    check_vector_links(&claims, vectors, &mut problems);
+    check_vector_links(&claims, &entries, vectors, &mut problems);
     for key in ts_keys.difference(&seen) {
         problems.push(Problem::Unmapped((*key).to_owned()));
     }
@@ -598,10 +675,110 @@ fn vector_file(entry: &Entry) -> Option<&str> {
         .strip_prefix("covered-by-vector:")
 }
 
+/// The vector cases that `reason` names, as (file name, case name), in order: one pair for each
+/// name of each phrase `<stem>.json case <name>` or `<stem>.json cases <name>, <name> and
+/// <name>`, where the stem is ASCII letters, digits, `_` and `-`. A name ends at `, `, ` and `,
+/// ` (`, `;`, `)` or the end of the reason. A note in parentheses after a name is skipped (up to
+/// its closing parenthesis, nested ones included), and the list goes on after it at `, ` or
+/// ` and `. Every phrase is read, also one inside a note.
+fn reason_cases(reason: &str) -> Vec<(String, &str)> {
+    const PHRASE: &str = ".json case";
+    let is_stem = |c: char| c.is_ascii_alphanumeric() || c == '_' || c == '-';
+    let mut found = Vec::new();
+    for (at, _) in reason.match_indices(PHRASE) {
+        let before = &reason[..at];
+        let stem = &before[before
+            .char_indices()
+            .rev()
+            .find(|&(_, c)| !is_stem(c))
+            .map_or(0, |(i, c)| i + c.len_utf8())..];
+        let after = &reason[at + PHRASE.len()..];
+        let Some(list) = after.strip_prefix("s ").or_else(|| after.strip_prefix(' ')) else {
+            continue;
+        };
+        if stem.is_empty() {
+            continue;
+        }
+        let file = format!("{stem}.json");
+        for case in case_list(list) {
+            found.push((file.clone(), case));
+        }
+    }
+    found
+}
+
+/// The names of the case list at the start of `list` (see [`reason_cases`]).
+fn case_list(list: &str) -> Vec<&str> {
+    let mut names = Vec::new();
+    let mut rest = list;
+    loop {
+        let end = [", ", " and ", " (", ";", ")"]
+            .iter()
+            .filter_map(|stop| rest.find(stop))
+            .min()
+            .unwrap_or(rest.len());
+        names.push(&rest[..end]);
+        rest = &rest[end..];
+        if let Some(note) = rest.strip_prefix(" (") {
+            rest = after_note(note);
+        }
+        if let Some(next) = rest
+            .strip_prefix(", ")
+            .or_else(|| rest.strip_prefix(" and "))
+        {
+            rest = next;
+        } else {
+            return names;
+        }
+    }
+}
+
+/// The text after the parenthesis that closes a note whose opening parenthesis comes just before
+/// `note`; empty when it never closes.
+fn after_note(note: &str) -> &str {
+    let mut depth = 1_usize;
+    for (i, c) in note.char_indices() {
+        match c {
+            '(' => depth += 1,
+            ')' => {
+                depth -= 1;
+                if depth == 0 {
+                    return &note[i + 1..];
+                }
+            }
+            _ => {}
+        }
+    }
+    ""
+}
+
+/// Reports each case that the reason of `entry`, a `covered-by-vector` entry, names but the
+/// vector file it names the case for does not have.
+fn check_reason_cases(entry: &Entry, vectors: &VectorTsTests, problems: &mut Vec<Problem>) {
+    let Some(reason) = entry.reason.as_deref() else {
+        return; // MissingReason already says so.
+    };
+    for (file, case) in reason_cases(reason) {
+        let known = file
+            .strip_suffix(".json")
+            .and_then(|stem| vectors.get(stem))
+            .is_some_and(|cases| cases.contains_key(case));
+        if !known {
+            problems.push(Problem::UnknownReasonCase {
+                key: entry.key.clone(),
+                file,
+                case: case.to_owned(),
+            });
+        }
+    }
+}
+
 /// Checks both directions of the links between `covered-by-vector` entries (`claims`: key to
-/// file name) and the `ts_test` keys of the cases in the vector files that exist.
+/// file name) and the `ts_test` keys of the cases in the vector files that exist, and that no
+/// case lists a key twice. `entries` holds the manifest entry of each key that has one.
 fn check_vector_links(
     claims: &BTreeMap<&str, &str>,
+    entries: &BTreeMap<&str, &Entry>,
     vectors: &VectorTsTests,
     problems: &mut Vec<Problem>,
 ) {
@@ -622,12 +799,25 @@ fn check_vector_links(
     for (stem, cases) in vectors {
         let file = format!("{stem}.json");
         for (case, keys) in cases {
+            let mut listed = BTreeSet::new();
+            let mut repeated = BTreeSet::new();
             for key in keys {
+                if !listed.insert(key.as_str()) {
+                    if repeated.insert(key.as_str()) {
+                        problems.push(Problem::RepeatedVectorKey {
+                            file: file.clone(),
+                            case: case.clone(),
+                            key: key.clone(),
+                        });
+                    }
+                    continue;
+                }
                 if claims.get(key.as_str()) != Some(&file.as_str()) {
                     problems.push(Problem::UnclaimedVectorCase {
                         file: file.clone(),
                         case: case.clone(),
                         key: key.clone(),
+                        entry: EntryState::of(entries.get(key.as_str()).copied()),
                     });
                 }
             }
@@ -932,6 +1122,7 @@ mod tests {
                     file: "constants.json".to_owned(),
                     case: "c1".to_owned(),
                     key: A.to_owned(),
+                    entry: EntryState::Todo,
                 },
             ]
         );
@@ -950,6 +1141,7 @@ mod tests {
                 file: "other.json".to_owned(),
                 case: "o1".to_owned(),
                 key: B.to_owned(),
+                entry: EntryState::NotApplicable("covered-by-vector:constants.json".to_owned()),
             }]
         );
         // A todo entry claims nothing.
@@ -960,7 +1152,229 @@ mod tests {
                 file: "constants.json".to_owned(),
                 case: "c1".to_owned(),
                 key: A.to_owned(),
+                entry: EntryState::Todo,
             }]
+        );
+    }
+
+    /// An unclaimed case says what the manifest holds for its key: no entry, a `todo` entry, a
+    /// `ported` entry, or an `n/a` entry with another category.
+    #[test]
+    fn unclaimed_case_names_the_entry_state() {
+        let gone = "v1|src/tests/gone.test.ts|removed > test";
+        let vectors = vector_files(&[("constants", &[("c1", &[A, gone]), ("c2", &[B])])]);
+        let unclaimed = |case: &str, key: &str, entry| Problem::UnclaimedVectorCase {
+            file: "constants.json".to_owned(),
+            case: case.to_owned(),
+            key: key.to_owned(),
+            entry,
+        };
+        assert_eq!(
+            run_with(
+                vec![
+                    ported(A, &[RUST_TEST]),
+                    not_applicable(B, "ts-host-only", "r")
+                ],
+                &vectors,
+                false
+            ),
+            vec![
+                unclaimed("c1", gone, EntryState::Missing),
+                unclaimed("c1", A, EntryState::Ported),
+                unclaimed(
+                    "c2",
+                    B,
+                    EntryState::NotApplicable("ts-host-only".to_owned())
+                ),
+            ]
+        );
+        // A stale or duplicate entry is no entry for its key.
+        assert_eq!(
+            run_with(vec![todo(A), todo(B), todo(gone), todo(A)], &vectors, false),
+            vec![
+                unclaimed("c1", gone, EntryState::Missing),
+                unclaimed("c1", A, EntryState::Todo),
+                unclaimed("c2", B, EntryState::Todo),
+                Problem::Stale(gone.to_owned()),
+                Problem::Duplicate(A.to_owned()),
+            ]
+        );
+    }
+
+    #[test]
+    fn unclaimed_case_text_says_what_the_entry_is() {
+        let text = |entry| {
+            Problem::UnclaimedVectorCase {
+                file: "constants.json".to_owned(),
+                case: "c1".to_owned(),
+                key: A.to_owned(),
+                entry,
+            }
+            .to_string()
+        };
+        let head = format!(
+            "unclaimed vector case: {VECTORS_DIR}/constants.json case \"c1\" pins {A}, whose entry"
+        );
+        let tail = "; make it n/a with category covered-by-vector:constants.json, or fix the \
+                    generator";
+        assert_eq!(
+            text(EntryState::Missing),
+            format!("{head} is missing{tail}")
+        );
+        assert_eq!(text(EntryState::Todo), format!("{head} is todo{tail}"));
+        assert_eq!(text(EntryState::Ported), format!("{head} is ported{tail}"));
+        assert_eq!(
+            text(EntryState::NotApplicable(
+                "covered-by-vector:other.json".to_owned()
+            )),
+            format!("{head} is n/a with category \"covered-by-vector:other.json\"{tail}")
+        );
+    }
+
+    /// A key repeated in one case's `ts_test` is a problem of its own; the case still claims the
+    /// key once, and an unclaimed repeated key is reported once.
+    #[test]
+    fn repeated_key_in_one_case_is_reported() {
+        let covered = not_applicable(B, "covered-by-vector:constants.json", "reason");
+        let vectors = vector_files(&[("constants", &[("c1", &[B, A, B]), ("c2", &[A, A, A])])]);
+        let repeated = |case: &str, key: &str| Problem::RepeatedVectorKey {
+            file: "constants.json".to_owned(),
+            case: case.to_owned(),
+            key: key.to_owned(),
+        };
+        let unclaimed = |case: &str| Problem::UnclaimedVectorCase {
+            file: "constants.json".to_owned(),
+            case: case.to_owned(),
+            key: A.to_owned(),
+            entry: EntryState::Todo,
+        };
+        assert_eq!(
+            run_with(vec![todo(A), covered], &vectors, false),
+            vec![
+                unclaimed("c1"),
+                unclaimed("c2"),
+                repeated("c1", B),
+                repeated("c2", A),
+            ]
+        );
+        assert_eq!(
+            repeated("c1", B).to_string(),
+            format!(
+                "repeated key: {VECTORS_DIR}/constants.json case \"c1\" lists {B} more than once \
+                 in ts_test; fix the generator"
+            )
+        );
+    }
+
+    /// The case names that a `covered-by-vector` reason gives must exist in the vector file it
+    /// names them for, whichever file that is.
+    #[test]
+    fn reason_case_names_must_exist_in_the_vector_file() {
+        let vectors = vector_files(&[
+            ("constants", &[("c1", &[B]), ("c2", &[])]),
+            ("other", &[("o1", &[])]),
+        ]);
+        let entry = |reason: &str| {
+            vec![
+                todo(A),
+                not_applicable(B, "covered-by-vector:constants.json", reason),
+            ]
+        };
+        let unknown = |file: &str, case: &str| Problem::UnknownReasonCase {
+            key: B.to_owned(),
+            file: file.to_owned(),
+            case: case.to_owned(),
+        };
+        for reason in [
+            "constants.json case c1; checked by a test",
+            "constants.json cases c1 and c2 (a note, with a comma); other.json case o1",
+            "the first is constants.json case c2 (see other.json case o1); then c1",
+        ] {
+            assert_eq!(
+                run_with(entry(reason), &vectors, false),
+                Vec::new(),
+                "{reason}"
+            );
+        }
+        assert_eq!(
+            run_with(
+                entry("constants.json cases c1, c3 and o1; nope.json case x"),
+                &vectors,
+                false
+            ),
+            vec![
+                unknown("constants.json", "c3"),
+                unknown("constants.json", "o1"),
+                unknown("nope.json", "x"),
+            ]
+        );
+        // Only covered-by-vector reasons are read.
+        let other = not_applicable(B, "ts-host-only", "constants.json case c9");
+        let unpinned = vector_files(&[("constants", &[("c1", &[])])]);
+        assert_eq!(run_with(vec![todo(A), other], &unpinned, false), Vec::new());
+        assert_eq!(
+            unknown("constants.json", "c3").to_string(),
+            format!(
+                "unknown vector case: {B}: the reason names case \"c3\" of constants.json, but \
+                 {VECTORS_DIR}/constants.json has no such case; fix the reason"
+            )
+        );
+    }
+
+    #[test]
+    fn reason_cases_reads_every_list_form() {
+        let cases = |reason: &str| -> Vec<(String, String)> {
+            reason_cases(reason)
+                .into_iter()
+                .map(|(file, case)| (file, case.to_owned()))
+                .collect()
+        };
+        let pairs = |items: &[(&str, &str)]| -> Vec<(String, String)> {
+            items
+                .iter()
+                .map(|(file, case)| ((*file).to_owned(), (*case).to_owned()))
+                .collect()
+        };
+        assert_eq!(cases("no vector file here"), pairs(&[]));
+        assert_eq!(
+            cases("event.json case client-info:ts:both-missing; checked by x"),
+            pairs(&[("event.json", "client-info:ts:both-missing")])
+        );
+        assert_eq!(
+            cases("inject.json cases a:1, a:2 and a:3"),
+            pairs(&[
+                ("inject.json", "a:1"),
+                ("inject.json", "a:2"),
+                ("inject.json", "a:3")
+            ])
+        );
+        assert_eq!(
+            cases("call.json cases t:null (null) and p:absent (undefined, (nested)); x"),
+            pairs(&[("call.json", "t:null"), ("call.json", "p:absent")])
+        );
+        assert_eq!(
+            cases(r#"tokens.json case output:{"type":"text","text":"hello world"}; x"#),
+            pairs(&[(
+                "tokens.json",
+                r#"output:{"type":"text","text":"hello world"}"#
+            )])
+        );
+        assert_eq!(
+            cases("a_b-1.json case x (see c.json cases y and z); d.json case w"),
+            pairs(&[
+                ("a_b-1.json", "x"),
+                ("c.json", "y"),
+                ("c.json", "z"),
+                ("d.json", "w"),
+            ])
+        );
+        assert_eq!(
+            cases("an unclosed note: e.json case x (never closed, f.json case y"),
+            pairs(&[("e.json", "x"), ("f.json", "y")])
+        );
+        assert_eq!(
+            cases("not a list: .json case x, g.jsoncases y, h.json casework"),
+            pairs(&[])
         );
     }
 
@@ -1498,6 +1912,57 @@ status = "todo"
                 },
             ]
         );
+    }
+
+    /// The checkout in `testdata/parity-repo` holds each link problem once, beside a claimed
+    /// case; `check_repo` reads it from disk and reports exactly those problems.
+    #[test]
+    fn check_repo_reports_the_link_problems_of_the_testdata_checkout() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("src/testdata/parity-repo");
+        let key = |title: &str| format!("v1|src/tests/links.test.ts|links > {title}");
+        let alpha = "alpha.json".to_owned();
+        let unclaimed = |case: &str, title: &str, entry| Problem::UnclaimedVectorCase {
+            file: alpha.clone(),
+            case: case.to_owned(),
+            key: key(title),
+            entry,
+        };
+        let unknown = |title: &str, file: &str, case: &str| Problem::UnknownReasonCase {
+            key: key(title),
+            file: file.to_owned(),
+            case: case.to_owned(),
+        };
+        let mut expected = vec![
+            Problem::Unmapped(key("no manifest entry")),
+            Problem::MissingVectorCase {
+                key: key("no case lists it"),
+                file: alpha.clone(),
+            },
+            unknown("no case lists it", "alpha.json", "a:nope"),
+            unknown("its vector file is missing", "beta.json", "b:one"),
+            unclaimed("a:todo", "todo entry", EntryState::Todo),
+            unclaimed("a:ported", "ported entry", EntryState::Ported),
+            unclaimed(
+                "a:other",
+                "another category",
+                EntryState::NotApplicable("ruled-divergence:RD-01".to_owned()),
+            ),
+            unclaimed("a:missing", "no manifest entry", EntryState::Missing),
+            Problem::RepeatedVectorKey {
+                file: alpha.clone(),
+                case: "a:repeated".to_owned(),
+                key: key("listed twice in one case"),
+            },
+            Problem::BadCategory {
+                key: key("its vector file is missing"),
+                category: "covered-by-vector:beta.json".to_owned(),
+            },
+        ];
+        expected.sort();
+        let report = check_repo(&root, &BTreeSet::new(), false).unwrap();
+        assert_eq!(report.problems, expected);
+        assert_eq!(report.ts.tests.len(), 8);
+        assert_eq!(report.manifest.tests.len(), 7);
     }
 
     #[test]
