@@ -1,8 +1,9 @@
 //! The public API gate (decision C51) and the package file list check.
 //!
 //! `cargo run -p xtask -- public-api [--bless]` runs
-//! `cargo +nightly public-api -p agentcat-sdk --all-features -ss` and compares the output with
-//! `agentcat-sdk/public-api.txt`. With `--bless` it writes the file instead. Either way, every
+//! `cargo +nightly-<date> public-api -p agentcat-sdk --all-features -ss` on the dated nightly
+//! [`TOOLCHAIN`] and compares the output with `agentcat-sdk/public-api.txt`. With `--bless` it
+//! writes the file instead. Either way, every
 //! crate path in the output must start with an allowed crate ([`ALLOWED_CRATES`]), so a type of
 //! `reqwest`, `tokio`, `chrono` or `agentcat-api` never appears in a public signature (C08).
 //! It exits 1 on a difference or a disallowed path.
@@ -17,6 +18,13 @@ use std::process::Command;
 /// The crates that may appear in a public signature (C51). `http` is not here: the current API
 /// does not use it, so a signature that starts to use it is a finding.
 pub const ALLOWED_CRATES: &[&str] = &["std", "core", "alloc", "agentcat_sdk", "rmcp", "serde_json"];
+
+/// The nightly toolchain that builds the rustdoc JSON for cargo-public-api. It is pinned: a newer
+/// nightly can change the rustdoc JSON format that cargo-public-api 0.52.0 reads, and the gate
+/// would then fail with no change in this repository. `.github/workflows/ci.yml` (job `api`) and
+/// `scripts/check.sh` install the same toolchain, and `CONTRIBUTING.md` names it; a test checks
+/// all three. Bump them together, with cargo-public-api when needed (CONTRIBUTING.md).
+pub const TOOLCHAIN: &str = "nightly-2026-10-18";
 
 /// Where the committed snapshot lives, relative to the workspace root.
 pub const SNAPSHOT: &str = "agentcat-sdk/public-api.txt";
@@ -205,20 +213,14 @@ pub fn run_package_list(args: &[String], root: &Path) -> (u8, Vec<String>) {
 /// The problems of the generated API against the snapshot; empty when the gate passes.
 fn public_api(root: &Path, bless: bool) -> Result<Vec<String>, String> {
     let output = Command::new("cargo")
-        .args([
-            "+nightly",
-            "public-api",
-            "-p",
-            "agentcat-sdk",
-            "--all-features",
-            "-ss",
-        ])
+        .arg(format!("+{TOOLCHAIN}"))
+        .args(["public-api", "-p", "agentcat-sdk", "--all-features", "-ss"])
         .current_dir(root)
         .output()
-        .map_err(|e| format!("cannot run `cargo +nightly public-api`: {e}"))?;
+        .map_err(|e| format!("cannot run `cargo +{TOOLCHAIN} public-api`: {e}"))?;
     if !output.status.success() {
         return Err(format!(
-            "`cargo +nightly public-api` failed ({}):\n{}",
+            "`cargo +{TOOLCHAIN} public-api` failed ({}; install the toolchain with `rustup toolchain install {TOOLCHAIN}`):\n{}",
             output.status,
             String::from_utf8_lossy(&output.stderr)
         ));
@@ -256,6 +258,56 @@ fn public_api(root: &Path, bless: bool) -> Result<Vec<String>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Every `nightly-<date>` name in `text`.
+    fn dated_nightlies(text: &str) -> Vec<&str> {
+        text.match_indices("nightly-")
+            .filter_map(|(at, _)| {
+                let name = text.get(at..at + "nightly-0000-00-00".len())?;
+                let date = &name["nightly-".len()..];
+                let dated = date.bytes().enumerate().all(|(i, b)| {
+                    if i == 4 || i == 7 {
+                        b == b'-'
+                    } else {
+                        b.is_ascii_digit()
+                    }
+                });
+                dated.then_some(name)
+            })
+            .collect()
+    }
+
+    #[test]
+    fn ci_check_sh_and_contributing_pin_the_toolchain_of_the_gate() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");
+        for file in [
+            ".github/workflows/ci.yml",
+            "scripts/check.sh",
+            "CONTRIBUTING.md",
+        ] {
+            let text = std::fs::read_to_string(root.join(file)).unwrap();
+            let names = dated_nightlies(&text);
+            assert!(
+                !names.is_empty(),
+                "{file} names no dated nightly; expected {TOOLCHAIN}"
+            );
+            for name in names {
+                assert_eq!(
+                    name, TOOLCHAIN,
+                    "{file} names {name}; the gate pins {TOOLCHAIN}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn dated_nightlies_finds_only_dated_names() {
+        let text = "nightly, nightly-2026-10-18 and +nightly-2027-01-02; nightly-builds";
+        assert_eq!(
+            dated_nightlies(text),
+            ["nightly-2026-10-18", "nightly-2027-01-02"]
+        );
+    }
 
     #[test]
     fn allowlist_accepts_rmcp_and_std() {

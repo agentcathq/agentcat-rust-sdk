@@ -147,11 +147,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # Nightly gives cargo-public-api the rustdoc JSON (it runs `cargo +nightly`). Stable, installed last,
-      # is the default: xtask and the package build run on stable, as in scripts/check.sh.
+      # A dated nightly gives cargo-public-api the rustdoc JSON (the xtask runs `cargo +nightly-<date>`,
+      # TOOLCHAIN in xtask/src/public_api.rs). It is pinned, so a rustdoc JSON change on a newer nightly
+      # cannot break this job; bump it with cargo-public-api (CONTRIBUTING.md). Stable, installed last, is
+      # the default: xtask and the package build run on stable, as in scripts/check.sh.
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
-          toolchain: nightly
+          toolchain: nightly-2026-10-18
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
           toolchain: stable
@@ -380,11 +382,12 @@ jobs:
           RMCP_EXPECTED_VERSION: ${{ matrix.version }}
       - run: cargo run -q -p xtask -- rmcp-canary
 
-  # The mutation diff gate (C53): cargo-mutants mutates only the lines that changed since the last commit of
-  # this branch whose CI run succeeded (scripts/mutants-base.sh; the parent commit when the branch has no
-  # green run), and no mutant may survive. An empty diff, or one with no mutable SDK source, passes. The
-  # full set runs in the nightly. The job needs `actions: read` for that lookup; the full history, because
-  # the base commit can be many commits back.
+  # The mutation diff gate (C53): cargo-mutants mutates only the lines that changed since the newest commit
+  # with a successful CI run that HEAD descends from, on any branch (scripts/mutants-base.sh; the parent
+  # commit when there is none), and no mutant may survive. An empty diff, or one with no mutable SDK source,
+  # passes. The full set runs in the nightly. The job needs `actions: read` for that lookup; the full
+  # history, because the base commit can be many commits back. Merge pull requests with a merge commit or a
+  # fast-forward: a squash leaves no green ancestor, and the gate then falls back to the parent commit.
   mutants:
     runs-on: ubuntu-latest
     timeout-minutes: 60

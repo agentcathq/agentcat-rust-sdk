@@ -27,6 +27,8 @@ need "cargo install cargo-mutants@27.1.0 --locked" cargo mutants --version
 need "rustup component add llvm-tools-preview" has_component 'llvm-tools(-preview)?'
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
+# cargo-public-api reads the rustdoc JSON of this dated nightly (TOOLCHAIN in xtask/src/public_api.rs)
+need "rustup toolchain install nightly-2026-10-18" has_toolchain 'nightly-2026-10-18'
 node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'
 need "$node_hint" command -v node
 need "$node_hint" command -v corepack
@@ -99,11 +101,12 @@ cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(
   --json --summary-only --output-path target/coverage.json
 cargo run -q -p xtask -- coverage target/coverage.json
 
-# mutants (C53): no surviving mutant in the lines that differ from origin/rewrite (scripts/mutants-base.sh). The
-# diff compares the working tree with the merge base, so uncommitted changes to tracked files and to files
-# staged with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
-# (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source,
-# finds no mutant and passes. CI runs the same gate against the last green commit of the branch.
+# mutants (C53): no surviving mutant in the lines that differ from the upstream of the current branch (for
+# example origin/rewrite), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
+# compares the working tree with the merge base, so uncommitted changes to tracked files and to files staged
+# with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
+# (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source, finds no
+# mutant and passes. CI runs the same gate against the newest green commit that HEAD descends from.
 mkdir -p target
 git diff "$(git merge-base "$(scripts/mutants-base.sh)" HEAD)" > target/mutants.diff
 scripts/mutants-run.sh --in-diff target/mutants.diff
@@ -119,8 +122,9 @@ RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-fea
 # a second run checks the doc links of the crate-private items, which the first run skips
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps --document-private-items
 
-# api (C51): the public API against agentcat-sdk/public-api.txt and the crate allowlist; the package holds only
-# the expected files; the publish dry run contacts crates.io but uploads nothing
+# api (C51): the public API against agentcat-sdk/public-api.txt and the crate allowlist, on the pinned
+# nightly-2026-10-18; the package holds only the expected files; the publish dry run contacts crates.io but
+# uploads nothing
 cargo run -q -p xtask -- public-api
 cargo run -q -p xtask -- package-list
 cargo publish -p agentcat-sdk --dry-run --allow-dirty

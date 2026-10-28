@@ -299,7 +299,9 @@ jobs:
           retention-days: 14
 
   # Merges the shards' outcomes.json and fails below 90 % detected of the viable mutants. Detected: caught
-  # or timed out (a timeout counts as detected, C53 ruling). Viable: not unviable (the mutant builds).
+  # or timed out (a timeout counts as detected, C53 ruling). Viable: not unviable (the mutant builds). It
+  # also fails when a shard did not succeed: a shard that failed or timed out can leave a partial
+  # outcomes.json, and a score of partial data could pass.
   mutants-score:
     needs: mutants-full
     if: always()
@@ -316,6 +318,10 @@ jobs:
           FULL_RESULT: ${{ needs.mutants-full.result }}
         run: |
           set -euo pipefail
+          if [ "$FULL_RESULT" != success ]; then
+            echo "mutants-full ended with: $FULL_RESULT; every shard must succeed for a score"
+            exit 1
+          fi
           for k in 0 1 2 3 4 5 6 7; do
             if [ ! -f "shards/mutants-shard-$k/outcomes.json" ]; then
               echo "no outcomes.json for shard $k (mutants-full ended with: $FULL_RESULT)"
@@ -352,6 +358,12 @@ jobs:
           printf '\n[patch.crates-io]\nrmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main" }\n' >> Cargo.toml
           cargo update -p rmcp
           grep -A2 -E '^name = "rmcp(-macros)?"$' Cargo.lock
+          # Cargo only warns when a patch does not match the requirement (rmcp main at 4.x or a prerelease);
+          # the leg would then test the rmcp of the lock. Stop unless rmcp comes from the git source.
+          if ! grep -q 'source = "git+https://github.com/modelcontextprotocol/rust-sdk' Cargo.lock; then
+            echo "rmcp-main: Cargo.lock has no rmcp from git main; the [patch.crates-io] entry is unused (rmcp main no longer matches the ^3 requirement?)"
+            exit 1
+          fi
       - run: cargo nextest run -p agentcat-sdk --all-features
       - run: cargo build -p agentcat-sdk --examples --all-features
       - run: cargo run -q -p xtask -- rmcp-canary
