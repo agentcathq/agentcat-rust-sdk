@@ -10,9 +10,14 @@
 //! `cargo run -q -p xtask -- rmcp-canary` checks that `Tracked<H>` forwards every method of rmcp's
 //! `ServerHandler` (see [`rmcp_canary`]).
 //!
+//! `cargo run -p xtask -- public-api [--bless]` checks the public API of `agentcat-sdk` against
+//! `agentcat-sdk/public-api.txt` and an allowlist of crates (see [`public_api`]);
+//! `cargo run -p xtask -- package-list` checks the files of the published package.
+//!
 //! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
 //! `cargo nextest run --workspace`).
 pub mod parity;
+pub mod public_api;
 pub mod rmcp_canary;
 pub mod sdk_manifest;
 
@@ -22,7 +27,7 @@ use std::process::{Command, ExitCode};
 
 use parity::{Report, Status};
 
-const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary";
+const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary | public-api [--bless] | package-list";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -44,6 +49,20 @@ fn main() -> ExitCode {
     }
     if args.first().map(String::as_str) == Some("rmcp-canary") {
         let (code, lines) = rmcp_canary::run(&args[1..], &workspace_root());
+        for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("public-api") {
+        let (code, lines) = public_api::run(&args[1..], &workspace_root());
+        for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("package-list") {
+        let (code, lines) = public_api::run_package_list(&args[1..], &workspace_root());
         for line in &lines {
             report_error(line);
         }

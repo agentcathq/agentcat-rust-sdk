@@ -20,6 +20,7 @@ need "cargo install cargo-nextest --locked" cargo nextest --version
 need "cargo install cargo-hack --locked" cargo hack --version
 need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --version
 need "cargo install cargo-deny --locked" cargo deny --version
+need "cargo install cargo-public-api --locked" cargo public-api --version
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'
@@ -97,6 +98,12 @@ RUSTFLAGS="-D warnings" cargo +1.88 test --workspace --doc --all-features
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps
 # a second run checks the doc links of the crate-private items, which the first run skips
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps --document-private-items
+
+# api (C51): the public API against agentcat-sdk/public-api.txt and the crate allowlist; the package holds only
+# the expected files; the publish dry run contacts crates.io but uploads nothing
+cargo run -q -p xtask -- public-api
+cargo run -q -p xtask -- package-list
+cargo publish -p agentcat-sdk --dry-run --allow-dirty
 
 # deny
 cargo deny --all-features check

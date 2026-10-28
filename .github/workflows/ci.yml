@@ -139,6 +139,30 @@ jobs:
       # a second run checks the doc links of the crate-private items, which the first run skips
       - run: cargo doc --workspace --all-features --no-deps --document-private-items
 
+  # The public API snapshot with its crate allowlist (C51), the package file list and the publish dry run.
+  api:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Stable builds the package; nightly gives cargo-public-api the rustdoc JSON.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: cargo-public-api@0.52.0
+      # To accept an intended change: cargo run -p xtask -- public-api --bless
+      - run: cargo run -q -p xtask -- public-api
+      - run: cargo run -q -p xtask -- package-list
+      - run: cargo publish -p agentcat-sdk --dry-run --allow-dirty
+
   deny:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -329,7 +353,7 @@ jobs:
 
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp]
+    needs: [fmt, clippy, hack, test, msrv, docs, api, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
