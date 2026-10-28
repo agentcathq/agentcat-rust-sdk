@@ -20,8 +20,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
   `custom_context_description`, `enable_tracing`, `enable_agent_tracking`,
   `enable_report_missing`, `api_base_url`, `log_destination`, and the hooks `resolve_session_id`,
   `identify`, `event_tags`, `event_properties`, `redact_event` and
-  `redact_sensitive_information`. The hooks get a `ToolCall` or an `Event`, and return a
-  `HookError` when they fail.
+  `redact_sensitive_information`. The hooks get a `ToolCall`, an `Event` or a string, and return
+  a `HookError` when they fail.
 - `UserIdentity`, which the `identify` hook returns.
 - `Event`, which the `redact_event` hook gets and returns. `Event::default()` builds one for the
   unit tests of a hook.

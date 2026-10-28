@@ -480,17 +480,24 @@
 //! ## A tracked server
 //!
 //! [`testing::Fake`] builds handles whose events stay in the process. It records each event as a
-//! real handle sends it, after the hooks and the redaction. Turn on the `test-util` feature in
-//! your dev-dependencies:
+//! real handle sends it, after the hooks and the redaction.
+//!
+//! The test that follows serves the tracked server to an `rmcp` client in memory, calls a tool,
+//! and makes sure that the fake recorded the call. It needs these dev-dependencies:
+//!
+//! - The `test-util` feature of the SDK, for `Fake`.
+//! - The `client` feature of `rmcp`, for the client.
+//! - The `io-util` feature of tokio, for `tokio::io::duplex`.
+//! - The `macros` and `rt` features of tokio, for `#[tokio::test]`.
 //!
 //! ```toml
 //! [dev-dependencies]
 //! agentcat-sdk = { version = "1", features = ["test-util"] }
+//! rmcp = { version = "3", features = ["client"] }
+//! tokio = { version = "1", features = ["io-util", "macros", "rt"] }
 //! ```
 //!
-//! Then serve the tracked server to an `rmcp` client in memory, call a tool, and make sure that
-//! the fake recorded the call. The client needs the `client` feature of `rmcp`. In a
-//! `#[tokio::test]`:
+//! In a `#[tokio::test]`:
 //!
 //! ```
 //! # use rmcp::handler::server::wrapper::Parameters;
@@ -535,7 +542,7 @@
 //! .serve(client_end)
 //! .await?;
 //!
-//! let mut arguments = serde_json::Map::new();
+//! let mut arguments = rmcp::model::JsonObject::new();
 //! arguments.insert("a".into(), 1.into());
 //! arguments.insert("b".into(), 2.into());
 //! client
@@ -549,7 +556,7 @@
 //! # fn main() {}
 //! ```
 //!
-//! [`Fake::events`](testing::Fake::events) returns the recorded events, for checks of your own.
+//! [`Fake::events`] returns the recorded events, for checks of your own.
 //!
 //! # Differences from the TypeScript SDK
 //!
@@ -628,7 +635,27 @@
 //! - [`stateless_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/stateless_http.rs):
 //!   a stateless streamable HTTP server with JSON responses.
 //! - [`hooks.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/hooks.rs):
-//!   a stdio server that uses every hook, a custom event and [`capture_error`].
+//!   a stdio server that uses every hook except `resolve_session_id`, a custom event and
+//!   [`capture_error`].
+//!
+// The `testing` module exists only with the `test-util` feature. Without the feature, the links
+// of the guide to the module go to docs.rs, so that a doc build with the default features has no
+// broken links.
+#![cfg_attr(feature = "test-util", doc = "[`testing`]: testing")]
+#![cfg_attr(feature = "test-util", doc = "[`testing::Fake`]: testing::Fake")]
+#![cfg_attr(feature = "test-util", doc = "[`Fake::events`]: testing::Fake::events")]
+#![cfg_attr(
+    not(feature = "test-util"),
+    doc = "[`testing`]: https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/index.html"
+)]
+#![cfg_attr(
+    not(feature = "test-util"),
+    doc = "[`testing::Fake`]: https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/struct.Fake.html"
+)]
+#![cfg_attr(
+    not(feature = "test-util"),
+    doc = "[`Fake::events`]: https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/struct.Fake.html#method.events"
+)]
 #![forbid(unsafe_code)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 

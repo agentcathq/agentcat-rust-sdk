@@ -92,7 +92,8 @@ calls. The [crate guide](https://docs.rs/agentcat-sdk) explains this and how to 
 - The [crate guide](https://docs.rs/agentcat-sdk): streamable HTTP and stateless servers, the
   options, the environment variables, shutdown, logging, testing and the known limits.
 - The [examples](https://github.com/agentcathq/agentcat-rust-sdk/tree/main/agentcat-sdk/examples):
-  stdio, streamable HTTP, stateless HTTP, and a server that uses every hook.
+  stdio, streamable HTTP, stateless HTTP, and a server that uses every hook except
+  `resolve_session_id`.
 - The [CHANGELOG](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/CHANGELOG.md).
 
 ## License

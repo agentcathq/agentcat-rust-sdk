@@ -1,4 +1,4 @@
-//! A stdio MCP server that uses every AgentCat hook.
+//! A stdio MCP server that uses every AgentCat hook except `resolve_session_id`.
 //!
 //! The server has three tools: `add`, `echo` and `fail`. The options show:
 //!
@@ -127,8 +127,10 @@ fn one_entry(key: &str, value: &str) -> Map<String, Value> {
     Map::from_iter([(key.to_owned(), Value::String(value.to_owned()))])
 }
 
-/// The options with every hook. Each hook gets the call (`ToolCall`) or the event, and returns a
-/// future. `Ok(None)` means "no change"; an `Err` is logged and skipped.
+/// The options with every hook except `resolve_session_id`. Each hook gets the call (`ToolCall`),
+/// the event or a string, and returns a future. For `identify`, `event_tags` and
+/// `event_properties`, `Ok(None)` adds nothing to the event, and the SDK logs an `Err` and skips
+/// the hook. When a redaction hook fails, the SDK drops the event.
 fn options() -> Options {
     Options::default()
         // Who made the call. Read your own auth data here, for example the headers of the call.
@@ -147,7 +149,8 @@ fn options() -> Options {
         .redact_sensitive_information(|text: String| async move {
             Ok::<_, HookError>(text.replace("secret-token", "[REDACTED]"))
         })
-        // Runs on the whole event, after the other hooks. Return `Ok(None)` to drop the event.
+        // Runs on the whole event, after `identify`, `event_tags` and `event_properties` and before
+        // `redact_sensitive_information`. Return `Ok(None)` to drop the event.
         .redact_event(|mut event: Event| async move {
             event.properties.get_or_insert_with(Map::new).insert(
                 "redacted_by".to_owned(),
