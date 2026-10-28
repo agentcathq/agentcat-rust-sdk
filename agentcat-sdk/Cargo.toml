@@ -6,6 +6,7 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
+homepage = "https://agentcat.com"
 readme = "README.md"
 build = "build.rs"
 keywords = ["mcp", "rmcp", "analytics", "telemetry", "agentcat"]

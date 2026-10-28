@@ -11,6 +11,9 @@ Install these tools:
 - Rust nightly, for the docs build and the minimal-versions check: `rustup toolchain install nightly`
 - The cargo tools of the gate:
   `cargo install cargo-nextest cargo-hack cargo-minimal-versions cargo-deny --locked`
+- The cargo tools of the public API, coverage and mutation checks:
+  `cargo install cargo-public-api cargo-llvm-cov cargo-mutants --locked`. cargo-public-api runs on
+  the nightly toolchain. cargo-llvm-cov also needs `rustup component add llvm-tools-preview`.
 - Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.
   The tests use Node to run the TypeScript SDK.
 
@@ -32,8 +35,20 @@ clone at the pinned commit.
 
 Run `scripts/check.sh`. Exit 0 means green. The script runs the commands of every job in
 `.github/workflows/ci.yml`: formatting, clippy, the feature matrix, the JavaScript tests, the checks
-of the generated files, the Rust tests on stable and on 1.88, the parity check, the docs build,
-cargo-deny and the minimal-versions check.
+of the generated files, the examples check, the harness matrix, the Rust tests and doctests on
+stable and on 1.88, the parity check, the docs build, cargo-deny and the minimal-versions check.
+
+The examples check runs the examples of `agentcat-sdk/examples/` against a local mock API. It fails
+when a line on stdout is not JSON-RPC, when the event of a call does not arrive, or when the example
+does not exit within 5 s after the client closes stdin or sends SIGTERM. To run it for one example,
+run `cargo build -p agentcat-sdk --examples --all-features`, then
+`node harness/src/examples-check.mjs stdio`.
+
+The harness matrix compares the Rust reference server with the TypeScript one on every scenario,
+transport and protocol lane. The transports are `stdio`, `http` (MCP sessions, JSON response mode),
+`http-stateless` (no sessions, JSON response mode) and `http-sse` (MCP sessions, server-sent events
+response mode, the default of `rmcp`). Run it with `node harness/src/matrix.mjs`.
+`harness/README.md` describes the harness.
 
 For a shorter loop, run one part, for example `cargo test`, `cargo nextest run --workspace` or
 `corepack pnpm --filter harness test`.

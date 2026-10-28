@@ -119,6 +119,8 @@ jobs:
           tool: nextest
       - run: cargo nextest run --workspace --all-features
       - run: cargo test -p agentcat-sdk --all-features --test json_key_order
+      # The README, the crate guide and the rustdoc examples that a person copies must compile on 1.88.
+      - run: cargo test --workspace --doc --all-features
 
   docs:
     runs-on: ubuntu-latest

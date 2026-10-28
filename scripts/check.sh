@@ -90,6 +90,8 @@ cargo run -q -p xtask -- rmcp-canary
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features
 RUSTFLAGS="-D warnings" cargo +1.88 test -p agentcat-sdk --all-features --test json_key_order
+# the README, the crate guide and the rustdoc examples that a person copies must compile on 1.88
+RUSTFLAGS="-D warnings" cargo +1.88 test --workspace --doc --all-features
 
 # docs
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps
