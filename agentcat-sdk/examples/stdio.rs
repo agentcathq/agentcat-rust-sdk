@@ -14,6 +14,17 @@
 //!
 //! The server ends when the client closes stdin. The last drop of the AgentCat handle then
 //! delivers the events that are still queued (up to 5 s). No `shutdown` call is needed here.
+//!
+//! # The `session_id` and `context` parameters
+//!
+//! AgentCat adds two parameters to every tool in `tools/list`: `session_id` and `context`. The
+//! `context` parameter asks the agent to say why it calls the tool. The `session_id` parameter ties
+//! the calls of one task together. The first call of a task sends `session_id` as `start` or sends
+//! none. The server then puts a text block that begins `[session_id issued` before the tool's own
+//! result blocks, and the block holds a `ses_` ID. The agent sends that ID in every later call.
+//! This is why a client's first `add` shows the ID before the sum. To turn this off, set the
+//! `resolve_session_id` option: the hook then picks the session, and the tools get no `session_id`
+//! parameter.
 #![expect(
     clippy::doc_markdown,
     reason = "AgentCat is the name of the product, not code"

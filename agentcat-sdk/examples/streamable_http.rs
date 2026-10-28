@@ -13,6 +13,17 @@
 //! The MCP endpoint is `http://127.0.0.1:8000/mcp`. Stop the server with Ctrl-C or SIGTERM. It
 //! then calls `shutdown`, which delivers the queued events (up to 5 s) before the process ends.
 //! Logs go to stderr.
+//!
+//! # The `session_id` and `context` parameters
+//!
+//! AgentCat adds two parameters to every tool in `tools/list`: `session_id` and `context`. The
+//! `context` parameter asks the agent to say why it calls the tool. The `session_id` parameter ties
+//! the calls of one task together. The first call of a task sends `session_id` as `start` or sends
+//! none. The server then puts a text block that begins `[session_id issued` before the tool's own
+//! result blocks, and the block holds a `ses_` ID. The agent sends that ID in every later call.
+//! This is why a client's first `add` shows the ID before the sum. To turn this off, set the
+//! `resolve_session_id` option: the hook then picks the session, and the tools get no `session_id`
+//! parameter.
 #![expect(
     clippy::print_stderr,
     reason = "this example logs to stderr; AgentCat writes nothing to stdout or stderr itself"
