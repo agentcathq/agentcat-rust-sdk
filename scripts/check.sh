@@ -95,6 +95,18 @@ cargo deny --all-features check
 
 # minimal-versions
 cargo +nightly minimal-versions check --direct --workspace
+# The serde_json floor (R22): the feature self-check finds no feature in a build of the SDK alone on
+# serde_json 1.0.127, the workspace's floor. serde_with 3.15 and later need a newer serde_json, so
+# serde_with goes down to 3.14.1 first. The pins go on Cargo.lock, which is restored after.
+lock_copy="$(mktemp)"
+cp Cargo.lock "$lock_copy"
+trap 'cp "$lock_copy" Cargo.lock; rm -f "$lock_copy"' EXIT
+cargo update -p serde_with --precise 3.14.1
+cargo update -p serde_json --precise 1.0.127
+cargo +stable nextest run -p agentcat-sdk --all-features --lib --no-tests=fail -E 'test(=delivery::tests::json_features_empty_in_this_build)'
+cp "$lock_copy" Cargo.lock
+rm -f "$lock_copy"
+trap - EXIT
 
 # rmcp-versions: the current rmcp is the one in Cargo.lock; CI repeats the tests for every 3.x minor
 # (job `rmcp`, R25). Run `node scripts/rmcp-versions.mjs` (network) to see the list.

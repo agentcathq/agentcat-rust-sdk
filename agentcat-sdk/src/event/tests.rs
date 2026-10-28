@@ -736,6 +736,135 @@ fn event_has_no_unknown_keys() {
     assert_eq!(super::Event::from_ts(&ts).session_id, None);
 }
 
+/// The event of a TS event that holds only `id`, `projectId`, `eventType` and `timestamp`, each
+/// with its [`sample_value`].
+fn sample_system_event() -> super::Event {
+    super::Event {
+        id: "evt_1".to_owned(),
+        project_id: "proj_1".to_owned(),
+        event_type: "mcp:tools/call".to_owned(),
+        timestamp: js::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap(),
+        ..super::Event::default()
+    }
+}
+
+/// The rows of [`from_ts_rejects_wrong_types`] whose value leaves the event as it was: the field
+/// stays `None`, or empty for a text field the event always has.
+fn unchanged_rows() -> Vec<(&'static str, &'static str, Value)> {
+    vec![
+        ("tags not an object", "tags", json!("a=1")),
+        ("fractional duration", "duration", json!(12.5)),
+        ("negative duration", "duration", json!(-3)),
+        (
+            "tokens above u32::MAX",
+            "inputTokens",
+            json!(u64::from(u32::MAX) + 1),
+        ),
+        ("negative tokens", "outputTokens", json!(-1)),
+        ("fractional tokens", "inputTokens", json!(3.5)),
+        ("null session", "sessionId", Value::Null),
+        ("null text", "serverName", Value::Null),
+        ("null duration", "duration", Value::Null),
+        ("null tokens", "inputTokens", Value::Null),
+        ("null flag", "isError", Value::Null),
+        ("null object", "identifyActorData", Value::Null),
+        ("null tags", "tags", Value::Null),
+        ("numeric text", "clientName", json!(1)),
+        ("string flag", "isError", json!("true")),
+        ("array object", "properties", json!(["a"])),
+    ]
+}
+
+/// The rows of [`from_ts_rejects_wrong_types`] whose value gives a field of `base` a new value.
+fn changed_rows(base: &super::Event) -> Vec<(&'static str, &'static str, Value, super::Event)> {
+    let epoch = super::Event {
+        timestamp: UNIX_EPOCH,
+        ..base.clone()
+    };
+    vec![
+        (
+            "non-string tag values",
+            "tags",
+            json!({"a": "1", "n": 2, "z": null, "b": true, "o": {"k": "v"}, "l": ["x"]}),
+            super::Event {
+                tags: Some(BTreeMap::from([("a".to_owned(), "1".to_owned())])),
+                ..base.clone()
+            },
+        ),
+        (
+            "tokens at u32::MAX",
+            "outputTokens",
+            json!(u32::MAX),
+            super::Event {
+                output_tokens: Some(u32::MAX),
+                ..base.clone()
+            },
+        ),
+        (
+            "null JSON value",
+            "parameters",
+            Value::Null,
+            super::Event {
+                parameters: Some(Value::Null),
+                ..base.clone()
+            },
+        ),
+        (
+            "unparsable timestamp",
+            "timestamp",
+            json!("yesterday"),
+            epoch.clone(),
+        ),
+        (
+            "numeric timestamp",
+            "timestamp",
+            json!(1_709_251_199_999_u64),
+            epoch,
+        ),
+        (
+            "numeric id",
+            "id",
+            json!(7),
+            super::Event {
+                id: String::new(),
+                ..base.clone()
+            },
+        ),
+        (
+            "boolean project",
+            "projectId",
+            json!(true),
+            super::Event {
+                project_id: String::new(),
+                ..base.clone()
+            },
+        ),
+    ]
+}
+
+/// C39, the rule of `Event::from_ts`: a field whose TS value has the wrong type is `None` (an
+/// empty string for `id`, `project_id` and `event_type`), a non-string tag value leaves its tag
+/// out, a `timestamp` that does not parse is the Unix epoch, and a JSON value field keeps any
+/// value, `null` too. Each row sets one key on an event of the system fields; the rest of the
+/// event must stay as it was.
+#[test]
+fn from_ts_rejects_wrong_types() {
+    let base = sample_system_event();
+    let system: Map<String, Value> = ["id", "projectId", "eventType", "timestamp"]
+        .into_iter()
+        .map(|key| (key.to_owned(), sample_value(key)))
+        .collect();
+    assert_eq!(super::Event::from_ts(&system), base);
+    let unchanged = unchanged_rows()
+        .into_iter()
+        .map(|(case, key, value)| (case, key, value, base.clone()));
+    for (case, key, value, expected) in unchanged.chain(changed_rows(&base)) {
+        let mut ts = system.clone();
+        ts.insert(key.to_owned(), value);
+        assert_eq!(super::Event::from_ts(&ts), expected, "{case}");
+    }
+}
+
 /// C49: `Event::default()` is the empty event a customer starts from to unit-test a
 /// `redact_event` hook: empty `id`, `project_id` and `event_type`, the Unix epoch as `timestamp`,
 /// and every other field `None`. The pattern names every field, so a new field must be added here.

@@ -37,7 +37,7 @@ use crate::test_support::queue::{
     self, CapturedLines, DropSignal, MOCK_FAILURE, RecordingPublisher,
 };
 use crate::test_support::rmcp::{Sample, connect};
-use crate::test_support::vectors;
+use crate::test_support::{TempHome, vectors};
 
 /// The project of the test events.
 const PROJECT: &str = "proj_delivery";
@@ -844,9 +844,11 @@ fn handle_with_held_attempt() -> (
 /// - Its request stays in the worker's waiting list. With a deadline no test reaches, the worker
 ///   drains the event in flight, stops once it is idle with nothing left to abandon (no `Shutting
 ///   down with` line), and answers the probe `true`; a later `flush` answers `true` at once.
-/// - With a short deadline, the worker stops at that deadline and abandons the event in flight:
-///   the probe, whose own deadline no test reaches, gets `false` while the attempt is still held,
-///   which only the cancelled request's deadline can give.
+/// - With a short deadline (1 s), the worker stops at that deadline and abandons the event in
+///   flight: the probe, sent before the shutdown and with a deadline no test reaches, gets `false`
+///   while the attempt is still held, which only the cancelled request's deadline can give. The
+///   probe goes first, so a test thread that stalls cannot send it after the stop (which answers
+///   `true`), and the deadline is far from the customer's 20 ms timeout.
 #[test]
 fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
     let (agentcat, delivery, publisher, gate, lines) = handle_with_held_attempt();
@@ -890,14 +892,19 @@ fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
     );
 
     let (agentcat, delivery, publisher, gate, lines) = handle_with_held_attempt();
-    assert!(
-        cancel_after_20_ms(agentcat.shutdown(ms(200))),
-        "the customer's timeout cancels the shutdown"
-    );
     let (probe, answer) = mpsc::channel();
     assert_eq!(
         delivery.request(Kind::Flush, LONG, Reply::Blocking(probe)),
         None
+    );
+    assert!(
+        cancel_after_20_ms(agentcat.shutdown(ms(1_000))),
+        "the customer's timeout cancels the shutdown"
+    );
+    assert_eq!(
+        answer.try_recv(),
+        Err(mpsc::TryRecvError::Empty),
+        "the probe waits for the cancelled shutdown's deadline"
     );
     assert_eq!(
         answer.recv_timeout(WAIT),
@@ -1313,10 +1320,8 @@ fn drop_on_worker_thread_does_not_wait() {
 /// wins, so this test relies on nextest's process per test (ruling P4).
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn log_lines_are_written_by_the_worker() {
-    let home = std::env::temp_dir().join(format!("agentcat-delivery-log-{}", std::process::id()));
-    let _ = std::fs::remove_dir_all(&home);
-    std::fs::create_dir_all(&home).unwrap();
-    logging::configure(LogDestination::File, Some(home.clone()));
+    let home = TempHome::new("delivery-log");
+    logging::configure(LogDestination::File, Some(home.path().to_path_buf()));
 
     let publisher: Arc<dyn Publisher> = Arc::new(RecordingPublisher::new());
     let agentcat = AgentCat::with_delivery(PROJECT, Options::default(), publisher, fast());
@@ -1325,11 +1330,10 @@ async fn log_lines_are_written_by_the_worker() {
     client.cancel().await.unwrap();
     assert!(agentcat.flush(WAIT).await);
 
-    let text = std::fs::read_to_string(home.join("agentcat.log")).unwrap();
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).unwrap();
     let warning = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
     let expected = format!("] {} {warning}", logging::prefix());
     assert!(text.lines().any(|line| line.ends_with(&expected)), "{text}");
-    let _ = std::fs::remove_dir_all(&home);
 }
 
 /// Task 11 (R22): the workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so

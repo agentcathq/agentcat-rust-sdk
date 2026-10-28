@@ -1,7 +1,8 @@
 //! `ApiPublisher` against a `wiremock` server on loopback (C44, RD-37): the request it sends,
 //! the base URL it uses, and which answers are failed attempts that the worker retries. Every
-//! test builds its handle through `AgentCat::with_delivery` with shrunk delays and posts to the
-//! mock only, never to a production endpoint (P15).
+//! test but `real_transport_process_publishes` builds its handle through
+//! `AgentCat::with_delivery` with shrunk delays; that one builds the transport of
+//! `AgentCat::new`. Every test posts to the mock only, never to a production endpoint (P15).
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -13,9 +14,11 @@ use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 use super::{ApiPublisher, NO_CLIENT};
 use crate::client::AgentCat;
 use crate::config::Options;
-use crate::config::env::{MapEnv, resolve_api_base_url};
+use crate::config::env::{AGENTCAT_API_URL, MCPCAT_API_URL, MapEnv, resolve_api_base_url};
 use crate::delivery::DeliveryConfig;
 use crate::delivery::Publisher;
+use crate::logging;
+use crate::test_support::TempHome;
 use crate::test_support::rmcp::{Sample, connect};
 
 const PROJECT: &str = "proj_http";
@@ -105,6 +108,49 @@ async fn posts_to_public_events_path() {
     for camel in ["projectId", "resourceName", "eventType", "sessionId"] {
         assert!(!text.contains(camel), "{camel} in {text}");
     }
+}
+
+/// C44, D38: the transport of `AgentCat::new` outside unit tests (`Transport::api`) sets the
+/// process logger to the home directory of its environment and posts to the API URL it resolves:
+/// the event reaches the mock, and the worker's success line, with the version prefix, reaches
+/// `<home>/agentcat.log`. The option and both environment variables name the mock, so no single
+/// fault in the URL resolution sends the event to the production default. The first
+/// `logging::configure` of a process wins, so this test relies on nextest's process per test
+/// (ruling P4).
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn real_transport_process_publishes() {
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path(EVENTS_PATH))
+        .respond_with(accepted())
+        .mount(&server)
+        .await;
+    let uri = server.uri();
+    let home = TempHome::new("http-transport");
+    let env = MapEnv::new(&[(AGENTCAT_API_URL, &uri), (MCPCAT_API_URL, &uri)])
+        .with_home(home.path().to_path_buf());
+    let options = Options::default().api_base_url(uri.clone());
+    let agentcat = AgentCat::with_api_transport(PROJECT, options, &env);
+    assert!(send_one(&agentcat).await);
+
+    let requests = received(&server).await;
+    assert_eq!(requests.len(), 1, "{requests:?}");
+    let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert_eq!(body["project_id"], PROJECT);
+    assert_eq!(body["resource_name"], "echo");
+    let id = body["id"].as_str().unwrap();
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("the log file");
+    let sent = format!(
+        "] {} Successfully sent event {id} | mcp:tools/call | session ",
+        logging::prefix()
+    );
+    let line = format!(" | {PROJECT} | ");
+    assert!(
+        text.lines().any(|entry| entry.contains(&sent)
+            && entry.contains(&line)
+            && entry.ends_with(" ms | anonymous")),
+        "{text}"
+    );
 }
 
 /// B-006: the `api_base_url` option wins over `AGENTCAT_API_URL`, so the event reaches the mock

@@ -507,6 +507,43 @@ async fn session_mint_failure_logs_and_continues() {
     assert!(published["id"].as_str().unwrap().starts_with("evt_"));
 }
 
+/// TS's outer `catch` in `processEvent`: when no event ID can be made (the clock outside the KSUID
+/// range, or no randomness), the event is dropped with TS's final failure line and Rust's reason.
+/// The source of IDs is asked only for an event without one. Rust-only: the test makes the source
+/// fail through the crate-private `process_with_ids`.
+#[tokio::test]
+async fn event_id_failure_drops_with_line() {
+    let mut log = Vec::new();
+    let dropped = super::process_with_ids(
+        job(call_event(), Some(Handle::current())),
+        &Redactors::default(),
+        BUDGET,
+        || None,
+        &mut log,
+    )
+    .await;
+    assert_eq!(dropped, None);
+    assert_eq!(
+        log,
+        ["Failed to deliver AgentCat event after retries: could not generate an event ID"]
+    );
+
+    let mut event = call_event();
+    event.insert("id".to_owned(), json!("evt_given"));
+    let mut log = Vec::new();
+    let published = super::process_with_ids(
+        job(event, Some(Handle::current())),
+        &Redactors::default(),
+        BUDGET,
+        || panic!("an event with an ID needs no new one"),
+        &mut log,
+    )
+    .await
+    .expect("the event keeps its ID");
+    assert_eq!(published["id"], json!("evt_given"));
+    assert_eq!(log, Vec::<String>::new());
+}
+
 // ------------------------------------------------------------------------ calls through rmcp
 
 /// The project of the calls through rmcp.

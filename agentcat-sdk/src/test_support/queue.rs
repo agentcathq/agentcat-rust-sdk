@@ -38,7 +38,7 @@ use std::collections::BTreeMap;
 use std::future::{pending, ready};
 use std::mem;
 use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, PoisonError, mpsc};
+use std::sync::{Arc, Condvar, Mutex, PoisonError, mpsc};
 use std::time::{Duration, Instant};
 
 use agentcat_api::models::PublishEventRequest;
@@ -708,22 +708,34 @@ impl Drop for DropSignal {
 type Entry = (String, Option<String>);
 
 /// The log lines a delivery worker wrote through [`CapturedLines::writer`], each with the name of
-/// the thread that wrote it. Clones share the lines.
+/// the thread that wrote it, and the signal of each new line. Clones share the lines.
 #[derive(Debug, Clone, Default)]
-pub(crate) struct CapturedLines(Arc<Mutex<Vec<Entry>>>);
+pub(crate) struct CapturedLines(Arc<(Mutex<Vec<Entry>>, Condvar)>);
 
 impl CapturedLines {
-    /// A writer that appends each line here.
+    /// A writer that appends each line here and wakes [`CapturedLines::wait_for`].
     pub(crate) fn writer(&self) -> LineWriter {
         let lines = self.clone();
         Arc::new(move |line: &str| {
             let thread = std::thread::current().name().map(str::to_owned);
-            lines
-                .0
+            let (entries, added) = &*lines.0;
+            entries
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner)
                 .push((line.to_owned(), thread));
+            added.notify_all();
         })
+    }
+
+    /// Waits until there are `count` lines, woken by each new one, for at most `timeout`;
+    /// `false` when fewer came.
+    pub(crate) fn wait_for(&self, count: usize, timeout: Duration) -> bool {
+        let (entries, added) = &*self.0;
+        let entries = entries.lock().unwrap_or_else(PoisonError::into_inner);
+        let (entries, _) = added
+            .wait_timeout_while(entries, timeout, |entries| entries.len() < count)
+            .unwrap_or_else(PoisonError::into_inner);
+        entries.len() >= count
     }
 
     /// The lines so far, oldest first.
@@ -734,6 +746,7 @@ impl CapturedLines {
     /// The lines so far, oldest first, each with the name of the thread that wrote it.
     pub(crate) fn entries(&self) -> Vec<Entry> {
         self.0
+            .0
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
             .clone()

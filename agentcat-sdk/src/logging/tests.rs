@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::sync::{Arc, Mutex};
 
 use tracing::field::{Field, Visit};
@@ -5,11 +6,18 @@ use tracing::{Event, Level, Metadata, Subscriber, span};
 
 use super::{Logger, configure, level, prefix, write};
 use crate::config::LogDestination;
+use crate::test_support::TempHome;
 
-fn temp_home(name: &str) -> std::path::PathBuf {
-    let dir = std::env::temp_dir().join(format!("agentcat-logging-{name}-{}", std::process::id()));
-    std::fs::create_dir_all(&dir).expect("create temp home");
-    dir
+/// The temp home of the logging test `name`.
+fn temp_home(name: &str) -> TempHome {
+    TempHome::new(&format!("logging-{name}"))
+}
+
+/// The size of `<dir>/agentcat.log`, `None` when there is no such file.
+fn log_size(dir: &Path) -> Option<u64> {
+    std::fs::metadata(dir.join("agentcat.log"))
+        .ok()
+        .map(|file| file.len())
 }
 
 fn is_line(line: &str, message: &str) -> bool {
@@ -39,10 +47,10 @@ fn is_line(line: &str, message: &str) -> bool {
 #[test]
 fn file_logger_appends_prefixed_lines() {
     let home = temp_home("append");
-    let logger = Logger::new(LogDestination::File, Some(home.clone()));
+    let logger = Logger::new(LogDestination::File, Some(home.path().to_path_buf()));
     logger.write("first message");
     logger.write("second message");
-    let text = std::fs::read_to_string(home.join("agentcat.log")).expect("log file");
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("log file");
     let lines: Vec<&str> = text.lines().collect();
     assert_eq!(lines.len(), 2);
     assert!(is_line(lines[0], "first message"), "{}", lines[0]);
@@ -51,17 +59,63 @@ fn file_logger_appends_prefixed_lines() {
     assert!(prefix().contains(" rmcp=3."));
 }
 
+/// TS writes nothing when there is no home directory: the file logger names no file, and its
+/// line reaches no `agentcat.log` in the temp root or in the working directory (where a relative
+/// path would put it), each the same size as before, or still absent.
 #[test]
 fn no_home_is_silent() {
-    // No file is named, so there is nothing to look at but the absence of a panic.
-    Logger::new(LogDestination::File, None).write("nobody hears this");
+    let logger = Logger::new(LogDestination::File, None);
+    assert_eq!(logger.path, None);
+    let places = [
+        std::env::temp_dir(),
+        std::env::current_dir().expect("a working directory"),
+    ];
+    let before: Vec<Option<u64>> = places.iter().map(|dir| log_size(dir)).collect();
+    logger.write("nobody hears this");
+    let after: Vec<Option<u64>> = places.iter().map(|dir| log_size(dir)).collect();
+    assert_eq!(after, before, "{places:?}");
 }
 
 #[test]
 fn unwritable_home_is_ignored() {
-    let missing = temp_home("missing").join("does-not-exist");
+    let home = temp_home("missing");
+    let missing = home.path().join("does-not-exist");
     Logger::new(LogDestination::File, Some(missing.clone())).write("lost");
     assert!(!missing.exists());
+}
+
+/// The helper of these tests: a temp home is removed with its content when it drops, so no test
+/// leaves a directory behind.
+#[test]
+fn temp_home_is_removed_on_drop() {
+    let home = temp_home("drop");
+    let dir = home.path().to_path_buf();
+    Logger::new(LogDestination::File, Some(dir.clone())).write("a line");
+    assert!(dir.join("agentcat.log").exists());
+    drop(home);
+    assert!(!dir.exists(), "{dir:?}");
+}
+
+/// TS's "caches the prefix so repeated logging stays consistent": the prefix is built once, so
+/// each call gives the same text at the same address, and two lines in a row carry that prefix.
+#[test]
+fn prefix_is_computed_once() {
+    let first = prefix();
+    assert!(
+        std::ptr::eq(first, prefix()),
+        "a second call built it again"
+    );
+    let home = temp_home("prefix");
+    let logger = Logger::new(LogDestination::File, Some(home.path().to_path_buf()));
+    logger.write("first");
+    logger.write("second");
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("log file");
+    let prefixes: Vec<&str> = text
+        .lines()
+        .filter_map(|line| line.split_once("] ")?.1.rsplit_once(' '))
+        .map(|(line_prefix, _)| line_prefix)
+        .collect();
+    assert_eq!(prefixes, [first, first], "{text}");
 }
 
 #[test]
@@ -141,11 +195,11 @@ fn global_logger_is_silent_until_configured_and_first_call_wins() {
     // process-global and sets once.
     let home = temp_home("global");
     write("before configure");
-    assert!(!home.join("agentcat.log").exists());
-    configure(LogDestination::File, Some(home.clone()));
+    assert!(!home.path().join("agentcat.log").exists());
+    configure(LogDestination::File, Some(home.path().to_path_buf()));
     configure(LogDestination::File, None);
     write("after configure");
-    let text = std::fs::read_to_string(home.join("agentcat.log")).expect("log file");
+    let text = std::fs::read_to_string(home.path().join("agentcat.log")).expect("log file");
     assert_eq!(text.lines().count(), 1);
     assert!(is_line(
         text.lines().next().expect("line"),

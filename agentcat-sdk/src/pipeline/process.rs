@@ -68,6 +68,17 @@ pub(crate) async fn process(
     hook_budget: Duration,
     log: &mut Vec<String>,
 ) -> Option<TsEvent> {
+    process_with_ids(job, redactors, hook_budget, new_event_id, log).await
+}
+
+/// [`process`] with `new_id` as the source of the event ID of stage 6, so a test can make it fail.
+async fn process_with_ids(
+    job: EventJob,
+    redactors: &Redactors,
+    hook_budget: Duration,
+    new_id: fn() -> Option<String>,
+    log: &mut Vec<String>,
+) -> Option<TsEvent> {
     let EventJob {
         mut event,
         hooks,
@@ -128,7 +139,7 @@ pub(crate) async fn process(
         .and_then(Value::as_str)
         .is_some_and(|id| !id.is_empty());
     if !has_id {
-        let Some(id) = new_event_id() else {
+        let Some(id) = new_id() else {
             log.push(
                 "Failed to deliver AgentCat event after retries: could not generate an event ID"
                     .to_owned(),

@@ -540,7 +540,8 @@ fn custom_vectors_match_ts() {
 }
 
 /// TS's queue writes its drop line inside `add`, before `publishCustomEvent` writes its own: the
-/// event and the `Published` line reach the worker together.
+/// event and the `Published` line reach the worker together. The test waits for the two lines on
+/// the capture's signal of each new line.
 #[test]
 fn queue_drop_line_comes_before_published_line() {
     let (agentcat, publisher, lines) = rig("proj_handle", Options::default());
@@ -555,10 +556,7 @@ fn queue_drop_line_comes_before_published_line() {
         .publish_custom_event("ses_1", "proj", CustomEvent::new())
         .expect("accepted");
     assert_eq!(publisher.requests().len(), 1);
-    let start = std::time::Instant::now();
-    while lines.lines().len() < before + 2 && start.elapsed() < WAIT {
-        std::thread::sleep(ms(5));
-    }
+    assert!(lines.wait_for(before + 2, WAIT), "{:?}", lines.lines());
     assert_eq!(
         lines.lines()[before..],
         [

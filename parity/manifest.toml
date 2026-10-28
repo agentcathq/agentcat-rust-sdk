@@ -3751,7 +3751,7 @@ rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > caches the prefix so repeated logging stays consistent"
 status = "ported"
-rust = ["agentcat-sdk::logging::tests::file_logger_appends_prefixed_lines"]
+rust = ["agentcat-sdk::logging::tests::prefix_is_computed_once"]
 
 [[test]]
 key = "v1|src/tests/logging-version-prefix.test.ts|version-info prefix on every log line > prefixes sink entries with sdk, node, and mcp versions"

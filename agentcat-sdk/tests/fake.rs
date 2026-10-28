@@ -19,6 +19,9 @@ use serde_json::{Value, json};
 #[derive(Deserialize, JsonSchema)]
 struct EchoArgs {
     msg: String,
+    /// How long the tool takes before it answers, in milliseconds: 0 when absent.
+    #[serde(default)]
+    delay_ms: u64,
 }
 
 #[derive(Clone)]
@@ -26,8 +29,10 @@ struct Echo;
 
 #[tool_router]
 impl Echo {
+    /// Answers `msg` after `delay_ms` milliseconds, as TS's `slow_echo` tool does.
     #[tool(description = "Echoes msg")]
     async fn echo(&self, Parameters(args): Parameters<EchoArgs>) -> String {
+        tokio::time::sleep(Duration::from_millis(args.delay_ms)).await;
         args.msg
     }
 }
@@ -79,12 +84,19 @@ async fn fake_records_tool_calls() {
     assert_eq!(events[0].project_id, "proj_1");
 }
 
+/// C43, B-003: a telemetry-only handle (an empty project ID) publishes nothing, and the fake still
+/// records its events, with the empty project.
 #[tokio::test]
-async fn fake_records_telemetry_only_events() {
+async fn telemetry_only_events_are_recorded_by_fake() {
     let fake = Fake::new();
     let client = connect(fake.agentcat("", Options::default()).track(Echo)).await;
     echo(&client, "hi").await;
     fake.assert_tracked("echo").await;
+    let events = fake.events().await;
+    assert_eq!(events.len(), 1, "{events:?}");
+    assert_eq!(events[0].event_type, "mcp:tools/call");
+    assert_eq!(events[0].project_id, "");
+    assert_eq!(events[0].resource_name.as_deref(), Some("echo"));
 }
 
 #[tokio::test]
@@ -103,6 +115,18 @@ async fn assert_tracked_count_panics_with_listing() {
     let client = connect(fake.agentcat("proj_1", Options::default()).track(Echo)).await;
     echo(&client, "hi").await;
     fake.assert_tracked_count(2).await;
+}
+
+/// A failing `assert_tracked` names the tool it looked for and lists what was recorded.
+#[tokio::test]
+#[should_panic(
+    expected = "expected a tracked call of tool `missing`, recorded: [mcp:tools/call echo]"
+)]
+async fn failing_assert_tracked_panics_with_tool_name() {
+    let fake = Fake::new();
+    let client = connect(fake.agentcat("proj_1", Options::default()).track(Echo)).await;
+    echo(&client, "hi").await;
+    fake.assert_tracked("missing").await;
 }
 
 #[tokio::test]
@@ -154,8 +178,10 @@ fn call_number(call: &ToolCall) -> u64 {
 
 /// TS's concurrency tests ("each event keeps its own `session_id`, `agent_id`, and actor under
 /// interleaving", B-029): ten calls at once, each with its own agent, each minting its own
-/// session, and an `identify` hook that names a user per call and answers in the reverse order
-/// of the calls. Each published event keeps the session, the agent and the actor of its own call.
+/// session, an `identify` hook that names a user per call and answers in the reverse order of the
+/// calls, and a tool that answers in the order of the calls (TS's `slow_echo` waits too), so the
+/// hooks and the tools of the calls overlap. Each published event keeps the session, the agent
+/// and the actor of its own call.
 #[tokio::test]
 async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
     const CALLS: u64 = 10;
@@ -173,16 +199,23 @@ async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
     let calls = (0..CALLS).map(|n| {
         let client = &client;
         async move {
-            let Value::Object(arguments) =
-                json!({"msg": n.to_string(), "session_id": "start", "agent_id": format!("agent-{n}")})
-            else {
+            let Value::Object(arguments) = json!({
+                "msg": n.to_string(),
+                "delay_ms": 10 * n,
+                "session_id": "start",
+                "agent_id": format!("agent-{n}"),
+            }) else {
                 unreachable!()
             };
             let result = client
                 .call_tool(CallToolRequestParams::new("echo").with_arguments(arguments))
                 .await
                 .expect("the call succeeds");
-            let mint_back = result.content[0].as_text().expect("the mint-back block").text.clone();
+            let mint_back = result.content[0]
+                .as_text()
+                .expect("the mint-back block")
+                .text
+                .clone();
             let session = mint_back
                 .lines()
                 .find_map(|line| line.strip_prefix("session_id: "))

@@ -11,19 +11,17 @@ use rmcp::ServerHandler;
 use crate::config::Options;
 #[cfg(test)]
 use crate::config::env::MapEnv;
-use crate::config::env::{AGENTCAT_PROJECT_ID, Env, sdk_enabled};
 #[cfg(not(test))]
-use crate::config::env::{ProcessEnv, resolve_api_base_url};
+use crate::config::env::ProcessEnv;
+use crate::config::env::{AGENTCAT_PROJECT_ID, Env, resolve_api_base_url, sdk_enabled};
 use crate::custom::{CustomEvent, publish_string};
 #[cfg(feature = "test-util")]
 use crate::delivery::Observer;
-#[cfg(not(test))]
 use crate::delivery::http::ApiPublisher;
 use crate::delivery::{Delivery, DeliveryConfig, LineWriter, Publisher};
 use crate::error::Error;
 use crate::event::CallRecord;
 use crate::event::assemble::EventJob;
-#[cfg(not(test))]
 use crate::logging;
 use crate::registry::ToolRegistry;
 use crate::sink::Sink;
@@ -150,11 +148,17 @@ struct Transport {
 }
 
 impl Transport {
-    /// The real transport: the process logger is set to the destination of `options` (the first
-    /// handle wins, D38) and events go to the API (C44), with the home directory and the API URL
-    /// of `env`.
+    /// The transport of the handles that [`AgentCat::new`] and [`AgentCat::from_env`] build: the
+    /// real one, [`Transport::api`].
     #[cfg(not(test))]
     fn process(options: &Options, env: &dyn Env) -> Self {
+        Self::api(options, env)
+    }
+
+    /// The real transport: the process logger is set to the destination of `options` (the first
+    /// handle wins, D38) and events go to the API (C44), with the home directory and the API URL
+    /// of `env`. A unit test reaches it through `AgentCat::with_api_transport` only.
+    fn api(options: &Options, env: &dyn Env) -> Self {
         logging::configure(options.log_to(), env.home_dir());
         let mut startup_lines = Vec::new();
         let publisher = ApiPublisher::new(resolve_api_base_url(options, env), &mut startup_lines);
@@ -168,7 +172,8 @@ impl Transport {
     /// The transport of a handle that [`AgentCat::new`] builds in a unit test (P15): events are
     /// accepted and dropped, nothing reaches a network, and the process logger stays as it is
     /// (unset, so the real home directory is not written to). A test that needs the real
-    /// publisher builds it itself, against a loopback server.
+    /// publisher builds it itself, or its handle with [`AgentCat::with_api_transport`], against a
+    /// loopback server and a temp home.
     #[cfg(test)]
     fn process(options: &Options, env: &dyn Env) -> Self {
         let _ = (options, env);
@@ -289,9 +294,27 @@ impl AgentCat {
         Self::build(project_id.to_owned(), options, env)
     }
 
+    /// A handle like [`AgentCat::with_env`] with the transport that `AgentCat::new` uses outside
+    /// unit tests ([`Transport::api`]), for a test that points `env` at a loopback server and a
+    /// temp home.
+    #[cfg(test)]
+    pub(crate) fn with_api_transport(project_id: &str, options: Options, env: &dyn Env) -> Self {
+        Self::build_with(project_id.to_owned(), options, env, Transport::api)
+    }
+
     /// [`AgentCat::new`] in the environment `env`: a handle that is off when `env` turns the SDK
     /// off (C45, D44), else one that publishes through the process transport.
     fn build(project_id: String, options: Options, env: &dyn Env) -> Self {
+        Self::build_with(project_id, options, env, Transport::process)
+    }
+
+    /// [`AgentCat::build`] with the transport that `transport` makes.
+    fn build_with(
+        project_id: String,
+        options: Options,
+        env: &dyn Env,
+        transport: fn(&Options, &dyn Env) -> Transport,
+    ) -> Self {
         if !sdk_enabled(env) {
             return Self::from_inner(Inner {
                 project_id,
@@ -301,7 +324,7 @@ impl AgentCat {
                 registries: Mutex::default(),
             });
         }
-        let transport = Transport::process(&options, env);
+        let transport = transport(&options, env);
         Self::assemble(project_id, options, transport, DeliveryConfig::default())
     }
 

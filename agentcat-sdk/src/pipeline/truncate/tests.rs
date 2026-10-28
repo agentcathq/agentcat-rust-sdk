@@ -519,3 +519,15 @@ proptest! {
         compare(&event);
     }
 }
+
+proptest! {
+    #![proptest_config(config())]
+
+    /// The size guard measures an event with `byte_size`, which counts the UTF-8 bytes of
+    /// `JSON.stringify(event)` (TS's `jsonByteSize`) without building the text: over random
+    /// events, it is the length of the text `js::stringify` writes.
+    #[test]
+    fn byte_size_matches_stringify_len(event in ts_event(js_string(40))) {
+        prop_assert_eq!(super::byte_size(&event), size_of(&event));
+    }
+}

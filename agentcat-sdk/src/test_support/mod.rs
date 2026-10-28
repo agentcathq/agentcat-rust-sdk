@@ -1,5 +1,5 @@
 //! Helpers shared by the crate's unit tests: the JS oracle, the markers of the strict JSON
-//! encoding, the vector loader, the proptest strategies and JSON helpers.
+//! encoding, the vector loader, the proptest strategies, JSON helpers and [`TempHome`].
 pub(crate) mod json;
 pub(crate) mod markers;
 pub(crate) mod oracle;
@@ -10,10 +10,43 @@ pub(crate) mod vectors;
 
 mod smoke;
 
+use std::path::{Path, PathBuf};
+
 use proptest::test_runner::Config;
 use serde_json::Value;
 
 use crate::js;
+
+/// A home directory for one test, `<temp dir>/agentcat-<name>-<process ID>`, empty when made and
+/// removed with its content on drop, so a test that writes `agentcat.log` never writes the
+/// developer's `~/agentcat.log` and leaves nothing behind.
+#[derive(Debug)]
+pub(crate) struct TempHome(PathBuf);
+
+impl TempHome {
+    /// A new, empty home directory for the test `name`.
+    ///
+    /// # Panics
+    ///
+    /// When the directory cannot be made.
+    pub(crate) fn new(name: &str) -> Self {
+        let dir = std::env::temp_dir().join(format!("agentcat-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create the temp home");
+        Self(dir)
+    }
+
+    /// The directory.
+    pub(crate) fn path(&self) -> &Path {
+        &self.0
+    }
+}
+
+impl Drop for TempHome {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
 
 /// The bytes of each side [`assert_js_eq`] shows around the first difference.
 const SHOWN_BYTES: usize = 40;
