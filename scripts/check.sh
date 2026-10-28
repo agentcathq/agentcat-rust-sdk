@@ -44,6 +44,12 @@ node oracle/src/parity/list-tests.mjs --check
 node harness/src/dump-contract.mjs --check
 # scripts/ tests never contact the network (rmcp-versions.mjs fetches only when run as a script)
 node --test "scripts/*.test.mjs"
+# the customer examples (C54) run against the local mock API; stdout carries only JSON-RPC, the last event
+# arrives, and the process exits 0 within 5 s of the client close
+cargo build -p agentcat-sdk --examples --all-features
+for example in stdio streamable_http hooks; do
+  node harness/src/examples-check.mjs "$example"
+done
 
 # harness-l3 (the Rust reference server is built above): the MCP-wire delta and the published events
 # against TS v2 on every scenario, transport and lane (every tracked Rust server must drain); an A/A run
@@ -110,6 +116,8 @@ trap - EXIT
 
 # rmcp-versions: the current rmcp is the one in Cargo.lock; CI repeats the tests for every 3.x minor
 # (job `rmcp`, R25). Run `node scripts/rmcp-versions.mjs` (network) to see the list.
+cargo build -p agentcat-sdk --examples --all-features
+cargo test -p agentcat-sdk --doc --all-features
 RMCP_EXPECTED_VERSION="$(sed -n '/^name = "rmcp"$/{n;s/^version = "\(.*\)"$/\1/p;q}' Cargo.lock)"
 export RMCP_EXPECTED_VERSION
 cargo nextest run -p agentcat-sdk --test rmcp_version

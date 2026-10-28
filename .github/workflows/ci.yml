@@ -204,6 +204,14 @@ jobs:
           tool: nextest
       - run: node --test "scripts/*.test.mjs"
       - run: cargo run -q -p xtask -- parity --final
+      # The customer examples (C54) against the local mock API: stdout carries only JSON-RPC, the last
+      # event arrives, and the process exits 0 within 5 s of the client close.
+      - run: cargo build -p agentcat-sdk --examples --all-features
+      - name: Examples check
+        run: |
+          for example in stdio streamable_http hooks; do
+            node harness/src/examples-check.mjs "$example"
+          done
 
   # L3: the MCP-wire delta of the Rust reference server against TS v2 (harness/README.md, "The L3 gate").
   harness-l3:
@@ -309,6 +317,9 @@ jobs:
       - run: cargo update -p rmcp-macros --precise ${{ matrix.macros }}
       - run: grep -A1 -E '^name = "rmcp(-macros)?"$' Cargo.lock
       - run: cargo nextest run -p agentcat-sdk --all-features
+      # The examples and the doc examples that a person copies must compile on every rmcp minor.
+      - run: cargo build -p agentcat-sdk --examples --all-features
+      - run: cargo test -p agentcat-sdk --doc --all-features
       - run: cargo nextest run -p agentcat-sdk --test rmcp_version
         env:
           RMCP_EXPECTED_VERSION: ${{ matrix.version }}

@@ -273,6 +273,37 @@ regenerating the file. Never edit it by hand. `--check` regenerates it into a te
 directory and exits 1 on any byte difference (drift between `TOOLS` and the file). A test compares
 ts-v1's `tools/list`, minus `execution`, with the file.
 
+## Examples check
+
+The examples check runs the customer examples of `agentcat-sdk` (`agentcat-sdk/examples/`) against the local
+mock API. It protects a person who copies an example: the server works, and nothing breaks the stdio
+channel.
+
+```sh
+cargo build -p agentcat-sdk --examples --all-features
+node harness/src/examples-check.mjs stdio
+node harness/src/examples-check.mjs streamable_http
+node harness/src/examples-check.mjs hooks
+```
+
+The check accepts `stdio`, `streamable_http`, `stateless_http` and `hooks`. For one example it:
+
+- starts the mock API and builds the example;
+- runs the example with `AGENTCAT_API_URL` set to the mock, `AGENTCAT_PROJECT_ID=proj_examples` and a
+  temporary `HOME` and `USERPROFILE`, so the SDK does not write the real `~/agentcat.log`. The check
+  refuses to start an example when the API URL is empty. The egress guard does not apply to Rust
+  examples, so the API URL is the only barrier: the check always sets it to the mock;
+- drives `initialize`, `tools/list` and three tool calls with the TS client, then closes the client right
+  after the last call. For HTTP examples it then sends SIGTERM;
+- asserts that each call published one event, that every stdout line is a JSON-RPC message, that the
+  example exits 0 within 5 s of the stdin close or the SIGTERM, and that the publish of the last call
+  arrived before the exit.
+
+For `hooks` it also asserts the values of the hooks (`demo-user`, the `example` tag, the redacted
+`secret-token`), the error recorded by `capture_error`, and one custom event (`echo-called`).
+`EXAMPLES_CHECK_VERBOSE=1` prints the time of the exit. `test/examples-check.test.mjs` tests the check
+against a fake example (`test/fixtures/example-fake.mjs`).
+
 ## Publish contract (L4)
 
 Every body a reference server publishes must be one the AgentCat backend accepts.

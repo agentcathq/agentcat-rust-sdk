@@ -10,7 +10,7 @@ readme = "README.md"
 build = "build.rs"
 keywords = ["mcp", "rmcp", "analytics", "telemetry", "agentcat"]
 categories = ["development-tools::debugging", "api-bindings"]
-include = ["src/**", "build.rs", "README.md", "CHANGELOG.md", "LICENSE"]
+include = ["src/**", "examples/**", "build.rs", "README.md", "CHANGELOG.md", "LICENSE"]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -66,8 +66,9 @@ rmcp = { workspace = true, features = [
   "macros",
   "transport-streamable-http-server",
   "transport-streamable-http-client-reqwest",
+  "transport-io",
 ] }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util", "net", "time", "test-util"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util", "net", "time", "test-util", "signal"] }
 schemars = "1"
 serde = { workspace = true, features = ["derive"] }
 axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
