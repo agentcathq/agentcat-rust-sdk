@@ -197,7 +197,7 @@ export function vitestCommand(dir, vitestArgs, nodeOptions = process.env.NODE_OP
 
 // Variables that point git at another repository (set inside git hooks) and
 // npm/pnpm/node:test settings inherited from the caller's own pnpm script.
-const DROPPED_ENV = new Set([
+export const DROPPED_ENV = new Set([
   "GIT_DIR",
   "GIT_WORK_TREE",
   "GIT_INDEX_FILE",

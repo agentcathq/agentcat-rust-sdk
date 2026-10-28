@@ -77,3 +77,41 @@ test("isPlainNumber is true exactly where serde_json parses the JSON text to the
     assert.equal(isPlainNumber(n), false, String(n));
   }
 });
+
+test("a Set and a class instance are rejected, with the class name and the path", () => {
+  class Point {
+    x = 1;
+  }
+  assert.throws(() => encodeStrict(new Set([1])), { message: "strict-json: $: not a plain object (Set)" });
+  assert.throws(() => encodeStrict({ at: [new Point()] }), { message: "strict-json: $.at[0]: not a plain object (Point)" });
+  assert.throws(() => encodeStrict(Object.create({ inherited: 1 })), { message: /^strict-json: \$: not a plain object/ });
+});
+
+test("1e23 and 2**53+2 carry their exact IEEE-754 bits", () => {
+  assert.deepEqual(encodeStrict(1e23), { $f64: "44b52d02c7e14af6" });
+  assert.deepEqual(encodeStrict(2 ** 53 + 2), { $f64: "4340000000000001" });
+  // The decimal text of 1e23 is not its exact value: serde_json without float_roundtrip would misread it.
+  assert.equal(isPlainNumber(1e23), false);
+  assert.equal(isPlainNumber(2 ** 53 + 2), false);
+});
+
+test("a cyclic value throws with the path where the cycle closes and the path it returns to", () => {
+  const a = { b: { list: [] } };
+  a.b.list.push(a);
+  assert.throws(() => encodeStrict(a), { message: "strict-json: $.b.list[0]: cyclic reference to $" });
+  const self = [];
+  self.push(self);
+  assert.throws(() => encodeStrict({ s: self }), { message: "strict-json: $.s[0]: cyclic reference to $.s" });
+  // The same object twice, with no cycle, is fine.
+  const shared = { n: 1 };
+  assert.deepEqual(encodeStrict({ x: shared, y: shared }), { x: { n: 1 }, y: { n: 1 } });
+});
+
+test("a property of an array other than an index is rejected, with its name", () => {
+  const withName = [1, 2];
+  withName.extra = true;
+  assert.throws(() => encodeStrict({ list: withName }), { message: 'strict-json: $.list: array property "extra"' });
+  const withSymbol = [1];
+  withSymbol[Symbol("s")] = 1;
+  assert.throws(() => encodeStrict(withSymbol), { message: "strict-json: $: array symbol key" });
+});

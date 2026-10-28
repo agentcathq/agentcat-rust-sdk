@@ -1,8 +1,13 @@
 // Loads the TS SDK source at the locked commit: esbuild bundles an entry (with
 // everything it imports) into a standalone ESM file once, and later loads import
-// that file. loadCore bundles the pure modules together, so they share one
-// instance of every module they import (one logging state); loadModule bundles
-// one module on its own.
+// that file. loadCore bundles these together, so they share one instance of every
+// module they import (one logging state, one event queue):
+//   src/modules/: constants, handles, tools, tokenEstimate, validation, truncation,
+//     sanitization, redaction, logging, internal, pendingEvent, eventQueue,
+//     exceptions, session
+//   src/engine/: listWrap, registry
+//   src/index.ts (as `sdk`) and src/thirdparty/ksuid (as `KSUID`)
+// loadModule bundles one module on its own; its bundle is not log-isolated.
 import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative } from "node:path";
@@ -37,6 +42,8 @@ const CORE_MODULES = [
   "internal",
   "pendingEvent",
   "eventQueue",
+  "exceptions",
+  "session",
 ];
 /** The engine namespaces of loadCore: `src/engine/<name>.ts` each (the tool-list pipeline and its state). */
 const CORE_ENGINE_MODULES = ["listWrap", "registry"];
@@ -88,6 +95,10 @@ async function buildCore() {
  * `dir` is bundleDir(); the test of parallel builds passes an empty one).
  * `retry` is the retry budget of the bundle's rename (renameWithRetry's
  * options; the test of a refused rename shrinks it).
+ *
+ * The bundle holds its own copy of every module it imports, `logging` included, and isolateLogFile
+ * (logs.mjs) does not touch it: it is not log-isolated, so a log call in it writes to the
+ * developer's `~/agentcat.log`. Use loadCore for anything that logs.
  *
  * In the SDK's own files (under `src/`), `import.meta.url`, `.dirname` and
  * `.filename` name the source file, as when Node runs it in place, so

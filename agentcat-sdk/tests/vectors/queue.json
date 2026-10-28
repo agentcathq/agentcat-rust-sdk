@@ -221,6 +221,115 @@
       ]
     },
     {
+      "name": "call:protocol-version",
+      "event": {
+        "id": "",
+        "sessionId": "ses_queue0000000000000000000000",
+        "projectId": "proj_queue",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2026-10-23T11:59:59.250Z",
+        "duration": 750,
+        "inputTokens": 18,
+        "outputTokens": 2,
+        "sdkLanguage": "TypeScript",
+        "agentcatVersion": "2.1.1",
+        "serverName": "queue-server",
+        "serverVersion": "1.0.0",
+        "clientName": "queue-client",
+        "clientVersion": "2.0.0",
+        "identifyActorData": {},
+        "resourceName": "echo",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "hello",
+                "session_id": "ses_queue0000000000000000000000"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "tags": {
+          "agentcat_session_id_source": "supplied",
+          "agentcat_protocol_version": "2025-11-25"
+        }
+      },
+      "requests": [
+        {
+          "id": "<evt>",
+          "projectId": "proj_queue",
+          "sessionId": "ses_queue0000000000000000000000",
+          "timestamp": "2026-10-23T11:59:59.250Z",
+          "duration": 750,
+          "inputTokens": 18,
+          "outputTokens": 2,
+          "eventType": "mcp:tools/call",
+          "resourceName": "echo",
+          "parameters": {
+            "request": {
+              "method": "tools/call",
+              "params": {
+                "name": "echo",
+                "arguments": {
+                  "msg": "hello",
+                  "session_id": "ses_queue0000000000000000000000"
+                },
+                "_meta": {
+                  "io.modelcontextprotocol/protocolVersion": "2025-11-25"
+                }
+              },
+              "jsonrpc": "2.0",
+              "id": 1
+            },
+            "extra": {
+              "requestId": 1
+            }
+          },
+          "response": {
+            "content": [
+              {
+                "type": "text",
+                "text": "hello"
+              }
+            ]
+          },
+          "identifyData": {},
+          "sdkLanguage": "TypeScript",
+          "agentcatVersion": "2.1.1",
+          "serverName": "queue-server",
+          "serverVersion": "1.0.0",
+          "clientName": "queue-client",
+          "clientVersion": "2.0.0",
+          "tags": {
+            "agentcat_session_id_source": "supplied",
+            "agentcat_protocol_version": "2025-11-25"
+          }
+        }
+      ],
+      "delays": [],
+      "logs": [
+        "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
+      ]
+    },
+    {
       "name": "call:telemetry-only",
       "event": {
         "id": "",
@@ -3225,7 +3334,7 @@
         "userIntent": "why SECRET-VALUE-42",
         "isError": true,
         "error": {
-          "message": "failed near SECRET-VALUE-42",
+          "message": "found SECRET-VALUE-42",
           "platform": "javascript"
         },
         "tags": {
@@ -3293,7 +3402,7 @@
           "userIntent": "why [REDACTED]",
           "isError": true,
           "error": {
-            "message": "failed near [REDACTED]",
+            "message": "found [REDACTED]",
             "platform": "javascript"
           },
           "identifyActorGivenId": "user-SECRET-VALUE-42",

@@ -59,6 +59,22 @@ function maskMinted(result) {
   return { ...result, sessionId: MINTED };
 }
 
+/**
+ * `value` with the properties of each array other than its indexes left out, as the wire form of a
+ * listing lacks them: TS's injection sets `context` on a `properties` that is an array, and JSON
+ * carries the elements only. Nothing else changes, so the keys of an object (a `__proto__` key
+ * too) stay as TS made them.
+ */
+function wireForm(value) {
+  if (Array.isArray(value)) return Array.from({ length: value.length }, (_, i) => wireForm(value[i]));
+  if (value === null || typeof value !== "object") return value;
+  const out = {};
+  for (const [key, field] of Object.entries(value)) {
+    Object.defineProperty(out, key, { value: wireForm(field), enumerable: true, writable: true, configurable: true });
+  }
+  return out;
+}
+
 export const functions = {
   "JSON.stringify": (...args) => JSON.stringify(...args),
   // The oracle itself: the TS commit it runs, and fixed replies for testing a client.
@@ -187,7 +203,7 @@ export const functions = {
   // option names; hook mode is a resolveSessionId hook (never called here). Gives one entry per page:
   // {tools, registry: [[name, [params]]], outputRegistry: [names], declaredSessionParams: [names],
   // logs}, the registry and sets in their insertion order and the declared set as it stands after the
-  // page. Each page is a copy, so the input stays as it was.
+  // page. Each page is a copy, so the input stays as it was. `tools` is in wire form (wireForm).
   "oracle.buildInjectedList": async ({ options, hookMode, pages }) => {
     const data = {
       projectId: "proj_1",
@@ -197,7 +213,7 @@ export const functions = {
     for (const page of pages) {
       const { value, logs } = await captureLogs(core, () => core.listWrap.buildInjectedList(data, copyJson(page)));
       out.push({
-        tools: value.tools,
+        tools: wireForm(value.tools),
         registry: [...value.registry].map(([name, params]) => [name, [...params]]),
         outputRegistry: [...value.outputRegistry],
         declaredSessionParams: [...core.registry.getDeclaredSessionParams(data)],

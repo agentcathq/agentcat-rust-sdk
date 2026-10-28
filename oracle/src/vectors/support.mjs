@@ -1,5 +1,21 @@
 // Helpers every vector generator shares.
 
+// The real timers, taken at import: node:test mock timers replace the global ones.
+const realSetTimeout = setTimeout;
+const realClearTimeout = clearTimeout;
+
+/**
+ * `promise`, rejected with `Error(message)` when it has not settled after `ms` milliseconds of real
+ * time (the clock that node:test mock timers do not move).
+ */
+export function withWatchdog(promise, ms, message) {
+  let timer;
+  const watchdog = new Promise((_, reject) => {
+    timer = realSetTimeout(() => reject(new Error(message)), ms);
+  });
+  return Promise.race([promise, watchdog]).finally(() => realClearTimeout(timer));
+}
+
 /**
  * The key of a TS test in `parity/ts-tests.json`: `v1|src/tests/<file>.test.ts|<title>`, or
  * `v2|src/tests/v2/<name>.test.ts|<title>` when `file` is `v2/<name>`.

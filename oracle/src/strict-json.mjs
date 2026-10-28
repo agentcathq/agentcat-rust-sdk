@@ -8,6 +8,7 @@
 
 const MARKER_KEYS = ["$utf16", "$f64", "$repeat"];
 const IDENTIFIER = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+const ARRAY_INDEX = /^(?:0|[1-9]\d*)$/;
 const NUMBER_TEXT = /^-?(\d+)(?:\.(\d+))?(?:e([+-]\d+))?$/;
 const MAX_DIGITS = 2n ** 53n;
 
@@ -29,10 +30,12 @@ export function isPlainNumber(n) {
  * A JSON-safe copy of `value` with the markers applied. Throws `strict-json: <path>: <reason>` for a
  * value JSON cannot carry: undefined (also as an array hole), a function, symbol or bigint, NaN or
  * +-Infinity, an object whose prototype is not Object.prototype or null, a symbol key or a key that is
- * not well-formed UTF-16, and an object with a marker key that is not exactly a well-formed $repeat macro.
+ * not well-formed UTF-16, an array with a property that is not an index, a cyclic value (the message
+ * names the path that closes the cycle and the path it returns to), and an object with a marker key
+ * that is not exactly a well-formed $repeat macro.
  */
 export function encodeStrict(value) {
-  return encode(value, "$");
+  return encode(value, "$", new Map());
 }
 
 /** A copy of `value` with every $repeat macro replaced by its string. */
@@ -43,7 +46,8 @@ export function expand(value) {
   return value;
 }
 
-function encode(value, path) {
+/** `open` maps each object on the way down to its path, so that a cycle is found and named. */
+function encode(value, path, open) {
   switch (typeof value) {
     case "string":
       return value.isWellFormed() ? value : { $utf16: codeUnits(value) };
@@ -54,15 +58,27 @@ function encode(value, path) {
       return value;
     case "object":
       if (value === null) return null;
-      if (!Array.isArray(value)) return encodeObject(value, path);
-      // Index by index, so that a hole is seen as undefined.
-      return Array.from({ length: value.length }, (_, i) => encode(value[i], `${path}[${i}]`));
+      if (open.has(value)) fail(path, `cyclic reference to ${open.get(value)}`);
+      open.set(value, path);
+      try {
+        return Array.isArray(value) ? encodeArray(value, path, open) : encodeObject(value, path, open);
+      } finally {
+        open.delete(value);
+      }
     default: // undefined, function, symbol, bigint
       return fail(path, typeof value);
   }
 }
 
-function encodeObject(value, path) {
+function encodeArray(value, path, open) {
+  if (Object.getOwnPropertySymbols(value).length > 0) fail(path, "array symbol key");
+  const extra = Object.keys(value).find((key) => !ARRAY_INDEX.test(key));
+  if (extra !== undefined) fail(path, `array property ${JSON.stringify(extra)}`);
+  // Index by index, so that a hole is seen as undefined.
+  return Array.from({ length: value.length }, (_, i) => encode(value[i], `${path}[${i}]`, open));
+}
+
+function encodeObject(value, path, open) {
   if (!isPlainObject(value)) fail(path, `not a plain object (${className(value)})`);
   if (Object.getOwnPropertySymbols(value).length > 0) fail(path, "symbol key");
   for (const key of Object.keys(value)) {
@@ -72,7 +88,7 @@ function encodeObject(value, path) {
   if (Object.hasOwn(value, "$repeat")) fail(path, "malformed $repeat macro");
   const marker = MARKER_KEYS.find((k) => Object.hasOwn(value, k));
   if (marker !== undefined) fail(path, `reserved key ${marker}`);
-  return copyObject(value, (v, key) => encode(v, keyPath(path, key)));
+  return copyObject(value, (v, key) => encode(v, keyPath(path, key), open));
 }
 
 function keyPath(path, key) {

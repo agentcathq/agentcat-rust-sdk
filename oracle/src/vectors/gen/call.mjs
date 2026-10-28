@@ -27,9 +27,13 @@ const cases = [];
 /** A JSON copy of `value`: no undefined, no prototype tricks. */
 const plain = (value) => (value === undefined ? undefined : JSON.parse(JSON.stringify(value)));
 
-/** Adds a case; `fields` follow the output (ts_test, deviation, output_text). */
+/**
+ * Adds a case; `fields` follow the output (ts_test, deviation, output_text). A case with a deviation
+ * keeps TS's output as it is: the JSON round trip of `plain` is no part of what RD-26 rules.
+ */
 function add(name, input, output, fields = {}) {
-  cases.push({ name, input: plain(input), output: plain(output), ...fields });
+  const copy = fields?.deviation === undefined ? plain : (value) => value;
+  cases.push({ name, input: copy(input), output: copy(output), ...fields });
 }
 
 const T = "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1";

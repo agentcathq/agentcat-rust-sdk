@@ -35,6 +35,7 @@ const NAMES = [
   "KSUID",
   "constants",
   "eventQueue",
+  "exceptions",
   "handles",
   "internal",
   "listWrap",
@@ -44,13 +45,14 @@ const NAMES = [
   "registry",
   "sanitization",
   "sdk",
+  "session",
   "tokenEstimate",
   "tools",
   "truncation",
   "validation",
 ];
 
-test("loadCore returns the sixteen core names, and KSUID is the TS default export", async () => {
+test("loadCore returns the eighteen core names, and KSUID is the TS default export", async () => {
   const core = await loadCore();
   assert.deepEqual(Object.keys(core).sort(), NAMES);
   assert.equal(core.KSUID.withPrefix("ses").fromParts(14e11, Buffer.alloc(16)), "ses_000000000000000000000000000");

@@ -22,6 +22,8 @@
 // - example becomes examples: [example]; x-* extensions are dropped.
 // - required, additionalProperties and every other validation keyword are copied
 //   exactly as written: nothing is loosened or tightened.
+// The result must compile under the strict ajv settings of validate.mjs (compileStrict); if it does
+// not, the extraction fails and writes nothing.
 import { execFileSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -30,6 +32,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
 
 import YAML from "yaml";
+
+import { compileStrict } from "./validate.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CONTRACT_DIR = join(HERE, "..", "..", "contract");
@@ -204,6 +208,12 @@ export function render(checkout, rev) {
       "schema.yml at the commit in SOURCE. Do not edit.",
     ...schemas[0],
   };
+  // The validator compiles this schema with strict ajv on every run: a failure there must stop the extraction.
+  try {
+    compileStrict(schema);
+  } catch (err) {
+    throw new Error(`${SCHEMA_FILE} does not compile under the strict ajv settings of validate.mjs: ${err.message}`, { cause: err });
+  }
   return {
     sha,
     files: {

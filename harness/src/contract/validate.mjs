@@ -22,14 +22,21 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const SCHEMA_PATH = join(HERE, "..", "..", "contract", "publish-event.schema.json");
 const PUBLISH_PATH = "/v1/public/events/";
 
+/**
+ * `schema` compiled with the settings every contract check uses: strict ajv (a keyword or format the
+ * conversion left behind is a compile error), all errors, formats included. Throws ajv's error when the
+ * schema does not compile. extract-schema.mjs compiles its output with this before it writes it.
+ */
+export function compileStrict(schema) {
+  const ajv = new Ajv2020({ strict: true, allErrors: true });
+  addFormats(ajv);
+  return ajv.compile(schema);
+}
+
 let compiled;
-/** The compiled schema (strict ajv: a keyword the conversion left behind is a compile error). */
+/** The compiled committed schema. */
 function validator() {
-  if (!compiled) {
-    const ajv = new Ajv2020({ strict: true, allErrors: true });
-    addFormats(ajv);
-    compiled = ajv.compile(JSON.parse(readFileSync(SCHEMA_PATH, "utf8")));
-  }
+  if (!compiled) compiled = compileStrict(JSON.parse(readFileSync(SCHEMA_PATH, "utf8")));
   return compiled;
 }
 

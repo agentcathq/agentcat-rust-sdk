@@ -4,12 +4,13 @@
 // race there; every process must still end with the bundle.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, test } from "node:test";
 import { pathToFileURL } from "node:url";
 
+import { loadCore } from "../src/bundle.mjs";
 import { ensureTs } from "../src/fetch-ts.mjs";
 
 const BUNDLE_MODULE = new URL("../src/bundle.mjs", import.meta.url).href;
@@ -95,4 +96,19 @@ test("parallel bundle builds converge where a rename onto a bundle in place is r
   assert.deepEqual(readdirSync(dir), ["tokenEstimate.mjs"]);
   const tokens = await import(pathToFileURL(join(dir, "tokenEstimate.mjs")).href);
   assert.equal(tokens.estimateInputTokens({ n: 1.0 }), 2);
+});
+
+test("the header of bundle.mjs lists every module loadCore bundles", async () => {
+  const text = readFileSync(new URL("../src/bundle.mjs", import.meta.url), "utf8");
+  const header = text.slice(0, text.indexOf("\nimport "));
+  const core = await loadCore();
+  const names = Object.keys(core);
+  assert.ok(names.includes("exceptions") && names.includes("session") && names.includes("sdk"), names.join(", "));
+  for (const name of names) assert.match(header, new RegExp(`\\b${name}\\b`), `the header does not name ${name}`);
+});
+
+test("the doc of loadModule says that its bundles are not log-isolated", () => {
+  const text = readFileSync(new URL("../src/bundle.mjs", import.meta.url), "utf8");
+  const doc = text.slice(text.lastIndexOf("/**", text.indexOf("export async function loadModule")), text.indexOf("export async function loadModule"));
+  assert.match(doc, /not log-isolated/);
 });

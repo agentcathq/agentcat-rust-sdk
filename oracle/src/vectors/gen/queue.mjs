@@ -2,9 +2,12 @@
 // does and runs it through TS's own EventQueue: `add`, then `processEvent` with the API client
 // replaced by a recorder and the backoff delay replaced by a no-op that records the milliseconds.
 // A tool-call event goes through publishEvent (eventInput built as callWrap builds it, its hooks fired
-// through TS's own resolvers); a custom event through publishCustomEvent. A fresh queue serves each
+// through TS's own resolvers; an error result gets TS's captureException error, and the protocol
+// version of `call.protocol_version` becomes the request's `_meta` and the SDK's protocol tag); a
+// custom event through publishCustomEvent. A fresh queue serves each
 // case; the module's queue only hands its events over. node:test mock timers freeze the clock at
-// NOW and drive the 30 s hook budget. Nothing reaches the network.
+// NOW and drive the 30 s hook budget until the queue settles (a watchdog of 5 s real time names a case
+// that never does). Nothing reaches the network.
 //
 // Case name prefixes: call:, hooks:, redact-event:, redact-strings:, sanitize:, truncate:, retry:,
 // custom:. Fields of a case (inputs, then outputs):
@@ -41,7 +44,7 @@ import { mock } from "node:test";
 
 import { loadCore } from "../../bundle.mjs";
 import { captureLogs } from "../../logs.mjs";
-import { tsKey } from "../support.mjs";
+import { tsKey, withWatchdog } from "../support.mjs";
 
 /** The frozen clock of every case. */
 const NOW = Date.parse("2026-10-23T12:00:00.000Z");
@@ -52,6 +55,8 @@ const PROJECT = "proj_queue";
 const SERVER_INFO = { name: "queue-server", version: "1.0.0" };
 const CLIENT_INFO = { name: "queue-client", version: "2.0.0" };
 const SECRET = "SECRET-VALUE-42";
+/** Real milliseconds the queue may take to settle before the case fails. */
+const WATCHDOG_MS = 5_000;
 const EVT_ID = /evt_[0-9A-Za-z]{27}/g;
 
 /** A valid session ID that reads as its label (TS's test helper `sid`). */
@@ -157,6 +162,9 @@ function publishCall(core, spec) {
   // A supplied session keeps the event deterministic; hook mode injects no session_id parameter.
   if (!spec.hook_mode) args.session_id = SESSION;
   const request = { method: "tools/call", params: { name, arguments: args }, jsonrpc: "2.0", id: 1 };
+  if (call.protocol_version !== undefined) {
+    request.params._meta = { [core.constants.META_PROTOCOL_VERSION_KEY]: call.protocol_version };
+  }
   const extra = { requestId: 1 };
   const resolution = core.handles.resolveHandles(data.options, projectId || undefined, request, extra, true);
 
@@ -176,12 +184,13 @@ function publishCall(core, spec) {
     redactionFn: data.options.redactSensitiveInformation,
   };
   if (Object.keys(pending).length > 0) event.pending = pending;
-  event.tags = { ...core.handles.buildHandleTags(resolution, undefined) };
+  event.tags = { ...core.handles.buildHandleTags(resolution, core.session.getProtocolVersion(request, extra)) };
   if ("context" in args) event.userIntent = args.context;
   const response = copyJson(call.response ?? { content: [{ type: "text", text: "hello" }] });
-  if (call.error !== undefined) {
+  // As callWrap does for an error result: the event records TS's own captureException of the result.
+  if (response.isError === true) {
     event.isError = true;
-    event.error = copyJson(call.error);
+    event.error = core.exceptions.captureException(response);
   }
   event.response = response;
   event.outputTokens = core.tokenEstimate.estimateOutputTokens(response);
@@ -209,6 +218,7 @@ function recordingQueue(core, failAttempts) {
   const requests = [];
   const delays = [];
   const runs = [];
+  let added = 0;
   let attempts = 0;
   queue.apiClient = {
     publishEvent: async ({ publishEventRequest }) => {
@@ -221,13 +231,35 @@ function recordingQueue(core, failAttempts) {
   queue.delay = async (ms) => {
     delays.push(ms);
   };
+  const add = queue.add.bind(queue);
+  queue.add = (event) => {
+    added += 1;
+    return add(event);
+  };
   const processEvent = queue.processEvent.bind(queue);
   queue.processEvent = (queued) => {
     const run = processEvent(queued);
     runs.push(run);
     return run;
   };
-  return { queue, requests, delays, settled: () => Promise.all(runs) };
+  /**
+   * Resolves once the queue has taken an event and every run of processEvent has finished (a run
+   * that another run starts is awaited too). Rejects with a named error after `WATCHDOG_MS` of real
+   * time, for a run that never finishes (a hook that hangs while the mock clock stands still).
+   */
+  const settled = (name) => {
+    const finished = (async () => {
+      for (;;) {
+        await drain();
+        if (added === 0) continue;
+        const seen = runs.length;
+        await Promise.all(runs);
+        if (runs.length === seen) return;
+      }
+    })();
+    return withWatchdog(finished, WATCHDOG_MS, `oracle: case ${name}: the queue did not settle within ${WATCHDOG_MS} ms`);
+  };
+  return { queue, requests, delays, settled };
 }
 
 /** An Error whose stack is its first line only, the same on every machine. */
@@ -255,12 +287,13 @@ function freezeClock() {
   }
 }
 
-/** Resolves after the pending promise callbacks have run. */
+/** Resolves after the pending promise callbacks have run; real `setImmediate` is not mocked. */
 const drain = () => new Promise((resolve) => setImmediate(resolve));
 
 /** Runs `spec` through TS; resolves with its event, requests, delays and logs, masked. */
 async function run(core, spec) {
   const recorder = recordingQueue(core, spec.fail_attempts ?? 0);
+  const hangs = Object.values(spec.hooks ?? {}).some((outcome) => outcome.hangs);
   const shared = core.eventQueue.eventQueue;
   const ownAdd = Object.hasOwn(shared, "add") ? shared.add : undefined;
   const events = [];
@@ -273,11 +306,17 @@ async function run(core, spec) {
     freezeClock();
     ({ logs } = await captureLogs(core, async () => {
       await (spec.custom === undefined ? publishCall(core, spec) : publishCustom(core, spec));
-      if (Object.values(spec.hooks ?? {}).some((outcome) => outcome.hangs)) {
+      // A hook that hangs ends at the 30 s budget: advance the mock clock until the queue is done.
+      let done = false;
+      const settled = recorder.settled(spec.name).finally(() => {
+        done = true;
+      });
+      settled.catch(() => {}); // the await below reports it
+      while (hangs && !done) {
         await drain(); // every hook that settles has settled
-        mock.timers.tick(core.pendingEvent.PENDING_HOOK_TIMEOUT_MS);
+        if (!done) mock.timers.tick(core.pendingEvent.PENDING_HOOK_TIMEOUT_MS);
       }
-      await recorder.settled();
+      await settled;
     }));
   } finally {
     mock.timers.reset();
@@ -330,12 +369,8 @@ const CUSTOM_TEST = "publishCustomEvent";
 
 function callCases() {
   add("call:plain", { call: { args: { context: "say hello" } } });
-  add("call:tool-error", {
-    call: {
-      response: { content: [{ type: "text", text: "the lookup failed" }], isError: true },
-      error: { message: "the lookup failed", platform: "javascript" },
-    },
-  });
+  add("call:tool-error", { call: { response: { content: [{ type: "text", text: "the lookup failed" }], isError: true } } });
+  add("call:protocol-version", { call: { protocol_version: "2025-11-25" } });
   add("call:telemetry-only", { project_id: "" });
   add(
     "call:no-session",
@@ -479,7 +514,6 @@ function redactionCases() {
       name: `lookup_${SECRET}`,
       args: { query: `find ${SECRET}`, context: `why ${SECRET}` },
       response: { content: [{ type: "text", text: `found ${SECRET}` }], isError: true },
-      error: { message: `failed near ${SECRET}`, platform: "javascript" },
     },
   });
   add("redact-strings:throws", { redact_strings: { throw_at: 2 } });

@@ -7,23 +7,12 @@ import { join } from "node:path";
 import { test } from "node:test";
 
 import { loadModule } from "../src/bundle.mjs";
-import { ensureTs, verifyTs } from "../src/fetch-ts.mjs";
+import { DROPPED_ENV, ensureTs, verifyTs } from "../src/fetch-ts.mjs";
 import { bundleDir, lock, tsDir, tsDist } from "../src/paths.mjs";
-
-// The variables run() drops: inside a git hook they point git at this repository, not the clone.
-const GIT_REDIRECTS = [
-  "GIT_DIR",
-  "GIT_WORK_TREE",
-  "GIT_INDEX_FILE",
-  "GIT_OBJECT_DIRECTORY",
-  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
-  "GIT_COMMON_DIR",
-  "GIT_PREFIX",
-];
 
 function git(args) {
   const env = { ...process.env };
-  for (const key of GIT_REDIRECTS) delete env[key];
+  for (const key of DROPPED_ENV) delete env[key]; // the variables run() drops: inside a git hook they point git at this repository
   return execFileSync("git", ["-C", tsDir(), ...args], { encoding: "utf8", env }).trim();
 }
 

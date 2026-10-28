@@ -447,7 +447,7 @@ fn success_line_matches_ts() {
         assert_eq!(logs, queue::worker_logs(&case), "{name}");
         ran += 1;
     }
-    assert_eq!(ran, 56, "every non-retry case ran");
+    assert_eq!(ran, 57, "every non-retry case ran");
 }
 
 /// The session of `request` when its `agentcat_session_id_source` tag says the SDK minted it.

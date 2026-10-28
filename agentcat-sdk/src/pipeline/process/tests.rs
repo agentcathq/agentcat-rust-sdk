@@ -152,7 +152,7 @@ async fn queue_vectors_match_ts() {
         }
         ran.push(name);
     }
-    assert_eq!(ran.len(), 56, "every non-retry case ran: {ran:?}");
+    assert_eq!(ran.len(), 57, "every non-retry case ran: {ran:?}");
 }
 
 /// The shrunk retry delays of [`queue_retry_vectors_match_ts`]: the real 1, 2 and 4 s would break

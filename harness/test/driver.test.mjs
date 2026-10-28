@@ -487,3 +487,18 @@ test("the scenario check rejects a bad parallel step, saveCursorAs or pageSize (
     assert.equal(res.code, 2, `${what}: ${res.stderr}`);
   }
 });
+
+test("the driver writes the ORACLE_SHA trace line once when ORACLE_SHA is set, and none when it is absent", { timeout: 120_000 }, async (t) => {
+  const { sha } = lock();
+  const trace = `oracle: ORACLE_SHA=${sha} overrides oracle/oracle.lock (${sha})\n`;
+  const scenario = oneCall(t, 1);
+  const env = (value) => ({ ORACLE_SHA: value });
+  const set = await driver(scenario, "trace", "stdio", [], { env: env(sha) });
+  assert.equal(set.code, 0, set.stderr);
+  assert.equal(set.stderr.split(trace).length - 1, 1, set.stderr);
+  const unset = await run(process.execPath, [DRIVER, scenario, "trace", "stdio", "--", ...TS_SERVER], {
+    env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== "ORACLE_SHA")),
+  });
+  assert.equal(unset.code, 0, unset.stderr);
+  assert.doesNotMatch(unset.stderr, /ORACLE_SHA/);
+});

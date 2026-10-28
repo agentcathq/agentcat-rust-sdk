@@ -60,8 +60,8 @@ test("oracle.sha replies the SHA the oracle runs", async () => {
 });
 
 test("a result is sent in the strict encoding: -0 is a $f64 marker", async () => {
-  const line = await ask('{"id":5,"fn":"oracle.echo","args":[-0]}');
-  assert.equal(line, '{"id":5,"ok":{"$f64":"8000000000000000"}}');
+  const line = await ask('{"id":38,"fn":"oracle.echo","args":[-0]}');
+  assert.equal(line, '{"id":38,"ok":{"$f64":"8000000000000000"}}');
 });
 
 test("a result the strict encoding rejects is an err line with a null stack", async () => {
