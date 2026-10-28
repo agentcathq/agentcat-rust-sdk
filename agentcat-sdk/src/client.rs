@@ -187,7 +187,6 @@ impl Transport {
 
 /// A publisher that accepts every event and sends none (P15; also the test fake's, C43).
 #[cfg(any(test, feature = "test-util"))]
-#[derive(Debug)]
 struct OfflinePublisher;
 
 #[cfg(any(test, feature = "test-util"))]
@@ -217,7 +216,6 @@ fn default_env() -> MapEnv {
 
 /// The sink of a handle that `AGENTCAT_ENABLED` turned off (C45): it drops every line, record and
 /// event, so nothing starts a thread, and it answers `flush` and `shutdown` with `true`.
-#[derive(Debug)]
 struct DisabledSink;
 
 impl Sink for DisabledSink {

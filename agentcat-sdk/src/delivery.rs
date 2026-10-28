@@ -31,7 +31,6 @@
 //!   worker's answer on a `std::sync::mpsc` channel, for at most `drop_drain` and 100 ms more, so
 //!   it never waits on the caller's runtime; the worker then exits. A drop on the worker thread
 //!   itself does not wait. `std::process::exit` and `panic = "abort"` skip the drain.
-use std::fmt;
 use std::future::ready;
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
@@ -79,7 +78,7 @@ pub(crate) trait Publisher: Send + Sync + 'static {
 
 /// Told about each event that finishes the pipeline, telemetry-only events included (the test
 /// fake's record, C43).
-pub(crate) trait Observer: Send + Sync + fmt::Debug + 'static {
+pub(crate) trait Observer: Send + Sync + 'static {
     /// Takes the finished event, before it is posted.
     fn finished(&self, event: &TsEvent);
 }

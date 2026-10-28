@@ -529,7 +529,7 @@ impl Gate {
 }
 
 /// What the clones of one [`RecordingPublisher`] share.
-#[derive(Debug, Default)]
+#[derive(Default)]
 struct Recorded {
     /// How many of the next attempts fail with [`MOCK_FAILURE`].
     failures: Mutex<usize>,
@@ -551,7 +551,7 @@ struct Recorded {
 
 /// A [`Publisher`] for tests that records every attempt and fails the first ones as told. Clones
 /// share the record.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub(crate) struct RecordingPublisher(Arc<Recorded>);
 
 /// Takes one attempt off the running count when the attempt ends or is dropped.
@@ -687,7 +687,6 @@ impl Publisher for RecordingPublisher {
 
 /// Sends one message when it is dropped. A hook's future that holds one and never returns shows
 /// that its task was aborted: only an abort drops that future.
-#[derive(Debug)]
 pub(crate) struct DropSignal(mpsc::Sender<()>);
 
 impl DropSignal {

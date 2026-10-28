@@ -147,7 +147,7 @@ fn hanging<T: Send + 'static>(
 }
 
 /// An observer that keeps every event it is told about.
-#[derive(Debug, Default)]
+#[derive(Default)]
 struct RecordingObserver(Mutex<Vec<TsEvent>>);
 
 impl Observer for RecordingObserver {
@@ -282,7 +282,6 @@ fn retries_three_times_then_logs_failure() {
 }
 
 /// A publisher that can never send (C44, a client that failed to build).
-#[derive(Debug)]
 struct Unusable(Arc<std::sync::atomic::AtomicUsize>);
 
 impl Publisher for Unusable {
@@ -1015,7 +1014,6 @@ fn shutting_down_line_dropped_when_worker_never_started() {
 }
 
 /// Blocks its drop until the test lets it go, then sets its flag.
-#[derive(Debug)]
 struct HeldDrop {
     release: mpsc::Receiver<()>,
     dropped: Arc<AtomicBool>,
@@ -1030,7 +1028,6 @@ impl Drop for HeldDrop {
 }
 
 /// A publisher whose one attempt never ends and holds a [`HeldDrop`].
-#[derive(Debug)]
 struct HangsHolding {
     held: Mutex<Option<HeldDrop>>,
     starts: mpsc::Sender<()>,
@@ -1245,7 +1242,6 @@ fn last_drop_on_current_thread_runtime_returns_within_budget() {
 
 /// A publisher whose attempt, once released, takes the last handle out of its slot and drops it
 /// on the worker thread, and reports how long that drop took and on which thread.
-#[derive(Debug)]
 struct DropsLastHandle {
     slot: Arc<Mutex<Option<AgentCat>>>,
     release: Arc<Semaphore>,

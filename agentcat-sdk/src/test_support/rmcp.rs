@@ -690,7 +690,7 @@ pub(crate) fn identity_json(identity: Option<&ClientIdentity>) -> Value {
 }
 
 /// A [`Sink`] that keeps every log line and every call record, and drops assembled events.
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub(crate) struct RecordingSink {
     logs: Mutex<Vec<String>>,
     records: Mutex<Vec<CallRecord>>,

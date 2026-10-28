@@ -22,8 +22,8 @@ pub const CRATE_FLOOR: u64 = 90;
 pub const PURE_FLOOR: u64 = 95;
 
 /// The pure set of C52: the modules whose work is mostly value in, value out, so tests reach
-/// nearly all of it. Paths under `agentcat-sdk/src/`; an entry that ends in `/` is every file
-/// under that directory.
+/// nearly all of it. Paths under `agentcat-sdk/src/`; an entry `dir/` is the module `dir`: its
+/// root (`dir/mod.rs` or `dir.rs`) and every file under `dir/`.
 pub const PURE_SET: &[&str] = &[
     "constants.rs",
     "js.rs",
@@ -103,7 +103,8 @@ struct CrateFile {
 pub struct Outcome {
     /// The table of the crate's files and the two totals.
     pub table: String,
-    /// One line for each floor the report is below, and for each pure set entry with no file.
+    /// One line for each floor the report is below, and for each pure set entry whose file or
+    /// module root the report lacks.
     pub problems: Vec<String>,
 }
 
@@ -125,11 +126,28 @@ fn crate_path(filename: &str) -> Option<String> {
 
 /// `true` when `path` (under [`CRATE_SRC`]) is in the pure set entry `entry`.
 fn in_entry(path: &str, entry: &str) -> bool {
-    if entry.ends_with('/') {
-        path.starts_with(entry)
-    } else {
-        path == entry
+    match entry.strip_suffix('/') {
+        Some(dir) => path.starts_with(entry) || path == format!("{dir}.rs"),
+        None => path == entry,
     }
+}
+
+/// The problem when the report lacks the root of the pure set entry `entry` (the file itself,
+/// or a module's `mod.rs` or its file beside the directory): a rename would otherwise drop it
+/// from the set unnoticed. `None` when the root is there.
+fn missing_root(paths: &[&str], entry: &str) -> Option<String> {
+    let Some(dir) = entry.strip_suffix('/') else {
+        return (!paths.contains(&entry)).then(|| {
+            format!("coverage: the pure set entry {entry} matches no file of the report")
+        });
+    };
+    let roots = [format!("{dir}/mod.rs"), format!("{dir}.rs")];
+    (!roots.iter().any(|root| paths.contains(&root.as_str()))).then(|| {
+        format!(
+            "coverage: the pure set entry {entry} has no module root in the report ({} or {})",
+            roots[0], roots[1]
+        )
+    })
 }
 
 /// Checks the floors on the text of an llvm-cov summary.
@@ -166,10 +184,10 @@ pub fn check(json: &str) -> Result<Outcome, String> {
             pure.add(file.lines);
         }
     }
+    let paths: Vec<&str> = files.iter().map(|file| file.path.as_str()).collect();
     let mut problems: Vec<String> = PURE_SET
         .iter()
-        .filter(|entry| !files.iter().any(|file| in_entry(&file.path, entry)))
-        .map(|entry| format!("coverage: the pure set entry {entry} matches no file of the report"))
+        .filter_map(|entry| missing_root(&paths, entry))
         .collect();
     if all.below(CRATE_FLOOR) {
         problems.push(format!(
@@ -489,6 +507,52 @@ pure set                         1000     1000  100.0 %
         assert_eq!(
             outcome.problems,
             ["coverage: the pure set entry pipeline/tags.rs matches no file of the report"]
+        );
+    }
+
+    /// [`pure_files`] without `handles/mod.rs`.
+    fn pure_files_without_handles_root() -> Vec<(String, u64, u64)> {
+        pure_files(100)
+            .into_iter()
+            .filter(|(path, _, _)| !path.ends_with("/handles/mod.rs"))
+            .collect()
+    }
+
+    #[test]
+    fn pure_directory_needs_its_module_root() {
+        // A file under handles/ is not enough: a renamed root would leave the set unnoticed.
+        let outcome = check_files(
+            &pure_files_without_handles_root(),
+            &[("agentcat-sdk/src/handles/ksuid.rs", 100, 100)],
+        );
+        assert_eq!(
+            outcome.problems,
+            [
+                "coverage: the pure set entry handles/ has no module root in the report (handles/mod.rs or handles.rs)"
+            ]
+        );
+    }
+
+    #[test]
+    fn pure_directory_root_may_sit_beside_it() {
+        // handles.rs is the module root and in the pure set: at 0 of 100 lines it takes the set to
+        // 1000 of 1100 lines.
+        let outcome = check_files(
+            &pure_files_without_handles_root(),
+            &[
+                ("agentcat-sdk/src/handles.rs", 0, 100),
+                ("agentcat-sdk/src/handles/ksuid.rs", 100, 100),
+            ],
+        );
+        assert_eq!(
+            outcome.problems,
+            [
+                "coverage: the pure set runs 90.9 % of its lines (1000 of 1100), below its floor of 95 %; its files below 95 %: handles.rs (0.0 %)"
+            ]
+        );
+        assert_eq!(
+            row(&outcome.table, "handles.rs (pure)"),
+            ["0", "100", "0.0", "%"]
         );
     }
 

@@ -252,7 +252,10 @@ jobs:
           cargo +nightly llvm-cov nextest -p agentcat-sdk --all-features --branch
           --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)'
           --json --summary-only --output-path target/coverage-branch.json
+      # `shell: bash` adds `-o pipefail`: a missing or unreadable report fails the step, not only `tee`.
+      # No step compares the percentage.
       - name: Branch coverage in the run summary
+        shell: bash
         run: |
           jq -r '.data[0].totals.branches
             | "Branch coverage of agentcat-sdk: \(.covered) of \(.count) branches, \((.percent * 10 | floor) / 10) % (target 85 %, report only)."' \
