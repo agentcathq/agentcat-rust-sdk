@@ -3,7 +3,9 @@ real agentcat-server ingest function process_event, against the ephemeral
 Postgres testcontainer of the server's own pytest setup. Local only (R14): no
 SQS, no AgentCat service, never in CI. See harness/ingest/README.md.
 
-CAPTURE_FILE: absolute path of harness/out/<scenario>.<label>.<transport>.raw.json.
+CAPTURE_FILES: colon-separated absolute paths of
+harness/out/<scenario>.<label>.<transport>.raw.json files. CAPTURE_FILE (one
+path) still works when CAPTURE_FILES is not set.
 Every body's project_id (and its camelCase alias projectId) is replaced with
 the id of a project this test creates; nothing else in the body changes.
 
@@ -25,7 +27,7 @@ from django.test import TestCase
 from apps.analytics.models.events import Event, ProcessResult, SqsMessage, process_event
 from apps.core.models import Organization, Project, User
 
-CAPTURE = os.environ["CAPTURE_FILE"]
+CAPTURES = [p for p in (os.environ.get("CAPTURE_FILES") or os.environ["CAPTURE_FILE"]).split(":") if p]
 PUBLISH_PATH = "/v1/public/events/"
 
 
@@ -99,27 +101,40 @@ class TestIngestCapture(TestCase):
         self.project = Project.objects.create(name="Harness Ingest", organization=org)
 
     def test_every_captured_body_ingests(self):
-        with open(CAPTURE, encoding="utf-8") as f:
-            requests = json.load(f)
-        bodies = [r["body"] for r in requests if r["method"] == "POST" and r["path"] == PUBLISH_PATH]
-        self.assertGreater(len(bodies), 0, f"no publish bodies in {CAPTURE}")
-        for body in bodies:
+        sent = []  # (file, index, body) for every publish body of every file
+        empty = []  # files without a publish body: the matrix driver already checked each one's expected count
+        for path in CAPTURES:
+            with open(path, encoding="utf-8") as f:
+                requests = json.load(f)
+            bodies = [r["body"] for r in requests if r["method"] == "POST" and r["path"] == PUBLISH_PATH]
+            if not bodies:
+                empty.append(os.path.basename(path))  # a scenario that expects 0 publishes (tracing-off)
+            sent.extend((path, i, b) for i, b in enumerate(bodies))
+        self.assertGreater(len(sent), 0, "no publish bodies in any capture file")
+        for n, (path, i, body) in enumerate(sent):
             body = dict(body)
             for k in ("project_id", "projectId"):
                 if k in body:
                     body[k] = self.project.id
+            sent[n] = (path, i, body)
             msg = SqsMessage(body=json.dumps(body), id=f"m_{body['id']}", receipt_handle="h")
-            label = f"{body.get('id')} {body.get('event_type')} {body.get('resource_name')}"
+            label = f"{os.path.basename(path)} body {i}: {body.get('event_type')} {body.get('resource_name')}"
             self.assertEqual(process_event(msg), ProcessResult.SUCCESS, label)
         stored = Event.objects.filter(project_id=self.project.id)
-        self.assertEqual(stored.count(), len(bodies))
+        self.assertEqual(stored.count(), len(sent))
         by_id = {e.id: e for e in stored}
-        for body in bodies:
+        for path, i, body in sent:
+            label = f"{os.path.basename(path)} body {i}"
             e = by_id[body["id"]]
-            self.assertEqual(e.resource_name, body.get("resource_name"))
-            self.assertEqual(bool(e.is_error), bool(body.get("is_error", False)))
+            self.assertEqual(e.resource_name, body.get("resource_name"), label)
+            self.assertEqual(bool(e.is_error), bool(body.get("is_error", False)), label)
             if body.get("input_tokens") is not None:
-                self.assertEqual(e.input_tokens, body["input_tokens"])
+                self.assertEqual(e.input_tokens, body["input_tokens"], label)
             if body.get("output_tokens") is not None:
-                self.assertEqual(e.output_tokens, body["output_tokens"])
-        print(f"INGESTED {len(bodies)} bodies OK; event types: {sorted({e.event_type for e in stored})}")
+                self.assertEqual(e.output_tokens, body["output_tokens"], label)
+        types = {}
+        for e in stored:
+            types[e.event_type] = types.get(e.event_type, 0) + 1
+        print(f"INGESTED {len(sent)} bodies OK from {len(CAPTURES)} files")
+        print(f"FILES WITHOUT A PUBLISH BODY {len(empty)}")
+        print(f"EVENT TYPES {dict(sorted(types.items()))}")

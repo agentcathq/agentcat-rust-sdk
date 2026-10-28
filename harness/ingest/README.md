@@ -20,8 +20,9 @@ What the steps guarantee:
   setting the server requires is `RESEND_API_KEY`, and step 5 gives it a dummy value.
 - `env -i` removes every variable of your shell environment (AWS keys included). The replay gets
   only the variables that step 5 lists.
-- `HOME` is a new empty directory, so the replay cannot read files under your home directory
-  (`~/.aws`, `~/.docker/config.json`, `~/.netrc`).
+- `HOME` is a new empty directory, so the replay cannot read files that it finds through `HOME`
+  (`~/.aws`, `~/.docker/config.json`, `~/.netrc`). A program that reads an absolute path can still
+  read it; `env -i` and the egress guard cover that case.
 - `AWS_SHARED_CREDENTIALS_FILE=/dev/null` and `AWS_CONFIG_FILE=/dev/null` give boto3 no credential
   files. `AWS_EC2_METADATA_DISABLED=true` stops boto3 from asking the EC2 instance metadata service
   for credentials.
@@ -30,8 +31,9 @@ What `test_ingest_capture.py` enforces (its egress guard, in Python code only):
 
 - A socket `connect`, `connect_ex` or `sendto` must go to a Unix socket (the Docker daemon) or a
   loopback address (the testcontainer). Any other address fails before a packet leaves.
-- A `getaddrinfo`, `gethostbyname` or `gethostbyname_ex` lookup must be of `localhost` or a loopback
-  address. Any other name fails with `EAI_NONAME` before a DNS query.
+- A `getaddrinfo`, `gethostbyname` or `gethostbyname_ex` lookup through Python's `socket` module
+  must be of `localhost` or a loopback address. The guard covers call-time lookups only: any other
+  name fails with `EAI_NONAME` before a DNS query.
 
 What nothing enforces:
 
@@ -54,57 +56,43 @@ whole process tree, including C code.
 
 Prerequisites: Docker running, git, Python 3.12 or 3.13, Poetry 2.x, Node 22 and corepack, and an
 agentcat-server checkout (here `~/agentcat-server`) that contains the commit in
-`harness/contract/SOURCE` (`git -C ~/agentcat-server fetch origin` if it does not).
+`harness/contract/SOURCE` (`git -C ~/agentcat-server fetch origin` if it does not). The harness run
+needs `corepack pnpm install` (repository root) and the first oracle build (`node oracle/src/fetch-ts.mjs`).
 
 Run from the repository root:
 
 ```sh
-# 1. A fresh TS run: writes harness/out/basic.ts.stdio.raw.json (11 publish bodies).
-node harness/src/driver.mjs harness/scenarios/basic.json ts stdio \
-  -- node --import ./harness/src/egress-guard.mjs harness/src/servers/ts-v1.mjs
+# 1. A harness run. The full matrix writes harness/out/<scenario>.<label>.<transport>.raw.json.
+node harness/src/matrix.mjs
 
-# 2. A throwaway clone of agentcat-server at the contract commit.
-WORK=$(mktemp -d)
-SHA=$(cut -d' ' -f2 harness/contract/SOURCE)
-git clone --no-hardlinks --quiet ~/agentcat-server "$WORK/agentcat-server"
-git -C "$WORK/agentcat-server" checkout --quiet --detach "$SHA"
-git -C "$WORK/agentcat-server" remote remove origin
-cp harness/ingest/test_ingest_capture.py "$WORK/agentcat-server/"
-cp harness/out/basic.ts.stdio.raw.json "$WORK/capture.json"
-
-# 3. The server's Python environment, inside the clone (agentcat-server CLAUDE.md, "Working in Git
-#    Worktrees": poetry install). POETRY_VIRTUALENVS_IN_PROJECT keeps the venv in the clone.
-#    This step keeps your HOME for Poetry's download cache. It installs packages and runs no test.
-(cd "$WORK/agentcat-server" && env -i HOME="$HOME" PATH="$PATH" POETRY_VIRTUALENVS_IN_PROJECT=true \
-  PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring poetry install --no-interaction)
-
-# 4. Optional: seed tiktoken's cache from an earlier download (see Safety).
-mkdir -p "$WORK/tiktoken-cache"
-cp /tmp/data-gym-cache/9b5ad71b2ce5302211f9c61530b329a4922fc6a4 "$WORK/tiktoken-cache/" 2>/dev/null || true
-
-# 5. The replay, with a new empty HOME and no AWS credentials.
-#    Add DOCKER_HOST="$DOCKER_HOST" if Docker is not at its default socket.
-mkdir -p "$WORK/home"
-(cd "$WORK/agentcat-server" && env -i HOME="$WORK/home" PATH="$PATH" POETRY_VIRTUALENVS_IN_PROJECT=true \
-  PYTHON_KEYRING_BACKEND=keyring.backends.null.Keyring \
-  AWS_SHARED_CREDENTIALS_FILE=/dev/null AWS_CONFIG_FILE=/dev/null AWS_EC2_METADATA_DISABLED=true \
-  CAPTURE_FILE="$WORK/capture.json" RESEND_API_KEY=local-ingest-replay \
-  TIKTOKEN_CACHE_DIR="$WORK/tiktoken-cache" \
-  poetry run pytest test_ingest_capture.py -s -p no:cacheprovider)
-
-# 6. Clean up.
-rm -rf "$WORK"
+# 2 to 6. Replay the Rust tracked captures.
+harness/ingest/replay.sh harness/out/*.rust-*.raw.json
 ```
 
-Expected: a line `INGESTED 11 bodies OK; event types: [...]` and `1 passed`.
+`replay.sh <capture.raw.json>...` takes one or more capture files. It resolves them to absolute
+paths and passes them to the test in `CAPTURE_FILES` (colon-separated; `CAPTURE_FILE` with one path
+still works when the test runs by hand). It then does these steps, and removes the clone on exit,
+also after a failed step:
 
-To replay another run (a Rust run in plan 3), copy its `harness/out/<scenario>.<label>.<transport>.raw.json`
-to `$WORK/capture.json` in step 2 instead.
+- Step 2 makes a throwaway clone of agentcat-server at the contract commit and copies the test in.
+- Step 3 runs `poetry install` inside the clone. It keeps your real `HOME` for Poetry's download
+  cache. It installs packages and runs no test. Nothing else in the script has your `HOME`.
+- Step 4 seeds tiktoken's cache from an earlier download when one exists (see Safety).
+- Step 5 runs the replay with `env -i`, a new empty `HOME`, no AWS credentials and a dummy
+  `RESEND_API_KEY`. Set `DOCKER_HOST` in your shell if Docker is not at its default socket.
+- Step 6 removes the clone.
+
+Expected: a line `INGESTED <n> bodies OK from <m> files`, a line `EVENT TYPES {...}` and `1 passed`.
+The test fails on any body that is not `ProcessResult.SUCCESS` and names the file and the body index.
+`RESULTS.md` records the last full run.
+
+To replay one run of one scenario, pass its file: `harness/ingest/replay.sh harness/out/basic.ts.stdio.raw.json`.
 
 ## Network audit (optional)
 
-To record every network system call of the replay, run step 5 with
-`strace -f -qq -e trace=%network -o "$WORK/net.log"` in front of `poetry run`. Then list the IP
+To record every network system call of the replay, edit step 5 of `replay.sh` to put
+`strace -f -qq -e trace=%network -o "$WORK/net.log"` in front of `poetry run`, and copy the log out
+before the script ends (the trap removes `$WORK`). Then, with `WORK` set to the log's directory, list the IP
 addresses and the Unix sockets that appear in the trace:
 
 ```sh
