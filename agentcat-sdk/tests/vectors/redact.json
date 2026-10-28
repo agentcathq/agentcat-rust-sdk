@@ -1,0 +1,6432 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/redact.mjs",
+  "cases": [
+    {
+      "name": "test:basic",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "sensitive user intent",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "[R:sensitive user intent]",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      },
+      "calls": [
+        "sensitive user intent"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should redact basic string fields"
+      ]
+    },
+    {
+      "name": "test:protected-fields",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_456",
+        "projectId": "proj_789",
+        "server": "my-server",
+        "serverName": "my-mcp-server",
+        "serverVersion": "1.2.3",
+        "clientName": "my-mcp-client",
+        "clientVersion": "4.5.6",
+        "identifyActorGivenId": "actor_123",
+        "identifyActorName": "John Doe",
+        "resourceName": "my-resource",
+        "eventType": "mcp:tools/call",
+        "actorId": "actor_456"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_456",
+        "projectId": "proj_789",
+        "server": "my-server",
+        "serverName": "my-mcp-server",
+        "serverVersion": "1.2.3",
+        "clientName": "my-mcp-client",
+        "clientVersion": "4.5.6",
+        "identifyActorGivenId": "actor_123",
+        "identifyActorName": "John Doe",
+        "resourceName": "my-resource",
+        "eventType": "mcp:tools/call",
+        "actorId": "actor_456"
+      },
+      "calls": [],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should not redact protected fields"
+      ]
+    },
+    {
+      "name": "test:nested-strings",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "query": "sensitive query",
+          "options": {
+            "apiKey": "secret-key-123",
+            "timeout": 5000
+          }
+        },
+        "response": {
+          "data": "sensitive response data",
+          "metadata": {
+            "source": "sensitive source"
+          }
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "query": "[R:sensitive query]",
+          "options": {
+            "apiKey": "[R:secret-key-123]",
+            "timeout": 5000
+          }
+        },
+        "response": {
+          "data": "[R:sensitive response data]",
+          "metadata": {
+            "source": "[R:sensitive source]"
+          }
+        }
+      },
+      "calls": [
+        "sensitive query",
+        "secret-key-123",
+        "sensitive response data",
+        "sensitive source"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should redact nested string fields"
+      ]
+    },
+    {
+      "name": "test:arrays-of-strings",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "tags": [
+            "sensitive1",
+            "sensitive2",
+            "sensitive3"
+          ],
+          "numbers": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "tags": [
+            "[R:sensitive1]",
+            "[R:sensitive2]",
+            "[R:sensitive3]"
+          ],
+          "numbers": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "calls": [
+        "sensitive1",
+        "sensitive2",
+        "sensitive3"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle arrays of strings"
+      ]
+    },
+    {
+      "name": "test:mixed-nested",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "users": [
+            {
+              "name": "John",
+              "age": 30,
+              "email": "john@example.com"
+            },
+            {
+              "name": "Jane",
+              "age": 25,
+              "email": "jane@example.com"
+            }
+          ]
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "users": [
+            {
+              "name": "[R:John]",
+              "age": 30,
+              "email": "[R:john@example.com]"
+            },
+            {
+              "name": "[R:Jane]",
+              "age": 25,
+              "email": "[R:jane@example.com]"
+            }
+          ]
+        }
+      },
+      "calls": [
+        "John",
+        "john@example.com",
+        "Jane",
+        "jane@example.com"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle mixed nested structures"
+      ]
+    },
+    {
+      "name": "test:identify-data",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyData": {
+          "email": "user@example.com",
+          "preferences": {
+            "theme": "dark",
+            "notifications": true
+          },
+          "metadata": {
+            "source": "webapp",
+            "version": "1.0.0"
+          }
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyData": {
+          "email": "user@example.com",
+          "preferences": {
+            "theme": "dark",
+            "notifications": true
+          },
+          "metadata": {
+            "source": "webapp",
+            "version": "1.0.0"
+          }
+        }
+      },
+      "calls": [],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle complex identifyData object without redacting it"
+      ]
+    },
+    {
+      "name": "test:error-object",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "isError": true,
+        "error": {
+          "message": "Sensitive error message",
+          "code": "ERR_001",
+          "stack": "Error: Sensitive error message\n    at functionName (file.js:10:5)"
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "isError": true,
+        "error": {
+          "message": "[R:Sensitive error message]",
+          "code": "[R:ERR_001]",
+          "stack": "[R:Error: Sensitive error message\n    at functionName (file.js:10:5)]"
+        }
+      },
+      "calls": [
+        "Sensitive error message",
+        "ERR_001",
+        "Error: Sensitive error message\n    at functionName (file.js:10:5)"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle error objects"
+      ]
+    },
+    {
+      "name": "test:deeply-nested-protected-name",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "nested": {
+            "deeply": {
+              "sessionId": "This should be redacted",
+              "data": "sensitive data"
+            }
+          }
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "nested": {
+            "deeply": {
+              "sessionId": "[R:This should be redacted]",
+              "data": "[R:sensitive data]"
+            }
+          }
+        }
+      },
+      "calls": [
+        "This should be redacted",
+        "sensitive data"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle deeply nested protected fields correctly"
+      ]
+    },
+    {
+      "name": "test:redactor-throws",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "sensitive data"
+      },
+      "throw_at": 1,
+      "error": "Error: redactor failed",
+      "calls": [
+        "sensitive data"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle custom redaction function errors gracefully"
+      ]
+    },
+    {
+      "name": "test:nested-in-protected",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyData": {
+          "nested": {
+            "deeply": {
+              "sensitive": "this should NOT be redacted",
+              "data": [
+                "array",
+                "of",
+                "strings"
+              ]
+            }
+          }
+        },
+        "otherData": {
+          "nested": {
+            "deeply": {
+              "sensitive": "this SHOULD be redacted"
+            }
+          }
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyData": {
+          "nested": {
+            "deeply": {
+              "sensitive": "this should NOT be redacted",
+              "data": [
+                "array",
+                "of",
+                "strings"
+              ]
+            }
+          }
+        },
+        "otherData": {
+          "nested": {
+            "deeply": {
+              "sensitive": "[R:this SHOULD be redacted]"
+            }
+          }
+        }
+      },
+      "calls": [
+        "this SHOULD be redacted"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should not redact nested fields within any protected field"
+      ]
+    },
+    {
+      "name": "test:all-fields",
+      "input": {
+        "id": "evt_123",
+        "projectId": "proj_123",
+        "sessionId": "ses_123000000000000000000000000",
+        "actorId": "actor_123",
+        "eventId": "custom_evt_123",
+        "eventType": "mcp:tools/call",
+        "isError": false,
+        "error": {
+          "message": "error message"
+        },
+        "resourceName": "resource_123",
+        "duration": 1000,
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "userIntent": "user intent text",
+        "parameters": {
+          "param1": "value1"
+        },
+        "response": {
+          "result": "success"
+        },
+        "identifyActorGivenId": "given_id_123",
+        "identifyActorName": "Actor Name",
+        "identifyData": {
+          "key": "value"
+        },
+        "server": "server_name"
+      },
+      "output": {
+        "id": "evt_123",
+        "projectId": "proj_123",
+        "sessionId": "ses_123000000000000000000000000",
+        "actorId": "actor_123",
+        "eventId": "[R:custom_evt_123]",
+        "eventType": "mcp:tools/call",
+        "isError": false,
+        "error": {
+          "message": "[R:error message]"
+        },
+        "resourceName": "resource_123",
+        "duration": 1000,
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "userIntent": "[R:user intent text]",
+        "parameters": {
+          "param1": "[R:value1]"
+        },
+        "response": {
+          "result": "[R:success]"
+        },
+        "identifyActorGivenId": "given_id_123",
+        "identifyActorName": "Actor Name",
+        "identifyData": {
+          "key": "value"
+        },
+        "server": "server_name"
+      },
+      "calls": [
+        "custom_evt_123",
+        "error message",
+        "user intent text",
+        "value1",
+        "success"
+      ],
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|redactEvent > should handle events with all possible fields"
+      ]
+    },
+    {
+      "name": "null-and-empty-string",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "nullValue": null,
+          "emptyString": ""
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "parameters": {
+          "nullValue": null,
+          "emptyString": "[R:]"
+        }
+      },
+      "calls": [
+        ""
+      ]
+    },
+    {
+      "name": "protected:all-strings",
+      "input": {
+        "sessionId": "v-sessionId",
+        "id": "v-id",
+        "projectId": "v-projectId",
+        "server": "v-server",
+        "serverName": "v-serverName",
+        "serverVersion": "v-serverVersion",
+        "clientName": "v-clientName",
+        "clientVersion": "v-clientVersion",
+        "identifyActorGivenId": "v-identifyActorGivenId",
+        "identifyActorName": "v-identifyActorName",
+        "identifyData": "v-identifyData",
+        "resourceName": "v-resourceName",
+        "eventType": "v-eventType",
+        "actorId": "v-actorId",
+        "tags": "v-tags",
+        "properties": "v-properties"
+      },
+      "output": {
+        "sessionId": "v-sessionId",
+        "id": "v-id",
+        "projectId": "v-projectId",
+        "server": "v-server",
+        "serverName": "v-serverName",
+        "serverVersion": "v-serverVersion",
+        "clientName": "v-clientName",
+        "clientVersion": "v-clientVersion",
+        "identifyActorGivenId": "v-identifyActorGivenId",
+        "identifyActorName": "v-identifyActorName",
+        "identifyData": "v-identifyData",
+        "resourceName": "v-resourceName",
+        "eventType": "v-eventType",
+        "actorId": "v-actorId",
+        "tags": "v-tags",
+        "properties": "v-properties"
+      },
+      "calls": []
+    },
+    {
+      "name": "protected:sessionId",
+      "input": {
+        "sessionId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "sessionId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:sessionId",
+      "input": {
+        "parameters": {
+          "sessionId": "v-sessionId",
+          "deep": {
+            "sessionId": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "sessionId": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "sessionId": "[R:v-sessionId]",
+          "deep": {
+            "sessionId": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "sessionId": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-sessionId",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:id",
+      "input": {
+        "id": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "id": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:id",
+      "input": {
+        "parameters": {
+          "id": "v-id",
+          "deep": {
+            "id": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "id": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "id": "[R:v-id]",
+          "deep": {
+            "id": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "id": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-id",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:projectId",
+      "input": {
+        "projectId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "projectId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:projectId",
+      "input": {
+        "parameters": {
+          "projectId": "v-projectId",
+          "deep": {
+            "projectId": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "projectId": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "projectId": "[R:v-projectId]",
+          "deep": {
+            "projectId": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "projectId": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-projectId",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:server",
+      "input": {
+        "server": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "server": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:server",
+      "input": {
+        "parameters": {
+          "server": "v-server",
+          "deep": {
+            "server": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "server": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "server": "[R:v-server]",
+          "deep": {
+            "server": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "server": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-server",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:serverName",
+      "input": {
+        "serverName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "serverName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:serverName",
+      "input": {
+        "parameters": {
+          "serverName": "v-serverName",
+          "deep": {
+            "serverName": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "serverName": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "serverName": "[R:v-serverName]",
+          "deep": {
+            "serverName": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "serverName": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-serverName",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:serverVersion",
+      "input": {
+        "serverVersion": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "serverVersion": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:serverVersion",
+      "input": {
+        "parameters": {
+          "serverVersion": "v-serverVersion",
+          "deep": {
+            "serverVersion": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "serverVersion": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "serverVersion": "[R:v-serverVersion]",
+          "deep": {
+            "serverVersion": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "serverVersion": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-serverVersion",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:clientName",
+      "input": {
+        "clientName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "clientName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:clientName",
+      "input": {
+        "parameters": {
+          "clientName": "v-clientName",
+          "deep": {
+            "clientName": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "clientName": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "clientName": "[R:v-clientName]",
+          "deep": {
+            "clientName": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "clientName": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-clientName",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:clientVersion",
+      "input": {
+        "clientVersion": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "clientVersion": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:clientVersion",
+      "input": {
+        "parameters": {
+          "clientVersion": "v-clientVersion",
+          "deep": {
+            "clientVersion": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "clientVersion": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "clientVersion": "[R:v-clientVersion]",
+          "deep": {
+            "clientVersion": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "clientVersion": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-clientVersion",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:identifyActorGivenId",
+      "input": {
+        "identifyActorGivenId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "identifyActorGivenId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:identifyActorGivenId",
+      "input": {
+        "parameters": {
+          "identifyActorGivenId": "v-identifyActorGivenId",
+          "deep": {
+            "identifyActorGivenId": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyActorGivenId": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "identifyActorGivenId": "[R:v-identifyActorGivenId]",
+          "deep": {
+            "identifyActorGivenId": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyActorGivenId": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-identifyActorGivenId",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:identifyActorName",
+      "input": {
+        "identifyActorName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "identifyActorName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:identifyActorName",
+      "input": {
+        "parameters": {
+          "identifyActorName": "v-identifyActorName",
+          "deep": {
+            "identifyActorName": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyActorName": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "identifyActorName": "[R:v-identifyActorName]",
+          "deep": {
+            "identifyActorName": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyActorName": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-identifyActorName",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:identifyData",
+      "input": {
+        "identifyData": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "identifyData": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:identifyData",
+      "input": {
+        "parameters": {
+          "identifyData": "v-identifyData",
+          "deep": {
+            "identifyData": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyData": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "identifyData": "[R:v-identifyData]",
+          "deep": {
+            "identifyData": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "identifyData": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-identifyData",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:resourceName",
+      "input": {
+        "resourceName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "resourceName": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:resourceName",
+      "input": {
+        "parameters": {
+          "resourceName": "v-resourceName",
+          "deep": {
+            "resourceName": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "resourceName": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "resourceName": "[R:v-resourceName]",
+          "deep": {
+            "resourceName": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "resourceName": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-resourceName",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:eventType",
+      "input": {
+        "eventType": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "eventType": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:eventType",
+      "input": {
+        "parameters": {
+          "eventType": "v-eventType",
+          "deep": {
+            "eventType": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "eventType": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "eventType": "[R:v-eventType]",
+          "deep": {
+            "eventType": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "eventType": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-eventType",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:actorId",
+      "input": {
+        "actorId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "actorId": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:actorId",
+      "input": {
+        "parameters": {
+          "actorId": "v-actorId",
+          "deep": {
+            "actorId": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "actorId": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "actorId": "[R:v-actorId]",
+          "deep": {
+            "actorId": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "actorId": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-actorId",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:tags",
+      "input": {
+        "tags": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "tags": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:tags",
+      "input": {
+        "parameters": {
+          "tags": "v-tags",
+          "deep": {
+            "tags": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "tags": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "tags": "[R:v-tags]",
+          "deep": {
+            "tags": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "tags": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-tags",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "protected:properties",
+      "input": {
+        "properties": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "u"
+      },
+      "output": {
+        "properties": {
+          "s": "x",
+          "list": [
+            "y",
+            {
+              "t": "z"
+            }
+          ],
+          "n": 1
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "nested:properties",
+      "input": {
+        "parameters": {
+          "properties": "v-properties",
+          "deep": {
+            "properties": {
+              "s": "x",
+              "list": [
+                "y",
+                {
+                  "t": "z"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "properties": "r"
+          }
+        ]
+      },
+      "output": {
+        "parameters": {
+          "properties": "[R:v-properties]",
+          "deep": {
+            "properties": {
+              "s": "[R:x]",
+              "list": [
+                "[R:y]",
+                {
+                  "t": "[R:z]"
+                }
+              ],
+              "n": 1
+            }
+          }
+        },
+        "response": [
+          {
+            "properties": "[R:r]"
+          }
+        ]
+      },
+      "calls": [
+        "v-properties",
+        "x",
+        "y",
+        "z",
+        "r"
+      ]
+    },
+    {
+      "name": "identify-actor-data:strings",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyActorGivenId": "actor_1",
+        "identifyActorData": {
+          "email": "a@example.com",
+          "plan": {
+            "tier": "pro"
+          },
+          "list": [
+            "x",
+            1
+          ]
+        }
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "identifyActorGivenId": "actor_1",
+        "identifyActorData": {
+          "email": "[R:a@example.com]",
+          "plan": {
+            "tier": "[R:pro]"
+          },
+          "list": [
+            "[R:x]",
+            1
+          ]
+        }
+      },
+      "calls": [
+        "a@example.com",
+        "pro",
+        "x"
+      ]
+    },
+    {
+      "name": "identify-actor-data:with-identify-data",
+      "input": {
+        "identifyData": {
+          "a": "kept"
+        },
+        "identifyActorData": {
+          "a": "redacted"
+        }
+      },
+      "output": {
+        "identifyData": {
+          "a": "kept"
+        },
+        "identifyActorData": {
+          "a": "[R:redacted]"
+        }
+      },
+      "calls": [
+        "redacted"
+      ]
+    },
+    {
+      "name": "identify-actor-data:string",
+      "input": {
+        "identifyActorData": "text"
+      },
+      "output": {
+        "identifyActorData": "[R:text]"
+      },
+      "calls": [
+        "text"
+      ]
+    },
+    {
+      "name": "timestamp:top-level",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "userIntent": "u"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "timestamp:nested",
+      "input": {
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "timestamp": "2025-01-15T12:00:00.000Z",
+          "list": [
+            {
+              "timestamp": "t"
+            }
+          ]
+        },
+        "response": {
+          "timestamp": "r"
+        },
+        "error": {
+          "timestamp": "e"
+        }
+      },
+      "output": {
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "timestamp": "[R:2025-01-15T12:00:00.000Z]",
+          "list": [
+            {
+              "timestamp": "[R:t]"
+            }
+          ]
+        },
+        "response": {
+          "timestamp": "[R:r]"
+        },
+        "error": {
+          "timestamp": "[R:e]"
+        }
+      },
+      "calls": [
+        "2025-01-15T12:00:00.000Z",
+        "t",
+        "r",
+        "e"
+      ]
+    },
+    {
+      "name": "timestamp:not-a-date-string",
+      "input": {
+        "timestamp": "not a date",
+        "userIntent": "u"
+      },
+      "output": {
+        "timestamp": "not a date",
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "timestamp:empty-string",
+      "input": {
+        "timestamp": ""
+      },
+      "output": {
+        "timestamp": ""
+      },
+      "calls": []
+    },
+    {
+      "name": "timestamp:object",
+      "input": {
+        "timestamp": {
+          "at": "2025-01-15T12:00:00.000Z",
+          "list": [
+            "x"
+          ]
+        }
+      },
+      "output": {
+        "timestamp": {
+          "at": "[R:2025-01-15T12:00:00.000Z]",
+          "list": [
+            "[R:x]"
+          ]
+        }
+      },
+      "calls": [
+        "2025-01-15T12:00:00.000Z",
+        "x"
+      ]
+    },
+    {
+      "name": "timestamp:array",
+      "input": {
+        "timestamp": [
+          "x",
+          "y"
+        ]
+      },
+      "output": {
+        "timestamp": [
+          "[R:x]",
+          "[R:y]"
+        ]
+      },
+      "calls": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "name": "timestamp:number",
+      "input": {
+        "timestamp": 1736942400000,
+        "userIntent": "u"
+      },
+      "output": {
+        "timestamp": 1736942400000,
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ]
+    },
+    {
+      "name": "timestamp:null",
+      "input": {
+        "timestamp": null
+      },
+      "output": {
+        "timestamp": null
+      },
+      "calls": []
+    },
+    {
+      "name": "empty-path:protected",
+      "input": {
+        "": {
+          "sessionId": "s",
+          "tags": {
+            "k": "v"
+          },
+          "timestamp": "t",
+          "a": "y"
+        },
+        "b": "z"
+      },
+      "output": {
+        "": {
+          "sessionId": "s",
+          "tags": {
+            "k": "v"
+          },
+          "timestamp": "[R:t]",
+          "a": "[R:y]"
+        },
+        "b": "[R:z]"
+      },
+      "calls": [
+        "t",
+        "y",
+        "z"
+      ]
+    },
+    {
+      "name": "empty-path:twice",
+      "input": {
+        "": {
+          "": {
+            "id": "i",
+            "properties": {
+              "p": "q"
+            },
+            "a": "y"
+          },
+          "a": "x"
+        }
+      },
+      "output": {
+        "": {
+          "": {
+            "id": "i",
+            "properties": {
+              "p": "q"
+            },
+            "a": "[R:y]"
+          },
+          "a": "[R:x]"
+        }
+      },
+      "calls": [
+        "y",
+        "x"
+      ]
+    },
+    {
+      "name": "empty-path:string",
+      "input": {
+        "": "s"
+      },
+      "output": {
+        "": "[R:s]"
+      },
+      "calls": [
+        "s"
+      ]
+    },
+    {
+      "name": "empty-path:array",
+      "input": {
+        "": [
+          {
+            "id": "i"
+          },
+          "s"
+        ]
+      },
+      "output": {
+        "": [
+          {
+            "id": "[R:i]"
+          },
+          "[R:s]"
+        ]
+      },
+      "calls": [
+        "i",
+        "s"
+      ]
+    },
+    {
+      "name": "empty-path:array-element-key",
+      "input": {
+        "parameters": [
+          {
+            "": {
+              "id": "i",
+              "a": "x"
+            },
+            "b": "y"
+          }
+        ]
+      },
+      "output": {
+        "parameters": [
+          {
+            "": {
+              "id": "[R:i]",
+              "a": "[R:x]"
+            },
+            "b": "[R:y]"
+          }
+        ]
+      },
+      "calls": [
+        "i",
+        "x",
+        "y"
+      ]
+    },
+    {
+      "name": "empty-path:array-under-empty",
+      "input": {
+        "": [
+          {
+            "": {
+              "id": "i",
+              "tags": {
+                "k": "v"
+              }
+            },
+            "a": "x"
+          }
+        ]
+      },
+      "output": {
+        "": [
+          {
+            "": {
+              "id": "[R:i]",
+              "tags": {
+                "k": "[R:v]"
+              }
+            },
+            "a": "[R:x]"
+          }
+        ]
+      },
+      "calls": [
+        "i",
+        "v",
+        "x"
+      ]
+    },
+    {
+      "name": "empty-path:array-nested-element",
+      "input": {
+        "": [
+          [
+            {
+              "": {
+                "sessionId": "s",
+                "a": "x"
+              }
+            }
+          ]
+        ]
+      },
+      "output": {
+        "": [
+          [
+            {
+              "": {
+                "sessionId": "[R:s]",
+                "a": "[R:x]"
+              }
+            }
+          ]
+        ]
+      },
+      "calls": [
+        "s",
+        "x"
+      ]
+    },
+    {
+      "name": "empty-path:after-named-key",
+      "input": {
+        "x": {
+          "": {
+            "id": "i"
+          }
+        },
+        "sessionId": {
+          "": "kept"
+        }
+      },
+      "output": {
+        "x": {
+          "": {
+            "id": "[R:i]"
+          }
+        },
+        "sessionId": {
+          "": "kept"
+        }
+      },
+      "calls": [
+        "i"
+      ]
+    },
+    {
+      "name": "empty-path:inside-protected",
+      "input": {
+        "tags": {
+          "": {
+            "a": "kept"
+          }
+        }
+      },
+      "output": {
+        "tags": {
+          "": {
+            "a": "kept"
+          }
+        }
+      },
+      "calls": []
+    },
+    {
+      "name": "order:index-keys",
+      "input_text": "{\"sessionId\":\"s\",\"b\":\"x\",\"2\":\"y\",\"a\":\"z\",\"1\":\"w\",\"10\":\"t\",\"0\":\"u\"}",
+      "output": {
+        "0": "[R:u]",
+        "1": "[R:w]",
+        "2": "[R:y]",
+        "10": "[R:t]",
+        "sessionId": "s",
+        "b": "[R:x]",
+        "a": "[R:z]"
+      },
+      "calls": [
+        "u",
+        "w",
+        "y",
+        "t",
+        "x",
+        "z"
+      ]
+    },
+    {
+      "name": "order:index-keys-nested",
+      "input_text": "{\"parameters\":{\"z\":\"a\",\"5\":\"b\",\"y\":{\"k\":\"c\",\"3\":\"d\"},\"4294967294\":\"e\",\"1\":\"f\"}}",
+      "output": {
+        "parameters": {
+          "1": "[R:f]",
+          "5": "[R:b]",
+          "4294967294": "[R:e]",
+          "z": "[R:a]",
+          "y": {
+            "3": "[R:d]",
+            "k": "[R:c]"
+          }
+        }
+      },
+      "calls": [
+        "f",
+        "b",
+        "e",
+        "a",
+        "d",
+        "c"
+      ]
+    },
+    {
+      "name": "order:index-key-above-u32",
+      "input_text": "{\"parameters\":{\"b\":\"a\",\"4294967296\":\"b\",\"3\":\"c\",\"4294967294\":\"d\",\"a\":\"e\"}}",
+      "output": {
+        "parameters": {
+          "3": "[R:c]",
+          "4294967294": "[R:d]",
+          "b": "[R:a]",
+          "4294967296": "[R:b]",
+          "a": "[R:e]"
+        }
+      },
+      "calls": [
+        "c",
+        "d",
+        "a",
+        "b",
+        "e"
+      ]
+    },
+    {
+      "name": "order:non-index-keys",
+      "input_text": "{\"parameters\":{\"b\":\"a\",\"01\":\"b\",\"-1\":\"c\",\"4294967295\":\"d\",\"1.5\":\"e\",\"a\":\"f\"}}",
+      "output": {
+        "parameters": {
+          "b": "[R:a]",
+          "01": "[R:b]",
+          "-1": "[R:c]",
+          "4294967295": "[R:d]",
+          "1.5": "[R:e]",
+          "a": "[R:f]"
+        }
+      },
+      "calls": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f"
+      ]
+    },
+    {
+      "name": "order:protected-after-index",
+      "input_text": "{\"id\":\"i\",\"7\":\"x\",\"tags\":{\"2\":\"t\",\"1\":\"u\"},\"1\":\"y\"}",
+      "output": {
+        "1": "[R:y]",
+        "7": "[R:x]",
+        "id": "i",
+        "tags": {
+          "1": "u",
+          "2": "t"
+        }
+      },
+      "calls": [
+        "y",
+        "x"
+      ]
+    },
+    {
+      "name": "types:no-strings",
+      "input": {
+        "duration": 5,
+        "isError": false,
+        "parameters": {
+          "n": -0.5,
+          "t": true,
+          "z": null,
+          "e": {},
+          "a": []
+        }
+      },
+      "output": {
+        "duration": 5,
+        "isError": false,
+        "parameters": {
+          "n": -0.5,
+          "t": true,
+          "z": null,
+          "e": {},
+          "a": []
+        }
+      },
+      "calls": []
+    },
+    {
+      "name": "types:empty-event",
+      "input": {},
+      "output": {},
+      "calls": []
+    },
+    {
+      "name": "types:empty-strings",
+      "input": {
+        "userIntent": "",
+        "parameters": {
+          "a": "",
+          "b": [
+            ""
+          ]
+        }
+      },
+      "output": {
+        "userIntent": "[R:]",
+        "parameters": {
+          "a": "[R:]",
+          "b": [
+            "[R:]"
+          ]
+        }
+      },
+      "calls": [
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "name": "types:characters",
+      "input": {
+        "parameters": {
+          "a": "é世😀",
+          "b": "\u0000\n\"\\",
+          "c": "😀x"
+        }
+      },
+      "output": {
+        "parameters": {
+          "a": "[R:é世😀]",
+          "b": "[R:\u0000\n\"\\]",
+          "c": "[R:😀x]"
+        }
+      },
+      "calls": [
+        "é世😀",
+        "\u0000\n\"\\",
+        "😀x"
+      ]
+    },
+    {
+      "name": "array:nested",
+      "input": {
+        "parameters": [
+          [
+            "a",
+            [
+              "b",
+              {
+                "c": "d"
+              }
+            ]
+          ],
+          [],
+          "e"
+        ]
+      },
+      "output": {
+        "parameters": [
+          [
+            "[R:a]",
+            [
+              "[R:b]",
+              {
+                "c": "[R:d]"
+              }
+            ]
+          ],
+          [],
+          "[R:e]"
+        ]
+      },
+      "calls": [
+        "a",
+        "b",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "name": "array:response",
+      "input": {
+        "response": [
+          {
+            "type": "text",
+            "text": "t"
+          },
+          "s",
+          1
+        ]
+      },
+      "output": {
+        "response": [
+          {
+            "type": "[R:text]",
+            "text": "[R:t]"
+          },
+          "[R:s]",
+          1
+        ]
+      },
+      "calls": [
+        "text",
+        "t",
+        "s"
+      ]
+    },
+    {
+      "name": "array:top-level-protected",
+      "input": {
+        "tags": [
+          "a",
+          {
+            "b": "c"
+          }
+        ]
+      },
+      "output": {
+        "tags": [
+          "a",
+          {
+            "b": "c"
+          }
+        ]
+      },
+      "calls": []
+    },
+    {
+      "name": "fields:unknown",
+      "input": {
+        "custom": "c",
+        "nested": {
+          "deep": "d"
+        },
+        "redactionFn": "r",
+        "eventRedactionFn": "e"
+      },
+      "output": {
+        "custom": "[R:c]",
+        "nested": {
+          "deep": "[R:d]"
+        },
+        "redactionFn": "[R:r]",
+        "eventRedactionFn": "[R:e]"
+      },
+      "calls": [
+        "c",
+        "d",
+        "r",
+        "e"
+      ]
+    },
+    {
+      "name": "throw:at-1",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "a",
+        "parameters": {
+          "b": "b",
+          "c": [
+            "c",
+            "d"
+          ]
+        },
+        "response": {
+          "e": "e"
+        }
+      },
+      "throw_at": 1,
+      "error": "Error: redactor failed",
+      "calls": [
+        "a"
+      ]
+    },
+    {
+      "name": "throw:at-3",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "a",
+        "parameters": {
+          "b": "b",
+          "c": [
+            "c",
+            "d"
+          ]
+        },
+        "response": {
+          "e": "e"
+        }
+      },
+      "throw_at": 3,
+      "error": "Error: redactor failed",
+      "calls": [
+        "a",
+        "b",
+        "c"
+      ]
+    },
+    {
+      "name": "throw:at-last",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "a",
+        "parameters": {
+          "b": "b",
+          "c": [
+            "c",
+            "d"
+          ]
+        },
+        "response": {
+          "e": "e"
+        }
+      },
+      "throw_at": 5,
+      "error": "Error: redactor failed",
+      "calls": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "name": "throw:after-last",
+      "input": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "a",
+        "parameters": {
+          "b": "b",
+          "c": [
+            "c",
+            "d"
+          ]
+        },
+        "response": {
+          "e": "e"
+        }
+      },
+      "throw_at": 6,
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "userIntent": "[R:a]",
+        "parameters": {
+          "b": "[R:b]",
+          "c": [
+            "[R:c]",
+            "[R:d]"
+          ]
+        },
+        "response": {
+          "e": "[R:e]"
+        }
+      },
+      "calls": [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e"
+      ]
+    },
+    {
+      "name": "proto:kept",
+      "input_text": "{\"sessionId\":\"s\",\"parameters\":{\"a\":\"1\",\"__proto__\":{\"x\":\"y\",\"z\":[\"w\"]},\"b\":\"2\"}}",
+      "output": {
+        "sessionId": "s",
+        "parameters": {
+          "a": "[R:1]",
+          "b": "[R:2]"
+        }
+      },
+      "calls": [
+        "1",
+        "y",
+        "w",
+        "2"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:string-value",
+      "input_text": "{\"parameters\":{\"__proto__\":\"text\",\"b\":\"2\"}}",
+      "output": {
+        "parameters": {
+          "b": "[R:2]"
+        }
+      },
+      "calls": [
+        "text",
+        "2"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:null-value",
+      "input_text": "{\"parameters\":{\"b\":\"2\",\"__proto__\":null}}",
+      "output": {
+        "parameters": {
+          "b": "[R:2]"
+        }
+      },
+      "calls": [
+        "2"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:array-value",
+      "input_text": "{\"parameters\":{\"__proto__\":[\"x\",{\"c\":\"d\"}],\"b\":\"2\"}}",
+      "output": {
+        "parameters": {
+          "b": "[R:2]"
+        }
+      },
+      "calls": [
+        "x",
+        "d",
+        "2"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:top-level",
+      "input_text": "{\"userIntent\":\"u\",\"__proto__\":{\"x\":\"y\"},\"b\":\"2\"}",
+      "output": {
+        "userIntent": "[R:u]",
+        "b": "[R:2]"
+      },
+      "calls": [
+        "u",
+        "y",
+        "2"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:in-protected",
+      "input_text": "{\"tags\":{\"__proto__\":{\"x\":\"y\"},\"k\":\"v\"},\"userIntent\":\"u\"}",
+      "output": {
+        "tags": {
+          "k": "v"
+        },
+        "userIntent": "[R:u]"
+      },
+      "calls": [
+        "u"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:nested-twice",
+      "input_text": "{\"parameters\":[{\"__proto__\":{\"deep\":{\"__proto__\":\"x\"}},\"k\":\"v\"}]}",
+      "output": {
+        "parameters": [
+          {
+            "k": "[R:v]"
+          }
+        ]
+      },
+      "calls": [
+        "x",
+        "v"
+      ],
+      "deviation": "RD-24"
+    },
+    {
+      "name": "apply:test-sync-hook",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "[SCRUBBED]"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "[SCRUBBED]"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
+      ]
+    },
+    {
+      "name": "apply:test-async-hook",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "[SCRUBBED]"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "[SCRUBBED]"
+      },
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply an asynchronous hook in place"
+      ]
+    },
+    {
+      "name": "apply:test-drop-null",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": null,
+      "output": null,
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
+      ]
+    },
+    {
+      "name": "apply:test-drop-undefined",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": null,
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop when the hook returns undefined"
+      ]
+    },
+    {
+      "name": "apply:test-deletions",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        }
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        }
+      },
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should honor field deletions instead of resurrecting them"
+      ]
+    },
+    {
+      "name": "apply:test-restore",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_forged",
+        "sessionId": "ses_forged000000000000000000000",
+        "projectId": "proj_forged",
+        "eventType": "forged:event",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      },
+      "ts_test": [
+        "v1|src/tests/redaction.test.ts|applyEventRedaction > should restore system-managed fields if the hook changes or removes them"
+      ]
+    },
+    {
+      "name": "apply:change-id",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "forged",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:remove-id",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "id": "evt_original"
+      }
+    },
+    {
+      "name": "apply:move-id-first",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "forged",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:only-id",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "forged"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:change-sessionId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "forged",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:remove-sessionId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "sessionId": "ses_123000000000000000000000000"
+      }
+    },
+    {
+      "name": "apply:move-sessionId-first",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "sessionId": "forged",
+        "id": "evt_original",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_original",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:only-sessionId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "sessionId": "forged"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_original",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:change-projectId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "forged",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:remove-projectId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "projectId": "proj_789"
+      }
+    },
+    {
+      "name": "apply:move-projectId-first",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "projectId": "forged",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "projectId": "proj_789",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:only-projectId",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "projectId": "forged"
+      },
+      "output": {
+        "projectId": "proj_789",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:change-eventType",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "forged",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:remove-eventType",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "eventType": "mcp:tools/call"
+      }
+    },
+    {
+      "name": "apply:move-eventType-first",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "eventType": "forged",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "eventType": "mcp:tools/call",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:only-eventType",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "eventType": "forged"
+      },
+      "output": {
+        "eventType": "mcp:tools/call",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:change-timestamp",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "forged",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:remove-timestamp",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:move-timestamp-first",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "timestamp": "forged",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:only-timestamp",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "timestamp": "forged"
+      },
+      "output": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call"
+      }
+    },
+    {
+      "name": "apply:reorder-all",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "userIntent": "sensitive intent",
+        "response": {
+          "content": "sensitive response"
+        },
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "resourceName": "add_todo",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "eventType": "mcp:tools/call",
+        "projectId": "proj_789",
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_original"
+      },
+      "output": {
+        "userIntent": "sensitive intent",
+        "response": {
+          "content": "sensitive response"
+        },
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "resourceName": "add_todo",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "eventType": "mcp:tools/call",
+        "projectId": "proj_789",
+        "sessionId": "ses_123000000000000000000000000",
+        "id": "evt_original"
+      }
+    },
+    {
+      "name": "apply:empty-replacement",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {},
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:remove-all-restored",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:new-keys",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "x",
+        "extra": {
+          "a": 1
+        },
+        "more": [
+          1
+        ]
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "x",
+        "extra": {
+          "a": 1
+        },
+        "more": [
+          1
+        ]
+      }
+    },
+    {
+      "name": "apply:new-keys-only",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "a": 1,
+        "b": "two"
+      },
+      "output": {
+        "a": 1,
+        "b": "two",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:original-without-project-id",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_forged",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:original-without-restored",
+      "original": {
+        "userIntent": "u"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:original-null-values",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": null,
+        "eventType": "mcp:tools/call",
+        "timestamp": null,
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "eventType": "mcp:tools/call",
+        "timestamp": null,
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "projectId": null
+      }
+    },
+    {
+      "name": "apply:original-timestamp-not-a-date",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": {
+          "at": 1
+        },
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "timestamp": {
+          "at": 1
+        }
+      }
+    },
+    {
+      "name": "apply:original-without-timestamp",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:internal-keys",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "redactionFn": "r",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "eventRedactionFn": {
+          "a": 1
+        }
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:internal-keys-null",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "redactionFn": null,
+        "eventRedactionFn": null
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:original-redaction-fn",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "redactionFn": "o"
+      },
+      "replacement": {
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "redactionFn": "o",
+        "id": "evt_original",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:original-redaction-fn-in-place",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "redactionFn": {
+          "a": 1
+        }
+      },
+      "replacement": {
+        "redactionFn": "h",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "redactionFn": {
+          "a": 1
+        },
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "id": "evt_original"
+      }
+    },
+    {
+      "name": "apply:original-event-redaction-fn",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent",
+        "eventRedactionFn": "o"
+      },
+      "replacement": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:index-keys",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "0": "y",
+        "1": "x",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "output": {
+        "0": "y",
+        "1": "x",
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      }
+    },
+    {
+      "name": "apply:proto-top-level",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "a": 1,
+        "__proto__": {
+          "x": "y"
+        },
+        "id": "f"
+      },
+      "output": {
+        "a": 1,
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "apply:proto-top-level-string",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "__proto__": "s",
+        "b": 2
+      },
+      "output": {
+        "b": 2,
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "apply:proto-nested-kept",
+      "original": {
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "resourceName": "add_todo",
+        "parameters": {
+          "text": "sensitive text"
+        },
+        "response": {
+          "content": "sensitive response"
+        },
+        "userIntent": "sensitive intent"
+      },
+      "replacement": {
+        "a": {
+          "__proto__": {
+            "x": "y"
+          }
+        },
+        "b": 2
+      },
+      "output": {
+        "a": {
+          "__proto__": {
+            "x": "y"
+          }
+        },
+        "b": 2,
+        "id": "evt_original",
+        "sessionId": "ses_123000000000000000000000000",
+        "projectId": "proj_789",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    {
+      "name": "seeded-0",
+      "input": {
+        "response": {
+          "": 2.5,
+          "clientName": true
+        },
+        "userIntent": "é😀a",
+        "projectId": {
+          "": [
+            2.5,
+            [],
+            {
+              "10": 2.5,
+              "": "\\",
+              "serverName": 2.5
+            }
+          ],
+          "\"😀世": null
+        },
+        "identifyActorData": {
+          "timestamp": true
+        },
+        "error": {
+          "10": "😀éb",
+          "identifyActorGivenId": 2.5,
+          "timestamp": 2.5,
+          "": true
+        }
+      },
+      "throw_at": 2,
+      "error": "Error: redactor failed",
+      "calls": [
+        "é😀a",
+        "😀éb"
+      ]
+    },
+    {
+      "name": "seeded-1",
+      "input": {
+        "identifyActorData": [],
+        "serverVersion": [],
+        "": [
+          "ééa",
+          {
+            "properties": [],
+            "timestamp": [
+              true,
+              2.5
+            ],
+            "\"\" ": {
+              "0": 57,
+              "server": 2.5,
+              "": null
+            }
+          },
+          "é😀",
+          "\\世"
+        ],
+        "properties": 37,
+        "identifyData": "\ncb",
+        "tags": "😀"
+      },
+      "output": {
+        "identifyActorData": [],
+        "serverVersion": [],
+        "": [
+          "[R:ééa]",
+          {
+            "properties": [],
+            "timestamp": [
+              true,
+              2.5
+            ],
+            "\"\" ": {
+              "0": 57,
+              "server": 2.5,
+              "": null
+            }
+          },
+          "[R:é😀]",
+          "[R:\\世]"
+        ],
+        "properties": 37,
+        "identifyData": "\ncb",
+        "tags": "😀"
+      },
+      "calls": [
+        "ééa",
+        "é😀",
+        "\\世"
+      ]
+    },
+    {
+      "name": "seeded-2",
+      "input": {
+        "eventId": [
+          [],
+          {
+            "8": null,
+            "timestamp": {
+              "0": null,
+              "": true,
+              "sessionId": true
+            },
+            "😀\"\"\n": []
+          }
+        ],
+        "response": {
+          "cb\"": {
+            "10": {
+              "0": "世",
+              "": true
+            },
+            "timestamp": null,
+            "": {
+              "0": 2.5
+            }
+          },
+          "timestamp": "\nb"
+        },
+        "parameters": -4,
+        "": "😀世 ",
+        "userIntent": 6
+      },
+      "throw_at": 1,
+      "error": "Error: redactor failed",
+      "calls": [
+        "世"
+      ]
+    },
+    {
+      "name": "seeded-3",
+      "input": {
+        "serverName": true,
+        "response": true,
+        "eventId": [
+          {},
+          {
+            "\\\n😀 ": {
+              "": "😀b",
+              "😀 ": "😀ca\"世\"世😀",
+              "resourceName": true
+            },
+            "": {
+              "identifyData": null
+            },
+            "timestamp": 63
+          },
+          {
+            "9": 36,
+            "timestamp": [
+              "",
+              null,
+              2.5,
+              93
+            ]
+          },
+          "cé"
+        ],
+        "id": {
+          "8": "",
+          "identifyActorName": [
+            2.5
+          ]
+        },
+        "": 83
+      },
+      "output": {
+        "serverName": true,
+        "response": true,
+        "eventId": [
+          {},
+          {
+            "\\\n😀 ": {
+              "": "[R:😀b]",
+              "😀 ": "[R:😀ca\"世\"世😀]",
+              "resourceName": true
+            },
+            "": {
+              "identifyData": null
+            },
+            "timestamp": 63
+          },
+          {
+            "9": 36,
+            "timestamp": [
+              "[R:]",
+              null,
+              2.5,
+              93
+            ]
+          },
+          "[R:cé]"
+        ],
+        "id": {
+          "8": "",
+          "identifyActorName": [
+            2.5
+          ]
+        },
+        "": 83
+      },
+      "calls": [
+        "😀b",
+        "😀ca\"世\"世😀",
+        "",
+        "cé"
+      ]
+    },
+    {
+      "name": "seeded-4",
+      "input": {
+        "eventType": {
+          "2": {
+            "timestamp": {
+              "6": 2.5,
+              "": "é b世c",
+              "resourceName": "\né  a"
+            }
+          },
+          "timestamp": [
+            "b",
+            "\\c\\\\世\\😀ca",
+            null,
+            [
+              35,
+              true,
+              "",
+              true
+            ]
+          ]
+        },
+        "projectId": {
+          "4": 2.5,
+          "timestamp": null,
+          "identifyActorGivenId": true
+        },
+        "response": {}
+      },
+      "output": {
+        "eventType": {
+          "2": {
+            "timestamp": {
+              "6": 2.5,
+              "": "é b世c",
+              "resourceName": "\né  a"
+            }
+          },
+          "timestamp": [
+            "b",
+            "\\c\\\\世\\😀ca",
+            null,
+            [
+              35,
+              true,
+              "",
+              true
+            ]
+          ]
+        },
+        "projectId": {
+          "4": 2.5,
+          "timestamp": null,
+          "identifyActorGivenId": true
+        },
+        "response": {}
+      },
+      "calls": []
+    },
+    {
+      "name": "seeded-5",
+      "input": {
+        "parameters": {
+          "\\\\世b": null
+        },
+        "": 41,
+        "response": true,
+        "properties": true
+      },
+      "output": {
+        "parameters": {
+          "\\\\世b": null
+        },
+        "": 41,
+        "response": true,
+        "properties": true
+      },
+      "calls": []
+    },
+    {
+      "name": "seeded-6",
+      "input": {
+        "response": {
+          "\né\n": true,
+          "": [
+            {},
+            {
+              "timestamp": " "
+            },
+            null
+          ],
+          "identifyActorName": {},
+          "timestamp": [
+            ""
+          ]
+        },
+        "parameters": 2.5,
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "projectId": [],
+        "": true
+      },
+      "throw_at": 2,
+      "error": "Error: redactor failed",
+      "calls": [
+        " ",
+        ""
+      ]
+    },
+    {
+      "name": "seeded-7",
+      "input": {
+        "parameters": 22
+      },
+      "output": {
+        "parameters": 22
+      },
+      "calls": []
+    },
+    {
+      "name": "seeded-8",
+      "input": {
+        "eventId": [
+          0,
+          {},
+          {
+            "timestamp": {
+              "": true,
+              "世 世": ""
+            }
+          },
+          {}
+        ],
+        "parameters": {
+          "": {
+            " \"a": {
+              "12": 2.5,
+              "timestamp": null
+            },
+            "tags": "a\"éb\"\"\n",
+            "sessionId": {},
+            "timestamp": {
+              "": " "
+            }
+          },
+          "timestamp": {
+            "": 2
+          }
+        },
+        "response": 71,
+        "server": 2.5
+      },
+      "output": {
+        "eventId": [
+          0,
+          {},
+          {
+            "timestamp": {
+              "": true,
+              "世 世": "[R:]"
+            }
+          },
+          {}
+        ],
+        "parameters": {
+          "": {
+            " \"a": {
+              "12": 2.5,
+              "timestamp": null
+            },
+            "tags": "[R:a\"éb\"\"\n]",
+            "sessionId": {},
+            "timestamp": {
+              "": "[R: ]"
+            }
+          },
+          "timestamp": {
+            "": 2
+          }
+        },
+        "response": 71,
+        "server": 2.5
+      },
+      "calls": [
+        "",
+        "a\"éb\"\"\n",
+        " "
+      ]
+    },
+    {
+      "name": "seeded-9",
+      "input": {
+        "parameters": true,
+        "tags": {
+          "0": "aaé c\n",
+          "": {
+            "\"": true,
+            "id": "\ncé😀世b\\",
+            "\\\\ ": {
+              "\"": "\"acé"
+            }
+          }
+        },
+        "response": {
+          "timestamp": null
+        },
+        "userIntent": 2.5
+      },
+      "output": {
+        "parameters": true,
+        "tags": {
+          "0": "aaé c\n",
+          "": {
+            "\"": true,
+            "id": "\ncé😀世b\\",
+            "\\\\ ": {
+              "\"": "\"acé"
+            }
+          }
+        },
+        "response": {
+          "timestamp": null
+        },
+        "userIntent": 2.5
+      },
+      "calls": []
+    },
+    {
+      "name": "seeded-10",
+      "input": {
+        "parameters": {
+          "": {
+            "timestamp": []
+          },
+          "sessionId": null
+        },
+        "timestamp": "😀",
+        "eventId": true,
+        "response": "\\céaa\né\\😀",
+        "serverVersion": null,
+        "clientName": "世\n\"",
+        "": "ééé\\\n\n ",
+        "identifyActorName": {}
+      },
+      "output": {
+        "parameters": {
+          "": {
+            "timestamp": []
+          },
+          "sessionId": null
+        },
+        "timestamp": "😀",
+        "eventId": true,
+        "response": "[R:\\céaa\né\\😀]",
+        "serverVersion": null,
+        "clientName": "世\n\"",
+        "": "[R:ééé\\\n\n ]",
+        "identifyActorName": {}
+      },
+      "calls": [
+        "\\céaa\né\\😀",
+        "ééé\\\n\n "
+      ]
+    },
+    {
+      "name": "seeded-11",
+      "input": {
+        "parameters": [
+          null,
+          null,
+          {
+            "sessionId": null
+          },
+          {
+            "": {
+              "identifyActorGivenId": null,
+              "timestamp": "b😀"
+            }
+          }
+        ],
+        "serverName": "\n\\ "
+      },
+      "throw_at": 1,
+      "error": "Error: redactor failed",
+      "calls": [
+        "b😀"
+      ]
+    },
+    {
+      "name": "seeded-12",
+      "input": {
+        "clientVersion": "",
+        "response": true,
+        "eventId": [
+          [
+            null,
+            2.5,
+            2.5,
+            {
+              "server": null,
+              "id": "",
+              "serverVersion": "\"",
+              "timestamp": "é😀"
+            }
+          ]
+        ],
+        "clientName": [
+          [],
+          [],
+          2.5,
+          ""
+        ],
+        "properties": {
+          "timestamp": "\" 😀c\"世",
+          "clientName": [
+            {
+              "6": null,
+              "世": null,
+              "projectId": "b"
+            },
+            [
+              null,
+              "    ééc\""
+            ],
+            {
+              "2": "",
+              "timestamp": "",
+              "": "c"
+            },
+            [
+              2.5,
+              2.5
+            ]
+          ]
+        }
+      },
+      "throw_at": 1,
+      "error": "Error: redactor failed",
+      "calls": [
+        ""
+      ]
+    },
+    {
+      "name": "seeded-13",
+      "input": {
+        "": {
+          "clientName": {}
+        }
+      },
+      "output": {
+        "": {
+          "clientName": {}
+        }
+      },
+      "calls": []
+    },
+    {
+      "name": "seeded-14",
+      "input": {
+        "response": {
+          "5": {
+            "7": null,
+            "timestamp": "世世b\"b😀aa",
+            "": [
+              true,
+              95,
+              "\"cbé世a\n😀😀",
+              null
+            ]
+          },
+          "aéca": [
+            [],
+            {},
+            "bb\n"
+          ]
+        }
+      },
+      "output": {
+        "response": {
+          "5": {
+            "7": null,
+            "timestamp": "[R:世世b\"b😀aa]",
+            "": [
+              true,
+              95,
+              "[R:\"cbé世a\n😀😀]",
+              null
+            ]
+          },
+          "aéca": [
+            [],
+            {},
+            "[R:bb\n]"
+          ]
+        }
+      },
+      "calls": [
+        "世世b\"b😀aa",
+        "\"cbé世a\n😀😀",
+        "bb\n"
+      ]
+    },
+    {
+      "name": "seeded-15",
+      "input": {
+        "timestamp": [
+          "\""
+        ],
+        "response": {
+          "3": [
+            null,
+            "",
+            {
+              "aac ": null,
+              "": true
+            },
+            {
+              " ": 2.5
+            }
+          ],
+          "serverVersion": [
+            2.5,
+            {
+              "12": 2.5,
+              "": -2
+            }
+          ],
+          "projectId": " c\n\n😀  c\"",
+          "\\\"世": null
+        },
+        "actorId": 2.5
+      },
+      "output": {
+        "timestamp": [
+          "[R:\"]"
+        ],
+        "response": {
+          "3": [
+            null,
+            "[R:]",
+            {
+              "aac ": null,
+              "": true
+            },
+            {
+              " ": 2.5
+            }
+          ],
+          "serverVersion": [
+            2.5,
+            {
+              "12": 2.5,
+              "": -2
+            }
+          ],
+          "projectId": "[R: c\n\n😀  c\"]",
+          "\\\"世": null
+        },
+        "actorId": 2.5
+      },
+      "calls": [
+        "\"",
+        "",
+        " c\n\n😀  c\""
+      ]
+    },
+    {
+      "name": "seeded-16",
+      "input": {
+        "": {
+          "4": [],
+          "projectId": [
+            [
+              " a世\"b世",
+              "😀c\\",
+              true,
+              61
+            ],
+            true
+          ],
+          "": [
+            2.5,
+            {
+              "7": "c"
+            }
+          ]
+        },
+        "response": [],
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "serverName": {
+          "": {
+            "timestamp": [],
+            "": {},
+            "clientVersion": {}
+          },
+          "server": "",
+          "identifyData": {},
+          "c\\😀😀": {
+            "8": [
+              "c\né😀😀\\😀 ",
+              true
+            ],
+            "": {
+              "": true,
+              "\né世": null,
+              "timestamp": null
+            },
+            "timestamp": 2.5,
+            "tags": [
+              2.5,
+              2.5,
+              ""
+            ]
+          }
+        }
+      },
+      "output": {
+        "": {
+          "4": [],
+          "projectId": [
+            [
+              " a世\"b世",
+              "😀c\\",
+              true,
+              61
+            ],
+            true
+          ],
+          "": [
+            2.5,
+            {
+              "7": "[R:c]"
+            }
+          ]
+        },
+        "response": [],
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "serverName": {
+          "": {
+            "timestamp": [],
+            "": {},
+            "clientVersion": {}
+          },
+          "server": "",
+          "identifyData": {},
+          "c\\😀😀": {
+            "8": [
+              "c\né😀😀\\😀 ",
+              true
+            ],
+            "": {
+              "": true,
+              "\né世": null,
+              "timestamp": null
+            },
+            "timestamp": 2.5,
+            "tags": [
+              2.5,
+              2.5,
+              ""
+            ]
+          }
+        }
+      },
+      "calls": [
+        "c"
+      ]
+    },
+    {
+      "name": "seeded-17",
+      "input": {
+        "projectId": {
+          "timestamp": true,
+          "tags": "a",
+          "\\bé": {},
+          "resourceName": {
+            "": [],
+            "clientName": {
+              "resourceName": "世😀世",
+              "properties": null,
+              "timestamp": "\\c\"",
+              "é😀": true
+            },
+            "projectId": {
+              "aa\n": 2.5
+            }
+          }
+        },
+        "eventId": "\\\"",
+        "parameters": [
+          {},
+          58,
+          [
+            2.5,
+            {
+              "10": 47
+            }
+          ]
+        ]
+      },
+      "output": {
+        "projectId": {
+          "timestamp": true,
+          "tags": "a",
+          "\\bé": {},
+          "resourceName": {
+            "": [],
+            "clientName": {
+              "resourceName": "世😀世",
+              "properties": null,
+              "timestamp": "\\c\"",
+              "é😀": true
+            },
+            "projectId": {
+              "aa\n": 2.5
+            }
+          }
+        },
+        "eventId": "[R:\\\"]",
+        "parameters": [
+          {},
+          58,
+          [
+            2.5,
+            {
+              "10": 47
+            }
+          ]
+        ]
+      },
+      "calls": [
+        "\\\""
+      ]
+    },
+    {
+      "name": "seeded-18",
+      "input": {
+        "response": 2.5,
+        "parameters": [
+          "😀\\",
+          true
+        ],
+        "identifyActorData": true,
+        "eventId": 2.5
+      },
+      "output": {
+        "response": 2.5,
+        "parameters": [
+          "[R:😀\\]",
+          true
+        ],
+        "identifyActorData": true,
+        "eventId": 2.5
+      },
+      "calls": [
+        "😀\\"
+      ]
+    },
+    {
+      "name": "seeded-19",
+      "input": {
+        "response": [
+          ""
+        ],
+        "actorId": "c\\cca a😀"
+      },
+      "output": {
+        "response": [
+          "[R:]"
+        ],
+        "actorId": "c\\cca a😀"
+      },
+      "calls": [
+        ""
+      ]
+    },
+    {
+      "name": "apply:seeded-0",
+      "original": {
+        "eventId": " 世\"",
+        "response": 2.5
+      },
+      "replacement": {
+        "timestamp": null,
+        "response": 2.5,
+        "parameters": "世\n",
+        "clientVersion": 2.5
+      },
+      "output": {
+        "response": 2.5,
+        "parameters": "世\n",
+        "clientVersion": 2.5
+      }
+    },
+    {
+      "name": "apply:seeded-1",
+      "original": {
+        "response": [
+          {
+            "a\"\n ": {
+              "3": 2.5,
+              "timestamp": null,
+              "\"世\\世": true
+            },
+            "timestamp": "\\\n\\\"\\世c"
+          },
+          []
+        ],
+        "parameters": 51,
+        "resourceName": {
+          "timestamp": 89,
+          "clientName": [
+            {}
+          ]
+        }
+      },
+      "replacement": {
+        "parameters": [
+          {
+            "timestamp": [
+              null,
+              true,
+              "b\\",
+              "é"
+            ]
+          },
+          {
+            "2": [
+              "😀世\n",
+              "",
+              2.5,
+              true
+            ],
+            "": true,
+            "b\"世\\": {
+              "actorId": "b \\",
+              "": 92,
+              " \n \\": "éa\\"
+            }
+          }
+        ],
+        "response": {
+          "0": {
+            "timestamp": true,
+            "\"\\": "世\n😀"
+          },
+          "": null
+        },
+        "sessionId": 29,
+        "userIntent": {
+          "properties": "\n\n"
+        },
+        "resourceName": [
+          {
+            "9": {
+              "0": 28
+            },
+            "é\\b": true,
+            "": "b\\\\\\b世 "
+          },
+          {}
+        ],
+        "identifyActorName": [
+          [
+            {
+              "6": 21
+            },
+            [
+              null,
+              "\"\\c\"c\""
+            ],
+            [
+              -5,
+              "bé\n\\b\"b\n",
+              "\n",
+              null
+            ],
+            {
+              "0": 2.5,
+              "b 😀": 2.5,
+              "": true
+            }
+          ],
+          [
+            {
+              "": true,
+              "éc\\": "\\\\\\\\\n",
+              "timestamp": "bba"
+            },
+            null
+          ],
+          {
+            "": {
+              "": "a世\\é  \n"
+            }
+          },
+          {
+            "5": {
+              "timestamp": 43
+            }
+          }
+        ]
+      },
+      "output": {
+        "parameters": [
+          {
+            "timestamp": [
+              null,
+              true,
+              "b\\",
+              "é"
+            ]
+          },
+          {
+            "2": [
+              "😀世\n",
+              "",
+              2.5,
+              true
+            ],
+            "": true,
+            "b\"世\\": {
+              "actorId": "b \\",
+              "": 92,
+              " \n \\": "éa\\"
+            }
+          }
+        ],
+        "response": {
+          "0": {
+            "timestamp": true,
+            "\"\\": "世\n😀"
+          },
+          "": null
+        },
+        "userIntent": {
+          "properties": "\n\n"
+        },
+        "resourceName": [
+          {
+            "9": {
+              "0": 28
+            },
+            "é\\b": true,
+            "": "b\\\\\\b世 "
+          },
+          {}
+        ],
+        "identifyActorName": [
+          [
+            {
+              "6": 21
+            },
+            [
+              null,
+              "\"\\c\"c\""
+            ],
+            [
+              -5,
+              "bé\n\\b\"b\n",
+              "\n",
+              null
+            ],
+            {
+              "0": 2.5,
+              "b 😀": 2.5,
+              "": true
+            }
+          ],
+          [
+            {
+              "": true,
+              "éc\\": "\\\\\\\\\n",
+              "timestamp": "bba"
+            },
+            null
+          ],
+          {
+            "": {
+              "": "a世\\é  \n"
+            }
+          },
+          {
+            "5": {
+              "timestamp": 43
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "apply:seeded-2",
+      "original": {
+        "parameters": {}
+      },
+      "replacement": {
+        "identifyActorGivenId": [
+          {
+            "2": {
+              "timestamp": 2.5,
+              "": "cc\\",
+              "server": 2.5
+            },
+            "9": "bb",
+            "": {
+              "": 59,
+              "bc\n ": 2.5
+            }
+          }
+        ],
+        "parameters": 66,
+        "serverName": null,
+        "clientName": {
+          "timestamp": "aa\n世\" ",
+          "serverVersion": {
+            "identifyActorName": 46
+          }
+        }
+      },
+      "output": {
+        "identifyActorGivenId": [
+          {
+            "2": {
+              "timestamp": 2.5,
+              "": "cc\\",
+              "server": 2.5
+            },
+            "9": "bb",
+            "": {
+              "": 59,
+              "bc\n ": 2.5
+            }
+          }
+        ],
+        "parameters": 66,
+        "serverName": null,
+        "clientName": {
+          "timestamp": "aa\n世\" ",
+          "serverVersion": {
+            "identifyActorName": 46
+          }
+        }
+      }
+    },
+    {
+      "name": "apply:seeded-3",
+      "original": {
+        "parameters": [
+          {
+            "timestamp": true,
+            "\n\\世 ": {
+              "2": 2.5,
+              "": 2.5,
+              "identifyActorGivenId": 2.5
+            },
+            "": {
+              "5": null,
+              "timestamp": "\\😀b世 ",
+              "\nb": "\n\n\\"
+            }
+          }
+        ],
+        "eventId": {},
+        "identifyActorData": {
+          "": 2.5,
+          "properties": "\n",
+          "timestamp": true
+        },
+        "": {
+          "properties": 74,
+          "identifyActorName": 2.5,
+          "": [
+            [
+              "😀世世",
+              7,
+              2.5,
+              2.5
+            ],
+            " \\b"
+          ],
+          "timestamp": 30
+        },
+        "timestamp": "2025-01-15T12:00:00.000Z"
+      },
+      "replacement": {
+        "parameters": [
+          null,
+          [
+            "ac\"",
+            {
+              "é\\": "é éb😀",
+              "timestamp": 2.5,
+              "😀é世\"": true
+            },
+            {
+              "世é😀é": 71,
+              "timestamp": null,
+              "tags": 38,
+              "server": null
+            },
+            {
+              "timestamp": true
+            }
+          ],
+          {
+            "1": {
+              "3": null,
+              "timestamp": null
+            },
+            "tags": [
+              true
+            ],
+            "": {
+              "identifyData": null,
+              "timestamp": true
+            },
+            "timestamp": {
+              "7": null
+            }
+          },
+          {
+            "properties": {
+              "c😀": null,
+              "": 2.5
+            },
+            "timestamp": "ac"
+          }
+        ],
+        "response": 2.5,
+        "": {
+          "": {}
+        },
+        "id": {
+          "1": {},
+          "8": [
+            92,
+            {
+              "timestamp": ""
+            },
+            "a "
+          ],
+          "tags": 2.5,
+          "serverVersion": [
+            {
+              "世b": 99
+            }
+          ]
+        }
+      },
+      "output": {
+        "parameters": [
+          null,
+          [
+            "ac\"",
+            {
+              "é\\": "é éb😀",
+              "timestamp": 2.5,
+              "😀é世\"": true
+            },
+            {
+              "世é😀é": 71,
+              "timestamp": null,
+              "tags": 38,
+              "server": null
+            },
+            {
+              "timestamp": true
+            }
+          ],
+          {
+            "1": {
+              "3": null,
+              "timestamp": null
+            },
+            "tags": [
+              true
+            ],
+            "": {
+              "identifyData": null,
+              "timestamp": true
+            },
+            "timestamp": {
+              "7": null
+            }
+          },
+          {
+            "properties": {
+              "c😀": null,
+              "": 2.5
+            },
+            "timestamp": "ac"
+          }
+        ],
+        "response": 2.5,
+        "": {
+          "": {}
+        },
+        "timestamp": "2025-01-15T12:00:00.000Z"
+      }
+    },
+    {
+      "name": "apply:seeded-4",
+      "original": {
+        "properties": 2.5,
+        "parameters": [
+          68
+        ]
+      },
+      "replacement": null,
+      "output": null
+    },
+    {
+      "name": "apply:seeded-5",
+      "original": {
+        "parameters": " \nb",
+        "response": "",
+        "properties": {
+          "timestamp": {
+            "4": 86,
+            "": 87
+          },
+          "ba": [
+            {},
+            "",
+            [
+              null,
+              "a\n世\\c 世cc"
+            ]
+          ]
+        }
+      },
+      "replacement": {
+        "response": 2.5,
+        "": [],
+        "error": {
+          "timestamp": {
+            "": [
+              "\""
+            ],
+            "properties": {
+              "timestamp": "a😀é\"\n",
+              "😀": 72
+            }
+          },
+          "b": []
+        },
+        "tags": [
+          64,
+          [
+            {
+              "": true
+            },
+            "éé\""
+          ]
+        ],
+        "parameters": {
+          "12": [
+            2.5,
+            []
+          ],
+          "": null
+        }
+      },
+      "output": {
+        "response": 2.5,
+        "": [],
+        "error": {
+          "timestamp": {
+            "": [
+              "\""
+            ],
+            "properties": {
+              "timestamp": "a😀é\"\n",
+              "😀": 72
+            }
+          },
+          "b": []
+        },
+        "tags": [
+          64,
+          [
+            {
+              "": true
+            },
+            "éé\""
+          ]
+        ],
+        "parameters": {
+          "12": [
+            2.5,
+            []
+          ],
+          "": null
+        }
+      }
+    },
+    {
+      "name": "apply:seeded-6",
+      "original": {
+        "identifyActorData": {},
+        "response": [
+          [
+            43,
+            {},
+            {
+              "eventType": 2.5
+            },
+            56
+          ]
+        ],
+        "parameters": [
+          [
+            " é\\",
+            null
+          ]
+        ]
+      },
+      "replacement": {
+        "parameters": "b",
+        "serverVersion": null,
+        "clientName": {
+          "é😀": 2.5,
+          "c😀\"": "éc\\a ",
+          "": 2.5
+        }
+      },
+      "output": {
+        "parameters": "b",
+        "serverVersion": null,
+        "clientName": {
+          "é😀": 2.5,
+          "c😀\"": "éc\\a ",
+          "": 2.5
+        }
+      }
+    },
+    {
+      "name": "apply:seeded-7",
+      "original": {
+        "response": {
+          "7": [
+            true
+          ]
+        }
+      },
+      "replacement": {
+        "response": {
+          "eventType": [],
+          "": [
+            []
+          ],
+          "timestamp": {
+            "3": null
+          },
+          "tags": null
+        },
+        "eventId": [
+          [
+            {},
+            {
+              "2": 6,
+              "9": 2.5,
+              "identifyActorGivenId": null,
+              "": "b"
+            },
+            {
+              "timestamp": null
+            }
+          ],
+          2.5
+        ],
+        "parameters": {
+          "2": [
+            {
+              "3": 2.5,
+              "9": "",
+              "actorId": 2.5,
+              "timestamp": "世\\b世\\a"
+            },
+            {},
+            [
+              true,
+              null,
+              null
+            ]
+          ],
+          "11": [
+            65,
+            83
+          ],
+          "identifyData": true,
+          "timestamp": {}
+        },
+        "actorId": "世ca世\nc\"\n😀"
+      },
+      "output": {
+        "response": {
+          "eventType": [],
+          "": [
+            []
+          ],
+          "timestamp": {
+            "3": null
+          },
+          "tags": null
+        },
+        "eventId": [
+          [
+            {},
+            {
+              "2": 6,
+              "9": 2.5,
+              "identifyActorGivenId": null,
+              "": "b"
+            },
+            {
+              "timestamp": null
+            }
+          ],
+          2.5
+        ],
+        "parameters": {
+          "2": [
+            {
+              "3": 2.5,
+              "9": "",
+              "actorId": 2.5,
+              "timestamp": "世\\b世\\a"
+            },
+            {},
+            [
+              true,
+              null,
+              null
+            ]
+          ],
+          "11": [
+            65,
+            83
+          ],
+          "identifyData": true,
+          "timestamp": {}
+        },
+        "actorId": "世ca世\nc\"\n😀"
+      }
+    },
+    {
+      "name": "apply:seeded-8",
+      "original": {
+        "parameters": {
+          "12": {
+            "timestamp": "a ca\"\\b\\",
+            "resourceName": [
+              null,
+              true,
+              41,
+              2.5
+            ],
+            "identifyActorName": [
+              true,
+              true,
+              true,
+              2.5
+            ]
+          }
+        },
+        "response": {
+          "identifyData": "b😀世ba\n 😀a"
+        },
+        "projectId": 2.5
+      },
+      "replacement": {
+        "eventId": {},
+        "response": [],
+        "userIntent": "c",
+        "": [
+          [
+            2.5,
+            {
+              "server": "世"
+            },
+            63
+          ],
+          true,
+          {},
+          "b\\ 😀😀😀"
+        ],
+        "parameters": [
+          "",
+          [
+            " b",
+            {
+              "1": null,
+              "timestamp": true,
+              "b\"😀世": "",
+              "identifyActorName": null
+            },
+            [],
+            []
+          ]
+        ]
+      },
+      "output": {
+        "eventId": {},
+        "response": [],
+        "userIntent": "c",
+        "": [
+          [
+            2.5,
+            {
+              "server": "世"
+            },
+            63
+          ],
+          true,
+          {},
+          "b\\ 😀😀😀"
+        ],
+        "parameters": [
+          "",
+          [
+            " b",
+            {
+              "1": null,
+              "timestamp": true,
+              "b\"😀世": "",
+              "identifyActorName": null
+            },
+            [],
+            []
+          ]
+        ],
+        "projectId": 2.5
+      }
+    },
+    {
+      "name": "apply:seeded-9",
+      "original": {
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "": "😀\\",
+        "response": [
+          [],
+          [
+            {
+              "": null,
+              "\\世\n": true
+            }
+          ],
+          37,
+          {
+            "5": " \\ca",
+            "timestamp": "a\"\n",
+            "actorId": {
+              "c世\n\\": true
+            }
+          }
+        ],
+        "identifyActorData": 58
+      },
+      "replacement": null,
+      "output": null
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+[
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["stdio"],
+    "lanes": ["2025-11-25"],
+    "ts": "mcpReq",
+    "rust": "requestId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (requestId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "mcpReq",
+    "rust": "_meta,requestId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (_meta,requestId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http", "http-sse"],
+    "lanes": ["2025-11-25"],
+    "ts": "http,mcpReq,sessionId",
+    "rust": "requestId,requestInfo,sessionId",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq,sessionId), Rust publishes the D34 shape from rmcp's RequestContext (requestId,requestInfo,sessionId); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http-stateless"],
+    "lanes": ["2025-11-25"],
+    "ts": "http,mcpReq",
+    "rust": "requestId,requestInfo",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (requestId,requestInfo); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.extra\\.<keys>",
+    "transports": ["http", "http-sse", "http-stateless"],
+    "lanes": ["2026-07-28"],
+    "ts": "http,mcpReq",
+    "rust": "_meta,requestId,requestInfo",
+    "reason": "every tool-call event: parameters.extra is the host SDK's handler context, projected to its sorted key names; TS v2 publishes its own keys (http,mcpReq), Rust publishes the D34 shape from rmcp's RequestContext (_meta,requestId,requestInfo); the headers and the URL inside it compare equal. The pins allow these two key sets only",
+    "deviation": "RD-07"
+  },
+  {
+    "path": "\\$\\.events\\[\\d+\\]\\.body\\.parameters\\.request\\.params\\._meta",
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rustKeys": "io\\.modelcontextprotocol/.+",
+    "reason": "every tool-call event at 2026-07-28: the TS v2 host library lifts the io.modelcontextprotocol/* envelope keys out of params._meta into extra.mcpReq.envelope before dispatch (TS src/modules/session.ts:33-36), so the request TS records has no _meta; rmcp keeps the envelope in params._meta (design 6.5, 6.6), and the Rust SDK records the request as rmcp hands it over; the pins allow only a TS request without _meta and a Rust _meta of io.modelcontextprotocol/* keys alone",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "basic",
+    "reason": "basic.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[4\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "features-off",
+    "reason": "features-off.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[5\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "features-off",
+    "reason": "features-off.json, the get_more_tools call with enableReportMissing false (an unknown tool): TS's error is the host's ProtocolError with a V8 stack and frames; Rust's is rmcp's ErrorData, whose type is its code name InvalidParams (C24), with no stack and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[5\\]\\.body\\.error\\.message",
+    "scenario": "features-off",
+    "ts": "Tool get_more_tools not found",
+    "rust": "tool not found",
+    "reason": "features-off.json, the get_more_tools call with enableReportMissing false (an unknown tool): the message is the host's text, Tool get_more_tools not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[1[12]\\]\\.body\\.error\\.(?:type|stack|frames)",
+    "scenario": "schemas",
+    "reason": "schemas.json, the two calls of the unknown tool nope: TS's error is the host's ProtocolError with a V8 stack and frames; Rust's is rmcp's ErrorData, whose type is its code name InvalidParams (C24), with no stack and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[1[12]\\]\\.body\\.error\\.message",
+    "scenario": "schemas",
+    "ts": "Tool nope not found",
+    "rust": "tool not found",
+    "reason": "schemas.json, the two calls of the unknown tool nope: the message is the host's text, Tool nope not found from the TS v2 host library, tool not found from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[1[34]\\]\\.body\\.(?:response\\.content\\[0\\]\\.text|error\\.message)",
+    "scenario": "schemas",
+    "ts": "Input validation error: Invalid arguments for tool echo: data/msg must be string",
+    "rust": "failed to deserialize parameters: invalid type: integer `5`, expected a string",
+    "reason": "schemas.json, the two echo calls with msg 5: the isError result text, and the error message taken from it, are the host validator's text: ajv's from the TS v2 host library, serde's from rmcp (the transcripts differ the same way)",
+    "deviation": "RD-13"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.response\\.content\\[0\\]\\.text",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+    "rust": "the tool's own context",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the result text: the host's validation error on TS, the tool's answer on Rust: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.(?:response\\.isError|is_error)",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": true,
+    "rust": "<absent>",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the failed call's isError on TS only: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": {
+      "message": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+      "platform": "<platform:string>"
+    },
+    "rust": "<absent>",
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the error TS records from the failed call: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.output_tokens",
+    "scenario": "pagination",
+    "transports": ["http-stateless"],
+    "ts": 31,
+    "rust": 7,
+    "reason": "pagination.json, stateless HTTP (a server per request, both lanes), the own_context call on page 3, the token estimate of the two different results: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.response\\.content\\[0\\]\\.text",
+    "scenario": "pagination",
+    "transports": ["http", "http-sse"],
+    "lanes": ["2026-07-28"],
+    "ts": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+    "rust": "the tool's own context",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the result text: the host's validation error on TS, the tool's answer on Rust: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.(?:response\\.isError|is_error)",
+    "scenario": "pagination",
+    "transports": ["http", "http-sse"],
+    "lanes": ["2026-07-28"],
+    "ts": true,
+    "rust": "<absent>",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the failed call's isError on TS only: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.error",
+    "scenario": "pagination",
+    "transports": ["http", "http-sse"],
+    "lanes": ["2026-07-28"],
+    "ts": {
+      "message": "Input validation error: Invalid arguments for tool own_context: data must have required property 'context'",
+      "platform": "<platform:string>"
+    },
+    "rust": "<absent>",
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the error TS records from the failed call: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[3\\]\\.body\\.output_tokens",
+    "scenario": "pagination",
+    "transports": ["http", "http-sse"],
+    "lanes": ["2026-07-28"],
+    "ts": 31,
+    "rust": 7,
+    "reason": "pagination.json, TS's 2026-07-28 HTTP handler (a fresh server per request), the own_context call on page 3, the token estimate of the two different results: TS's rebuild reads page 1 alone (K-01, K-02), so the heuristic strip (B-051) removes the tool's own context and the host rejects the call; on Rust, get_tool answers first and the rebuild follows next_cursor (C03), so the tool keeps its context (the delta differs the same way)",
+    "deviation": "RD-12"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "redaction",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "redaction",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "redaction",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "redaction.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "hooks-fail",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.type",
+    "scenario": "hooks-fail-resolve",
+    "ts": "Error",
+    "rust": "harness_ref_server::tools::Boom",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "hooks-fail",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.stack",
+    "scenario": "hooks-fail-resolve",
+    "ts": "<stack:string>",
+    "rust": "<absent>",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "hooks-fail",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "hooks-fail.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[2\\]\\.body\\.error\\.frames",
+    "scenario": "hooks-fail-resolve",
+    "ts": "<frames:array:abs_path,colno,filename,function,in_app,lineno>",
+    "rust": "<absent>",
+    "reason": "hooks-fail-resolve.json, the boom call: TS's error carries the constructor name Error, a V8 stack and frames; Rust's carries the type path of the error recorded with capture_error, no stack (no backtrace without RUST_BACKTRACE) and no frames (C23)",
+    "deviation": "RD-06"
+  },
+  {
+    "path": "\\$\\.events\\[(?:6|8|10|12)\\]\\.body\\.client_name",
+    "scenario": "custom-events",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "harness-client",
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
+  },
+  {
+    "path": "\\$\\.events\\[(?:6|8|10|12)\\]\\.body\\.client_version",
+    "scenario": "custom-events",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "1.0.0",
+    "reason": "custom-events.json, stdio at 2026-07-28, the server-form custom events of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
+  },
+  {
+    "path": "\\$\\.events\\[6\\]\\.body\\.client_name",
+    "scenario": "redaction",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "harness-client",
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
+  },
+  {
+    "path": "\\$\\.events\\[6\\]\\.body\\.client_version",
+    "scenario": "redaction",
+    "transports": ["stdio"],
+    "lanes": ["2026-07-28"],
+    "ts": "<absent>",
+    "rust": "1.0.0",
+    "reason": "redaction.json, stdio at 2026-07-28, the server-form custom event of emit_custom_server: TS's server form takes the client from the host server's getClientVersion(), which the TS v2 host seeds from the request envelope only on a per-request HTTP server instance (seedClientIdentityFromEnvelope); a 2026-07-28 stdio connection has no initialize, so the TS event has no client fields. Rust's server form on the CallContext takes the call's client (C16, the B-085 ladder: the envelope's clientInfo). Owner ruling R28 keeps the call's client",
+    "deviation": "RD-38"
+  }
+]

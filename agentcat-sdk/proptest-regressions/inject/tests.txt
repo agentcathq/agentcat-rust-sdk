@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 6fd282dca0324101238651b5647f1ce82c881d476fe38bcd6ca61af556fc8e35 # shrinks to options = Object {"enableReportMissing": Bool(false), "enableTracing": Bool(false), "enableToolCallContext": Bool(false), "enableAgentTracking": Bool(false)}, hook_mode = false, pages = [[Tool { name: "echo", title: None, description: None, input_schema: {"properties": Object {}}, output_schema: None, annotations: None, icons: None, meta: None }]]
+cc 0b6094f353e88a2c7b23547f526a82d1f4552a68c4a32abe8bc16c42d2021d63 # shrinks to options = Object {"enableReportMissing": Bool(false), "enableTracing": Bool(false), "enableToolCallContext": Bool(true), "enableAgentTracking": Bool(false)}, hook_mode = false, pages = [[Tool { name: "echo", title: None, description: None, input_schema: {"additionalProperties": Bool(false), "type": String("object"), "properties": Object {}}, output_schema: None, annotations: None, icons: None, meta: None }]]

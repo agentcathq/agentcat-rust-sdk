@@ -1,0 +1,11 @@
+version: 2
+updates:
+  # "/" scans .github/workflows; the composite actions keep their own SHA pins.
+  - package-ecosystem: github-actions
+    directories: ["/", "/.github/actions/*"]
+    schedule:
+      interval: weekly
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly

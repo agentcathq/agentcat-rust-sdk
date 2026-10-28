@@ -1,0 +1,82 @@
+# cargo-mutants 27.1.0 configuration (C53). Every exclusion below gives its reason; the published crate
+# has no `mutants` dependency and no `#[mutants::skip]` attribute.
+#
+# Counts (a timed-out mutant counts as detected; the score is detected of viable mutants):
+# - Before (Task 14's nightly push run 40666991218, commit 93899e3): 1014 mutants: 780 caught, 48 missed,
+#   13 timed out, 173 unviable; 94.3 % detected ((780 + 13) / 841), 92.7 % caught.
+# - After (Task 15): the 10 equivalent mutants of `exclude_re` dropped and a test for each of the other 38,
+#   all 38 caught by `cargo mutants --iterate` on top of the run above: 1004 mutants: 818 caught, 0 missed,
+#   13 timed out, 173 unviable; 100 % detected (831 / 831), 98.4 % caught.
+
+# The nextest runner, as in the test jobs.
+test_tool = "nextest"
+# The whole feature set, as in the test jobs.
+additional_cargo_args = ["--all-features"]
+# The SDK crate only: xtask and the harness reference server are tooling, and their tests do not pin the SDK.
+# (27.1 has no `package` key in the config file; the source globs select the crate.)
+examine_globs = ["agentcat-sdk/src/**/*.rs"]
+
+# A mutant can turn a loop or a wait into an endless one. A mutant run times out at the multiplier times the
+# time of the baseline test run, and never under the minimum (seconds).
+timeout_multiplier = 3.0
+minimum_test_timeout = 60.0
+
+# The oracle-compared tests start `oracle/src/server.mjs`, which reads the pinned TS clone from
+# `oracle/.cache` and its modules from `node_modules`. Both are in .gitignore, and cargo-mutants skips
+# ignored files when it copies the tree. This config COPIES them into the scratch tree: `gitignore = false`
+# keeps the ignored files (`target/` is still never copied). The pinned TS clone in `oracle/.cache` is a git
+# repository that the oracle queries (`git rev-parse HEAD`), so `copy_vcs = true` keeps `.git` directories
+# too (about 40 MB). The copy reads only the local disk, so it needs no network: the job and
+# `scripts/check.sh` run `corepack pnpm install` and the oracle build first. A symlink back to the source
+# tree would not work, because the oracle resolves `.cache` from its own path and Node resolves a
+# symlinked `node_modules` to the source tree's real paths.
+gitignore = false
+copy_vcs = true
+
+# Not mutated.
+exclude_globs = [
+  # Test helpers (test-util feature and unit-test support): a mutant here changes a test, not the SDK.
+  "agentcat-sdk/src/test_support/**",
+  # Unit-test modules, for the same reason.
+  "agentcat-sdk/src/**/tests.rs",
+]
+
+# Mutants dropped by name: each one is equivalent (no test can observe it in this build), for the reason
+# above its entry. A pattern is matched against the name that `cargo mutants --list` prints
+# (`<file>:<line>:<col>: <change>`); a pattern names a column only where one function holds two mutants with
+# the same text, so that it still matches after a line move.
+exclude_re = [
+  # `--all-features` turns a TLS feature on, so `tls_warning` returns `None` in this build whatever the URL.
+  # The warning of a build without one is pinned by `https_without_tls_feature_warns_once`, which runs in
+  # the `--no-default-features` test run.
+  'agentcat-sdk/src/delivery/http\.rs:\d+:\d+: replace tls_warning -> Option<String> with None$',
+  # The workspace turns neither `arbitrary_precision` nor `float_roundtrip` on (R22), so the probe of
+  # `json_features` finds no feature and returns an empty Vec in this build
+  # (`json_features_empty_in_this_build`).
+  # (A basic string: the pattern holds a `'`.)
+  "agentcat-sdk/src/delivery/worker\\.rs:\\d+:\\d+: replace json_features -> Vec<&'static str> with vec!\\[\\]$",
+  # `remainder << 32` has no bit in the low 32 bits and `u64::from(*word)` none above them, so `|` and `^`
+  # give the same value.
+  'agentcat-sdk/src/handles/ksuid\.rs:\d+:\d+: replace \| with \^ in base62$',
+  # The two checks of the canonical form only spare a parse: `str::parse::<u32>` rejects every key they
+  # let through by mistake. With `<=`, an 11-digit key overflows `u32`; with `||`, a key with a non-digit
+  # after its first digit is not a number.
+  'agentcat-sdk/src/js\.rs:\d+:\d+: replace < with <= in array_index$',
+  'agentcat-sdk/src/js\.rs:\d+:\d+: replace && with \|\| in array_index$',
+  # A key of the event with the same rank as the new key is the new key itself, which the early return
+  # handles, so no present key has an equal rank and `>=` finds the same place as `>`.
+  'agentcat-sdk/src/pipeline/mod\.rs:\d+:\d+: replace > with >= in set_field$',
+  # The `!value.is_null()` guards copy TS's `!= null` checks, but both sanitizers give `null` back
+  # unchanged, so sending a `null` `response` or `parameters` through them changes nothing.
+  'agentcat-sdk/src/pipeline/sanitize\.rs:\d+:\d+: replace match guard !value\.is_null\(\) with true in sanitize_event$',
+  # An array of exactly `MAX_STACK_FRAMES` (50) frames: its first 25 and its last 25 are the whole array,
+  # so cutting it gives it back unchanged. The column (48) picks the array's comparison; the string's
+  # comparison below it in `limit_frames` (column 37) changes the result (a string becomes an array) and
+  # stays mutated. A line move keeps the column. Only an edit of the array's line itself can move its `>`
+  # to another column; that line is then in the diff, so the diff gate tests the mutant and fails on it as
+  # missed until the column here is updated.
+  'agentcat-sdk/src/pipeline/truncate\.rs:\d+:48: replace > with >= in limit_frames$',
+  # A compile-time assertion that `Tracked<H>` is `Send + Sync + 'static`: the `const fn` runs only in a
+  # `const` item, so emptying its body changes no run-time behavior.
+  'agentcat-sdk/src/tracked\.rs:\d+:\d+: replace tracked with \(\)$',
+]

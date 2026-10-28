@@ -1,0 +1,21 @@
+{
+  "_comment": "The fixed demo scenario of decision C58. Both servers (the hooks example in Rust and demo/ts-server.mjs) run it over stdio. Each session starts without a session_id, so the SDK issues a new one. The custom event comes from the echo tool, as in hooks.rs: it publishes one custom event per echo call, so the three echo calls give three custom events on the dashboard, not one. RD-39 (pending): the first call of a session cannot give the TS custom event its session, so the TS custom event of the echo in the second session has no session, and the Rust one has it; run.mjs expects exactly this difference. The second echo of session one carries secret-token, which redact_sensitive_information replaces with [REDACTED]. The add call carries intent text in the context argument.",
+  "sessions": [
+    {
+      "name": "first",
+      "steps": [
+        { "list": true },
+        { "tool": "add", "arguments": { "a": 2, "b": 3 }, "context": "Adding two numbers to check the total of a demo order", "expect": { "text": "5", "isError": false } },
+        { "tool": "echo", "arguments": { "text": "hello from the demo" }, "context": "Sending a greeting back", "expect": { "text": "hello from the demo", "isError": false } },
+        { "tool": "echo", "arguments": { "text": "my secret-token is here" }, "context": "Sending text that holds a secret", "expect": { "text": "my secret-token is here", "isError": false } },
+        { "tool": "fail", "arguments": {}, "context": "Looking up a record that does not exist", "expect": { "text": "the record does not exist", "isError": true } }
+      ]
+    },
+    {
+      "name": "second",
+      "steps": [
+        { "tool": "echo", "arguments": { "text": "hello from a second session" }, "context": "Sending a greeting in a new session", "expect": { "text": "hello from a second session", "isError": false } }
+      ]
+    }
+  ]
+}

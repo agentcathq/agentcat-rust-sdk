@@ -1,0 +1,273 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/event_order.mjs",
+  "cases": [
+    {
+      "name": "tool_call",
+      "event": [
+        {
+          "key": "id"
+        },
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "inputTokens"
+        },
+        {
+          "key": "outputTokens"
+        },
+        {
+          "key": "ipAddress",
+          "undefined": true
+        },
+        {
+          "key": "sdkLanguage"
+        },
+        {
+          "key": "agentcatVersion"
+        },
+        {
+          "key": "serverName"
+        },
+        {
+          "key": "serverVersion"
+        },
+        {
+          "key": "clientName"
+        },
+        {
+          "key": "clientVersion"
+        },
+        {
+          "key": "identifyActorGivenId"
+        },
+        {
+          "key": "identifyActorName"
+        },
+        {
+          "key": "identifyActorData"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "isError",
+          "undefined": true
+        },
+        {
+          "key": "error",
+          "undefined": true
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        }
+      ],
+      "request": [
+        "method",
+        "params",
+        "jsonrpc",
+        "id"
+      ],
+      "params": [
+        "name",
+        "arguments",
+        "_meta"
+      ],
+      "extra": [
+        "signal",
+        "sessionId",
+        "_meta",
+        "sendNotification",
+        "sendRequest",
+        "authInfo",
+        "requestId",
+        "requestInfo",
+        "taskId",
+        "taskStore",
+        "taskRequestedTtl",
+        "closeSSEStream",
+        "closeStandaloneSSEStream"
+      ]
+    },
+    {
+      "name": "custom_string",
+      "event": [
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "isError"
+        },
+        {
+          "key": "error"
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        },
+        {
+          "key": "serverName",
+          "undefined": true
+        },
+        {
+          "key": "serverVersion",
+          "undefined": true
+        },
+        {
+          "key": "clientName",
+          "undefined": true
+        },
+        {
+          "key": "clientVersion",
+          "undefined": true
+        },
+        {
+          "key": "id"
+        }
+      ]
+    },
+    {
+      "name": "custom_server",
+      "event": [
+        {
+          "key": "id"
+        },
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "inputTokens",
+          "undefined": true
+        },
+        {
+          "key": "outputTokens",
+          "undefined": true
+        },
+        {
+          "key": "ipAddress",
+          "undefined": true
+        },
+        {
+          "key": "sdkLanguage"
+        },
+        {
+          "key": "agentcatVersion"
+        },
+        {
+          "key": "serverName"
+        },
+        {
+          "key": "serverVersion"
+        },
+        {
+          "key": "clientName"
+        },
+        {
+          "key": "clientVersion"
+        },
+        {
+          "key": "identifyActorGivenId",
+          "undefined": true
+        },
+        {
+          "key": "identifyActorName",
+          "undefined": true
+        },
+        {
+          "key": "identifyActorData"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "isError"
+        },
+        {
+          "key": "error"
+        },
+        {
+          "key": "pending",
+          "undefined": true
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        }
+      ]
+    }
+  ]
+}

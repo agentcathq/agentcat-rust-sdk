@@ -1,0 +1,3356 @@
+{
+  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
+  "generator": "oracle/src/vectors/gen/call.mjs",
+  "cases": [
+    {
+      "name": "strip:ts:exact",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "text": "x",
+          "session_id": "ses_1",
+          "agent_id": "agt_1",
+          "context": "why"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      },
+      "ts_test": [
+        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > strips exactly what was injected"
+      ]
+    },
+    {
+      "name": "strip:ts:owns-session",
+      "input": {
+        "name": "deploy",
+        "arguments": {
+          "session_id": "prod-42",
+          "agent_id": "agt_1",
+          "context": "why"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "session_id": "prod-42"
+      },
+      "ts_test": [
+        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > preserves the customer's own session_id param"
+      ]
+    },
+    {
+      "name": "strip:ts:fallback-absent-tool",
+      "input": {
+        "name": "unlisted_tool",
+        "arguments": {
+          "text": "x",
+          "session_id": "a",
+          "agent_id": "b",
+          "context": "c"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      },
+      "ts_test": [
+        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
+      ]
+    },
+    {
+      "name": "strip:ts:fallback-no-registry",
+      "input": {
+        "name": "any",
+        "arguments": {
+          "text": "x",
+          "session_id": "a"
+        },
+        "registry": null
+      },
+      "output": {
+        "text": "x"
+      },
+      "ts_test": [
+        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
+      ]
+    },
+    {
+      "name": "strip:ts:get-more-tools",
+      "input": {
+        "name": "get_more_tools",
+        "arguments": {
+          "context": "need a tool",
+          "session_id": "a",
+          "agent_id": "b"
+        },
+        "registry": null
+      },
+      "output": {
+        "context": "need a tool"
+      },
+      "ts_test": [
+        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > fallback never strips get_more_tools' own context"
+      ]
+    },
+    {
+      "name": "strip:entry:none-present",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "text": "x"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "strip:entry:only-session",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "session_id": "s"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:entry:only-agent",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "agent_id": "a",
+          "text": "x"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "strip:entry:only-context",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "context": "c",
+          "text": "x"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "strip:entry:empty-arguments",
+      "input": {
+        "name": "add_todo",
+        "arguments": {},
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:entry:empty-list",
+      "input": {
+        "name": "plain",
+        "arguments": {
+          "session_id": "mine",
+          "agent_id": "mine",
+          "context": "mine"
+        },
+        "registry": [
+          [
+            "plain",
+            []
+          ]
+        ]
+      },
+      "output": {
+        "session_id": "mine",
+        "agent_id": "mine",
+        "context": "mine"
+      }
+    },
+    {
+      "name": "strip:entry:only-context-recorded",
+      "input": {
+        "name": "ctx",
+        "arguments": {
+          "session_id": "mine",
+          "agent_id": "mine",
+          "context": "c"
+        },
+        "registry": [
+          [
+            "ctx",
+            [
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "session_id": "mine",
+        "agent_id": "mine"
+      }
+    },
+    {
+      "name": "strip:entry:agent-only-recorded",
+      "input": {
+        "name": "agent",
+        "arguments": {
+          "session_id": "mine",
+          "agent_id": "a",
+          "context": "mine"
+        },
+        "registry": [
+          [
+            "agent",
+            [
+              "agent_id"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "session_id": "mine",
+        "context": "mine"
+      }
+    },
+    {
+      "name": "strip:entry:get-more-tools-recorded",
+      "input": {
+        "name": "get_more_tools",
+        "arguments": {
+          "session_id": "s",
+          "agent_id": "a",
+          "context": "c"
+        },
+        "registry": [
+          [
+            "get_more_tools",
+            [
+              "session_id",
+              "agent_id"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "context": "c"
+      }
+    },
+    {
+      "name": "strip:entry:get-more-tools-empty",
+      "input": {
+        "name": "get_more_tools",
+        "arguments": {
+          "session_id": "s",
+          "agent_id": "a",
+          "context": "c"
+        },
+        "registry": [
+          [
+            "get_more_tools",
+            []
+          ]
+        ]
+      },
+      "output": {
+        "session_id": "s",
+        "agent_id": "a",
+        "context": "c"
+      }
+    },
+    {
+      "name": "strip:entry:key-order",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "z": 1,
+          "session_id": "s",
+          "a": 2,
+          "context": "c",
+          "m": 3
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "z": 1,
+        "a": 2,
+        "m": 3
+      }
+    },
+    {
+      "name": "strip:entry:nested-values-kept",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "session_id": "s",
+          "payload": {
+            "session_id": "inner",
+            "context": [
+              1
+            ]
+          }
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "payload": {
+          "session_id": "inner",
+          "context": [
+            1
+          ]
+        }
+      }
+    },
+    {
+      "name": "strip:entry:null-values",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "session_id": null,
+          "agent_id": null,
+          "context": null,
+          "k": null
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "k": null
+      }
+    },
+    {
+      "name": "strip:entry:lookalike-keys",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "Session_Id": 1,
+          "session_id ": 2,
+          "sessionId": 3,
+          "agent-id": 4,
+          "context2": 5,
+          "contexts": 6,
+          " context": 7
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "Session_Id": 1,
+        "session_id ": 2,
+        "sessionId": 3,
+        "agent-id": 4,
+        "context2": 5,
+        "contexts": 6,
+        " context": 7
+      }
+    },
+    {
+      "name": "strip:entry:index-keys",
+      "input": {
+        "name": "add_todo",
+        "arguments": {
+          "2": 3,
+          "10": 2,
+          "b": 1,
+          "session_id": "s"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "2": 3,
+        "10": 2,
+        "b": 1
+      }
+    },
+    {
+      "name": "strip:entry:other-tool-in-registry",
+      "input": {
+        "name": "other",
+        "arguments": {
+          "session_id": "mine",
+          "context": "mine"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:fallback:none-present",
+      "input": {
+        "name": "unlisted",
+        "arguments": {
+          "text": "x"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "strip:fallback:empty-arguments",
+      "input": {
+        "name": "unlisted",
+        "arguments": {},
+        "registry": null
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:fallback:each-alone-session",
+      "input": {
+        "name": "t",
+        "arguments": {
+          "session_id": "s"
+        },
+        "registry": null
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:fallback:each-alone-agent",
+      "input": {
+        "name": "t",
+        "arguments": {
+          "agent_id": "a"
+        },
+        "registry": null
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:fallback:each-alone-context",
+      "input": {
+        "name": "t",
+        "arguments": {
+          "context": "c"
+        },
+        "registry": null
+      },
+      "output": {}
+    },
+    {
+      "name": "strip:fallback:get-more-tools-with-registry",
+      "input": {
+        "name": "get_more_tools",
+        "arguments": {
+          "context": "c",
+          "session_id": "s",
+          "agent_id": "a",
+          "extra": 1
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "context": "c",
+        "extra": 1
+      }
+    },
+    {
+      "name": "strip:fallback:get-more-tools-only-context",
+      "input": {
+        "name": "get_more_tools",
+        "arguments": {
+          "context": "c"
+        },
+        "registry": null
+      },
+      "output": {
+        "context": "c"
+      }
+    },
+    {
+      "name": "strip:fallback:key-order",
+      "input": {
+        "name": "t",
+        "arguments": {
+          "z": 1,
+          "context": "c",
+          "a": 2,
+          "agent_id": "a",
+          "session_id": "s"
+        },
+        "registry": null
+      },
+      "output": {
+        "z": 1,
+        "a": 2
+      }
+    },
+    {
+      "name": "strip:fallback:lookalike-keys",
+      "input": {
+        "name": "t",
+        "arguments": {
+          "Context": 1,
+          "context ": 2,
+          "sessionid": 3,
+          "agent_ids": 4
+        },
+        "registry": null
+      },
+      "output": {
+        "Context": 1,
+        "context ": 2,
+        "sessionid": 3,
+        "agent_ids": 4
+      }
+    },
+    {
+      "name": "strip:fallback:empty-name",
+      "input": {
+        "name": "",
+        "arguments": {
+          "session_id": "s",
+          "text": "x"
+        },
+        "registry": [
+          [
+            "add_todo",
+            [
+              "session_id",
+              "agent_id",
+              "context"
+            ]
+          ],
+          [
+            "deploy",
+            [
+              "agent_id",
+              "context"
+            ]
+          ]
+        ]
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "strip:fallback:name-like-prototype",
+      "input": {
+        "name": "toString",
+        "arguments": {
+          "session_id": "s",
+          "text": "x"
+        },
+        "registry": null
+      },
+      "output": {
+        "text": "x"
+      }
+    },
+    {
+      "name": "mint-back:ts:prepends-first",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hi"
+            }
+          ]
+        },
+        "text": "BLOCK"
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "BLOCK"
+          },
+          {
+            "type": "text",
+            "text": "hi"
+          }
+        ]
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|appendMintBack > prepends a text block as the first content element"
+      ]
+    },
+    {
+      "name": "mint-back:ts:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "boom"
+            }
+          ]
+        },
+        "text": "BLOCK"
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "BLOCK"
+          },
+          {
+            "type": "text",
+            "text": "boom"
+          }
+        ]
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|appendMintBack > prepends on isError results too"
+      ]
+    },
+    {
+      "name": "mint-back:text:plain-block",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hi"
+            }
+          ]
+        },
+        "text": "BLOCK"
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "BLOCK"
+          },
+          {
+            "type": "text",
+            "text": "hi"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:single",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "hello"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:several-blocks",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "one"
+            },
+            {
+              "type": "image",
+              "data": "AAAA",
+              "mimeType": "image/png"
+            },
+            {
+              "type": "text",
+              "text": "three"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "one"
+          },
+          {
+            "type": "image",
+            "data": "AAAA",
+            "mimeType": "image/png"
+          },
+          {
+            "type": "text",
+            "text": "three"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "it broke"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "it broke"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:is-error-false",
+      "input": {
+        "result": {
+          "isError": false,
+          "content": [
+            {
+              "type": "text",
+              "text": "fine"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "fine"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:empty",
+      "input": {
+        "result": {
+          "content": []
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:structured",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "42 things"
+            }
+          ],
+          "structuredContent": {
+            "count": 42
+          }
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "42 things"
+          }
+        ],
+        "structuredContent": {
+          "count": 42
+        }
+      }
+    },
+    {
+      "name": "mint-back:minted:structured-is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "bad"
+            }
+          ],
+          "structuredContent": {
+            "msg": "boom"
+          }
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "bad"
+          }
+        ],
+        "structuredContent": {
+          "msg": "boom"
+        }
+      }
+    },
+    {
+      "name": "mint-back:minted:resources",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "resource",
+              "resource": {
+                "uri": "file:///a.txt",
+                "text": "body"
+              }
+            },
+            {
+              "type": "resource_link",
+              "uri": "file:///b.txt",
+              "name": "b"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "resource",
+            "resource": {
+              "uri": "file:///a.txt",
+              "text": "body"
+            }
+          },
+          {
+            "type": "resource_link",
+            "uri": "file:///b.txt",
+            "name": "b"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:minted:meta",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "m"
+            }
+          ],
+          "_meta": {
+            "k": "v"
+          }
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "m"
+          }
+        ],
+        "_meta": {
+          "k": "v"
+        }
+      }
+    },
+    {
+      "name": "mint-back:invalid:single",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "hello"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:several-blocks",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "one"
+            },
+            {
+              "type": "image",
+              "data": "AAAA",
+              "mimeType": "image/png"
+            },
+            {
+              "type": "text",
+              "text": "three"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "one"
+          },
+          {
+            "type": "image",
+            "data": "AAAA",
+            "mimeType": "image/png"
+          },
+          {
+            "type": "text",
+            "text": "three"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "it broke"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "it broke"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:is-error-false",
+      "input": {
+        "result": {
+          "isError": false,
+          "content": [
+            {
+              "type": "text",
+              "text": "fine"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "fine"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:empty",
+      "input": {
+        "result": {
+          "content": []
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:structured",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "42 things"
+            }
+          ],
+          "structuredContent": {
+            "count": 42
+          }
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "42 things"
+          }
+        ],
+        "structuredContent": {
+          "count": 42
+        }
+      }
+    },
+    {
+      "name": "mint-back:invalid:structured-is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "bad"
+            }
+          ],
+          "structuredContent": {
+            "msg": "boom"
+          }
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "bad"
+          }
+        ],
+        "structuredContent": {
+          "msg": "boom"
+        }
+      }
+    },
+    {
+      "name": "mint-back:invalid:resources",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "resource",
+              "resource": {
+                "uri": "file:///a.txt",
+                "text": "body"
+              }
+            },
+            {
+              "type": "resource_link",
+              "uri": "file:///b.txt",
+              "name": "b"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "resource",
+            "resource": {
+              "uri": "file:///a.txt",
+              "text": "body"
+            }
+          },
+          {
+            "type": "resource_link",
+            "uri": "file:///b.txt",
+            "name": "b"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:invalid:meta",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "m"
+            }
+          ],
+          "_meta": {
+            "k": "v"
+          }
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "m"
+          }
+        ],
+        "_meta": {
+          "k": "v"
+        }
+      }
+    },
+    {
+      "name": "mint-back:supplied:single",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "hello"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:supplied:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "it broke"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "it broke"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:foreign:single",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "hello"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:foreign:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "it broke"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "it broke"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:hook-mode:single",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "hello"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "hello"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:hook-mode:is-error",
+      "input": {
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "it broke"
+            }
+          ]
+        },
+        "text": null
+      },
+      "output": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "it broke"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:text:minted-text",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "x"
+            }
+          ]
+        },
+        "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "x"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:text:invalid-text",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "x"
+            }
+          ]
+        },
+        "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "x"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mint-back:text:multiline-and-unicode",
+      "input": {
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "x"
+            }
+          ]
+        },
+        "text": "line 1\nline 2 😀 — \u0000"
+      },
+      "output": {
+        "content": [
+          {
+            "type": "text",
+            "text": "line 1\nline 2 😀 — \u0000"
+          },
+          {
+            "type": "text",
+            "text": "x"
+          }
+        ]
+      }
+    },
+    {
+      "name": "structured:ts:first-key",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "a": 1
+        }
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating"
+      ],
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"a\":1}"
+    },
+    {
+      "name": "structured:ts:absent",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        }
+      },
+      "output": {
+        "content": []
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
+      ]
+    },
+    {
+      "name": "structured:ts:array",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": [
+          1,
+          2
+        ]
+      },
+      "output": {
+        "content": [],
+        "structuredContent": [
+          1,
+          2
+        ]
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
+      ],
+      "output_text": "[1,2]"
+    },
+    {
+      "name": "structured:ts:string",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": "nope"
+      },
+      "output": {
+        "content": [],
+        "structuredContent": "nope"
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
+      ],
+      "output_text": "\"nope\""
+    },
+    {
+      "name": "structured:ts:own-mcp-session",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "mcp_session": "customer-owned"
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": "customer-owned"
+        }
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > never clobbers an existing key (customer data wins)"
+      ],
+      "output_text": "{\"mcp_session\":\"customer-owned\"}"
+    },
+    {
+      "name": "structured:ts:is-error",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "msg": "boom"
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "msg": "boom"
+        }
+      },
+      "ts_test": [
+        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > applies to isError results that carry structuredContent"
+      ],
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"msg\":\"boom\"}"
+    },
+    {
+      "name": "structured:object:empty",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {}
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          }
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"}}"
+    },
+    {
+      "name": "structured:object:one-key",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "count": 42
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "count": 42
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"count\":42}"
+    },
+    {
+      "name": "structured:object:index-keys-first",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "a",
+          "10": "b",
+          "x": "c"
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "a",
+          "10": "b",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "x": "c"
+        }
+      },
+      "output_text": "{\"0\":\"a\",\"10\":\"b\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"x\":\"c\"}"
+    },
+    {
+      "name": "structured:object:index-keys-mixed",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "a",
+          "10": "b",
+          "x": "c",
+          "y": "d"
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "a",
+          "10": "b",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "x": "c",
+          "y": "d"
+        }
+      },
+      "output_text": "{\"0\":\"a\",\"10\":\"b\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"x\":\"c\",\"y\":\"d\"}"
+    },
+    {
+      "name": "structured:object:index-keys-descending",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "1": 4,
+          "2": 3,
+          "9": 2,
+          "10": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "1": 4,
+          "2": 3,
+          "9": 2,
+          "10": 1,
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          }
+        }
+      },
+      "output_text": "{\"1\":4,\"2\":3,\"9\":2,\"10\":1,\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"}}"
+    },
+    {
+      "name": "structured:object:index-keys-only",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "3": "b",
+          "5": "a"
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "3": "b",
+          "5": "a",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          }
+        }
+      },
+      "output_text": "{\"3\":\"b\",\"5\":\"a\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"}}"
+    },
+    {
+      "name": "structured:object:index-limit",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "4294967294": "a",
+          "4294967295": "b",
+          "4294967296": "c",
+          "z": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "4294967294": "a",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "4294967295": "b",
+          "4294967296": "c",
+          "z": 1
+        }
+      },
+      "output_text": "{\"4294967294\":\"a\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"4294967295\":\"b\",\"4294967296\":\"c\",\"z\":1}"
+    },
+    {
+      "name": "structured:object:not-index-spellings",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "1": 5,
+          "01": 1,
+          "-1": 2,
+          "1.5": 3,
+          " 1": 4
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "1": 5,
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "01": 1,
+          "-1": 2,
+          "1.5": 3,
+          " 1": 4
+        }
+      },
+      "output_text": "{\"1\":5,\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"01\":1,\"-1\":2,\"1.5\":3,\" 1\":4}"
+    },
+    {
+      "name": "structured:object:nested",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "a": {
+            "mcp_session": "inner"
+          },
+          "b": [
+            {
+              "0": 1
+            }
+          ]
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "a": {
+            "mcp_session": "inner"
+          },
+          "b": [
+            {
+              "0": 1
+            }
+          ]
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"a\":{\"mcp_session\":\"inner\"},\"b\":[{\"0\":1}]}"
+    },
+    {
+      "name": "structured:object:own-mcp-session-with-others",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": 1,
+          "mcp_session": {
+            "x": 1
+          },
+          "z": 2
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": 1,
+          "mcp_session": {
+            "x": 1
+          },
+          "z": 2
+        }
+      },
+      "output_text": "{\"0\":1,\"mcp_session\":{\"x\":1},\"z\":2}"
+    },
+    {
+      "name": "structured:object:own-mcp-session-null",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "mcp_session": null
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": null
+        }
+      },
+      "output_text": "{\"mcp_session\":null}"
+    },
+    {
+      "name": "structured:object:similar-key",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "mcp_sessions": 1,
+          "mcp_session ": 2,
+          "Mcp_Session": 3
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "mcp_sessions": 1,
+          "mcp_session ": 2,
+          "Mcp_Session": 3
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"mcp_sessions\":1,\"mcp_session \":2,\"Mcp_Session\":3}"
+    },
+    {
+      "name": "structured:object:unicode-keys",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "😀": 1,
+          "é": 2
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "😀": 1,
+          "é": 2
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"😀\":1,\"é\":2}"
+    },
+    {
+      "name": "structured:object:null-values",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "3": null,
+          "a": null
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "3": null,
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "a": null
+        }
+      },
+      "output_text": "{\"3\":null,\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"a\":null}"
+    },
+    {
+      "name": "structured:other:array-empty",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": []
+      },
+      "output": {
+        "content": [],
+        "structuredContent": []
+      },
+      "output_text": "[]"
+    },
+    {
+      "name": "structured:other:array-of-objects",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": [
+          {
+            "a": 1
+          }
+        ]
+      },
+      "output": {
+        "content": [],
+        "structuredContent": [
+          {
+            "a": 1
+          }
+        ]
+      },
+      "output_text": "[{\"a\":1}]"
+    },
+    {
+      "name": "structured:other:string",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": "text"
+      },
+      "output": {
+        "content": [],
+        "structuredContent": "text"
+      },
+      "output_text": "\"text\""
+    },
+    {
+      "name": "structured:other:string-empty",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": ""
+      },
+      "output": {
+        "content": [],
+        "structuredContent": ""
+      },
+      "output_text": "\"\""
+    },
+    {
+      "name": "structured:other:null",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": null
+      },
+      "output": {
+        "content": [],
+        "structuredContent": null
+      },
+      "output_text": "null"
+    },
+    {
+      "name": "structured:other:number",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": 7
+      },
+      "output": {
+        "content": [],
+        "structuredContent": 7
+      },
+      "output_text": "7"
+    },
+    {
+      "name": "structured:other:zero",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": 0
+      },
+      "output": {
+        "content": [],
+        "structuredContent": 0
+      },
+      "output_text": "0"
+    },
+    {
+      "name": "structured:other:true",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": true
+      },
+      "output": {
+        "content": [],
+        "structuredContent": true
+      },
+      "output_text": "true"
+    },
+    {
+      "name": "structured:other:false",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": false
+      },
+      "output": {
+        "content": [],
+        "structuredContent": false
+      },
+      "output_text": "false"
+    },
+    {
+      "name": "structured:mint:one-key-session",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:one-key-agent",
+      "input": {
+        "mint": {
+          "agent_id": "opus|cc|k3n9x"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "agent_id": "opus|cc|k3n9x"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"agent_id\":\"opus|cc|k3n9x\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:one-key-status",
+      "input": {
+        "mint": {
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "status": "issued"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"status\":\"issued\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:two-keys",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "status": "issued"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:two-keys-agent",
+      "input": {
+        "mint": {
+          "agent_id": "opus|cc|k3n9x",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "agent_id": "opus|cc|k3n9x",
+            "status": "issued"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"agent_id\":\"opus|cc|k3n9x\",\"status\":\"issued\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:three-keys",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "agent_id": "opus|cc|k3n9x",
+          "status": "issued"
+        },
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "a": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "0": "z",
+          "2": "b",
+          "mcp_session": {
+            "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+            "agent_id": "opus|cc|k3n9x",
+            "status": "issued"
+          },
+          "a": 1
+        }
+      },
+      "output_text": "{\"0\":\"z\",\"2\":\"b\",\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"agent_id\":\"opus|cc|k3n9x\",\"status\":\"issued\"},\"a\":1}"
+    },
+    {
+      "name": "structured:mint:three-keys-array",
+      "input": {
+        "mint": {
+          "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
+          "agent_id": "opus|cc|k3n9x",
+          "status": "issued"
+        },
+        "structuredContent": [
+          1
+        ]
+      },
+      "output": {
+        "content": [],
+        "structuredContent": [
+          1
+        ]
+      },
+      "output_text": "[1]"
+    },
+    {
+      "name": "structured:mint:unrecognized",
+      "input": {
+        "mint": {
+          "agent_id": "a|b|c",
+          "status": "unrecognized"
+        },
+        "structuredContent": {
+          "x": 1
+        }
+      },
+      "output": {
+        "content": [],
+        "structuredContent": {
+          "mcp_session": {
+            "agent_id": "a|b|c",
+            "status": "unrecognized"
+          },
+          "x": 1
+        }
+      },
+      "output_text": "{\"mcp_session\":{\"agent_id\":\"a|b|c\",\"status\":\"unrecognized\"},\"x\":1}"
+    },
+    {
+      "name": "result-error:text-one",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "tool failed"
+          }
+        ]
+      },
+      "output": {
+        "message": "tool failed",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-two",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "first"
+          },
+          {
+            "type": "text",
+            "text": "second"
+          }
+        ]
+      },
+      "output": {
+        "message": "first second",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-three-joined-with-space",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "a"
+          },
+          {
+            "type": "text",
+            "text": "b"
+          },
+          {
+            "type": "text",
+            "text": "c"
+          }
+        ]
+      },
+      "output": {
+        "message": "a b c",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-trimmed",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "  padded \n"
+          }
+        ]
+      },
+      "output": {
+        "message": "padded",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-inner-whitespace-kept",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": " a\n"
+          },
+          {
+            "type": "text",
+            "text": "\tb "
+          }
+        ]
+      },
+      "output": {
+        "message": "a\n \tb",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-empty-first",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": ""
+          },
+          {
+            "type": "text",
+            "text": "later"
+          }
+        ]
+      },
+      "output": {
+        "message": "later",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-empty-last",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "early"
+          },
+          {
+            "type": "text",
+            "text": ""
+          }
+        ]
+      },
+      "output": {
+        "message": "early",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-whitespace-only",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "   \n\t "
+          }
+        ]
+      },
+      "output": {
+        "message": "Unknown error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-empty",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": ""
+          }
+        ]
+      },
+      "output": {
+        "message": "Unknown error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-unicode",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "fail 😀 — é"
+          }
+        ]
+      },
+      "output": {
+        "message": "fail 😀 — é",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:text-js-whitespace",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": " ﻿ x "
+          }
+        ]
+      },
+      "output": {
+        "message": "x",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:mixed-image-between",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "a"
+          },
+          {
+            "type": "image",
+            "data": "AAAA",
+            "mimeType": "image/png"
+          },
+          {
+            "type": "text",
+            "text": "b"
+          }
+        ]
+      },
+      "output": {
+        "message": "a b",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:mixed-resource-first",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "resource",
+            "resource": {
+              "uri": "file:///a",
+              "text": "ignored"
+            }
+          },
+          {
+            "type": "text",
+            "text": "shown"
+          }
+        ]
+      },
+      "output": {
+        "message": "shown",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:mixed-link-and-audio",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "resource_link",
+            "uri": "file:///b",
+            "name": "b"
+          },
+          {
+            "type": "audio",
+            "data": "AAAA",
+            "mimeType": "audio/wav"
+          },
+          {
+            "type": "text",
+            "text": "z"
+          }
+        ]
+      },
+      "output": {
+        "message": "z",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:no-text-image",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "image",
+            "data": "AAAA",
+            "mimeType": "image/png"
+          }
+        ]
+      },
+      "output": {
+        "message": "Unknown error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:no-text-resource",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "resource",
+            "resource": {
+              "uri": "file:///a",
+              "text": "ignored"
+            }
+          }
+        ]
+      },
+      "output": {
+        "message": "Unknown error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:empty-content",
+      "input": {
+        "isError": true,
+        "content": []
+      },
+      "output": {
+        "message": "Unknown error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:structured-ignored",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "with data"
+          }
+        ],
+        "structuredContent": {
+          "code": 7
+        }
+      },
+      "output": {
+        "message": "with data",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:meta-ignored",
+      "input": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "with meta"
+          }
+        ],
+        "_meta": {
+          "k": 1
+        }
+      },
+      "output": {
+        "message": "with meta",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "result-error:is-error-false",
+      "input": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "not an error"
+          }
+        ]
+      },
+      "output": {
+        "message": "not an error",
+        "platform": "javascript"
+      }
+    },
+    {
+      "name": "report-missing:ts:only-context",
+      "input": {
+        "context": "Need a database query tool for SQL operations"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 45)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:ts:description-and-context",
+      "input": {
+        "context": "User wants to fetch data from external REST APIs"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 48)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:ts:missing-description",
+      "input": {
+        "context": "Some context without description"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 32)"
+        ]
+      },
+      "ts_test": [
+        "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully"
+      ]
+    },
+    {
+      "name": "report-missing:string",
+      "input": {
+        "context": "abc"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 3)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:string-empty",
+      "input": {
+        "context": ""
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:string-emoji",
+      "input": {
+        "context": "😀x"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 3)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:string-astral-only",
+      "input": {
+        "context": "😀𝄞"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 4)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:string-combining",
+      "input": {
+        "context": "éé"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 3)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:string-long",
+      "input": {
+        "context": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 300)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:array",
+      "input": {
+        "context": [
+          1,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 3)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:array-empty",
+      "input": {
+        "context": []
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:array-of-strings",
+      "input": {
+        "context": [
+          "😀",
+          "ab"
+        ]
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 2)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:number",
+      "input": {
+        "context": 5
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:true",
+      "input": {
+        "context": true
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:false",
+      "input": {
+        "context": false
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:null",
+      "input": {
+        "context": null
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:absent",
+      "input": {},
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:object-empty",
+      "input": {
+        "context": {}
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:object-keys",
+      "input": {
+        "context": {
+          "a": 1,
+          "b": 2
+        }
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:object-length-key",
+      "input": {
+        "context": {
+          "length": 7
+        }
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 7)"
+        ]
+      },
+      "deviation": "RD-26"
+    },
+    {
+      "name": "report-missing:object-length-string",
+      "input": {
+        "context": {
+          "length": "ab"
+        }
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: ab)"
+        ]
+      },
+      "deviation": "RD-26"
+    },
+    {
+      "name": "report-missing:object-length-null",
+      "input": {
+        "context": {
+          "length": null
+        }
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    },
+    {
+      "name": "report-missing:object-length-zero",
+      "input": {
+        "context": {
+          "length": 0
+        }
+      },
+      "output": {
+        "value": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future."
+            }
+          ]
+        },
+        "logs": [
+          "Missing tool reported (context length: 0)"
+        ]
+      }
+    }
+  ]
+}

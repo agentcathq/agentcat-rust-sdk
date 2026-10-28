@@ -1,0 +1,75 @@
+[package]
+name = "agentcat-sdk"
+version = "1.0.0"
+description = "AgentCat analytics SDK for MCP servers built on rmcp"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage = "https://agentcat.com"
+readme = "README.md"
+build = "build.rs"
+keywords = ["mcp", "rmcp", "analytics", "telemetry", "agentcat"]
+categories = ["development-tools::debugging", "api-bindings"]
+include = ["src/**", "examples/**", "build.rs", "README.md", "CHANGELOG.md", "LICENSE"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[dependencies]
+serde_json = { workspace = true, features = ["preserve_order"] }
+ryu-js = { workspace = true }
+getrandom = { workspace = true }
+sha2 = { workspace = true }
+rmcp = { workspace = true }
+# `http::request::Parts`, which rmcp's streamable HTTP server puts in the request extensions; http 1.x
+# does not build without "std".
+http = { workspace = true, features = ["std"] }
+# "net" turns on the IO driver of the delivery thread, which reqwest needs.
+tokio = { workspace = true, features = ["rt", "time", "sync", "net"] }
+futures = { workspace = true, features = ["std"] }
+thiserror = { workspace = true }
+chrono = { workspace = true, features = ["std"] }
+tracing = { workspace = true, features = ["std"] }
+agentcat-api = { workspace = true }
+reqwest = { workspace = true }
+
+[features]
+default = ["rustls"]
+# C44: exactly one TLS stack is the usual choice; both together pull both.
+rustls = ["agentcat-api/rustls"]
+native-tls = ["agentcat-api/native-tls"]
+# `agentcat_sdk::testing::Fake`: handles whose events stay in the process, for a customer's tests (C43).
+test-util = []
+
+[[test]]
+name = "fake"
+required-features = ["test-util"]
+
+# A customer's tests of a `redact_event` hook, outside the crate so `#[non_exhaustive]` applies.
+[[test]]
+name = "customer_redaction"
+required-features = ["test-util"]
+
+[lints]
+workspace = true
+
+# Test-only dependencies live here, not in `[workspace.dependencies]`: the `--no-dev-deps` builds of
+# cargo-hack and minimal-versions would report a workspace entry that only dev-dependencies use as unused.
+[dev-dependencies]
+wiremock = "0.6"
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+# "std" is needed to read PROPTEST_CASES and to save failing seeds in proptest-regressions/.
+proptest = { version = "1", default-features = false, features = ["std"] }
+rmcp = { workspace = true, features = [
+  "client",
+  "macros",
+  "transport-streamable-http-server",
+  "transport-streamable-http-client-reqwest",
+  "transport-io",
+] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util", "net", "time", "test-util", "signal"] }
+schemars = "1"
+serde = { workspace = true, features = ["derive"] }
+axum = { version = "0.8", default-features = false, features = ["http1", "tokio"] }
