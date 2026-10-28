@@ -16,7 +16,7 @@ use crate::test_support::strategies::{js_char, js_string};
 use crate::test_support::{assert_js_eq, config, oracle, vectors};
 
 /// The case name prefixes of `handles.json`.
-const KINDS: [&str; 8] = [
+const KINDS: [&str; 9] = [
     "derive",
     "valid",
     "extract",
@@ -25,6 +25,7 @@ const KINDS: [&str; 8] = [
     "structured",
     "tags",
     "hook-value",
+    "lowercase",
 ];
 
 /// What the oracle and the vectors write in place of a minted session ID.
@@ -138,7 +139,8 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
                 .is_some_and(|rest| rest.starts_with(':'))
         })
         .unwrap_or_else(|| panic!("{name}: unknown kind"));
-    let input = &case["input"];
+    // The `lowercase` case has no input.
+    let input = case.get("input").unwrap_or(&Value::Null);
     let output = &case["output"];
     match kind {
         "derive" => {
@@ -203,9 +205,66 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
                 assert_ne!(session_id, session().0, "{name}: one ID per mint");
             }
         }
+        "lowercase" => check_lowercase(case),
         _ => unreachable!("{name}: kind {kind:?} has no check"),
     }
     kind
+}
+
+/// The sentinel test of `resolve_handles` is `eq_ignore_ascii_case`, TS's
+/// `toLowerCase() === "start"`. The two agree when no character but the letter in its two ASCII
+/// cases has that letter as its lowercase, and no character lowercases to a part of the sentinel.
+/// The case lists them for every character of the BMP, as this ICU version of TS gives them.
+fn check_lowercase(case: &Map<String, Value>) {
+    let name = vectors::name(case);
+    let letters = case["output"]["letters"]
+        .as_object()
+        .unwrap_or_else(|| panic!("{name}: output.letters is not an object"));
+    let sentinel: BTreeSet<char> = SESSION_START_SENTINEL.chars().collect();
+    assert_eq!(
+        letters.keys().cloned().collect::<BTreeSet<_>>(),
+        sentinel.iter().map(char::to_string).collect(),
+        "{name}: one entry per letter of the sentinel"
+    );
+    for (letter, chars) in letters {
+        let upper = letter.to_ascii_uppercase();
+        let listed: BTreeSet<String> = chars
+            .as_array()
+            .unwrap_or_else(|| panic!("{name}: letters.{letter} is not an array"))
+            .iter()
+            .map(|c| {
+                c.as_str()
+                    .unwrap_or_else(|| panic!("{name}: {c} is not a string"))
+                    .to_owned()
+            })
+            .collect();
+        assert_eq!(
+            listed,
+            BTreeSet::from([letter.clone(), upper]),
+            "{name}: only the ASCII cases of {letter} lowercase to it"
+        );
+        for unit in (0_u32..=0xFFFF).filter_map(char::from_u32) {
+            let text = unit.to_string();
+            assert_eq!(
+                text.eq_ignore_ascii_case(letter),
+                listed.contains(&text),
+                "{name}: U+{:04X} against {letter}",
+                u32::from(unit)
+            );
+        }
+    }
+    for (character, lower) in case["output"]["expanding"]
+        .as_object()
+        .unwrap_or_else(|| panic!("{name}: output.expanding is not an object"))
+    {
+        let lower = lower
+            .as_str()
+            .unwrap_or_else(|| panic!("{name}: expanding.{character} is not a string"));
+        assert!(
+            !SESSION_START_SENTINEL.contains(lower),
+            "{name}: {character:?} lowercases to {lower:?}, a part of the sentinel"
+        );
+    }
 }
 
 #[test]

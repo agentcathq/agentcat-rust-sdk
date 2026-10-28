@@ -56561,6 +56561,139 @@
       }
     },
     {
+      "name": "proto:parameters",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"parameters\":{\"a\":1,\"__proto__\":{\"x\":\"y\"},\"b\":2}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "a": 1,
+          "b": 2
+        }
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:parameters-twin",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"parameters\":{\"a\":1,\"_proto_\":{\"x\":\"y\"},\"b\":2}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "a": 1,
+          "_proto_": {
+            "x": "y"
+          },
+          "b": 2
+        }
+      }
+    },
+    {
+      "name": "proto:parameters-string",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"parameters\":{\"__proto__\":\"text\",\"b\":2}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "b": 2
+        }
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:parameters-string-twin",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"parameters\":{\"_proto_\":\"text\",\"b\":2}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "parameters": {
+          "_proto_": "text",
+          "b": 2
+        }
+      }
+    },
+    {
+      "name": "proto:error",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"error\":{\"message\":\"m\",\"__proto__\":{\"deep\":[1,2]}}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "error": {
+          "message": "m"
+        }
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:error-twin",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"error\":{\"message\":\"m\",\"_proto_\":{\"deep\":[1,2]}}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "error": {
+          "message": "m",
+          "_proto_": {
+            "deep": [
+              1,
+              2
+            ]
+          }
+        }
+      }
+    },
+    {
+      "name": "proto:response",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"response\":{\"__proto__\":[\"x\"],\"content\":[{\"type\":\"text\",\"text\":\"t\"}]}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "t"
+            }
+          ]
+        }
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:response-twin",
+      "input_text": "{\"id\":\"evt_1\",\"sessionId\":\"ses_1\",\"eventType\":\"mcp:tools/call\",\"timestamp\":\"2025-01-15T12:00:00.000Z\",\"response\":{\"_proto_\":[\"x\"],\"content\":[{\"type\":\"text\",\"text\":\"t\"}]}}",
+      "output": {
+        "id": "evt_1",
+        "sessionId": "ses_1",
+        "eventType": "mcp:tools/call",
+        "timestamp": "2025-01-15T12:00:00.000Z",
+        "response": {
+          "_proto_": [
+            "x"
+          ],
+          "content": [
+            {
+              "type": "text",
+              "text": "t"
+            }
+          ]
+        }
+      }
+    },
+    {
       "name": "seeded-0",
       "input": {
         "id": "evt_1",

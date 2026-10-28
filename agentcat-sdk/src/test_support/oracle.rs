@@ -8,17 +8,30 @@
 use std::fmt;
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;
-use std::process::{Child, ChildStdin, ChildStdout, Command, Stdio};
+use std::process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, Stdio};
 use std::sync::{Mutex, MutexGuard, OnceLock, PoisonError};
 
 use serde_json::{Map, Value, json};
 
 use super::markers;
 
+/// The `node` child of an [`Oracle`]. Dropping it kills the child and waits for it, so that no
+/// process outlives its oracle (an `Oracle` that fails to start, or a test's own).
+#[derive(Debug)]
+struct ChildGuard(Child);
+
+impl Drop for ChildGuard {
+    fn drop(&mut self) {
+        // `kill` fails when the child has exited already; `wait` then still reaps it.
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
+
 /// A connection to the oracle server process.
 #[derive(Debug)]
 pub(crate) struct Oracle {
-    child: Child,
+    child: ChildGuard,
     stdin: ChildStdin,
     stdout: BufReader<ChildStdout>,
     next_id: u64,
@@ -27,7 +40,7 @@ pub(crate) struct Oracle {
 /// A failed oracle call: the TS function threw (`message` is `error.message`, `stack` the
 /// error's stack when it has one), or the client got no valid reply (`stack` is `None`). The
 /// server sends both in the strict encoding; a `$utf16` marker is read with [`markers::d09`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(crate) struct OracleError {
     pub(crate) message: String,
     pub(crate) stack: Option<String>,
@@ -40,6 +53,20 @@ impl OracleError {
             message: message.into(),
             stack: None,
         }
+    }
+}
+
+/// `OracleError: ` and the message, then each line of the stack on a line of its own, so that a
+/// test that fails on `unwrap()` shows a readable stack (a derived `Debug` escapes it into one).
+impl fmt::Debug for OracleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "OracleError: {}", self.message)?;
+        if let Some(stack) = &self.stack {
+            for line in stack.lines() {
+                write!(f, "\n    {line}")?;
+            }
+        }
+        Ok(())
     }
 }
 
@@ -92,7 +119,7 @@ impl Oracle {
             .arg(&server)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
+            .stderr(Stdio::piped())
             .spawn()
             .map_err(|e| {
                 OracleError::client(format!(
@@ -100,11 +127,18 @@ impl Oracle {
                      on PATH, and `corepack pnpm install` run once): {e}"
                 ))
             })?;
+        let stderr = child.stderr.take();
+        let mut child = ChildGuard(child);
+        if let Some(stderr) = stderr {
+            relay_stderr(stderr);
+        }
         let stdin = child
+            .0
             .stdin
             .take()
             .ok_or_else(|| OracleError::client("oracle stdin is not piped"))?;
         let stdout = child
+            .0
             .stdout
             .take()
             .ok_or_else(|| OracleError::client("oracle stdout is not piped"))?;
@@ -153,11 +187,38 @@ impl Oracle {
 
     /// Text about the exit of the server, if it has exited.
     fn exit_note(&mut self) -> String {
-        match self.child.try_wait() {
+        match self.child.0.try_wait() {
             Ok(Some(status)) => format!(" (the server exited: {status})"),
             _ => String::new(),
         }
     }
+}
+
+/// The most characters of a reply line that an error message holds.
+const MAX_LINE_CHARS: usize = 2_000;
+
+/// `line` without its line break, cut to [`MAX_LINE_CHARS`] characters; a longer line ends with
+/// `… (N more)`, N the characters left out.
+fn capped(line: &str) -> String {
+    let line = line.trim_end_matches(['\r', '\n']);
+    let total = line.chars().count();
+    if total <= MAX_LINE_CHARS {
+        return line.to_owned();
+    }
+    let kept: String = line.chars().take(MAX_LINE_CHARS).collect();
+    format!("{kept}… ({} more)", total - MAX_LINE_CHARS)
+}
+
+/// Copies the stderr of the server, line by line, to the output of the test that started it. The
+/// child writes to a pipe of this process, not to the pipe of the test runner, so a child that
+/// outlives the test cannot hold the runner's output open (nextest reports that as a leak). The
+/// thread ends when the child exits.
+fn relay_stderr(stderr: ChildStderr) {
+    std::thread::spawn(move || {
+        for line in BufReader::new(stderr).lines().map_while(Result::ok) {
+            eprintln!("oracle: {line}");
+        }
+    });
 }
 
 /// The `sha` of `oracle/oracle.lock`.
@@ -190,13 +251,18 @@ fn check_sha(reply: Result<Option<Value>, OracleError>, pinned: &str) -> Result<
 /// Turns one reply line into the result of request `id`. The id is checked first, for `err`
 /// replies too: a reply for another request (or with a null id) means the stream is out of step.
 fn match_reply(line: &str, id: u64, func: &str) -> Result<Option<Value>, OracleError> {
-    let bad =
-        |why: &str| OracleError::client(format!("bad oracle reply {line:?} to {func}: {why}"));
+    let bad = |why: &str| {
+        OracleError::client(format!(
+            "bad oracle reply {:?} to {func}: {why}",
+            capped(line)
+        ))
+    };
     let mut reply: Map<String, Value> =
         serde_json::from_str(line).map_err(|e| bad(&e.to_string()))?;
     if reply.get("id") != Some(&json!(id)) {
         return Err(OracleError::client(format!(
-            "protocol error: oracle reply {line:?} does not answer request {id} ({func})"
+            "protocol error: oracle reply {:?} does not answer request {id} ({func})",
+            capped(line)
         )));
     }
     if let Some(err) = reply.remove("err") {
@@ -227,7 +293,7 @@ fn text(value: Value) -> Result<String, String> {
 mod tests {
     use serde_json::json;
 
-    use super::{OracleError, check_sha, match_reply};
+    use super::{MAX_LINE_CHARS, Oracle, OracleError, capped, check_sha, match_reply};
 
     fn err(message: &str, stack: Option<&str>) -> OracleError {
         OracleError {
@@ -327,6 +393,65 @@ mod tests {
         assert_eq!(
             check_sha(Err(err("gone", None)), "def"),
             Err(err("gone", None))
+        );
+    }
+
+    #[test]
+    fn debug_puts_each_line_of_the_stack_on_a_line_of_its_own() {
+        assert_eq!(
+            format!(
+                "{:?}",
+                err("boom", Some("TypeError: boom\n    at f\n    at g"))
+            ),
+            "OracleError: boom\n    TypeError: boom\n        at f\n        at g"
+        );
+        assert_eq!(format!("{:?}", err("boom", None)), "OracleError: boom");
+    }
+
+    #[test]
+    fn a_line_over_the_cap_ends_with_the_count_left_out() {
+        let short = "x".repeat(MAX_LINE_CHARS);
+        assert_eq!(capped(&format!("{short}\n")), short);
+        let long = format!("{}{}", "é".repeat(MAX_LINE_CHARS), "世".repeat(17));
+        assert_eq!(
+            capped(&format!("{long}\n")),
+            format!("{}… (17 more)", "é".repeat(MAX_LINE_CHARS))
+        );
+    }
+
+    #[test]
+    fn a_bad_reply_message_holds_at_most_the_cap() {
+        let line = format!(r#"{{"id":9,"ok":"{}"}}"#, "y".repeat(5_000));
+        let e = match_reply(&line, 3, "f").unwrap_err();
+        assert!(e.message.contains("… (3"), "{}", e.message);
+        assert!(
+            e.message.chars().count() < MAX_LINE_CHARS + 200,
+            "{}",
+            e.message
+        );
+    }
+
+    /// The guard of the `node` child kills it and waits for it: after the oracle drops, the
+    /// process is gone and not a zombie (a zombie still answers `kill -0`).
+    #[cfg(unix)]
+    #[test]
+    fn oracle_child_is_reaped() {
+        use std::process::{Command, Stdio};
+
+        let alive = |pid: u32| {
+            Command::new("kill")
+                .args(["-0", &pid.to_string()])
+                .stderr(Stdio::null())
+                .status()
+                .is_ok_and(|status| status.success())
+        };
+        let oracle = Oracle::spawn().unwrap();
+        let pid = oracle.child.0.id();
+        assert!(alive(pid), "the oracle child runs");
+        drop(oracle);
+        assert!(
+            !alive(pid),
+            "the dropped oracle left its child running or unreaped"
         );
     }
 }

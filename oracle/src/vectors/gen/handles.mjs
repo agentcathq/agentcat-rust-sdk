@@ -14,6 +14,11 @@
 //   tags:<label>        input: {res, protocolVersion?};  output: buildHandleTags(res, protocolVersion)
 //   hook-value:<label>  input: {value?, projectId?};     output: oracle.sessionFromHookValue(input),
 //                                                        {sessionId, sessionSource}
+//   lowercase:<label>   no input;  output: {letters, expanding}, over every BMP code unit that is not a
+//                                  surrogate: letters maps each letter of SESSION_START_SENTINEL to the
+//                                  characters whose toLowerCase() is that letter; expanding maps each
+//                                  character whose toLowerCase() is not one UTF-16 unit to that text
+//                                  (the table behind the sentinel test `toLowerCase() === "start"`)
 // An absent field is undefined. A resolution is TS's HandleResolution: {sessionId, sessionSource,
 // hookMode, agentId?, agentSource?}. A minted session ID is random, so the oracle.* functions
 // (functions.mjs) check it with isValidSessionId and write "<minted>" in its place.
@@ -59,7 +64,7 @@ function caseOf(name, fields, tsTest) {
 }
 
 // Characters of the seeded derive IDs: ASCII, ":", whitespace, BMP letters and astral characters.
-const DERIVE_ALPHABET = "abcXYZ019-_:| \t\n\u0085 ﻿é世ſ😀𝄞";
+const DERIVE_ALPHABET = "abcXYZ019-_:| \t\n\u0085\u00A0\uFEFFé世ſ😀𝄞";
 
 function deriveCases(core) {
   const cases = [];
@@ -95,7 +100,7 @@ function deriveCases(core) {
   add("empty", "", undefined);
   add("empty+p", "", "p");
   add("tab+p", "\t", "p");
-  add("bom-x", "﻿x", undefined);
+  add("bom-x", "\uFEFFx", undefined);
   add("x-nel+proj", "x\u0085", "proj_2bCg3fv09poapZdDQUDJsT2UCvG");
   add("unicode", "é世ſ", "p");
   add("astral", "😀𝄞", undefined);
@@ -137,8 +142,8 @@ function validCases(core) {
   add("trailing-space", `${T} `);
   add("leading-space", ` ${T}`);
   add("trailing-nel", `${T}\u0085`);
-  add("trailing-line-separator", `${T} `);
-  add("trailing-bom", `${T}﻿`);
+  add("trailing-line-separator", `${T}\u2028`);
+  add("trailing-bom", `${T}\uFEFF`);
   add("inner-tab", `ses_${BODY.slice(0, 13)}\t${BODY.slice(13, 26)}`);
   add("prefix-upper", `SES_${BODY}`);
   add("prefix-capital", `Ses_${BODY}`);
@@ -188,10 +193,10 @@ function extractCases(core) {
   ]);
   add("string", { session_id: "x" }, "session_id");
   add("padded", { session_id: "  x  " }, "session_id");
-  add("bom", { session_id: "﻿x" }, "session_id");
+  add("bom", { session_id: "\uFEFFx" }, "session_id");
   add("nel", { session_id: "x\u0085" }, "session_id");
-  add("mongolian-vowel-separator", { session_id: "᠎x" }, "session_id");
-  add("line-separator-ideographic-space", { session_id: " x　" }, "session_id");
+  add("mongolian-vowel-separator", { session_id: "\u180Ex" }, "session_id");
+  add("line-separator-ideographic-space", { session_id: "\u2028x\u3000" }, "session_id");
   add("inner-space", { session_id: " a b " }, "session_id");
   add("null", { session_id: null }, "session_id");
   add("true", { session_id: true }, "session_id");
@@ -215,7 +220,7 @@ const SESSION_VALUES = {
   start: "start",
   "space-START-tab": " START\t",
   sTaRt: "sTaRt",
-  "bom-start": "﻿start",
+  "bom-start": "\uFEFFstart",
   "start-nel": "start\u0085",
   "long-s-tart": "ſtart",
   restart: "restart",
@@ -442,7 +447,7 @@ const HOOK_VALUES = {
   spaces: "   ",
   null: null,
   absent: undefined,
-  "bom-corr-nel": "﻿corr\u0085",
+  "bom-corr-nel": "\uFEFFcorr\u0085",
 };
 const PROJECT_IDS = { absent: undefined, empty: "", proj_1: "proj_1" };
 
@@ -466,6 +471,20 @@ function hookValueCases() {
   return cases;
 }
 
+/** The toLowerCase() table of the BMP that the sentinel test of resolveHandles depends on. */
+function lowercaseCases(core) {
+  const letters = Object.fromEntries([...new Set(core.constants.SESSION_START_SENTINEL)].map((letter) => [letter, []]));
+  const expanding = {};
+  for (let unit = 0; unit <= 0xffff; unit++) {
+    if (unit >= 0xd800 && unit <= 0xdfff) continue;
+    const char = String.fromCharCode(unit);
+    const lower = char.toLowerCase();
+    if (Object.hasOwn(letters, lower)) letters[lower].push(char);
+    if (lower.length !== 1) expanding[char] = lower;
+  }
+  return [{ name: "lowercase:sentinel-letters", output: { letters, expanding } }];
+}
+
 export async function generate() {
   const core = await loadCore();
   const cases = [
@@ -476,6 +495,7 @@ export async function generate() {
     ...mintBackCases(core),
     ...tagCases(core),
     ...hookValueCases(),
+    ...lowercaseCases(core),
   ];
   return { cases };
 }

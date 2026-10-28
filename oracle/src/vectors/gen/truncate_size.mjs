@@ -3,7 +3,7 @@
 // at depth 9 down to 1, and then its longest strings cut. Case fields as in truncate.mjs; the
 // pathological-payload test of truncation.test.ts is here, where the 2 MiB cap leaves room for it.
 // Every string is ASCII: no cut drops half a character (RD-22), so Rust measures the bytes TS
-// measures.
+// measures. The cut of the last resort through an emoji is in truncate_cut.mjs.
 import { expand } from "../../strict-json.mjs";
 import { bytes, check, collector, makeEvent, rep, tsTest } from "./truncate.mjs";
 

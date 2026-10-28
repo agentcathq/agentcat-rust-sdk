@@ -46,42 +46,58 @@ static BMP_PARTS: [Part; 7] = [
     (1, &['\u{0}'..='\u{D7FF}', '\u{E000}'..='\u{FFFF}']),
 ];
 
-/// The draws per unit of weight: at least the size of the largest part (any BMP character,
-/// 63 488), so every character of a part can come up.
-const SLOTS: u32 = 1 << 16;
+/// The draws per unit of weight, before each part rounds up to a multiple of its size.
+const SLOTS: u32 = 1 << 18;
+
+/// The number of characters in `ranges`.
+fn size(ranges: &[RangeInclusive<char>]) -> u32 {
+    ranges
+        .iter()
+        .map(|range| u32::from(*range.end()) - u32::from(*range.start()) + 1)
+        .sum()
+}
+
+/// The draws of one part: `weight * SLOTS` rounded up to a multiple of the part's size, so that
+/// every character of the part has the same number of draws (a remainder would favor the first
+/// characters), and a part is never short of its weight.
+fn slots(&(weight, ranges): &Part) -> u32 {
+    let size = size(ranges);
+    (weight * SLOTS).div_ceil(size) * size
+}
 
 /// One character of `parts`. A single integer draw mapped through the table, not a union of
 /// strategies: a 400 000-character [`bmp_string`] holds one small value tree per character.
 fn mix(parts: &'static [Part]) -> impl Strategy<Value = char> + Clone {
-    let draws: u32 = parts.iter().map(|&(weight, _)| weight * SLOTS).sum();
+    let draws: u32 = parts.iter().map(slots).sum();
     (0..draws).prop_map(move |n| pick(parts, n))
 }
 
-/// The character of `draw`: the parts take `weight * SLOTS` draws each, in order, and a part
-/// gives its characters in turn. Draw 0 is `'a'`, where a shrunk character ends.
+/// The character of `draw`: the parts take [`slots`] draws each, in order, and a part gives its
+/// characters in turn. Draw 0 is `'a'`, where a shrunk character ends.
 fn pick(parts: &[Part], draw: u32) -> char {
     let mut n = draw;
-    let len =
-        |range: &RangeInclusive<char>| u32::from(*range.end()) - u32::from(*range.start()) + 1;
-    for &(weight, ranges) in parts {
-        if n < weight * SLOTS {
-            let mut k = n % ranges.iter().map(len).sum::<u32>();
-            for range in ranges {
-                if k < len(range) {
+    for part in parts {
+        let count = slots(part);
+        if n < count {
+            let mut k = n % size(part.1);
+            for range in part.1 {
+                let len = size(std::slice::from_ref(range));
+                if k < len {
                     let code = u32::from(*range.start()) + k;
                     return char::from_u32(code).expect("no range holds a surrogate");
                 }
-                k -= len(range);
+                k -= len;
             }
         }
-        n -= weight * SLOTS;
+        n -= count;
     }
     panic!("draw {draw} is past the end of the mix")
 }
 
-/// Object keys a strategy never gives: `__proto__` (RD-24 has its own vector cases) and the
-/// marker keys of the strict JSON encoding.
-const RESERVED_KEYS: [&str; 4] = ["__proto__", "$utf16", "$f64", "$repeat"];
+/// Object keys a strategy never gives: `__proto__` (RD-24 has its own vector cases), `toString`
+/// (RD-27: TS throws on a joined array that holds an object with that key) and the marker keys of
+/// the strict JSON encoding.
+const RESERVED_KEYS: [&str; 5] = ["__proto__", "toString", "$utf16", "$f64", "$repeat"];
 
 /// One character: a weighted mix of ASCII letters and digits, `"` and `\`, U+0000 to U+001F,
 /// U+007F, the JavaScript whitespace set and its neighbors, BMP letters, the private use area
@@ -108,8 +124,8 @@ pub(crate) fn bmp_string(len: Range<usize>) -> impl Strategy<Value = String> + C
 
 /// An object key: array-index-like keys (`"0"` to `"20"`, `"4294967294"`, `"4294967295"`, and
 /// the non-index spellings `"01"`, `"-1"`, `"1.5"`), short words, `"..."`, `"context"`,
-/// `"type"`, `"text"`, and [`js_string`] of up to 12 characters. Never `__proto__`, `$utf16`,
-/// `$f64` or `$repeat`.
+/// `"type"`, `"text"`, and [`js_string`] of up to 12 characters. Never `__proto__`, `toString`,
+/// `$utf16`, `$f64` or `$repeat`.
 pub(crate) fn object_key() -> impl Strategy<Value = String> + Clone {
     let fixed = |keys: &[&str]| {
         prop::sample::select(keys.iter().map(|&k| k.to_owned()).collect::<Vec<_>>())
@@ -189,7 +205,8 @@ pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Valu
 ///
 /// The fields TS truncation limits with `truncateString` hold strings and `frames` is an array,
 /// so no event meets RD-26 (an object with a `length` key) or RD-27 (an object with a `toString`
-/// key in a joined array): the objects of the payloads only reach `normalize`.
+/// key in a joined array): the objects of the payloads only reach `normalize`. No object of an
+/// event has a `toString` or `__proto__` key ([`RESERVED_KEYS`]); a test checks it.
 pub(crate) fn ts_event(
     text: impl Strategy<Value = String> + Clone + 'static,
 ) -> impl Strategy<Value = TsEvent> + Clone {
@@ -525,11 +542,24 @@ mod tests {
     use serde_json::Value;
 
     use super::{
-        BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick, ts_event,
+        BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick, size, slots,
+        ts_event,
     };
     use crate::test_support::config;
 
-    const RESERVED: [&str; 4] = ["__proto__", "$utf16", "$f64", "$repeat"];
+    const RESERVED: [&str; 5] = ["__proto__", "toString", "$utf16", "$f64", "$repeat"];
+
+    /// `true` when an object anywhere in `value` has a key of [`RESERVED`].
+    fn has_reserved_key(value: &Value) -> bool {
+        match value {
+            Value::Object(map) => {
+                map.keys().any(|key| RESERVED.contains(&key.as_str()))
+                    || map.values().any(has_reserved_key)
+            }
+            Value::Array(items) => items.iter().any(has_reserved_key),
+            _ => false,
+        }
+    }
 
     /// The keys of a [`ts_event`], in order.
     const EVENT_KEYS: [&str; 24] = [
@@ -582,25 +612,37 @@ mod tests {
         }
     }
 
-    /// Every draw of the whole mix: each part gets `weight * SLOTS` draws, every character of a
-    /// part comes up, no draw leaves its part, and no character is outside the BMP.
+    /// Every draw of the whole mix: every character of a part comes up, each the same number of
+    /// times (no modulo bias), no draw leaves its part, no character is outside the BMP, and a
+    /// part has at least `weight * SLOTS` draws, at most a size more.
     #[test]
-    fn the_mix_gives_each_part_its_weight_and_every_character() {
+    fn the_mix_gives_each_part_its_weight_and_every_character_equally() {
         let mut n = 0;
-        for &(weight, ranges) in &BMP_PARTS {
-            let mut seen = std::collections::BTreeSet::new();
-            for _ in 0..weight * SLOTS {
+        for part in &BMP_PARTS {
+            let (weight, ranges) = *part;
+            let mut seen = std::collections::BTreeMap::new();
+            for _ in 0..slots(part) {
                 let c = pick(&BMP_PARTS, n);
                 assert!(
                     ranges.iter().any(|r| r.contains(&c)),
                     "draw {n}: {c:?} not in {ranges:?}"
                 );
                 assert!(u32::from(c) <= 0xFFFF, "draw {n}: {c:?}");
-                seen.insert(c);
+                *seen.entry(c).or_insert(0_u32) += 1;
                 n += 1;
             }
-            let size: usize = ranges.iter().map(|r| r.clone().count()).sum();
-            assert_eq!(seen.len(), size, "{ranges:?}");
+            let chars: usize = ranges.iter().map(|r| r.clone().count()).sum();
+            assert_eq!(seen.len(), chars, "{ranges:?}");
+            let counts: std::collections::BTreeSet<u32> = seen.values().copied().collect();
+            assert_eq!(counts.len(), 1, "{ranges:?}: unequal draws per character");
+            assert!(
+                slots(part) >= weight * SLOTS,
+                "{ranges:?}: short of its weight"
+            );
+            assert!(
+                slots(part) < weight * SLOTS + size(ranges),
+                "{ranges:?}: too many draws"
+            );
         }
     }
 
@@ -654,6 +696,9 @@ mod tests {
             for key in ["userIntent", "resourceName", "serverName", "serverVersion", "clientName", "clientVersion"] {
                 prop_assert!(event.get(key).is_none_or(Value::is_string), "{key}");
             }
+            // RD-24 (`__proto__`) and RD-27 (`toString`) have vector cases of their own, and
+            // `ts_event` never makes one of those keys, nor a marker key of the strict encoding.
+            prop_assert!(!has_reserved_key(&Value::Object(event)), "a reserved key");
         }
     }
 }

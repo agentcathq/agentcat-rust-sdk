@@ -42,7 +42,9 @@ function hex(c) {
 
 function stringifyCases() {
   const fixed = {
-    "float-one": { n: 1.0 },
+    // 1.0 is the integer 1 in JavaScript; the text case float-one below has the whole float 1.0.
+    "integer-one": { n: 1.0 },
+    "float-one": { n: 1.5, m: -2.25 },
     "1e21": 1e21,
     "1e-7": 1e-7,
     "1e-6": 1e-6,
@@ -101,6 +103,7 @@ function stringifyTextCases() {
     "index-keys-first": '{"b":1,"1":2,"a":3,"0":4}',
     "index-keys-ascending": '{"10":1,"9":2,"x":3}',
     "index-key-limits": '{"4294967295":1,"4294967294":2,"01":3,"-1":4,"1.5":5}',
+    "index-key-above-u32": '{"b":1,"4294967296":2,"3":3,"4294967295":4,"a":5,"4294967294":6}',
     "duplicate-keys": '{"a":1,"b":2,"a":3}',
     "duplicate-index-keys": '{"2":"a","b":1,"2":"c","0":"d"}',
     "nested-index-keys": '{"z":{"3":[{"y":1,"0":2}],"1":{"q":0,"10":1,"2":2}},"5":{"b":1,"a":2,"4":3}}',

@@ -3,11 +3,19 @@
   "generator": "oracle/src/vectors/gen/js.mjs",
   "cases": [
     {
-      "name": "stringify:float-one",
+      "name": "stringify:integer-one",
       "input": {
         "n": 1
       },
       "output": "{\"n\":1}"
+    },
+    {
+      "name": "stringify:float-one",
+      "input": {
+        "n": 1.5,
+        "m": -2.25
+      },
+      "output": "{\"n\":1.5,\"m\":-2.25}"
     },
     {
       "name": "stringify:1e21",
@@ -607,6 +615,11 @@
       "name": "stringify-text:index-key-limits",
       "input_text": "{\"4294967295\":1,\"4294967294\":2,\"01\":3,\"-1\":4,\"1.5\":5}",
       "output": "{\"4294967294\":2,\"4294967295\":1,\"01\":3,\"-1\":4,\"1.5\":5}"
+    },
+    {
+      "name": "stringify-text:index-key-above-u32",
+      "input_text": "{\"b\":1,\"4294967296\":2,\"3\":3,\"4294967295\":4,\"a\":5,\"4294967294\":6}",
+      "output": "{\"3\":3,\"4294967294\":6,\"b\":1,\"4294967296\":2,\"4294967295\":4,\"a\":5}"
     },
     {
       "name": "stringify-text:duplicate-keys",

@@ -1,5 +1,5 @@
 //! `truncate_event` against TS: the vectors of `tests/vectors/truncate.json` and
-//! `tests/vectors/truncate_size.json`, and property tests that run the same events through the JS
+//! `tests/vectors/truncate_size.json` and `tests/vectors/truncate_cut.json`, and property tests that run the same events through the JS
 //! oracle.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
@@ -10,8 +10,9 @@ use crate::pipeline::TsEvent;
 use crate::test_support::strategies::{bmp_string, js_string, number, ts_event};
 use crate::test_support::{assert_js_eq, config, config_capped, markers, oracle, vectors};
 
-/// The vector sets: the field limits and the TS tests, then the size guard.
-const SETS: [&str; 2] = ["truncate", "truncate_size"];
+/// The vector sets and the fewest cases each holds: the field limits and the TS tests, the size guard, then a last-resort cut
+/// through an emoji.
+const SETS: [(&str, usize); 3] = [("truncate", 10), ("truncate_size", 10), ("truncate_cut", 1)];
 
 /// Each RD-26 and RD-27 case and its twin, where Rust gives the twin's TS result. RD-26: the same
 /// field with an object that has no `length` key. RD-27: the same array with `{"a": 1}` in place
@@ -85,9 +86,9 @@ fn reply_of(case: &Map<String, Value>, context: &str) -> Value {
 
 #[test]
 fn truncate_event_by_value_matches_vectors() {
-    for set in SETS {
+    for (set, fewest) in SETS {
         let cases = vectors::cases(set);
-        assert!(cases.len() >= 10, "{set}.json has its cases");
+        assert!(cases.len() >= fewest, "{set}.json has its cases");
         for case in &cases {
             let name = vectors::name(case);
             let context = format!("{set}.json {name}");
@@ -96,6 +97,7 @@ fn truncate_event_by_value_matches_vectors() {
             let expected = &reply_of(case, &context);
             match case.get("deviation").and_then(Value::as_str) {
                 None => assert_matches_ts(&actual, expected, &context),
+                Some("RD-24") => check_rd24(&cases, name, &actual, &context),
                 Some("RD-25") => check_rd25(&actual, expected, &context),
                 Some("RD-26") => check_rd26(&cases, name, &actual, expected, &context),
                 Some("RD-27") => check_rd27(&cases, name, input, &actual, expected, &context),
@@ -103,6 +105,49 @@ fn truncate_event_by_value_matches_vectors() {
                 Some(other) => panic!("{context}: unknown deviation {other}"),
             }
         }
+    }
+}
+
+/// RD-24: Rust keeps a `__proto__` key that TS drops. The twin case, `<name>-twin`, has the key
+/// renamed `_proto_`, which TS keeps; Rust gives the twin's TS output with the key renamed back.
+fn check_rd24(
+    cases: &[Map<String, Value>],
+    name: &str,
+    actual: &Result<TsEvent, TruncateError>,
+    context: &str,
+) {
+    let twin_name = format!("{name}-twin");
+    let twin = cases
+        .iter()
+        .find(|case| vectors::name(case) == twin_name)
+        .unwrap_or_else(|| panic!("{context}: no twin case {twin_name}"));
+    let event = actual
+        .as_ref()
+        .unwrap_or_else(|e| panic!("{context}: RD-24: Rust truncates the event: {e}"));
+    assert_js_eq(
+        &Value::Object(event.clone()),
+        &proto_renamed(&reply_of(twin, &twin_name)["value"]),
+        &format!("{context}: RD-24, against the TS output of {twin_name}"),
+    );
+}
+
+/// `value` with each `_proto_` key renamed `__proto__`, in place, at any depth.
+fn proto_renamed(value: &Value) -> Value {
+    match value {
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, item)| {
+                    let key = if key == "_proto_" {
+                        "__proto__"
+                    } else {
+                        key.as_str()
+                    };
+                    (key.to_owned(), proto_renamed(item))
+                })
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(proto_renamed).collect()),
+        other => other.clone(),
     }
 }
 
@@ -166,11 +211,13 @@ fn check_rd27(
     context: &str,
 ) {
     assert!(expected.get("error").is_some(), "{context}: TS throws");
-    let items = input["userIntent"].as_array().expect("an array userIntent");
+    let items = input["userIntent"]
+        .as_array()
+        .unwrap_or_else(|| panic!("{context}: RD-27: userIntent is not an array"));
     let at = items
         .iter()
         .position(|item| item.get("toString").is_some())
-        .expect("an item with a toString key");
+        .unwrap_or_else(|| panic!("{context}: RD-27: no item with a toString key"));
     assert_eq!(
         items.iter().filter(|item| item.is_object()).count(),
         1,
@@ -184,7 +231,9 @@ fn check_rd27(
         Value::Object(input_of(twin, twin_name)),
         "{context}: the twin {twin_name} differs only at index {at}"
     );
-    let event = actual.as_ref().expect("RD-27: Rust truncates the event");
+    let event = actual
+        .as_ref()
+        .unwrap_or_else(|e| panic!("{context}: RD-27: Rust truncates the event: {e}"));
     assert_js_eq(
         &Value::Object(event.clone()),
         &reply_of(twin, twin_name)["value"],

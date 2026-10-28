@@ -47,6 +47,7 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
         "divisor" => {
             // The divisor TS pins, applied to every byte count up to 2000, in float arithmetic.
             let divisor = case["output"].as_f64().expect("divisor");
+            assert_eq!(divisor, 3.5, "TS pins the divisor 3.5");
             for bytes in 0_u32..=2000 {
                 #[expect(clippy::cast_possible_truncation, reason = "at most 572 tokens")]
                 let tokens = (f64::from(bytes) / divisor).ceil() as i32;

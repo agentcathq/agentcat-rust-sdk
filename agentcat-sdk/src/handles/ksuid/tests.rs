@@ -3,7 +3,7 @@
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::{EPOCH_MS, MAX_TIME_MS, from_parts, random, random_at};
+use super::{EPOCH_MS, MAX_TIME_MS, encode, from_parts, random, random_at};
 use crate::test_support::{config, oracle, vectors};
 
 /// The 16 payload bytes of a case's `payload_hex`.
@@ -75,12 +75,23 @@ fn min_and_max_match_ts() {
     assert_eq!(encoded(&max), output_of("min-max:max"));
 }
 
+/// Times for `from_parts`: a third from the whole range, a third around `EPOCH_MS` and a third
+/// around `MAX_TIME_MS`, each margin reaching 2 s on both sides of the limit, so the in-range and
+/// out-of-range edges are both common.
+fn times() -> impl Strategy<Value = u64> {
+    prop_oneof![
+        (EPOCH_MS - 2_000)..=(MAX_TIME_MS + 2_000),
+        (EPOCH_MS - 2_000)..=(EPOCH_MS + 2_000),
+        (MAX_TIME_MS - 2_000)..=(MAX_TIME_MS + 2_000),
+    ]
+}
+
 proptest! {
     #![proptest_config(config())]
 
     #[test]
     fn from_parts_matches_ts(
-        time_ms in (EPOCH_MS - 2_000)..=(MAX_TIME_MS + 2_000),
+        time_ms in times(),
         payload in prop::array::uniform16(any::<u8>()),
     ) {
         let args = [json!("evt"), json!(time_ms), json!(hex::encode(payload))];
@@ -94,9 +105,23 @@ proptest! {
     }
 }
 
+/// `encode` gives what `from_parts` gives for every in-range time.
+#[test]
+fn encode_equals_from_parts_in_range() {
+    let payload = [0xab; 16];
+    for time_ms in [EPOCH_MS, EPOCH_MS + 999, EPOCH_MS + 1_000, MAX_TIME_MS] {
+        assert_eq!(
+            from_parts("ses", time_ms, &payload),
+            Some(encode("ses", (time_ms - EPOCH_MS) / 1_000, &payload)),
+            "{time_ms}"
+        );
+    }
+}
+
 #[test]
 fn random_has_the_shape_and_differs() {
-    for prefix in ["ses", "evt", "event", "user", "req"] {
+    // The prefixes of ksuid.test.ts "should handle different prefixes", and the two this SDK uses.
+    for prefix in ["event", "user", "task", "session", "req", "ses", "evt"] {
         let first = random(prefix).unwrap();
         let second = random(prefix).unwrap();
         let (head, rest) = first.split_once('_').unwrap();
@@ -108,6 +133,17 @@ fn random_has_the_shape_and_differs() {
     let ids: std::collections::BTreeSet<String> =
         (0..100).map(|_| random("ses").unwrap()).collect();
     assert_eq!(ids.len(), 100);
+}
+
+/// ksuid.test.ts "should create unique prefixed KSUIDs": 10 `event_` IDs, all distinct.
+#[test]
+fn ten_event_ids_are_distinct() {
+    let ids: Vec<String> = (0..10).map(|_| random("event").unwrap()).collect();
+    let distinct: std::collections::BTreeSet<&String> = ids.iter().collect();
+    assert_eq!(distinct.len(), ids.len());
+    for id in &ids {
+        assert!(id.starts_with("event_") && encoded(id).len() == 27, "{id}");
+    }
 }
 
 #[test]

@@ -1,4 +1,6 @@
 //! The constants of `constants` against `tests/vectors/constants.json`, which the TS SDK wrote.
+use std::sync::OnceLock;
+
 use serde_json::{Map, Value};
 
 use super::*;
@@ -75,10 +77,17 @@ const PORTED: [(&str, &str); 26] = [
     ("AGENT_ID_PARAM", AGENT_ID_PARAM),
 ];
 
+/// The cases of `constants.json`, read once for the whole test binary.
+fn cases() -> &'static [Map<String, Value>] {
+    static CASES: OnceLock<Vec<Map<String, Value>>> = OnceLock::new();
+    CASES.get_or_init(|| vectors::cases("constants"))
+}
+
 fn case(name: &str) -> Map<String, Value> {
-    vectors::cases("constants")
-        .into_iter()
+    cases()
+        .iter()
         .find(|c| vectors::name(c) == name)
+        .cloned()
         .unwrap_or_else(|| panic!("no vector case {name:?}"))
 }
 
@@ -97,7 +106,7 @@ fn every_ported_constant_equals_ts() {
 
 #[test]
 fn every_ts_constant_is_ported_or_listed() {
-    let plain: Vec<String> = vectors::cases("constants")
+    let plain: Vec<String> = cases()
         .iter()
         .map(|c| vectors::name(c).to_owned())
         .filter(|n| !FUNCTION_CASES.contains(&n.as_str()))
@@ -127,7 +136,12 @@ fn every_ts_constant_is_ported_or_listed() {
 #[test]
 fn mint_back_session_line_matches_ts() {
     let case = case("mintBackSessionLine");
-    let input = case["input"].as_str().unwrap_or_default();
+    let input = case["input"].as_str().unwrap_or_else(|| {
+        panic!(
+            "mintBackSessionLine: input is not a string: {:?}",
+            case["input"]
+        )
+    });
     assert_js_eq(
         &Value::from(mint_back_session_line(input)),
         &case["value"],
@@ -168,8 +182,18 @@ fn get_more_tools_result_text_matches_ts() {
 #[test]
 fn report_missing_log_line_matches_ts() {
     let case = case("handleReportMissing");
-    let context = case["input"]["context"].as_str().unwrap_or_default();
-    let logs = case["logs"].as_array().cloned().unwrap_or_default();
+    let context = case["input"]["context"].as_str().unwrap_or_else(|| {
+        panic!(
+            "handleReportMissing: input.context is not a string: {:?}",
+            case["input"]
+        )
+    });
+    let logs = case["logs"].as_array().unwrap_or_else(|| {
+        panic!(
+            "handleReportMissing: logs is not an array: {:?}",
+            case.get("logs")
+        )
+    });
     assert_eq!(logs.len(), 1, "handleReportMissing logs one line: {logs:?}");
     assert_js_eq(
         &Value::from(report_missing_log_line(js::utf16_len(context))),

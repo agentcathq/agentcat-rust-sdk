@@ -316,6 +316,13 @@ fn sanitize_event_input() -> impl Strategy<Value = TsEvent> {
         })
 }
 
+// The property test leaves out the inputs where Rust differs from TS on purpose, which only the
+// vector cases of `sanitize.json` check against TS (with twins that rename the key or the type):
+// a `__proto__` key in the parameters, in `structuredContent` or in a block (RD-24); an array
+// `response` (RD-25); a block `type` with an own `toString` key (RD-27, where TS throws). It also
+// leaves out events with other shapes than a tool-call event (no `response`, a `parameters`
+// that is not `{request, extra}`): those are vector cases too. `ts_event` never makes a `toString`
+// or `__proto__` key, and `odd_block` has no `type` with a `toString` key.
 proptest! {
     #![proptest_config(config_capped(300))]
 

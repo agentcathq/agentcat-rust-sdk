@@ -51,6 +51,26 @@ fn without_proto(value: &Value) -> Value {
     }
 }
 
+/// `value` with each `_proto_` key renamed `__proto__`, in place.
+fn proto_renamed(value: &Value) -> Value {
+    match value {
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, item)| {
+                    let key = if key == "_proto_" {
+                        "__proto__"
+                    } else {
+                        key.as_str()
+                    };
+                    (key.to_owned(), proto_renamed(item))
+                })
+                .collect(),
+        ),
+        Value::Array(items) => Value::Array(items.iter().map(proto_renamed).collect()),
+        other => other.clone(),
+    }
+}
+
 #[test]
 fn vectors_match_ts() {
     let cases = vectors::cases("normalize");
@@ -60,21 +80,22 @@ fn vectors_match_ts() {
         let (depth, breadth, max_string) = limits_of(case);
         let actual = normalize(&input_of(case), depth, breadth, max_string);
         if case.get("deviation").and_then(Value::as_str) == Some("RD-24") {
-            // RD-24: Rust keeps the `__proto__` key, with a normalized value.
+            // RD-24: Rust keeps the `__proto__` key. TS drops it, so the case's output is Rust's
+            // without the key. TS keeps the key of the twin case, `_proto_`: Rust's whole output
+            // is the twin's with the key renamed, which is also where TS puts the value.
             assert!(
                 has_proto_key(&actual),
                 "{name}: Rust keeps the __proto__ key"
             );
-            let Value::Object(top) = input_of(case) else {
-                panic!("{name}: an object input");
-            };
-            let Some(proto) = top.get("__proto__") else {
-                panic!("{name}: a top-level __proto__ key");
-            };
-            let kept = normalize(proto, depth.saturating_sub(1), breadth, max_string);
-            assert_eq!(
-                actual["__proto__"], kept,
-                "{name}: normalized __proto__ value"
+            let twin_name = format!("{name}-twin");
+            let twin = cases
+                .iter()
+                .find(|c| vectors::name(c) == twin_name)
+                .unwrap_or_else(|| panic!("{name}: no twin case {twin_name}"));
+            assert_js_eq(
+                &actual,
+                &proto_renamed(&twin["output"]),
+                &format!("{name}: against {twin_name}"),
             );
             assert_js_eq(&without_proto(&actual), &case["output"], name);
         } else {

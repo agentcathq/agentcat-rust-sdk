@@ -42,7 +42,7 @@ const SESSION_BODY_LEN: usize = 27;
 /// 2024-01-01T00:00:00Z in milliseconds since the Unix epoch, the base time of a derived ID.
 const DERIVE_EPOCH_MS: u64 = 1_704_067_200_000;
 
-// Every derived time is inside the KSUID range, so `ksuid::from_parts` never fails for one. The
+// Every derived time is inside the KSUID range, so `ksuid::encode` gets seconds that fit in a `u32`. The
 // largest offset is the largest `u32` (0xFFFF_FFFF), in milliseconds (about 49.7 days).
 const _: () = assert!(
     DERIVE_EPOCH_MS >= ksuid::EPOCH_MS && DERIVE_EPOCH_MS + 0xFFFF_FFFF <= ksuid::MAX_TIME_MS
@@ -138,8 +138,12 @@ pub(crate) fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
     let mut payload = [0; 16];
     payload.copy_from_slice(&rest[..16]);
     let time_ms = DERIVE_EPOCH_MS + u64::from(u32::from_be_bytes(offset));
-    // The const assertion above keeps every derived time in range, so this is never empty.
-    ksuid::from_parts(SESSION_PREFIX, time_ms, &payload).unwrap_or_default()
+    // The const assertion above keeps every derived time in range, so the seconds fit in a `u32`.
+    ksuid::encode(
+        SESSION_PREFIX,
+        (time_ms - ksuid::EPOCH_MS) / 1_000,
+        &payload,
+    )
 }
 
 /// Whether `value` is a session ID this SDK issues, TS's `/^ses_[0-9A-Za-z]{27}$/`: `ses_` and

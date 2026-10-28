@@ -2174,6 +2174,101 @@
       ]
     },
     {
+      "name": "empty-path:array-element-key",
+      "input": {
+        "parameters": [
+          {
+            "": {
+              "id": "i",
+              "a": "x"
+            },
+            "b": "y"
+          }
+        ]
+      },
+      "output": {
+        "parameters": [
+          {
+            "": {
+              "id": "[R:i]",
+              "a": "[R:x]"
+            },
+            "b": "[R:y]"
+          }
+        ]
+      },
+      "calls": [
+        "i",
+        "x",
+        "y"
+      ]
+    },
+    {
+      "name": "empty-path:array-under-empty",
+      "input": {
+        "": [
+          {
+            "": {
+              "id": "i",
+              "tags": {
+                "k": "v"
+              }
+            },
+            "a": "x"
+          }
+        ]
+      },
+      "output": {
+        "": [
+          {
+            "": {
+              "id": "[R:i]",
+              "tags": {
+                "k": "[R:v]"
+              }
+            },
+            "a": "[R:x]"
+          }
+        ]
+      },
+      "calls": [
+        "i",
+        "v",
+        "x"
+      ]
+    },
+    {
+      "name": "empty-path:array-nested-element",
+      "input": {
+        "": [
+          [
+            {
+              "": {
+                "sessionId": "s",
+                "a": "x"
+              }
+            }
+          ]
+        ]
+      },
+      "output": {
+        "": [
+          [
+            {
+              "": {
+                "sessionId": "[R:s]",
+                "a": "[R:x]"
+              }
+            }
+          ]
+        ]
+      },
+      "calls": [
+        "s",
+        "x"
+      ]
+    },
+    {
       "name": "empty-path:after-named-key",
       "input": {
         "x": {
@@ -2260,6 +2355,26 @@
         "a",
         "d",
         "c"
+      ]
+    },
+    {
+      "name": "order:index-key-above-u32",
+      "input_text": "{\"parameters\":{\"b\":\"a\",\"4294967296\":\"b\",\"3\":\"c\",\"4294967294\":\"d\",\"a\":\"e\"}}",
+      "output": {
+        "parameters": {
+          "3": "[R:c]",
+          "4294967294": "[R:d]",
+          "b": "[R:a]",
+          "4294967296": "[R:b]",
+          "a": "[R:e]"
+        }
+      },
+      "calls": [
+        "c",
+        "d",
+        "a",
+        "b",
+        "e"
       ]
     },
     {

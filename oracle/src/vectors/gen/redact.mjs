@@ -289,12 +289,18 @@ export async function generate() {
   await walk("empty-path:twice", { "": { "": { id: "i", properties: { p: "q" }, a: "y" }, a: "x" } });
   await walk("empty-path:string", { "": "s" });
   await walk("empty-path:array", { "": [{ id: "i" }, "s"] });
+  // A "" key inside an array element: TS's path for an element is its parent's, so the objects
+  // under that key are at the top level only when the arrays sit at the top level through "" keys.
+  await walk("empty-path:array-element-key", { parameters: [{ "": { id: "i", a: "x" }, b: "y" }] });
+  await walk("empty-path:array-under-empty", { "": [{ "": { id: "i", tags: { k: "v" } }, a: "x" }] });
+  await walk("empty-path:array-nested-element", { "": [[{ "": { sessionId: "s", a: "x" } }]] });
   await walk("empty-path:after-named-key", { x: { "": { id: "i" } }, sessionId: { "": "kept" } });
   await walk("empty-path:inside-protected", { tags: { "": { a: "kept" } } });
 
   // Index-like keys come first, in ascending order, in TS's walk: they change the call order.
   await walkText("order:index-keys", '{"sessionId":"s","b":"x","2":"y","a":"z","1":"w","10":"t","0":"u"}');
   await walkText("order:index-keys-nested", '{"parameters":{"z":"a","5":"b","y":{"k":"c","3":"d"},"4294967294":"e","1":"f"}}');
+  await walkText("order:index-key-above-u32", '{"parameters":{"b":"a","4294967296":"b","3":"c","4294967294":"d","a":"e"}}');
   await walkText("order:non-index-keys", '{"parameters":{"b":"a","01":"b","-1":"c","4294967295":"d","1.5":"e","a":"f"}}');
   await walkText("order:protected-after-index", '{"id":"i","7":"x","tags":{"2":"t","1":"u"},"1":"y"}');
 

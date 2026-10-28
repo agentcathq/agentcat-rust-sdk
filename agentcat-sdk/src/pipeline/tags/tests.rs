@@ -46,6 +46,8 @@ fn tag_key() -> impl Strategy<Value = String> + Clone {
     prop_oneof![
         "[a-zA-Z0-9$_.: -]{0,40}",
         "[0-9]{1,3}",
+        // Always a valid key, so enough entries survive to reach the 50-tag cap.
+        "[a-z]{3,12}",
         object_key().prop_map(|key| key.chars().take(40).collect::<String>()),
     ]
 }
@@ -55,6 +57,9 @@ fn tag_value() -> impl Strategy<Value = Value> + Clone {
     prop_oneof![
         6 => js_string(120).prop_map(Value::String),
         2 => "[a-z]{190,210}".prop_map(Value::String),
+        // Astral characters are 2 UTF-16 units each: 190 to 213 units, the 200-unit limit inside.
+        2 => (95_usize..=105, 0_usize..=3)
+            .prop_map(|(astral, ascii)| Value::String("😀".repeat(astral) + &"a".repeat(ascii))),
         1 => "[a-z]{0,5}\n[a-z]{0,5}".prop_map(Value::String),
         1 => number().prop_map(Value::Number),
         1 => Just(Value::Null),
@@ -68,7 +73,11 @@ proptest! {
 
     #[test]
     fn validate_tags_matches_ts(
-        entries in proptest::collection::vec((tag_key(), tag_value()), 0..70),
+        // Half the cases hold 48 to 69 entries, around the 50-tag cap.
+        entries in prop_oneof![
+            proptest::collection::vec((tag_key(), tag_value()), 0..70),
+            proptest::collection::vec((tag_key(), tag_value()), 48..70),
+        ],
     ) {
         let tags: Map<String, Value> = entries.into_iter().collect();
         let mut log = Vec::new();

@@ -3032,6 +3032,22 @@
       }
     },
     {
+      "name": "breadth:index-key-above-u32",
+      "input_text": "{\"b\":1,\"4294967296\":2,\"3\":3,\"4294967295\":4,\"a\":5,\"4294967294\":6}",
+      "limits": [
+        10,
+        4,
+        100
+      ],
+      "output": {
+        "3": 3,
+        "4294967294": 6,
+        "b": 1,
+        "4294967296": 2,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
       "name": "breadth:index-keys-not-canonical",
       "input_text": "{\"b\":1,\"01\":2,\"4294967295\":3,\"4294967294\":4,\"2\":5,\"a\":6,\"10\":7}",
       "limits": [
@@ -36078,12 +36094,31 @@
       "deviation": "RD-24"
     },
     {
+      "name": "proto:kept-twin",
+      "input_text": "{\"a\":1,\"_proto_\":{\"x\":\"y\"},\"b\":2}",
+      "output": {
+        "a": 1,
+        "_proto_": {
+          "x": "y"
+        },
+        "b": 2
+      }
+    },
+    {
       "name": "proto:kept-string",
       "input_text": "{\"__proto__\":\"text\",\"b\":2}",
       "output": {
         "b": 2
       },
       "deviation": "RD-24"
+    },
+    {
+      "name": "proto:kept-string-twin",
+      "input_text": "{\"_proto_\":\"text\",\"b\":2}",
+      "output": {
+        "_proto_": "text",
+        "b": 2
+      }
     },
     {
       "name": "proto:counts-toward-breadth",
@@ -36098,6 +36133,50 @@
         "...": "[MaxProperties ~]"
       },
       "deviation": "RD-24"
+    },
+    {
+      "name": "proto:counts-toward-breadth-twin",
+      "input_text": "{\"_proto_\":{\"x\":1},\"a\":1,\"b\":2,\"c\":3}",
+      "limits": [
+        10,
+        2,
+        100
+      ],
+      "output": {
+        "_proto_": {
+          "x": 1
+        },
+        "a": 1,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "proto:kept-deep-value",
+      "input_text": "{\"__proto__\":{\"a\":{\"b\":{\"c\":1}}},\"z\":1}",
+      "limits": [
+        2,
+        100,
+        100
+      ],
+      "output": {
+        "z": 1
+      },
+      "deviation": "RD-24"
+    },
+    {
+      "name": "proto:kept-deep-value-twin",
+      "input_text": "{\"_proto_\":{\"a\":{\"b\":{\"c\":1}}},\"z\":1}",
+      "limits": [
+        2,
+        100,
+        100
+      ],
+      "output": {
+        "_proto_": {
+          "a": "[Object]"
+        },
+        "z": 1
+      }
     },
     {
       "name": "seeded-0",

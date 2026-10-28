@@ -11005,6 +11005,32 @@
       "ts_test": [
         "v1|src/tests/handles.test.ts|sessionFromHookValue > treats a whitespace-only value as null"
       ]
+    },
+    {
+      "name": "lowercase:sentinel-letters",
+      "output": {
+        "letters": {
+          "s": [
+            "S",
+            "s"
+          ],
+          "t": [
+            "T",
+            "t"
+          ],
+          "a": [
+            "A",
+            "a"
+          ],
+          "r": [
+            "R",
+            "r"
+          ]
+        },
+        "expanding": {
+          "İ": "i̇"
+        }
+      }
     }
   ]
 }

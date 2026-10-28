@@ -42,21 +42,27 @@ fn base62(bytes: &[u8; 20]) -> [u8; ENCODED_LEN] {
     digits
 }
 
+/// `<prefix>_` and the 27-character KSUID of `seconds` since [`EPOCH_MS`] and `payload`. Only the
+/// low 32 bits of `seconds` count, so a caller keeps it at or below `u32::MAX`; [`from_parts`]
+/// checks that, and `derive_session_id` has a const assertion for it.
+pub(crate) fn encode(prefix: &str, seconds: u64, payload: &[u8; 16]) -> String {
+    let mut bytes = [0_u8; 20];
+    bytes[..4].copy_from_slice(&seconds.to_be_bytes()[4..]);
+    bytes[4..].copy_from_slice(payload);
+    let mut id = String::with_capacity(prefix.len() + 1 + ENCODED_LEN);
+    id.push_str(prefix);
+    id.push('_');
+    id.extend(base62(&bytes).iter().map(|&b| char::from(b)));
+    id
+}
+
 /// `<prefix>_` and the 27-character KSUID of `time_ms` and `payload`; `None` when `time_ms` is
 /// outside `EPOCH_MS..=MAX_TIME_MS`, where TS throws.
 pub(crate) fn from_parts(prefix: &str, time_ms: u64, payload: &[u8; 16]) -> Option<String> {
     if !(EPOCH_MS..=MAX_TIME_MS).contains(&time_ms) {
         return None;
     }
-    let seconds = u32::try_from((time_ms - EPOCH_MS) / 1_000).ok()?;
-    let mut bytes = [0_u8; 20];
-    bytes[..4].copy_from_slice(&seconds.to_be_bytes());
-    bytes[4..].copy_from_slice(payload);
-    let mut id = String::with_capacity(prefix.len() + 1 + ENCODED_LEN);
-    id.push_str(prefix);
-    id.push('_');
-    id.extend(base62(&bytes).iter().map(|&b| char::from(b)));
-    Some(id)
+    Some(encode(prefix, (time_ms - EPOCH_MS) / 1_000, payload))
 }
 
 /// A new ID for the current time with 16 random bytes; `None` when the clock is outside the KSUID

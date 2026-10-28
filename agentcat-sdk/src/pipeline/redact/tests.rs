@@ -6,13 +6,16 @@
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::{PROTECTED_FIELDS, apply_event_redaction, redact_strings};
+use super::{
+    EVENT_HOOK_FIELD, PROTECTED_FIELDS, RESTORED_FIELDS, STRING_HOOK_FIELD, apply_event_redaction,
+    redact_strings,
+};
 use crate::pipeline::TsEvent;
 use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
 use crate::test_support::{assert_js_eq, config, markers, oracle, vectors};
 
 /// TS's fields for the two hooks, which the restore treats in its own way.
-const HOOK_FIELDS: [&str; 2] = ["redactionFn", "eventRedactionFn"];
+const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 
 /// What [`redact`] gives: the event, or the number of the call that failed.
 type Redacted = Result<TsEvent, usize>;
@@ -281,9 +284,7 @@ fn redact_input() -> impl Strategy<Value = TsEvent> {
 /// hook fields, other fields) and whose values are [`json_value`]s or timestamps.
 fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
     let key = prop_oneof![
-        4 => prop::sample::select(
-            ["id", "sessionId", "projectId", "eventType", "timestamp"].map(str::to_owned).to_vec()
-        ),
+        4 => prop::sample::select(RESTORED_FIELDS.map(str::to_owned).to_vec()),
         1 => prop::sample::select(HOOK_FIELDS.map(str::to_owned).to_vec()),
         2 => prop::sample::select(
             ["parameters", "response", "userIntent", "tags", "resourceName"]

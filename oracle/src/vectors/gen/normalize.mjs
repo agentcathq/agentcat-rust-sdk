@@ -2,10 +2,21 @@
 //
 // Case fields: input (or input_text: its JSON text, when key order matters or the input holds a
 // `__proto__` own key); limits: [depth, breadth, max_string] (absent: the TS defaults); output.
-// `deviation: "RD-24"` marks a case whose TS output lacks the `__proto__` key that Rust keeps.
+// `deviation: "RD-24"` marks a case whose TS output lacks the `__proto__` key that Rust keeps. Its
+// twin, `<name>-twin`, has the key renamed `_proto_`: TS keeps that key, so the twin's output is
+// what Rust gives with the key renamed back.
 import { loadCore } from "oracle/bundle";
 
 import { int, pick, seeded, text, tsKey } from "../support.mjs";
+
+/** A copy of `value` without the keys `key`, at any depth. */
+function dropKey(value, key) {
+  if (Array.isArray(value)) return value.map((item) => dropKey(item, key));
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).filter(([k]) => k !== key).map(([k, v]) => [k, dropKey(v, key)]));
+  }
+  return value;
+}
 
 const ts = (group, title) => [tsKey("truncation", `normalize - ${group} > ${title}`)];
 
@@ -57,6 +68,11 @@ export async function generate() {
   add("test:wide-object", wide, [10, 5], ts("breadth limiting", "should limit object properties to maxBreadth"));
   add("test:wide-array", Array.from({ length: 150 }, (_, i) => i), [10, 5], ts("breadth limiting", "should limit array elements to maxBreadth"));
   add("test:within-breadth", { a: 1, b: 2, c: 3 }, [10, 100], ts("breadth limiting", "should leave objects within breadth limit unchanged"));
+  // truncation.test.ts "should allow same object in different branches (not a cycle)" shares one
+  // object under two keys. A JSON file cannot share an object, so the case holds two equal ones
+  // (that test is RD-20 in the parity manifest, so the case has no ts_test). A Rust `Value` has no
+  // sharing and no cycle, so the check is that an equal value under two keys is never marked
+  // "[Circular ~]".
   add("test:same-object-twice", { a: { x: 1 }, b: { x: 1 } });
 
   // Appendix C: a 12-level object and a 102-element array.
@@ -90,6 +106,8 @@ export async function generate() {
   for (let i = 0; i < 12; i++) idx.push(`"s${i}":"v"`);
   for (let i = 9; i >= 0; i--) idx.push(`"${i * 3}":${i}`);
   addText("breadth:index-keys-after-string-keys", `{${idx.join(",")}}`, [10, 5, 100]);
+  // 4294967296 is above the largest array index (4294967294), so it keeps its insertion place.
+  addText("breadth:index-key-above-u32", '{"b":1,"4294967296":2,"3":3,"4294967295":4,"a":5,"4294967294":6}', [10, 4, 100]);
   addText("breadth:index-keys-not-canonical", '{"b":1,"01":2,"4294967295":3,"4294967294":4,"2":5,"a":6,"10":7}', [10, 3, 100]);
 
   // String lengths, in UTF-16 units.
@@ -108,10 +126,23 @@ export async function generate() {
   add("small:zero-breadth", mixed, [3, 0, 5]);
   add("small:zero-string", mixed, [3, 10, 0]);
 
-  // RD-24: TS drops the `__proto__` key (the assignment sets the prototype); Rust keeps it.
-  addText("proto:kept", '{"a":1,"__proto__":{"x":"y"},"b":2}', undefined, undefined, "RD-24");
-  addText("proto:kept-string", '{"__proto__":"text","b":2}', undefined, undefined, "RD-24");
-  addText("proto:counts-toward-breadth", '{"__proto__":{"x":1},"a":1,"b":2,"c":3}', [10, 2, 100], undefined, "RD-24");
+  // RD-24: TS drops the `__proto__` key (the assignment sets the prototype); Rust keeps it. The
+  // twin renames the key to `_proto_`, which TS keeps: Rust's value of the key is the twin's.
+  const proto = (name, inputText, limits) => {
+    addText(name, inputText, limits, undefined, "RD-24");
+    const renamed = inputText.replaceAll('"__proto__"', '"_proto_"');
+    if (renamed === inputText) throw new Error(`${name}: has a __proto__ key`);
+    addText(`${name}-twin`, renamed, limits);
+    const twin = cases.find((c) => c.name === `${name}-twin`).output;
+    const original = cases.find((c) => c.name === name).output;
+    if (JSON.stringify(dropKey(twin, "_proto_")) !== JSON.stringify(original)) {
+      throw new Error(`${name}: TS drops the key and nothing else`);
+    }
+  };
+  proto("proto:kept", '{"a":1,"__proto__":{"x":"y"},"b":2}');
+  proto("proto:kept-string", '{"__proto__":"text","b":2}');
+  proto("proto:counts-toward-breadth", '{"__proto__":{"x":1},"a":1,"b":2,"c":3}', [10, 2, 100]);
+  proto("proto:kept-deep-value", '{"__proto__":{"a":{"b":{"c":1}}},"z":1}', [2, 100, 100]);
 
   // Random values with small limits.
   const rand = seeded(7);

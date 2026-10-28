@@ -43,7 +43,7 @@ pub(crate) fn sanitize_event(event: &TsEvent) -> TsEvent {
         .map(|(key, value)| {
             let value = match key.as_str() {
                 "response" if !value.is_null() => sanitize_response(value),
-                "parameters" if !value.is_null() => sanitize_parameters(value),
+                "parameters" if !value.is_null() => sanitize_tool_values(value),
                 _ => value.clone(),
             };
             (key.clone(), value)
@@ -65,7 +65,7 @@ fn sanitize_response(response: &Value) -> Value {
                         Value::Array(blocks.iter().map(sanitize_block).collect())
                     }
                     ("structuredContent", Value::Object(_) | Value::Array(_)) => {
-                        sanitize_parameters(value)
+                        sanitize_tool_values(value)
                     }
                     _ => value.clone(),
                 };
@@ -114,15 +114,15 @@ fn sanitize_resource(block: &Value) -> Value {
     }
 }
 
-/// `value` with every large base64 string replaced; objects in [`js::own_entries`] order, a
-/// `__proto__` key kept (RD-24).
-fn sanitize_parameters(value: &Value) -> Value {
+/// `value` (the `parameters`, or the `structuredContent` of a response) with every large base64
+/// string replaced; objects in [`js::own_entries`] order, a `__proto__` key kept (RD-24).
+fn sanitize_tool_values(value: &Value) -> Value {
     match value {
         Value::String(text) if is_binary(text) => Value::String(BINARY_DATA_NOTE.to_owned()),
-        Value::Array(items) => Value::Array(items.iter().map(sanitize_parameters).collect()),
+        Value::Array(items) => Value::Array(items.iter().map(sanitize_tool_values).collect()),
         Value::Object(map) => Value::Object(
             js::own_entries(map)
-                .map(|(key, item)| (key.clone(), sanitize_parameters(item)))
+                .map(|(key, item)| (key.clone(), sanitize_tool_values(item)))
                 .collect(),
         ),
         other => other.clone(),

@@ -14,6 +14,8 @@
 //   RD-26  an object whose `length` is at most the limit passes TS's limit; Rust gives the error;
 //   RD-27  an object with an own `toString` key in a joined array throws in TS; Rust writes
 //          "[object Object]";
+//   RD-24  a `__proto__` key stays (TS drops it while normalize copies the object); the case's
+//          twin, `<name>-twin`, has the key renamed `_proto_`, which TS keeps;
 //   RD-28  TS gives an `error` without `message` an own `message: undefined`, which counts toward
 //          normalize's 100-key breadth; Rust counts only the keys JSON holds.
 import { loadCore } from "oracle/bundle";
@@ -54,13 +56,24 @@ export function collector() {
     if (names.has(name)) throw new Error(`duplicate case ${name}`);
     names.add(name);
     const reply = truncate(expand(input));
-    const result = "error" in reply ? { error: reply.error } : { output: reply.value };
+    // An assigned `__proto__` leaves a non-plain object; a JSON round trip makes it plain.
+    const value = deviation === "RD-24" && !("error" in reply) ? JSON.parse(JSON.stringify(reply.value)) : reply.value;
+    const result = "error" in reply ? { error: reply.error } : { output: value };
     cases.push({ name, ...fields, ...result, ...(keys && { ts_test: keys }), ...(deviation && { deviation }) });
     return reply;
   };
   const add = (name, input, options) => finish(name, { input }, input, options);
   const addText = (name, inputText, options) => finish(name, { input_text: inputText }, JSON.parse(inputText), options);
   return { cases, add, addText };
+}
+
+/** A copy of `value` without the keys `key`, at any depth. */
+function dropKey(value, key) {
+  if (Array.isArray(value)) return value.map((item) => dropKey(item, key));
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).filter(([k]) => k !== key).map(([k, v]) => [k, dropKey(v, key)]));
+  }
+  return value;
 }
 
 /** Throws with `message` unless `ok`. */
@@ -99,7 +112,7 @@ const intentArray = (n) =>
 
 export async function generate() {
   const core = await loadCore();
-  const { cases, add } = collector();
+  const { cases, add, addText } = collector();
 
   // The truncateEvent tests of truncation.test.ts that JSON can carry. An undefined field is an
   // absent key.
@@ -339,6 +352,23 @@ export async function generate() {
     properties: { deep, wide },
   }));
   add("normalize:index-keys", makeEvent({ parameters: { b: 1, 10: 2, 2: 3, a: 4 }, properties: { z: 1, 1: 2 } }));
+
+  // RD-24: a `__proto__` key in a normalized field. TS drops it; Rust keeps it, so its value of the
+  // key is the twin's value of `_proto_`. The twin renames the key, which TS keeps.
+  const eventText = (field, value) => `${JSON.stringify(makeEvent()).slice(0, -1)},"${field}":${value}}`;
+  const proto = (name, field, value) => {
+    addText(name, eventText(field, value), { deviation: "RD-24" });
+    const renamed = value.replaceAll('"__proto__"', '"_proto_"');
+    check(renamed !== value, `${name}: has a __proto__ key`);
+    addText(`${name}-twin`, eventText(field, renamed));
+    const twin = cases.find((c) => c.name === `${name}-twin`).output;
+    const original = cases.find((c) => c.name === name).output;
+    check(JSON.stringify(dropKey(twin, "_proto_")) === JSON.stringify(original), `${name}: TS drops the key and nothing else`);
+  };
+  proto("proto:parameters", "parameters", '{"a":1,"__proto__":{"x":"y"},"b":2}');
+  proto("proto:parameters-string", "parameters", '{"__proto__":"text","b":2}');
+  proto("proto:error", "error", '{"message":"m","__proto__":{"deep":[1,2]}}');
+  proto("proto:response", "response", '{"__proto__":["x"],"content":[{"type":"text","text":"t"}]}');
 
   // Random events, all well under the size limit.
   const rand = seeded(8);

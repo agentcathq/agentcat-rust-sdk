@@ -74,6 +74,7 @@ export async function generate() {
   for (let i = 0; i < 60; i++) orderEntries.push(`${JSON.stringify(`s${i}`)}:"v${i}"`);
   for (let i = 9; i >= 0; i--) orderEntries.push(`"${i * 7}":"i${i}"`);
   await addText("order:index-keys-after-string-keys", `{${orderEntries.join(",")}}`);
+  await addText("order:index-key-above-u32", '{"b":"1","4294967296":"2","3":"3","4294967294":"4","a":"5"}');
   await addText("order:index-keys-not-canonical", '{"b":"1","01":"2","4294967295":"3","4294967294":"4","2":"5","a":"6","10":"7"}');
 
   // `__proto__` passes the key pattern; Object.fromEntries makes it an own key, so TS keeps it.
