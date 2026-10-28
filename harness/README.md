@@ -342,8 +342,21 @@ leaves them out. The type is only the example's choice: `ts-server.mjs` sets `er
 because the TS SDK records `error.name` as the type.
 
 `--prod --project <id>` is for maintainers only. It sends to the default AgentCat API, for the project
-"Testing" only, with no egress guard. It refuses any other project, and it refuses when `CI` is set; both
-refusals happen before any server starts. Never run it from CI. It writes the session IDs and the run time to
+"Testing" only, with no egress guard. Two independent guards refuse it, both before any server starts:
+
+- `parseArgs` refuses any other project, and it refuses when `CI` is set.
+- `confirmProd` refuses a server environment with no loopback `AGENTCAT_API_URL` (one that publishes to
+  production) unless `AGENTCAT_DEMO_PROD=yes` is in the environment. It runs before the first process of the run
+  and again right before each server process.
+
+A maintainer runs it so:
+
+```sh
+AGENTCAT_DEMO_PROD=yes node harness/demo/run.mjs --prod --project <the Testing project ID>
+```
+
+Never run it from CI, and never set `AGENTCAT_DEMO_PROD` in a test: the tests call `confirmProd` as a pure
+function, and `drive` with a command that is not a server. It writes the session IDs and the run time to
 `harness/out/demo/sessions.json`.
 
 ## Publish contract (L4)

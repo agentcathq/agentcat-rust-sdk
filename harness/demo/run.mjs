@@ -3,15 +3,19 @@
 // commit), over stdio with the TS client.
 //
 // usage: node harness/demo/run.mjs --mock
-//        node harness/demo/run.mjs --prod --project proj_2yAR5QHJ3CE3icTpJlKJqu1ZiXG   (maintainers only)
+//        AGENTCAT_DEMO_PROD=yes node harness/demo/run.mjs --prod --project proj_2yAR5QHJ3CE3icTpJlKJqu1ZiXG   (maintainers only)
 //
 //   --mock  Both servers publish to the local mock API and run as the harness runs them: the TS server under the
 //           egress guard. The run fails (exit 1) unless each server publishes, with the same event count and the
 //           same event types. Prints one JSON summary line on stdout. This is part of the gate.
 //   --prod  Both servers publish to the default AgentCat API, for the project "Testing" only. No egress guard
-//           and no API URL. The run is refused (exit 2) for any other project, and when CI is set. It writes the
-//           session IDs of both servers and the run time to harness/out/demo/sessions.json.
-// Every refusal happens in parseArgs, before the first line of output, any server process or any network call.
+//           and no API URL. The run is refused (exit 2) for any other project, when CI is set, and unless
+//           AGENTCAT_DEMO_PROD=yes is in the environment. It writes the session IDs of both servers and the run
+//           time to harness/out/demo/sessions.json.
+// Two independent guards refuse a production run. parseArgs checks the command line and CI before the first line
+// of output, any process or any network call. confirmProd checks the environment of the servers: one without a
+// loopback API URL publishes to production, so it needs AGENTCAT_DEMO_PROD=yes. It runs before the first
+// process of the run and again right before each server process. No test sets AGENTCAT_DEMO_PROD.
 import { spawn } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -55,6 +59,31 @@ export function parseArgs(argv, env) {
   return { mode, project };
 }
 
+/** The confirmation that a production run needs, in the runner's environment (the second guard of --prod). */
+export const PROD_CONFIRMATION = "AGENTCAT_DEMO_PROD";
+
+/** Whether `url` is an http URL on a loopback host (the local mock API). */
+function isLoopback(url) {
+  try {
+    const { protocol, hostname } = new URL(url);
+    return protocol === "http:" && ["127.0.0.1", "localhost", "[::1]"].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The second guard of --prod, independent of parseArgs. A server environment without a loopback
+ * AGENTCAT_API_URL publishes to production, so it needs AGENTCAT_DEMO_PROD=yes in `runnerEnv`. Throws a
+ * UsageError otherwise. It has no side effect.
+ */
+export function confirmProd(serverEnv, runnerEnv) {
+  if (isLoopback(serverEnv.AGENTCAT_API_URL)) return;
+  if (runnerEnv[PROD_CONFIRMATION] !== "yes") {
+    throw new UsageError(`refusing --prod: set ${PROD_CONFIRMATION}=yes to confirm a run that publishes to production`);
+  }
+}
+
 /** The environment of a demo server: no AgentCat setting from the developer's shell, a temporary HOME. */
 function serverEnv({ mockUrl, project, home }) {
   if (mockUrl !== undefined) return { ...exampleEnv({ mockUrl, home }), AGENTCAT_PROJECT_ID: project, DISABLE_DIAGNOSTICS: "true" };
@@ -68,9 +97,11 @@ const blocks = (result) => (result.content ?? []).filter((b) => b.type === "text
 
 /**
  * Runs the scenario against one server process. Resolves with `{ failures, sessions }`: failures is a list of
- * texts, sessions the `ses_` IDs the SDK issued, in order.
+ * texts, sessions the `ses_` IDs the SDK issued, in order. Rejects with a UsageError, before it starts the
+ * process, when confirmProd refuses `env`; `runnerEnv` is the runner's environment.
  */
-async function drive({ label, command, env, scenario }) {
+export async function drive({ label, command, env, scenario, runnerEnv = process.env }) {
+  confirmProd(env, runnerEnv);
   const failures = [];
   const sessions = [];
   let tools = [];
@@ -140,23 +171,32 @@ async function main() {
     return 2;
   }
   const { mode, project } = args;
-  process.stderr.write(`demo: starting the ${mode} run\n`);
   const scenario = JSON.parse(readFileSync(join(HERE, "scenario.json"), "utf8"));
 
-  const built = await runToEnd("cargo", ["build", "-q", "-p", "agentcat-sdk", "--example", "hooks", "--all-features"]);
-  if (built !== 0) throw new Error(`cargo build of the example hooks failed (exit ${built})`);
-
+  // The mock (a local process) starts first in mock mode only: the server environment needs its URL.
   const mock = mode === "mock" ? await startMock() : undefined;
   const home = mkdtempSync(join(tmpdir(), "demo-"));
-  const env = serverEnv({ mockUrl: mock?.url, project, home });
-  const guard = mode === "mock" ? ["--import", pathToFileURL(GUARD).href] : [];
-  const servers = [
-    { label: "rust", command: [exampleBinary("hooks")] },
-    { label: "ts", command: [process.execPath, ...guard, join(HERE, "ts-server.mjs")] },
-  ];
   const results = {};
   const failures = [];
   try {
+    const env = serverEnv({ mockUrl: mock?.url, project, home });
+    try {
+      confirmProd(env, process.env);
+    } catch (error) {
+      if (!(error instanceof UsageError)) throw error;
+      process.stderr.write(`demo: ${error.message}\n`);
+      return 2;
+    }
+    process.stderr.write(`demo: starting the ${mode} run\n`);
+
+    const built = await runToEnd("cargo", ["build", "-q", "-p", "agentcat-sdk", "--example", "hooks", "--all-features"]);
+    if (built !== 0) throw new Error(`cargo build of the example hooks failed (exit ${built})`);
+
+    const guard = mode === "mock" ? ["--import", pathToFileURL(GUARD).href] : [];
+    const servers = [
+      { label: "rust", command: [exampleBinary("hooks")] },
+      { label: "ts", command: [process.execPath, ...guard, join(HERE, "ts-server.mjs")] },
+    ];
     for (const server of servers) {
       if (mock) await fetch(`${mock.url}/__reset`, { method: "POST" });
       const { failures: found, sessions, tools } = await drive({ ...server, env, scenario });
@@ -203,6 +243,6 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     process.exitCode = await main();
   } catch (error) {
     process.stderr.write(`demo: ${error.message}\n`);
-    process.exitCode = 1;
+    process.exitCode = error instanceof UsageError ? 2 : 1;
   }
 }

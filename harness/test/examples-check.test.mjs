@@ -1,6 +1,7 @@
 // The examples check (src/examples-check.mjs) against a fake example (test/fixtures/example-fake.mjs):
-// it passes a well-behaved example and fails on stdout noise, a missing publish, a bad exit status and
-// a slow exit. It also refuses to start an example when the API URL is empty.
+// it passes a well-behaved example and fails on stdout noise, a missing publish, a bad exit status, a
+// slow exit, a first call whose session block replaces the tool's result and a first call with no
+// session ID. It also refuses to start an example when the API URL is empty.
 import assert from "node:assert/strict";
 import { join } from "node:path";
 import { test } from "node:test";
@@ -40,6 +41,18 @@ test("a non-zero exit status fails", { timeout: 60_000 }, async () => {
 test("an exit later than the budget fails", { timeout: 60_000 }, async () => {
   const { failures } = await check("slow", { exitBudgetMs: 500 });
   assert.ok(failures.some((f) => /did not exit within 500 ms/.test(f)), failures.join("\n"));
+});
+
+test("a first call whose session block replaces the tool's result fails", { timeout: 60_000 }, async () => {
+  const { failures } = await check("replace-result");
+  assert.equal(failures.length, 1, failures.join("\n"));
+  assert.match(failures[0], /^add returned \[\] .*expected "5"/);
+});
+
+test("a first call that issues no session ID fails", { timeout: 60_000 }, async () => {
+  const { failures } = await check("no-session");
+  assert.equal(failures.length, 1, failures.join("\n"));
+  assert.match(failures[0], /the first call \(add\) did not issue a session ID/);
 });
 
 test("an empty API URL refuses to start", () => {

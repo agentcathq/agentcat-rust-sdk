@@ -1,13 +1,17 @@
 // The dashboard demo (demo/run.mjs, decision C58). The --prod refusals must happen before any server process
 // starts or any network call: each refusal test runs under the egress guard and asserts that the runner never
-// printed its "starting" line. No test runs --prod with the demo project and CI unset.
+// printed its "starting" line. No test runs --prod with the demo project and CI unset, and no test puts
+// AGENTCAT_DEMO_PROD in the environment of a process: the second guard (confirmProd) is tested as a pure
+// function, and through drive() with a command that is not a server.
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { test } from "node:test";
 
 import { compareEvents, compareTools } from "../demo/compare.mjs";
+import { PROD_CONFIRMATION, UsageError, confirmProd, drive } from "../demo/run.mjs";
 import { GUARD, HARNESS, run } from "./support.mjs";
 
 const RUN = join(HARNESS, "demo", "run.mjs");
@@ -17,6 +21,8 @@ const PROD_PROJECT = "proj_2yAR5QHJ3CE3icTpJlKJqu1ZiXG";
 function demo(args, { ci } = {}) {
   const env = { ...process.env };
   delete env.CI;
+  // A developer shell's confirmation never reaches a test run.
+  delete env[PROD_CONFIRMATION];
   if (ci !== undefined) env.CI = ci;
   return run(process.execPath, ["--import", pathToFileURL(GUARD).href, RUN, ...args], { env, timeoutMs: 280_000 });
 }
@@ -38,7 +44,45 @@ test("--prod with another project is refused", { timeout: 60_000 }, async () => 
 });
 
 test("--prod with CI set is refused, even for the demo project", { timeout: 60_000 }, async () => {
-  assertRefused(await demo(["--prod", "--project", PROD_PROJECT], { ci: "true" }), /CI is set/);
+  const result = await demo(["--prod", "--project", PROD_PROJECT], { ci: "true" });
+  assertRefused(result, /CI is set/);
+  // parseArgs, the first guard, refuses before the second one runs.
+  assert.doesNotMatch(result.stderr, /AGENTCAT_DEMO_PROD/);
+});
+
+// Pure calls of the second guard: no process starts, and nothing reaches the network.
+test("confirmProd: a server environment with the loopback mock URL needs no confirmation", () => {
+  for (const url of ["http://127.0.0.1:4321", "http://localhost:4321", "http://[::1]:4321"]) {
+    assert.doesNotThrow(() => confirmProd({ AGENTCAT_API_URL: url }, {}));
+  }
+});
+
+test("confirmProd: a production server environment is refused without AGENTCAT_DEMO_PROD=yes", () => {
+  const prod = [{}, { AGENTCAT_API_URL: "" }, { AGENTCAT_API_URL: "https://api.example.com" }, { AGENTCAT_API_URL: "https://127.0.0.1:4321" }, { AGENTCAT_API_URL: "not a url" }];
+  for (const serverEnv of prod) {
+    for (const runnerEnv of [{}, { [PROD_CONFIRMATION]: "" }, { [PROD_CONFIRMATION]: "no" }, { [PROD_CONFIRMATION]: "YES" }, { [PROD_CONFIRMATION]: "1" }]) {
+      assert.throws(() => confirmProd(serverEnv, runnerEnv), (error) => error instanceof UsageError && /AGENTCAT_DEMO_PROD=yes/.test(error.message));
+    }
+  }
+  // The exact value passes (a pure call; nothing starts).
+  assert.doesNotThrow(() => confirmProd({}, { [PROD_CONFIRMATION]: "yes" }));
+});
+
+test("drive refuses a production server environment before it starts the process", { timeout: 30_000 }, async () => {
+  const dir = mkdtempSync(join(tmpdir(), "demo-guard-"));
+  try {
+    const marker = join(dir, "started");
+    // Not a server: if the guard let it through, it would only write the marker file.
+    const command = [process.execPath, "-e", `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "started")`];
+    await assert.rejects(
+      drive({ label: "probe", command, env: { PATH: process.env.PATH }, scenario: { sessions: [] }, runnerEnv: {} }),
+      (error) => error instanceof UsageError && /AGENTCAT_DEMO_PROD=yes/.test(error.message),
+    );
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    assert.equal(existsSync(marker), false, "drive started the process");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("no mode, and both modes, are refused", { timeout: 60_000 }, async () => {

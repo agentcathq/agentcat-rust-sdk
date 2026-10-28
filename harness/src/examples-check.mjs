@@ -8,6 +8,8 @@
 // AGENTCAT_PROJECT_ID=proj_examples and a temporary HOME (the SDK writes ~/agentcat.log there). It drives
 // initialize, tools/list and three tool calls with the TS client, closes the client right after the last
 // call (stdio: closes stdin; HTTP: closes the client, then sends SIGTERM) and asserts:
+//   - the first call issues a session ID in a block before the tool's result, and keeps that result;
+//   - each call returns the expected text;
 //   - one tools/call publish per call, and for `hooks` the hook values and the custom event;
 //   - every stdout line is a JSON-RPC message;
 //   - the example exits 0 within 5 s of the stdin close or the SIGTERM;
@@ -223,20 +225,28 @@ export async function checkExample(name, { command, exitBudgetMs = EXIT_BUDGET_M
     const names = tools.map((tool) => tool.name);
     for (const tool of expectedTools) if (!names.includes(tool)) fail(`tools/list does not list ${tool}: ${JSON.stringify(names)}`);
 
-    // The first call of a server has no session ID. The SDK answers it with the ID it issues, in place of
-    // the tool's result; the later calls pass that ID back.
+    // The first call of a server has no session ID. The SDK puts a text block that begins
+    // `[session_id issued` and holds the ID it issues before the tool's own result, which it keeps; the
+    // later calls pass that ID back. So the tool's text is the first block of a later call, and the
+    // block after the issued one on the first call.
     let sessionId;
     for (const [tool, args, text, isError] of calls) {
       const sent = { ...args, context: "Checking the example" };
       if (sessionId) sent.session_id = sessionId;
       const result = await client.callTool({ name: tool, arguments: sent });
-      const got = result.content?.[0]?.text;
-      const issued = sessionId === undefined ? /session_id: (ses_\w+)/.exec(got ?? "")?.[1] : undefined;
+      const content = result.content ?? [];
+      const first = content[0]?.text;
+      const issued = sessionId === undefined ? /session_id: (ses_\w+)/.exec(first ?? "")?.[1] : undefined;
+      let rest = content;
       if (issued) {
         sessionId = issued;
-        continue;
+        rest = content.slice(1);
+      } else if (sessionId === undefined) {
+        fail(`the first call (${tool}) did not issue a session ID: ${JSON.stringify(first)}`);
+        sessionId = "";
       }
-      sessionId ??= "";
+      const texts = rest.map((block) => block.text);
+      const got = texts.length === 1 ? texts[0] : texts;
       if (got !== text || Boolean(result.isError) !== isError) {
         fail(`${tool} returned ${JSON.stringify(got)} (isError ${Boolean(result.isError)}), expected ${JSON.stringify(text)} (isError ${isError})`);
       }
