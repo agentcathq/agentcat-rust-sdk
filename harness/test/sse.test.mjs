@@ -20,8 +20,8 @@ const SERVERS = [
   ["rust", RUST_SERVER],
 ];
 
-/** Starts `server http-sse 0` untracked; resolves {url, stop()}. */
-async function serve(t, server) {
+/** Starts `server <mode> 0` untracked; resolves {url, stop()}. */
+async function serve(t, server, mode = "http-sse") {
   const [cmd, ...args] = server;
   const env = {
     ...process.env,
@@ -31,7 +31,7 @@ async function serve(t, server) {
     HARNESS_PROJECT_ID: basic.projectId,
     HARNESS_NO_TRACK: "1",
   };
-  const child = spawn(cmd, [...args, "http-sse", "0"], { env, stdio: ["ignore", "pipe", "pipe"] });
+  const child = spawn(cmd, [...args, mode, "0"], { env, stdio: ["ignore", "pipe", "pipe"] });
   t.after(() => child.kill("SIGKILL"));
   const line = await new Promise((resolve, reject) => {
     child.once("exit", (code) => reject(new Error(`server exited ${code} before its ready line`)));
@@ -63,6 +63,43 @@ for (const [name, server] of SERVERS) {
     assert.match(res.headers.get("content-type") ?? "", /^text\/event-stream/);
     assert.match(await res.text(), /^data: .*"id":2/m);
   });
+}
+
+// The 2026-07-28 envelope: no initialize, no session; the request carries its protocol version, client
+// info and capabilities in params._meta and the method and tool name in headers.
+async function call2026(url) {
+  const res = await post(
+    url,
+    {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: {
+        name: "echo",
+        arguments: { msg: "hi" },
+        _meta: {
+          "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+          "io.modelcontextprotocol/clientInfo": { name: "sse-test", version: "1.0.0" },
+          "io.modelcontextprotocol/clientCapabilities": {},
+        },
+      },
+    },
+    { "mcp-protocol-version": "2026-07-28", "mcp-method": "tools/call", "mcp-name": "echo" },
+  );
+  return { status: res.status, type: res.headers.get("content-type") ?? "", text: await res.text() };
+}
+
+// The 2026-07-28 lane: http answers JSON, http-sse answers SSE, on both servers (README, HTTP responses).
+for (const [name, server] of SERVERS.filter(([n]) => n !== "ts-v1")) {
+  for (const [mode, type] of [["http-sse", /^text\/event-stream/], ["http", /^application\/json/]]) {
+    test(`${name} answers a 2026-07-28 tools/call over ${mode} as ${type.source.slice(1)}`, { timeout: 120_000 }, async (t) => {
+      const res = await call2026(await serve(t, server, mode));
+      assert.equal(res.status, 200, res.text);
+      assert.match(res.type, type, res.text);
+      assert.match(res.text, /"id":1/);
+      assert.match(res.text, /hi/);
+    });
+  }
 }
 
 test("a bad transport name is still refused by the usage line of each server", { timeout: 60_000 }, async (t) => {

@@ -161,8 +161,8 @@ with one of those keys exits 2.
 default; exit 0 as expected, 1 not (one line per bad combination; a combination without `delta` or
 `events` is bad), 2 on bad arguments.
 
-One full matrix (12 scenarios: 72 combinations, 288 driver runs) took about 180 s at `--jobs 4` on the
-development machine; the A/A and canary runs about 12 s each.
+One full matrix (13 scenarios, 4 transports, 2 lanes: 104 combinations, 416 driver runs) takes a few
+minutes at `--jobs 4` on the development machine; the A/A and canary runs about 12 s each.
 
 ### driver.mjs
 
@@ -317,7 +317,7 @@ differences listed in "The Rust reference server" below.
 | argv `http <port>` | Stateful streamable HTTP on `127.0.0.1:<port>` (0: any free port), path `/mcp`. A request without a known `mcp-session-id` gets a new transport and a new tracked server (`initialize` creates the session; anything else is rejected by the transport). One tracked server per MCP session. A 2026-07-28 request (it carries the per-request `_meta` envelope; the protocol has no sessions) gets a fresh tracked server per request (`ts-v2.mjs`: `createMcpHandler`). |
 | argv `http-sse <port>` | As `http`, with SSE responses (C59): TS `enableJsonResponse: false` (`ts-v2.mjs` also `createMcpHandler`'s `responseMode: "sse"`), Rust `with_json_response(false)`, rmcp's default. The default most customers keep. It runs every scenario that runs on `http`, on both lanes. |
 | argv `http-stateless <port>` | Streamable HTTP with no session ID. Each POST gets a fresh tracked server and transport, both closed when the response closes. GET and DELETE answer 405 with `Allow: POST` and the body `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Method not allowed."},"id":null}`. A 2026-07-28 request is served as in `http` mode. |
-| HTTP responses | JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body, not an SSE stream. Rust: `http-stateless`, and 2026-07-28 requests in either mode, answer JSON. In `http` mode, a 2025-era POST gets rmcp's SSE stream (a priming event, then one event per JSON-RPC message), because rmcp serves JSON only without session mode. |
+| HTTP responses | `http` and `http-stateless` use JSON response mode (`enableJsonResponse: true`; `createMcpHandler`'s `responseMode: "json"`): every POST is answered with one JSON body. `http-sse` uses SSE (`enableJsonResponse: false`; `responseMode: "sse"`): every POST is answered with an SSE stream. Rust answers 2026-07-28 requests as the mode says (`http`, `http-stateless`: JSON; `http-sse`: SSE), as `test/sse.test.mjs` proves. Rust answers a 2025-era POST in `http` and `http-sse` with rmcp's SSE stream (a priming event, then one event per JSON-RPC message), because rmcp serves JSON for a 2025-era request only without session mode (`http-stateless`). |
 | ready line | HTTP modes print one line on stdout and nothing else: `{"ready": true, "url": "http://127.0.0.1:<port>/mcp"}`. |
 | SIGTERM | An HTTP server exits on SIGTERM (the TS SDK drains its queue first); one that needs SIGKILL fails the driver run. The tracked Rust server also drains on SIGTERM in every mode and on stdin EOF (stdio): it runs `shutdown(5 s)` and prints `{"drained":true}` or `{"drained":false}` on stderr before it exits (the matrix runs it with `--expect-drained`). An untracked server prints nothing. |
 | `AGENTCAT_API_URL` | Mock API base URL. Required; must be `http://` on `127.0.0.1`, `localhost` or `[::1]`, else exit 2 with `refusing to start` on stderr. The TS server passes it to `track` as `apiBaseUrl`. |
@@ -389,9 +389,9 @@ the CI job `oracle-harness` build it before the harness tests.
   (`AgentCat::track`) for the connection. `http` and `http-sse` serve rmcp's `StreamableHttpService` with a
   `LocalSessionManager` and `legacy_session_mode(true)`, `http-stateless` with
   `legacy_session_mode(false)`; `http` and `http-stateless` use `json_response(true)`, `http-sse` uses
-  `json_response(false)`. rmcp honors `json_response` only
-  where it serves a request without a session: in `http-stateless`, and for 2026-07-28 requests in
-  either mode. Each MCP session or request gets a fresh tracked server from one shared `AgentCat`
+  `json_response(false)`. rmcp honors `json_response` for a 2025-era request only
+  where it serves it without a session (`http-stateless`), and for every 2026-07-28 request: JSON in
+  `http` and `http-stateless`, SSE in `http-sse`. Each MCP session or request gets a fresh tracked server from one shared `AgentCat`
   handle. rmcp serves 2026-07-28 requests and `server/discover` itself in every mode (over HTTP, a
   fresh server per 2026-07-28 request).
 - `src/tools.rs`: the tools. Names, descriptions and schemas come only from
@@ -411,9 +411,10 @@ Where it differs from the TS servers:
 
 - `http` mode answers each 2025-era POST with an SSE stream, not one JSON body (`http-sse` does so on both servers): a priming event
   (`data:` empty, `id`, `retry: 3000`), then one event per JSON-RPC message. In rmcp 3.7.0,
-  `json_response` takes effect only when `legacy_session_mode` is false; the session path always
-  answers with an SSE stream. The driver's clients read both. `http-stateless` and 2026-07-28
-  requests answer JSON, as the TS servers do.
+  `json_response` takes effect for a 2025-era request only when `legacy_session_mode` is false; the
+  session path always answers with an SSE stream, so Rust `http` differs from TS `http` (JSON) on
+  the 2025-11-25 lane. The driver's clients read both. `http-stateless` answers JSON and 2026-07-28
+  requests follow the mode (`http` JSON, `http-sse` SSE), as the TS servers do.
 - `AGENTCAT_API_URL`: the check is stricter than the WHATWG parse of `common.mjs`: no user info,
   backslash, whitespace or control character; the host spelled `127.0.0.1`, `localhost` (any case)
   or `[::1]`; a port, when given, of 1 to 5 digits below 65536. The value is checked and goes in as
