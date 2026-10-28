@@ -23,6 +23,7 @@ need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --ve
 need "cargo install cargo-deny --locked" cargo deny --version
 need "cargo install cargo-public-api@0.52.0 --locked" cargo public-api --version
 need "cargo install cargo-llvm-cov@0.9.1 --locked" cargo llvm-cov --version
+need "cargo install cargo-mutants@27.1.0 --locked" cargo mutants --version
 need "rustup component add llvm-tools-preview" has_component 'llvm-tools(-preview)?'
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
@@ -95,6 +96,13 @@ cargo run -q -p xtask -- rmcp-canary
 cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)' \
   --json --summary-only --output-path target/coverage.json
 cargo run -q -p xtask -- coverage target/coverage.json
+
+# mutants (C53): no surviving mutant in the lines that differ from origin/rewrite (scripts/mutants-base.sh). The
+# diff holds the working tree, so uncommitted changes count. An empty diff, or one with no mutable SDK source,
+# finds no mutant and passes. CI runs the same gate against the last green commit of the branch.
+mkdir -p target
+git diff "$(git merge-base "$(scripts/mutants-base.sh)" HEAD)" > target/mutants.diff
+cargo mutants --in-diff target/mutants.diff
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features

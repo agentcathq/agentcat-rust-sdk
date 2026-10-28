@@ -5,7 +5,8 @@ name: Nightly
 # workflow files change (R-14). A scheduled or dispatched run fails on drift and opens or updates the
 # `ts-drift` issue. A push run never opens an issue: it reports drift as a warning and fails only when
 # a job crashes (the drift job itself, the Rust suite, or the branch coverage run, whose percentage is
-# a report and never a failure).
+# a report and never a failure). The mutation shards (`mutants-full`, `mutants-score`) and the rmcp and
+# agentcat-api legs run on every nightly run, push runs included; none of them feeds the `report` job.
 on:
   schedule:
     - cron: "0 6 * * *"
@@ -15,6 +16,7 @@ on:
     paths:
       - ".github/workflows/nightly.yml"
       - ".github/actions/**"
+      - ".cargo/**"
       - "scripts/ts-drift-issue.sh"
       - "oracle/**"
       - "harness/**"
@@ -260,6 +262,174 @@ jobs:
           jq -r '.data[0].totals.branches
             | "Branch coverage of agentcat-sdk: \(.covered) of \(.count) branches, \((.percent * 10 | floor) / 10) % (target 85 %, report only)."' \
             target/coverage-branch.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # The full mutation set (C53) in 8 shards. A shard fails only when cargo-mutants itself fails (exit code
+  # 1 usage, 4 the unmutated tree fails its tests); surviving or timed-out mutants (2, 3) are judged by
+  # `mutants-score` from all shards together. The mutant copy carries oracle/.cache and node_modules
+  # (.cargo/mutants.toml).
+  mutants-full:
+    name: mutants-full (shard ${{ matrix.shard }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest,cargo-mutants@27.1.0
+      - name: Mutants of shard ${{ matrix.shard }} of 8
+        shell: bash
+        run: |
+          code=0
+          cargo mutants --shard "${{ matrix.shard }}/8" || code=$?
+          case "$code" in
+            0 | 2 | 3) ;;
+            *) echo "cargo mutants exited $code"; exit "$code" ;;
+          esac
+      - if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mutants-shard-${{ matrix.shard }}
+          path: mutants.out
+          retention-days: 14
+
+  # Merges the shards' outcomes.json and fails below 90 % caught of the viable mutants. Viable: not
+  # unviable (the mutant builds). A timeout counts as viable and not as caught.
+  mutants-score:
+    needs: mutants-full
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: mutants-shard-*
+          path: shards
+      - name: Score
+        shell: bash
+        env:
+          FULL_RESULT: ${{ needs.mutants-full.result }}
+        run: |
+          set -euo pipefail
+          for k in 0 1 2 3 4 5 6 7; do
+            if [ ! -f "shards/mutants-shard-$k/outcomes.json" ]; then
+              echo "no outcomes.json for shard $k (mutants-full ended with: $FULL_RESULT)"
+              exit 1
+            fi
+          done
+          jq -s '{caught: (map(.caught) | add), missed: (map(.missed) | add), timeout: (map(.timeout) | add), unviable: (map(.unviable) | add)}' \
+            shards/mutants-shard-*/outcomes.json > score.json
+          jq -r '. as $s | ($s.caught + $s.missed + $s.timeout) as $viable
+            | (if $viable == 0 then 100 else ($s.caught * 1000 / $viable | floor) / 10 end) as $pct
+            | "Mutation score: \($s.caught) caught, \($s.missed) missed, \($s.timeout) timeout, \($s.unviable) unviable; \($pct) % caught of \($viable) viable (floor 90 %)."' \
+            score.json | tee -a "$GITHUB_STEP_SUMMARY"
+          jq -e '(.caught + .missed + .timeout) as $v | $v == 0 or (.caught * 100 / $v >= 90)' score.json > /dev/null
+
+  # The SDK tests and the rmcp canary against rmcp's git `main`, through a [patch.crates-io] added at run
+  # time (the repository is not changed). A failure means rmcp main changed; it feeds no other job.
+  rmcp-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest
+      - name: Patch rmcp to git main
+        run: |
+          printf '\n[patch.crates-io]\nrmcp = { git = "https://github.com/modelcontextprotocol/rust-sdk", branch = "main" }\n' >> Cargo.toml
+          cargo update -p rmcp
+          grep -A2 -E '^name = "rmcp(-macros)?"$' Cargo.lock
+      - run: cargo nextest run -p agentcat-sdk --all-features
+      - run: cargo build -p agentcat-sdk --examples --all-features
+      - run: cargo run -q -p xtask -- rmcp-canary
+
+  rmcp-versions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      legs: ${{ steps.list.outputs.legs }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+      - id: list
+        run: |
+          legs="$(node scripts/rmcp-versions.mjs)"
+          echo "legs=$legs" >> "$GITHUB_OUTPUT"
+
+  # The canary (every ServerHandler method forwarded) on the highest patch of every rmcp 3.x minor.
+  rmcp-canary:
+    name: rmcp-canary (${{ matrix.version }})
+    needs: rmcp-versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.rmcp-versions.outputs.legs) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - run: cargo update -p rmcp --precise ${{ matrix.version }}
+      - run: cargo update -p rmcp-macros --precise ${{ matrix.macros }}
+      - run: grep -A1 -E '^name = "rmcp(-macros)?"$' Cargo.lock
+      - run: cargo run -q -p xtask -- rmcp-canary
+
+  # The SDK against the newest agentcat-api on crates.io (the workspace pins "=0.0.3", R11). The job
+  # never fails the run: a break shows as a warning and a note in the run summary.
+  agentcat-api-latest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      - uses: ./.github/actions/node-oracle
+      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
+        with:
+          tool: nextest
+      - name: Use the newest agentcat-api
+        run: |
+          sed -i 's/^agentcat-api = { version = "=[^"]*"/agentcat-api = { version = "*"/' Cargo.toml
+          grep -n '^agentcat-api' Cargo.toml
+          cargo update -p agentcat-api
+          grep -A1 -E '^name = "agentcat-api"$' Cargo.lock
+      - run: cargo nextest run -p agentcat-sdk --all-features
+      - if: failure()
+        run: |
+          echo "::warning title=agentcat-api::The SDK does not build or pass its tests against the newest agentcat-api."
+          echo "The SDK does not build or pass its tests against the newest agentcat-api on crates.io (the workspace pins it with \`=\`). Read the log of this job." >> "$GITHUB_STEP_SUMMARY"
 
   # Opens or updates the one open `ts-drift` issue (scheduled and dispatched runs). A push run only
   # prints the findings: drift is a warning there, a crashed job a failure.

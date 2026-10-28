@@ -1,0 +1,39 @@
+# cargo-mutants 27.1.0 configuration (C53). Every exclusion below gives its reason; the published crate
+# has no `mutants` dependency and no `#[mutants::skip]` attribute.
+
+# The nextest runner, as in the test jobs.
+test_tool = "nextest"
+# The whole feature set, as in the test jobs.
+additional_cargo_args = ["--all-features"]
+# The SDK crate only: xtask and the harness reference server are tooling, and their tests do not pin the SDK.
+# (27.1 has no `package` key in the config file; the source globs select the crate.)
+examine_globs = ["agentcat-sdk/src/**/*.rs"]
+
+# A mutant can turn a loop or a wait into an endless one. A mutant run times out at the multiplier times the
+# time of the baseline test run, and never under the minimum (seconds).
+timeout_multiplier = 3.0
+minimum_test_timeout = 60.0
+
+# The oracle-compared tests start `oracle/src/server.mjs`, which reads the pinned TS clone from
+# `oracle/.cache` and its modules from `node_modules`. Both are in .gitignore, and cargo-mutants skips
+# ignored files when it copies the tree. This config COPIES them into the scratch tree: `gitignore = false`
+# keeps the ignored files (`target/` is still never copied). The pinned TS clone in `oracle/.cache` is a git
+# repository that the oracle queries (`git rev-parse HEAD`), so `copy_vcs = true` keeps `.git` directories
+# too (about 40 MB). The copy reads only the local disk, so it needs no network: the job and
+# `scripts/check.sh` run `corepack pnpm install` and the oracle build first. A symlink back to the source
+# tree would not work, because the oracle resolves `.cache` from its own path and Node resolves a
+# symlinked `node_modules` to the source tree's real paths.
+gitignore = false
+copy_vcs = true
+
+# Not mutated.
+exclude_globs = [
+  # Test helpers (test-util feature and unit-test support): a mutant here changes a test, not the SDK.
+  "agentcat-sdk/src/test_support/**",
+  # Unit-test modules, for the same reason.
+  "agentcat-sdk/src/**/tests.rs",
+]
+
+# Mutants dropped by name. Each entry needs a reason; there are none yet. Task 15 adds an entry only for a
+# mutant that no test can observe (an equivalent mutant).
+exclude_re = []

@@ -2,3 +2,5 @@
 node_modules/
 oracle/.cache/
 harness/out/
+/mutants.out/
+/mutants.out.old/
