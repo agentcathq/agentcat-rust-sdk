@@ -215,6 +215,12 @@
 //! So call [`AgentCat::shutdown`] after your server stops: the queued events then go out before
 //! the process ends.
 //!
+//! This quickstart stops only on Ctrl-C. Containers and process managers stop a server with
+//! SIGTERM, and a server that does not catch it skips `shutdown` and loses the queued events. The
+//! [`streamable_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/streamable_http.rs)
+//! example stops on SIGTERM (Unix) or Ctrl-C: copy its `stop_signal` function in place of
+//! `tokio::signal::ctrl_c()`.
+//!
 //! ## Stateless HTTP
 //!
 //! In stateless mode, `rmcp` builds a new server handler for each request. The setup is the same

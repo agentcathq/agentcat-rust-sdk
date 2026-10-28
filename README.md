@@ -15,11 +15,11 @@ To add AgentCat to your server, read the crate's [README](agentcat-sdk/README.md
 | Path | What it holds |
 |---|---|
 | [`agentcat-sdk/`](agentcat-sdk) | The published crate: the SDK, its tests, its examples, the README and the CHANGELOG. |
-| [`xtask/`](xtask) | Repository tasks in Rust: the parity check (`cargo run -p xtask -- parity`) and the check that the SDK forwards every method of `rmcp`'s `ServerHandler` (`rmcp-canary`). |
+| [`xtask/`](xtask) | Repository tasks in Rust, run as `cargo run -p xtask -- <task>`: the parity check (`parity`), the check that the SDK forwards every method of `rmcp`'s `ServerHandler` (`rmcp-canary`), the public API check against `agentcat-sdk/public-api.txt` (`public-api`), the check of the files in the published package (`package-list`) and the line coverage floors (`coverage`). |
 | [`oracle/`](oracle) | Node tools that build the TypeScript SDK at a pinned commit and run its modules: the test vectors, the property-test oracle and the list of TypeScript tests. |
 | [`harness/`](harness) | The differential harness: TypeScript and Rust reference servers, one scripted MCP client, a mock AgentCat API, and the rules that compare two runs. |
 | [`parity/`](parity) | The list of every TypeScript test (`ts-tests.json`, generated) and the map from each test to its Rust test, harness scenario or reason (`manifest.toml`). |
-| [`scripts/`](scripts) | `check.sh`, the local gate. It runs the commands of every CI job. |
+| [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. `mutants-base.sh` and `mutants-run.sh` pick the base commit of the mutation check and run it. `rmcp-versions.mjs` lists the rmcp versions that CI tests. `ts-drift-issue.sh` opens the issue of the nightly TypeScript drift check. |
 | [`docs/`](docs) | The decision log, the research, the design and the plans. |
 
 ## How the SDK proves parity with TypeScript
