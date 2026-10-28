@@ -20,7 +20,7 @@ need "cargo install cargo-nextest --locked" cargo nextest --version
 need "cargo install cargo-hack --locked" cargo hack --version
 need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --version
 need "cargo install cargo-deny --locked" cargo deny --version
-need "cargo install cargo-public-api --locked" cargo public-api --version
+need "cargo install cargo-public-api@0.52.0 --locked" cargo public-api --version
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'

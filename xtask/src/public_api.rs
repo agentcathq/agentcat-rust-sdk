@@ -110,19 +110,39 @@ pub fn diff(expected: &str, actual: &str) -> String {
     out
 }
 
-/// The files of a `cargo package --list` output that the package must not hold.
+/// Files that every package holds (`Cargo.lock` and `.cargo_vcs_info.json` depend on cargo and git).
+const REQUIRED_FILES: &[&str] = &[
+    "build.rs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "Cargo.toml",
+    "Cargo.toml.orig",
+    "src/lib.rs",
+];
+
+/// The problems of a `cargo package --list` output: a file outside the expected set, or a
+/// required file ([`REQUIRED_FILES`]) that is missing.
 #[must_use]
 pub fn check_package_list(list: &str) -> Vec<String> {
-    list.lines()
+    let files: Vec<String> = list
+        .lines()
         .map(|l| l.trim().replace('\\', "/"))
         .filter(|l| !l.is_empty())
+        .collect();
+    let missing = REQUIRED_FILES
+        .iter()
+        .filter(|r| !files.iter().any(|f| f == *r))
+        .map(|r| format!("package-list: required file missing from the package: {r}"));
+    let unexpected = files
+        .iter()
         .filter(|l| {
             !(l.starts_with("src/")
                 || l.starts_with("examples/")
                 || PACKAGE_FILES.contains(&l.as_str()))
         })
-        .map(|l| format!("package-list: unexpected file in the package: {l}"))
-        .collect()
+        .map(|l| format!("package-list: unexpected file in the package: {l}"));
+    missing.chain(unexpected).collect()
 }
 
 /// Runs `public-api [--bless]`; returns the exit code and the lines to print.
@@ -266,6 +286,51 @@ mod tests {
         assert_eq!(diff("a\nb\n", "b\n"), "@@ -1 +1 @@\n-a\n");
     }
 
+    const FULL_LIST: &str =
+        "Cargo.toml\nCargo.toml.orig\nLICENSE\nREADME.md\nCHANGELOG.md\nbuild.rs\nsrc/lib.rs\n";
+
+    #[test]
+    fn package_list_rejects_a_missing_required_file() {
+        let list = FULL_LIST
+            .replace("README.md\n", "")
+            .replace("src/lib.rs\n", "src/js.rs\n");
+        assert_eq!(
+            check_package_list(&list),
+            [
+                "package-list: required file missing from the package: README.md",
+                "package-list: required file missing from the package: src/lib.rs"
+            ]
+        );
+    }
+
+    #[test]
+    fn allowlist_rejects_paths_in_where_dyn_impl_and_qualified_forms() {
+        let samples = [
+            ("pub fn a<T>(T) where T: tokio::io::AsyncRead", "tokio"),
+            (
+                "pub fn b(Box<dyn reqwest::Foo + core::marker::Send>)",
+                "reqwest",
+            ),
+            ("pub fn c(impl chrono::Datelike)", "chrono"),
+            ("pub fn d() -> impl agentcat_api::Thing", "agentcat_api"),
+            (
+                "pub fn e<T>(T) -> <T as tokio::io::AsyncRead>::Item",
+                "tokio",
+            ),
+            (
+                "pub fn f<T>(&self) where <T as core::ops::Deref>::Target: http::Foo",
+                "http",
+            ),
+        ];
+        for (sample, krate) in samples {
+            assert_eq!(
+                disallowed_crates(sample).into_iter().collect::<Vec<_>>(),
+                [krate],
+                "{sample}"
+            );
+        }
+    }
+
     #[test]
     fn package_list_accepts_the_expected_files() {
         let list = "Cargo.lock\nCargo.toml\nCargo.toml.orig\nLICENSE\nREADME.md\nCHANGELOG.md\nbuild.rs\n.cargo_vcs_info.json\nsrc/lib.rs\nexamples/stdio.rs\n";
@@ -274,9 +339,9 @@ mod tests {
 
     #[test]
     fn package_list_rejects_other_files() {
-        let list = "Cargo.toml\nsrc/lib.rs\ntests/x.rs\npublic-api.txt\n";
+        let list = format!("{FULL_LIST}tests/x.rs\npublic-api.txt\n");
         assert_eq!(
-            check_package_list(list),
+            check_package_list(&list),
             [
                 "package-list: unexpected file in the package: tests/x.rs",
                 "package-list: unexpected file in the package: public-api.txt"
