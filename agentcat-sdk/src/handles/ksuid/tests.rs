@@ -1,10 +1,10 @@
-//! `ksuid` against the TS KSUID library: the vectors of `tests/vectors/ksuid.json`, a property
-//! test that runs the same inputs through the JS oracle, and Rust-only tests of `random`.
+//! `ksuid`: the cases of `tests/vectors/ksuid.json` and `tests/vectors/ksuid_cases.json`,
+//! property tests of the encoding (it reads back, and it keeps the order), and tests of `random`.
 use proptest::prelude::*;
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value};
 
 use super::{EPOCH_MS, MAX_TIME_MS, encode, from_parts, random, random_at};
-use crate::test_support::{config, oracle, vectors};
+use crate::test_support::{config, vectors};
 
 /// The 16 payload bytes of a case's `payload_hex`.
 fn payload_of(hex_text: &str) -> [u8; 16] {
@@ -86,22 +86,89 @@ fn times() -> impl Strategy<Value = u64> {
     ]
 }
 
+/// The cases of `ksuid_cases.json`: random times around the edges of the range and inside it,
+/// with random payloads.
+#[test]
+fn from_parts_matches_ksuid_cases() {
+    let cases = vectors::cases("ksuid_cases");
+    assert!(cases.len() >= 100, "ksuid_cases.json has its cases");
+    for case in &cases {
+        check_from_parts(case);
+    }
+}
+
+/// The 20 bytes that the 27 base62 characters `text` stand for, big-endian, read with the
+/// alphabet `0-9`, `A-Z`, `a-z`.
+fn base62_bytes(text: &str) -> [u8; 20] {
+    let mut bytes = [0_u8; 20];
+    for c in text.chars() {
+        let digit = match c {
+            '0'..='9' => u32::from(c) - u32::from('0'),
+            'A'..='Z' => u32::from(c) - u32::from('A') + 10,
+            'a'..='z' => u32::from(c) - u32::from('a') + 36,
+            _ => panic!("{c:?} is not a base62 digit"),
+        };
+        // bytes = bytes * 62 + digit, from the last byte up.
+        let mut carry = digit;
+        for byte in bytes.iter_mut().rev() {
+            let value = u32::from(*byte) * 62 + carry;
+            *byte = u8::try_from(value & 0xff).unwrap();
+            carry = value >> 8;
+        }
+        assert_eq!(carry, 0, "{text} is more than 20 bytes");
+    }
+    bytes
+}
+
+/// The seconds since [`EPOCH_MS`] of an in-range `time_ms`, as a KSUID holds them.
+fn seconds_of(time_ms: u64) -> u32 {
+    u32::try_from((time_ms - EPOCH_MS) / 1_000).unwrap()
+}
+
+/// Times inside `EPOCH_MS..=MAX_TIME_MS`: a third from the whole range, a third in its first 2 s
+/// and a third in its last 2 s.
+fn in_range_times() -> impl Strategy<Value = u64> {
+    prop_oneof![
+        EPOCH_MS..=MAX_TIME_MS,
+        EPOCH_MS..=(EPOCH_MS + 2_000),
+        (MAX_TIME_MS - 2_000)..=MAX_TIME_MS,
+    ]
+}
+
 proptest! {
     #![proptest_config(config())]
 
+    /// An in-range time gives `evt_` and 27 base62 characters that read back to the whole
+    /// seconds since the epoch (4 bytes, big-endian) and the payload; any other time gives
+    /// `None`.
     #[test]
-    fn from_parts_matches_ts(
+    fn from_parts_reads_back_to_its_seconds_and_payload(
         time_ms in times(),
         payload in prop::array::uniform16(any::<u8>()),
     ) {
-        let args = [json!("evt"), json!(time_ms), json!(hex::encode(payload))];
         let actual = from_parts("evt", time_ms, &payload);
-        // An oracle error is TS throwing, and nothing else may fail.
-        let js = oracle::call("ksuid.fromParts", &args).unwrap_or_else(|e| {
-            assert!(e.message.starts_with("Valid KSUID timestamps"), "{}", e.message);
-            None
-        });
-        prop_assert_eq!(actual.map(Value::from), js);
+        if !(EPOCH_MS..=MAX_TIME_MS).contains(&time_ms) {
+            prop_assert_eq!(actual, None);
+            return Ok(());
+        }
+        let id = actual.expect("an in-range time gives an ID");
+        let text = id.strip_prefix("evt_").expect("the prefix and `_`");
+        prop_assert_eq!(text.len(), 27);
+        prop_assert!(is_base62(text), "{}", id);
+        let bytes = base62_bytes(text);
+        prop_assert_eq!(&bytes[..4], &seconds_of(time_ms).to_be_bytes()[..]);
+        prop_assert_eq!(&bytes[4..], &payload[..]);
+    }
+
+    /// Two IDs with the same prefix sort as their seconds, then their payloads, sort.
+    #[test]
+    fn from_parts_keeps_the_order_of_seconds_then_payload(
+        first in (in_range_times(), prop::array::uniform16(any::<u8>())),
+        second in (in_range_times(), prop::array::uniform16(any::<u8>())),
+    ) {
+        let ids = [&first, &second].map(|(time_ms, payload)| from_parts("evt", *time_ms, payload).unwrap());
+        let parts = [&first, &second].map(|(time_ms, payload)| (seconds_of(*time_ms), *payload));
+        prop_assert_eq!(ids[0].cmp(&ids[1]), parts[0].cmp(&parts[1]));
     }
 }
 

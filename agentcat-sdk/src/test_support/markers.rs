@@ -1,5 +1,4 @@
-//! The markers of the strict JSON encoding of vector files and oracle replies
-//! (`oracle/src/strict-json.mjs`):
+//! The markers of the strict JSON encoding of the vector files:
 //!
 //! - `{"$utf16": [<UTF-16 code units>]}`: a string that is not well-formed UTF-16, which a Rust
 //!   `String` cannot hold.
@@ -60,7 +59,7 @@ pub(super) fn try_decode_f64(value: Value) -> Result<Value, String> {
 }
 
 /// [`d09`], with an error for a malformed marker.
-pub(super) fn try_d09(value: Value) -> Result<Value, String> {
+fn try_d09(value: Value) -> Result<Value, String> {
     rewrite(value, UTF16, &|marker| {
         let units = marker
             .as_array()

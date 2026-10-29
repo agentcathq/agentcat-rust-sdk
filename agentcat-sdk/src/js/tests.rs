@@ -1,17 +1,19 @@
-//! `js` against JavaScript: the TS-generated vectors of `tests/vectors/js.json`, and property
-//! tests that run the same inputs through the JS oracle.
+//! `js`: the cases of `tests/vectors/js.json` and `tests/vectors/wire_cases.json`, and property
+//! tests of the rules of each function (texts that read back, the key order, the trimmed and cut
+//! strings, the type names).
 use std::collections::BTreeSet;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use proptest::prelude::*;
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Number, Value, json};
 
 use super::{
     cut_utf16, iso_millis, number_to_string, own_entries, parse_iso_millis, stringify,
     to_js_string, to_js_value, trim, type_of, utf16_len, write_stringify,
 };
-use crate::test_support::strategies::{js_string, json_value, object_key};
-use crate::test_support::{assert_js_eq, config, oracle, vectors};
+use crate::test_support::json::index_keys_first;
+use crate::test_support::strategies::{js_string, json_value, number, object_key};
+use crate::test_support::{assert_js_eq, config, vectors};
 
 /// The case name prefixes of `js.json`.
 const KINDS: [&str; 7] = [
@@ -179,13 +181,12 @@ fn vectors_match_ts() {
     );
 }
 
-/// `-0` is `"0"` in JavaScript, as `stringify:negative-zero` and `string:-0` show; `ryu_js`
-/// writes it so, and this pins it for `number_to_string` itself.
+/// `-0` is written `0`, as `stringify:negative-zero` and `string:-0` show; this pins it for
+/// `number_to_string` itself.
 #[test]
-fn negative_zero_matches_js() {
-    let zero = serde_json::Number::from_f64(-0.0).unwrap();
-    let js = oracle::call("oracle.String", &[json!({"value": -0.0})]).unwrap();
-    assert_eq!(Some(json!(number_to_string(&zero))), js);
+fn negative_zero_is_written_0() {
+    let zero = Number::from_f64(-0.0).unwrap();
+    assert_eq!(number_to_string(&zero), "0");
 }
 
 /// C40: `to_js_value` is the `JSON.stringify` text read back, so `serde_json` writes it as
@@ -220,31 +221,20 @@ fn to_js_value_past_the_nesting_limit_is_a_copy() {
     assert_eq!(to_js_value(&value), value);
 }
 
-/// RD-27 (owner ruling R23): JavaScript's `String()` throws for an object with an own
-/// `toString` key, alone or at any depth inside an array; `to_js_string` writes it as
-/// JavaScript writes the same object without that key.
+/// An object with a `toString` key, alone or at any depth inside an array, is written as any
+/// other object is: `[object Object]`.
 #[test]
-fn to_js_string_keeps_objects_with_a_to_string_key_rd27() {
-    let cases = [
-        (json!({"toString": 1}), json!({"other": 1})),
-        (json!([[{"toString": null}]]), json!([[{"other": null}]])),
+fn objects_with_a_to_string_key_are_written_object_object() {
+    for (value, expected) in [
+        (json!({"toString": 1}), "[object Object]"),
+        (json!([[{"toString": null}]]), "[object Object]"),
         (
             json!([1, [{"toString": "f"}, null, "a"]]),
-            json!([1, [{"other": "f"}, null, "a"]]),
+            "1,[object Object],,a",
         ),
-    ];
-    for (value, renamed) in &cases {
-        let err = oracle::call("oracle.String", &[json!({"value": value})]).unwrap_err();
-        assert!(
-            err.message
-                .contains("Cannot convert object to primitive value"),
-            "{value}: {err}"
-        );
-        let js = oracle::call("oracle.String", &[json!({"value": renamed})]).unwrap();
-        assert_eq!(Some(json!(to_js_string(Some(value)))), js, "{value}");
+    ] {
+        assert_eq!(to_js_string(Some(&value)), expected, "{value}");
     }
-    assert_eq!(to_js_string(Some(&cases[0].0)), "[object Object]");
-    assert_eq!(to_js_string(Some(&cases[1].0)), "[object Object]");
 }
 
 /// The plain JSON text of a number: a safe integer, or at most 15 digits times 10^e with
@@ -329,57 +319,184 @@ fn padded_string() -> impl Strategy<Value = String> + Clone {
     (edge.clone(), js_string(20), edge).prop_map(|(head, body, tail)| head + &body + &tail)
 }
 
-/// The `{value?}` argument of `oracle.String` and `oracle.typeof`.
-fn value_arg(value: Option<&Value>) -> Value {
-    value.map_or_else(|| json!({}), |value| json!({"value": value}))
+/// The cases of `wire_cases.json`: random values and JSON texts for `stringify`, random padded
+/// strings for `trim`, random strings and unit counts for `cut`, random strings for `utf16-len`,
+/// and random values (or none) for `string` and `typeof`.
+#[test]
+fn every_kind_matches_wire_cases() {
+    let seen: BTreeSet<&str> = vectors::cases("wire_cases")
+        .iter()
+        .map(check_case)
+        .collect();
+    assert_eq!(
+        seen,
+        BTreeSet::from(KINDS),
+        "wire_cases.json has cases of every kind"
+    );
 }
+
+/// Whether the two numbers are the same `f64` up to 4 units in the last place: `serde_json`
+/// without `float_roundtrip` can read a shortest number text 1 unit off.
+fn close(a: &Number, b: &Number) -> bool {
+    let (Some(a), Some(b)) = (a.as_f64(), b.as_f64()) else {
+        return false;
+    };
+    (is_zero(a) && is_zero(b))
+        || (a.is_sign_negative() == b.is_sign_negative() && a.to_bits().abs_diff(b.to_bits()) <= 4)
+}
+
+/// Whether `f` is `0` or `-0`.
+fn is_zero(f: f64) -> bool {
+    f.to_bits() << 1 == 0
+}
+
+/// Checks that `read` (a written text read back) is `original`: the same strings, booleans,
+/// `null`s and numbers ([`close`]), arrays of the same items, and objects of the same entries in
+/// the order of [`index_keys_first`].
+fn check_read_back(read: &Value, original: &Value, path: &str) -> Result<(), TestCaseError> {
+    match (read, original) {
+        (Value::Number(a), Value::Number(b)) => {
+            prop_assert!(close(a, b), "{}: {} is not {}", path, a, b);
+        }
+        (Value::Array(read), Value::Array(original)) => {
+            prop_assert_eq!(read.len(), original.len(), "{}", path);
+            for (i, (read, original)) in read.iter().zip(original).enumerate() {
+                check_read_back(read, original, &format!("{path}[{i}]"))?;
+            }
+        }
+        (Value::Object(read), Value::Object(original)) => {
+            let keys: Vec<&str> = read.keys().map(String::as_str).collect();
+            prop_assert_eq!(
+                keys,
+                index_keys_first(original.keys().map(String::as_str)),
+                "{}",
+                path
+            );
+            for (key, value) in original {
+                check_read_back(&read[key], value, &format!("{path}.{key}"))?;
+            }
+        }
+        _ => prop_assert_eq!(read, original, "{}", path),
+    }
+    Ok(())
+}
+
+/// What `to_js_string` gives for a JSON value, from the rule: arrays are their items joined with
+/// `,` (a `null` item as `""`), objects `[object Object]`.
+fn joined(value: &Value) -> String {
+    match value {
+        Value::Null => "null".to_owned(),
+        Value::Bool(flag) => flag.to_string(),
+        Value::Number(number) => number_to_string(number),
+        Value::String(text) => text.clone(),
+        Value::Array(items) => items
+            .iter()
+            .map(|item| {
+                if item.is_null() {
+                    String::new()
+                } else {
+                    joined(item)
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(","),
+        Value::Object(_) => "[object Object]".to_owned(),
+    }
+}
+
+/// The characters `trim` removes: U+0009 to U+000D, U+0020, U+00A0, U+1680, U+2000 to U+200A,
+/// U+2028, U+2029, U+202F, U+205F, U+3000 and U+FEFF.
+const TRIMMED: [char; 25] = [
+    '\t', '\n', '\u{B}', '\u{C}', '\r', ' ', '\u{A0}', '\u{1680}', '\u{2000}', '\u{2001}',
+    '\u{2002}', '\u{2003}', '\u{2004}', '\u{2005}', '\u{2006}', '\u{2007}', '\u{2008}', '\u{2009}',
+    '\u{200A}', '\u{2028}', '\u{2029}', '\u{202F}', '\u{205F}', '\u{3000}', '\u{FEFF}',
+];
 
 proptest! {
     #![proptest_config(config())]
 
+    /// The text of `stringify` (and of `write_stringify`) reads back to the value, with the
+    /// array-index keys of each object first.
     #[test]
-    fn stringify_matches_js(value in json_value(6, 8)) {
-        let js = oracle::call("JSON.stringify", std::slice::from_ref(&value)).unwrap();
-        prop_assert_eq!(Some(json!(stringify(&value))), js);
+    fn stringify_reads_back_with_index_keys_first(value in json_value(6, 8)) {
+        let text = stringify(&value);
+        let mut written = String::new();
+        write_stringify(&value, &mut written).unwrap();
+        prop_assert_eq!(&written, &text);
+        let read: Value = serde_json::from_str(&text).unwrap();
+        check_read_back(&read, &value, "value")?;
     }
 
+    /// A number text reads back to the same `f64` (`-0` as `0`). It has an exponent exactly when
+    /// the number is at least 1e21 or below 1e-6 (and not 0) in magnitude.
     #[test]
-    fn reformat_matches_js(text in json_text()) {
+    fn number_text_reads_back_with_an_exponent_only_out_of_range(number in number()) {
+        let text = number_to_string(&number);
+        let f = number.as_f64().unwrap();
+        let read: f64 = text.parse().unwrap();
+        if is_zero(f) {
+            prop_assert_eq!(text.as_str(), "0");
+        } else {
+            prop_assert_eq!(read.to_bits(), f.to_bits(), "{}", text);
+        }
+        let exponent = f.abs() >= 1e21 || (!is_zero(f) && f.abs() < 1e-6);
+        prop_assert_eq!(text.contains('e'), exponent, "{}", text);
+    }
+
+    /// A JSON text with shuffled and repeated keys is written back with the index keys first.
+    #[test]
+    fn stringify_of_a_text_reads_back_with_index_keys_first(text in json_text()) {
         let value: Value = serde_json::from_str(&text).unwrap();
-        let js = oracle::call("oracle.reformat", &[json!(text)]).unwrap();
-        prop_assert_eq!(Some(json!(stringify(&value))), js, "{}", text);
+        let read: Value = serde_json::from_str(&stringify(&value)).unwrap();
+        check_read_back(&read, &value, &text)?;
     }
 
+    /// `trim` removes the white space at both ends and nothing else.
     #[test]
-    fn trim_matches_js(text in padded_string()) {
-        let js = oracle::call("String.prototype.trim", &[json!(text)]).unwrap();
-        prop_assert_eq!(Some(json!(trim(&text))), js);
+    fn trim_removes_only_the_white_space_at_both_ends(text in padded_string()) {
+        prop_assert_eq!(trim(&text), text.trim_matches(|c| TRIMMED.contains(&c)));
     }
 
+    /// `cut_utf16` gives the longest prefix of at most `units` UTF-16 units.
     #[test]
-    fn cut_matches_js((text, units) in (js_string(30), 0..40usize)) {
-        let js = oracle::call("String.prototype.slice", &[json!(text), json!(units)])
-            .unwrap()
-            .unwrap();
-        assert_js_eq(&json!(cut_utf16(&text, units)), &js, &format!("{text:?} at {units}"));
+    fn cut_is_the_longest_prefix_within_the_units((text, units) in (js_string(30), 0..40usize)) {
+        let cut = cut_utf16(&text, units);
+        prop_assert!(text.starts_with(cut));
+        prop_assert!(cut.encode_utf16().count() <= units);
+        if let Some(next) = text[cut.len()..].chars().next() {
+            prop_assert!(cut.encode_utf16().count() + next.len_utf16() > units);
+        }
     }
 
+    /// `utf16_len` counts the UTF-16 units.
     #[test]
-    fn utf16_len_matches_js(text in js_string(30)) {
-        let js = oracle::call("String.length", &[json!(text)]).unwrap();
-        prop_assert_eq!(Some(json!(utf16_len(&text))), js);
+    fn utf16_len_counts_the_utf16_units(text in js_string(30)) {
+        prop_assert_eq!(utf16_len(&text), text.encode_utf16().count());
     }
 
+    /// `to_js_string` writes no value as `undefined`, joins arrays with `,` and writes objects as
+    /// `[object Object]`.
     #[test]
-    fn to_js_string_matches_js(value in proptest::option::of(json_value(3, 4))) {
-        let js = oracle::call("oracle.String", &[value_arg(value.as_ref())]).unwrap();
-        prop_assert_eq!(Some(json!(to_js_string(value.as_ref()))), js);
+    fn to_js_string_joins_arrays_and_writes_objects_as_object_object(
+        value in proptest::option::of(json_value(3, 4)),
+    ) {
+        let expected = value.as_ref().map_or_else(|| "undefined".to_owned(), joined);
+        prop_assert_eq!(to_js_string(value.as_ref()), expected);
     }
 
+    /// `type_of` is `undefined` for no value and `object` for `null`, arrays and objects.
     #[test]
-    fn type_of_matches_js(value in proptest::option::of(json_value(2, 3))) {
-        let js = oracle::call("oracle.typeof", &[value_arg(value.as_ref())]).unwrap();
-        prop_assert_eq!(Some(json!(type_of(value.as_ref()))), js);
+    fn type_of_is_object_for_null_arrays_and_objects(
+        value in proptest::option::of(json_value(2, 3)),
+    ) {
+        let expected = match &value {
+            None => "undefined",
+            Some(Value::Bool(_)) => "boolean",
+            Some(Value::Number(_)) => "number",
+            Some(Value::String(_)) => "string",
+            Some(Value::Null | Value::Array(_) | Value::Object(_)) => "object",
+        };
+        prop_assert_eq!(type_of(value.as_ref()), expected);
     }
 }
 

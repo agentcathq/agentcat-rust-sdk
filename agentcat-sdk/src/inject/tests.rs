@@ -1,6 +1,6 @@
-//! `inject` against the TS SDK: the cases of `tests/vectors/inject.json` (each page listed in turn
-//! on one [`InjectState`], as TS lists them on one tracking-data object), a property test that runs
-//! random listings through the JS oracle, and a Rust-only test of the shared schemas.
+//! `inject`: the cases of `tests/vectors/inject.json` and `tests/vectors/inject_cases.json` (each
+//! page listed in turn on one [`InjectState`]), property tests of the rules of a listing, and a
+//! test of the shared schemas.
 use std::collections::{BTreeMap, BTreeSet};
 
 use proptest::prelude::*;
@@ -8,12 +8,13 @@ use rmcp::model::Tool;
 use serde_json::{Map, Value, json};
 
 use super::{
-    InjectConfig, InjectState, InjectedList, build_injected_list, get_more_tools_tool, inject_tool,
+    CONTEXT_PARAM, InjectConfig, InjectState, InjectedList, build_injected_list,
+    get_more_tools_tool, inject_tool,
 };
 use crate::config::Options;
-use crate::constants::GET_MORE_TOOLS_NAME;
+use crate::constants::{AGENT_ID_PARAM, GET_MORE_TOOLS_NAME, SESSION_ID_PARAM};
 use crate::test_support::strategies::{js_string, tool_list};
-use crate::test_support::{assert_js_eq, config, oracle, vectors};
+use crate::test_support::{assert_js_eq, config, vectors};
 
 /// The case name prefixes of `inject.json`.
 const KINDS: [&str; 8] = [
@@ -426,22 +427,150 @@ fn ts_options() -> impl Strategy<Value = Value> {
         )
 }
 
+/// The cases of `inject_cases.json`: one or two pages of random tools listed with random
+/// options and hook modes. The two `listing:regression:` cases are the listings of the seeds in
+/// `proptest-regressions/inject/tests.txt`.
+#[test]
+fn listings_match_inject_cases() {
+    let cases = vectors::cases("inject_cases");
+    assert!(cases.len() >= 50, "inject_cases.json has its cases");
+    for case in &cases {
+        let name = vectors::name(case);
+        let input = &case["input"];
+        let lists = case["output"].as_array().unwrap();
+        check_pages(&config_of(input), pages_of(input), lists, name);
+    }
+}
+
+/// The parameters the pipeline injects.
+const INJECTED: [&str; 3] = [SESSION_ID_PARAM, AGENT_ID_PARAM, CONTEXT_PARAM];
+
+/// Whether JSON `value` is falsy: `null`, `false`, a zero or `""`.
+fn falsy(value: &Value) -> bool {
+    match value {
+        Value::Null => true,
+        Value::Bool(flag) => !flag,
+        Value::Number(number) => number.as_f64() == Some(0.0),
+        Value::String(text) => text.is_empty(),
+        Value::Array(_) | Value::Object(_) => false,
+    }
+}
+
+/// The names of `tools`, in order.
+fn names(tools: &[Tool]) -> Vec<&str> {
+    tools.iter().map(|tool| tool.name.as_ref()).collect()
+}
+
+/// The config of `options` and `hook_mode`, and the lists of `pages` listed in turn on one
+/// [`InjectState`].
+fn list_pages(
+    options: &Value,
+    hook_mode: bool,
+    pages: &[Vec<Tool>],
+) -> (InjectConfig, Vec<InjectedList>) {
+    let config = config_of(&json!({"options": options, "hookMode": hook_mode}));
+    let mut state = InjectState::default();
+    let lists = pages
+        .iter()
+        .map(|page| build_injected_list(&config, page.clone(), &mut state))
+        .collect();
+    (config, lists)
+}
+
+// The tests below take the arguments of one strategy tuple, so the seeds in
+// `proptest-regressions/inject/tests.txt` give each of them the same listings.
 proptest! {
     #![proptest_config(config())]
 
+    /// A list holds the tools of its page in their order, then `get_more_tools` when
+    /// report-missing is on and the page has no tool of that name.
     #[test]
-    fn inject_matches_ts(
+    fn listing_keeps_the_tool_order_and_adds_get_more_tools_last(
         options in ts_options(),
         hook_mode in any::<bool>(),
         pages in prop::collection::vec(tool_list(), 1..=2),
     ) {
-        let input = json!({
-            "options": options,
-            "hookMode": hook_mode,
-            "pages": serde_json::to_value(&pages).unwrap(),
-        });
-        let ts = oracle::call("oracle.buildInjectedList", std::slice::from_ref(&input)).unwrap().unwrap();
-        let ts = ts.as_array().unwrap();
-        check_pages(&config_of(&input), pages, ts, &input.to_string());
+        let (config, lists) = list_pages(&options, hook_mode, &pages);
+        for (page, list) in pages.iter().zip(&lists) {
+            let mut expected = names(page);
+            if config.report_missing && !expected.contains(&GET_MORE_TOOLS_NAME) {
+                expected.push(GET_MORE_TOOLS_NAME);
+            }
+            prop_assert_eq!(names(&list.tools), expected);
+        }
+    }
+
+    /// A listed tool keeps its name, description and annotations, and every property of its
+    /// input schema but a falsy one under an injected name, which the pipeline may replace.
+    #[test]
+    fn listing_keeps_every_customer_property_but_a_falsy_injected_name(
+        options in ts_options(),
+        hook_mode in any::<bool>(),
+        pages in prop::collection::vec(tool_list(), 1..=2),
+    ) {
+        let (_, lists) = list_pages(&options, hook_mode, &pages);
+        for (page, list) in pages.iter().zip(&lists) {
+            for (tool, listed) in page.iter().zip(&list.tools) {
+                prop_assert_eq!(&listed.name, &tool.name);
+                prop_assert_eq!(&listed.description, &tool.description);
+                prop_assert_eq!(&listed.annotations, &tool.annotations);
+                let Some(Value::Object(properties)) = tool.input_schema.get("properties") else {
+                    continue;
+                };
+                let listed_properties = listed.input_schema["properties"].as_object().unwrap();
+                for (key, value) in properties {
+                    if !(INJECTED.contains(&key.as_str()) && falsy(value)) {
+                        prop_assert_eq!(listed_properties.get(key), Some(value), "{}", key);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Each parameter the registry records for a tool whose name is unique on its page is in
+    /// that tool's `required` list, and among its properties when they are an object.
+    #[test]
+    fn injected_parameters_are_required(
+        options in ts_options(),
+        hook_mode in any::<bool>(),
+        pages in prop::collection::vec(tool_list(), 1..=2),
+    ) {
+        let (_, lists) = list_pages(&options, hook_mode, &pages);
+        for list in &lists {
+            let listed = names(&list.tools);
+            for tool in &list.tools {
+                let name: &str = tool.name.as_ref();
+                if name.is_empty() || listed.iter().filter(|other| **other == name).count() > 1 {
+                    continue;
+                }
+                let (_, entry) = list.entries.iter().find(|(key, _)| key == name).unwrap();
+                let schema = &tool.input_schema;
+                for param in &entry.injected {
+                    let required = schema.get("required").and_then(Value::as_array);
+                    prop_assert!(
+                        required.is_some_and(|required| required.contains(&json!(param))),
+                        "{}: {} is not required", name, param
+                    );
+                    if let Some(Value::Object(properties)) = schema.get("properties") {
+                        prop_assert!(properties.contains_key(*param), "{}: no {}", name, param);
+                    }
+                }
+            }
+        }
+    }
+
+    /// Listing the tools of a list again, with the same config on a new state, changes none of
+    /// them.
+    #[test]
+    fn relisting_a_listed_page_changes_no_tool(
+        options in ts_options(),
+        hook_mode in any::<bool>(),
+        pages in prop::collection::vec(tool_list(), 1..=2),
+    ) {
+        let (config, lists) = list_pages(&options, hook_mode, &pages);
+        for list in lists {
+            let again = build_injected_list(&config, list.tools.clone(), &mut InjectState::default());
+            prop_assert_eq!(again.tools, list.tools);
+        }
     }
 }

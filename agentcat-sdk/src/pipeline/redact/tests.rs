@@ -1,8 +1,8 @@
-//! `redact_strings` and `apply_event_redaction` against TS: the vectors of
-//! `tests/vectors/redact.json` and property tests that run the same events through the JS oracle.
+//! `redact_strings` and `apply_event_redaction`: the cases of `tests/vectors/redact.json` and
+//! `tests/vectors/redact_cases.json`, and property tests of the walk and of the restore.
 //!
-//! The redactor of every test is the oracle's: it records each string it gets, gives
-//! `"[R:" + s + "]"`, and fails on call number `throw_at` (1-based) when a case has one.
+//! The redactor of every test records each string it gets, gives `"[R:" + s + "]"`, and fails on
+//! call number `throw_at` (1-based) when a case has one.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
@@ -11,8 +11,9 @@ use super::{
     redact_strings, visit_strings,
 };
 use crate::pipeline::TsEvent;
+use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
-use crate::test_support::{assert_js_eq, config, markers, oracle, vectors};
+use crate::test_support::{assert_js_eq, config, markers, vectors};
 
 /// TS's fields for the two hooks, which the restore treats in its own way.
 const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
@@ -20,7 +21,7 @@ const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 /// What [`redact`] gives: the event, or the number of the call that failed.
 type Redacted = Result<TsEvent, usize>;
 
-/// Runs [`redact_strings`] on `event` with the oracle's redactor: the result and every string
+/// Runs [`redact_strings`] on `event` with the test redactor: the result and every string
 /// the redactor got, in order.
 fn redact(event: &TsEvent, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
     let mut calls = Vec::new();
@@ -121,43 +122,95 @@ fn check_restore_case(case: &Map<String, Value>) {
     }
 }
 
-/// Runs `event` through Rust and through TS (the oracle) and compares the calls and the results.
-fn compare_redact(event: &TsEvent, throw_at: Option<usize>) {
-    let (result, calls) = redact(event, throw_at);
-    let mut request = Map::new();
-    request.insert("event".to_owned(), Value::Object(event.clone()));
-    if let Some(n) = throw_at {
-        request.insert("throwAt".to_owned(), json!(n));
+/// The cases of `redact_cases.json`: `walk:` cases, random events through the walk (some with a
+/// redactor that fails before or after the last string), and `restore:` cases, random hook
+/// results restored against random originals.
+#[test]
+fn walks_and_restores_match_redact_cases() {
+    let cases = vectors::cases("redact_cases");
+    let (restore, walk): (Vec<_>, Vec<_>) =
+        cases.iter().partition(|case| case.contains_key("original"));
+    assert!(walk.len() >= 50, "redact_cases.json has its walk cases");
+    assert!(
+        restore.len() >= 50,
+        "redact_cases.json has its restore cases"
+    );
+    for case in walk {
+        check_walk_case(case);
+        if let Some(error) = case.get("error") {
+            assert_eq!(
+                error,
+                &case["throw_at"],
+                "{}: the failing call",
+                vectors::name(case)
+            );
+        }
     }
-    let ts = oracle::call("oracle.redactEvent", &[Value::Object(request)])
-        .unwrap()
-        .expect("a reply");
-    assert_js_eq(&calls_value(calls), &ts["calls"], "redactEvent: calls");
-    match (result, ts.get("value"), ts.get("error")) {
-        (Ok(event), Some(value), None) => {
-            assert_js_eq(&Value::Object(event), value, "redactEvent");
-        }
-        (Err(call), None, Some(_)) => assert_eq!(Some(call), throw_at, "redactEvent: error"),
-        (result, value, error) => {
-            panic!("Rust gives {result:?}; TS gives value {value:?}, error {error:?}")
-        }
+    for case in restore {
+        check_restore_case(case);
     }
 }
 
-/// Runs the restore through Rust and through TS (the oracle) and compares the results.
-fn compare_restore(original: &TsEvent, replacement: Option<&TsEvent>) {
-    let actual = apply_event_redaction(original, replacement.cloned()).map(Value::Object);
-    let request = json!({
-        "original": original,
-        "replacement": replacement,
-    });
-    let ts = oracle::call("oracle.applyEventRedaction", &[request])
-        .unwrap()
-        .expect("a reply");
-    match actual {
-        Some(actual) => assert_js_eq(&actual, &ts, "applyEventRedaction"),
-        None => assert_eq!(ts, Value::Null, "applyEventRedaction drops the event"),
+/// `value` with every string `s` in it written `[R:s]`.
+fn wrap_all(value: &Value) -> Value {
+    match value {
+        Value::String(text) => Value::String(format!("[R:{text}]")),
+        Value::Array(items) => Value::Array(items.iter().map(wrap_all).collect()),
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, value)| (key.clone(), wrap_all(value)))
+                .collect(),
+        ),
+        other => other.clone(),
     }
+}
+
+/// The walk's result for an object of the top level (the event, or an object under `""` keys
+/// only), from the rule: a protected key keeps its value, and so does the event's own
+/// `timestamp` string; a `""` key holds another top-level object; every other string is
+/// redacted.
+fn expected_walk(object: &Map<String, Value>, is_event: bool) -> Map<String, Value> {
+    object
+        .iter()
+        .map(|(key, value)| {
+            let kept = PROTECTED_FIELDS.contains(&key.as_str())
+                || (is_event && key == "timestamp" && value.is_string());
+            let walked = match value {
+                _ if kept => value.clone(),
+                Value::Object(inner) if key.is_empty() => {
+                    Value::Object(expected_walk(inner, false))
+                }
+                _ => wrap_all(value),
+            };
+            (key.clone(), walked)
+        })
+        .collect()
+}
+
+/// The restore's result, from the rule: the hook's result without `eventRedactionFn`, where the
+/// string-hook field and each restored field take the original's value (in their place when the
+/// result has them, at the end in that order when not) or go when the original lacks them.
+fn expected_restore(original: &TsEvent, replacement: &TsEvent) -> Vec<(String, Value)> {
+    let copied: Vec<&str> = std::iter::once(STRING_HOOK_FIELD)
+        .chain(RESTORED_FIELDS)
+        .collect();
+    let mut expected: Vec<(String, Value)> = replacement
+        .iter()
+        .filter(|(key, _)| *key != EVENT_HOOK_FIELD)
+        .filter_map(|(key, value)| match original.get(key) {
+            Some(kept) if copied.contains(&key.as_str()) => Some((key.clone(), kept.clone())),
+            None if copied.contains(&key.as_str()) => None,
+            _ => Some((key.clone(), value.clone())),
+        })
+        .collect();
+    for field in copied {
+        if let Some(value) = original.get(field)
+            && !expected.iter().any(|(key, _)| key == field)
+        {
+            expected.push((field.to_owned(), value.clone()));
+        }
+    }
+    expected
 }
 
 /// A key the walk treats in a special way somewhere: a protected name, `timestamp`, `""`, or an
@@ -241,15 +294,38 @@ fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
 proptest! {
     #![proptest_config(config())]
 
+    /// The walk redacts every string but those under a protected key of the top level and the
+    /// event's own `timestamp` string, and lists the event's keys with the array-index keys first.
     #[test]
-    fn redact_strings_matches_ts(
-        event in redact_input(),
-        throw_at in prop::option::weighted(0.2, 1usize..=12),
+    fn the_walk_redacts_every_string_but_the_protected_top_level_ones(
+        event in prop_oneof![redact_input(), walk_event()],
     ) {
-        compare_redact(&event, throw_at);
+        let (result, _) = redact(&event, None);
+        let redacted = result.unwrap();
+        prop_assert_eq!(&redacted, &expected_walk(&event, true));
+        let keys: Vec<&str> = redacted.keys().map(String::as_str).collect();
+        prop_assert_eq!(keys, index_keys_first(event.keys().map(String::as_str)));
     }
 
-    /// C38: the async string hook gets the strings of [`visit_strings`] and gives its results to
+    /// A redactor that fails on call `n` stops the walk there with its error, after the first
+    /// `n` strings of a full walk; one that fails past the last string changes nothing.
+    #[test]
+    fn a_failing_redactor_stops_the_walk_at_its_call(
+        event in redact_input(),
+        throw_at in 1usize..=12,
+    ) {
+        let (full, all_calls) = redact(&event, None);
+        let (result, calls) = redact(&event, Some(throw_at));
+        if throw_at <= all_calls.len() {
+            prop_assert_eq!(result, Err(throw_at));
+            prop_assert_eq!(&calls[..], &all_calls[..throw_at]);
+        } else {
+            prop_assert_eq!(result, full);
+            prop_assert_eq!(calls, all_calls);
+        }
+    }
+
+    /// The async string hook gets the strings of [`visit_strings`] and gives its results to
     /// [`redact_strings`] in that order, so the two walks must visit the same strings in the
     /// same order. Fed those results in visit order, `redact_strings` builds the same event as
     /// with the redactor called inside the walk, and uses every result.
@@ -267,11 +343,21 @@ proptest! {
         prop_assert_eq!(results.next(), None);
     }
 
+    /// The restore drops the event when the hook gives none. Otherwise it keeps the hook's
+    /// result but `eventRedactionFn`, and takes the string-hook field and the restored fields
+    /// from the original.
     #[test]
-    fn apply_event_redaction_matches_ts(
+    fn the_restore_takes_the_system_fields_from_the_original(
         original in restore_map(),
         replacement in prop::option::weighted(0.9, restore_map()),
     ) {
-        compare_restore(&original, replacement.as_ref());
+        let actual = apply_event_redaction(&original, replacement.clone());
+        match replacement {
+            None => prop_assert_eq!(actual, None),
+            Some(replacement) => {
+                let actual: Vec<(String, Value)> = actual.unwrap().into_iter().collect();
+                prop_assert_eq!(actual, expected_restore(&original, &replacement));
+            }
+        }
     }
 }

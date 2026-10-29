@@ -375,14 +375,14 @@ fn error_data(text: impl Strategy<Value = String> + Clone + 'static) -> BoxedStr
         .boxed()
 }
 
-/// A tool listing of 1 to 6 tools in the shapes of the `seeded:` cases of
-/// `oracle/src/vectors/gen/inject.mjs`, each one rmcp's `Tool` holds. Names come from a small set
-/// with `get_more_tools` and `unknown`, so they repeat. An input schema has, in any key order: a
-/// `type` or none; `properties` that is an object of customer properties (some named `session_id`,
-/// `agent_id` or `context`, with truthy or falsy schemas, and index keys), absent, falsy, a string,
-/// number or boolean, or an array; `required` absent, a list or another value;
-/// `additionalProperties`; and a composition key with a truthy or falsy value. A tool sometimes has
-/// a description, an output schema ([`output_schema`]) and annotations.
+/// A tool listing of 1 to 6 tools in the shapes of the `seeded:` cases of `inject.json`, each
+/// one rmcp's `Tool` holds. Names come from a small set with `get_more_tools` and `unknown`, so
+/// they repeat. An input schema has, in any key order: a `type` or none; `properties` that is an
+/// object of customer properties (some named `session_id`, `agent_id` or `context`, with truthy or
+/// falsy schemas, and index keys), absent, falsy, a string, number or boolean, or an array;
+/// `required` absent, a list or another value; `additionalProperties`; and a composition key with
+/// a truthy or falsy value. A tool sometimes has a description, an output schema
+/// ([`output_schema`]) and annotations.
 pub(crate) fn tool_list() -> impl Strategy<Value = Vec<Tool>> + Clone {
     let name = prop::sample::select(vec!["echo", "search", "get_more_tools", "own", "unknown"]);
     let description = prop::option::of(prop::sample::select(vec!["Search", "", "d"]));

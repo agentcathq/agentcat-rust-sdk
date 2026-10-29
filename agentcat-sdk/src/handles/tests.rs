@@ -1,6 +1,6 @@
-//! `handles` against the TS SDK: the vectors of `tests/vectors/handles.json`, property tests that
-//! run the same inputs through the JS oracle, and Rust-only tests of the random IDs. A minted
-//! session ID is random, so both sides check it is valid and write [`MINTED`] in its place.
+//! `handles`: the cases of `tests/vectors/handles.json` and `tests/vectors/handles_cases.json`,
+//! property tests of the rules of each function, and tests of the random IDs. A minted session
+//! ID is random, so the check makes sure it is valid and writes [`MINTED`] in its place.
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
@@ -12,8 +12,9 @@ use super::{
     new_event_id, new_session_id, resolve_handles, session_from_hook_value,
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, SESSION_START_SENTINEL};
+use crate::js;
 use crate::test_support::strategies::{js_char, js_string};
-use crate::test_support::{assert_js_eq, config, oracle, vectors};
+use crate::test_support::{assert_js_eq, config, vectors};
 
 /// The case name prefixes of `handles.json`.
 const KINDS: [&str; 9] = [
@@ -28,7 +29,7 @@ const KINDS: [&str; 9] = [
     "lowercase",
 ];
 
-/// What the oracle and the vectors write in place of a minted session ID.
+/// What the vectors write in place of a minted session ID.
 const MINTED: &str = "<minted>";
 
 /// The base62 digits of a KSUID.
@@ -434,53 +435,100 @@ fn tag_agent_id() -> impl Strategy<Value = String> + Clone {
     ]
 }
 
+/// The cases of `handles_cases.json`: random IDs and projects for `derive`, random strings
+/// around the session ID shape for `valid`, random tool arguments for `extract` and `resolve`
+/// (with every hook mode, agent tracking and parameter owner), and random resolutions and
+/// protocol versions for `tags`.
+#[test]
+fn every_kind_matches_handles_cases() {
+    let seen: BTreeSet<&str> = vectors::cases("handles_cases")
+        .iter()
+        .map(check_case)
+        .collect();
+    assert_eq!(
+        seen,
+        BTreeSet::from(["derive", "valid", "extract", "resolve", "tags"]),
+        "handles_cases.json has cases of each kind"
+    );
+}
+
 proptest! {
     #![proptest_config(config())]
 
+    /// A project ID is hashed with the ID as `"<id>:<project>"`; an empty project is no project.
+    /// The result is a session ID.
     #[test]
-    fn derive_matches_ts(id in js_string(40), project in proptest::option::of(js_string(10))) {
-        let mut args = vec![json!(id)];
-        if let Some(project) = &project {
-            args.push(json!(project));
-        }
-        let js = oracle::call("handles.deriveSessionId", &args).unwrap();
-        prop_assert_eq!(Some(json!(derive_session_id(&id, project.as_deref()))), js);
+    fn derive_hashes_the_id_and_the_project_together(
+        id in js_string(40),
+        project in proptest::option::of(js_string(10)),
+    ) {
+        let derived = derive_session_id(&id, project.as_deref());
+        prop_assert!(has_session_shape(&derived), "{}", derived);
+        let expected = match project.as_deref() {
+            Some("") | None => derive_session_id(&id, None),
+            Some(project) => derive_session_id(&format!("{id}:{project}"), None),
+        };
+        prop_assert_eq!(&derived, &expected);
+        prop_assert_eq!(derive_session_id(&id, Some("")), derive_session_id(&id, None));
     }
 
+    /// A value is valid exactly when it is `ses_` and 27 base62 digits.
     #[test]
-    fn is_valid_matches_ts(value in prop_oneof![4 => session_shaped(), 1 => js_string(30)]) {
-        let js = oracle::call("handles.isValidSessionId", &[json!(value)]).unwrap();
-        prop_assert_eq!(Some(json!(is_valid_session_id(&value))), js, "{:?}", value);
+    fn is_valid_is_the_session_id_shape(value in prop_oneof![4 => session_shaped(), 1 => js_string(30)]) {
+        prop_assert_eq!(is_valid_session_id(&value), has_session_shape(&value), "{:?}", value);
     }
 
+    /// A handle is a trimmed, non-empty string value. The session is the hook's in hook mode,
+    /// foreign when the tool owns `session_id`, and otherwise new when the handle is absent or
+    /// `start` in any ASCII case, the handle when it is valid, and none when it is not. The agent
+    /// ID is its handle with agent tracking, and absent without.
     #[test]
-    fn extract_and_resolve_match_ts(
+    fn extract_and_resolve_follow_the_session_rules(
         args in handle_args(),
         hook_mode in any::<bool>(),
         agent_tracking in any::<bool>(),
         session_param_is_ours in any::<bool>(),
     ) {
-        let js_args = args.clone().map_or(Value::Null, Value::Object);
+        let handle = |param: &str| {
+            args.as_ref()
+                .and_then(|args| args.get(param))
+                .and_then(Value::as_str)
+                .map(js::trim)
+                .filter(|text| !text.is_empty())
+                .map(str::to_owned)
+        };
         for param in [SESSION_ID_PARAM, AGENT_ID_PARAM] {
-            let js = oracle::call("handles.extractHandle", &[js_args.clone(), json!(param)]).unwrap();
-            prop_assert_eq!(extract_handle(args.as_ref(), param).map(Value::from), js, "{}", param);
+            prop_assert_eq!(extract_handle(args.as_ref(), param), handle(param), "{}", param);
         }
-        let mut input = json!({
-            "hookMode": hook_mode,
-            "agentTracking": agent_tracking,
-            "sessionParamIsOurs": session_param_is_ours,
-        });
-        if let Some(args) = &args {
-            input["args"] = Value::Object(args.clone());
-        }
-        let js = oracle::call("oracle.resolveHandles", &[input.clone()]).unwrap().unwrap();
         let res = resolve_handles(args.as_ref(), hook_mode, agent_tracking, session_param_is_ours)
             .unwrap();
-        assert_js_eq(&masked_resolution(&res), &js, &input.to_string());
+        prop_assert_eq!(res.hook_mode, hook_mode);
+        prop_assert_eq!(res.agent_id.clone(), handle(AGENT_ID_PARAM).filter(|_| agent_tracking));
+        let session = handle(SESSION_ID_PARAM);
+        let expected = if hook_mode {
+            Some((String::new(), SessionSource::Hook))
+        } else if !session_param_is_ours {
+            Some((String::new(), SessionSource::Foreign))
+        } else if session.as_ref().is_none_or(|value| value.eq_ignore_ascii_case("start")) {
+            None
+        } else if session.as_deref().is_some_and(has_session_shape) {
+            session.map(|value| (value, SessionSource::Supplied))
+        } else {
+            Some((String::new(), SessionSource::Invalid))
+        };
+        if let Some(expected) = expected {
+            prop_assert_eq!((res.session_id, res.session_source), expected);
+        } else {
+            prop_assert_eq!(res.session_source, SessionSource::Minted);
+            prop_assert!(has_session_shape(&res.session_id), "{}", res.session_id);
+        }
     }
 
+    /// The tags are the session source; with a non-empty agent ID, that ID with CR and LF
+    /// written as spaces and cut to its longest prefix of at most 200 UTF-16 units, and the agent
+    /// source `supplied`; and a non-empty protocol version. They come in that order.
     #[test]
-    fn handle_tags_match_ts(
+    fn handle_tags_hold_the_source_the_cut_agent_and_the_version(
         agent_id in proptest::option::of(tag_agent_id()),
         source in prop::sample::select(SOURCES.to_vec()),
         hook_mode in any::<bool>(),
@@ -494,14 +542,27 @@ proptest! {
             session_id: String::new(),
             session_source: source,
             hook_mode,
-            agent_id,
+            agent_id: agent_id.clone(),
         };
-        let mut args = vec![resolution_to_ts(&res)];
-        if let Some(version) = &protocol_version {
-            args.push(json!(version));
+        let tags = build_handle_tags(&res, protocol_version.as_deref());
+        let mut expected = vec![("agentcat_session_id_source", json!(source.as_str()))];
+        if let Some(agent) = agent_id.filter(|agent| !agent.is_empty()) {
+            let flat: String = agent.chars().map(|c| if c == '\r' || c == '\n' { ' ' } else { c }).collect();
+            let mut units = 0;
+            let cut: String = flat
+                .chars()
+                .take_while(|c| {
+                    units += c.len_utf16();
+                    units <= 200
+                })
+                .collect();
+            expected.push(("agentcat_agent_id", json!(cut)));
+            expected.push(("agentcat_agent_id_source", json!("supplied")));
         }
-        let js = oracle::call("handles.buildHandleTags", &args).unwrap().unwrap();
-        let actual = build_handle_tags(&res, protocol_version.as_deref());
-        assert_js_eq(&Value::Object(actual), &js, &format!("{args:?}"));
+        if let Some(version) = protocol_version.filter(|version| !version.is_empty()) {
+            expected.push(("agentcat_protocol_version", json!(version)));
+        }
+        let actual: Vec<(&str, Value)> = tags.iter().map(|(key, value)| (key.as_str(), value.clone())).collect();
+        prop_assert_eq!(actual, expected);
     }
 }

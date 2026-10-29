@@ -1,6 +1,5 @@
-//! `call` against the TS SDK: the cases of `tests/vectors/call.json`, property tests that run
-//! random arguments and structured content through the JS oracle, and Rust-only tests of the
-//! error shapes (RD-05, RD-06, C24, C41).
+//! `call`: the cases of `tests/vectors/call.json` and `tests/vectors/call_cases.json`, property
+//! tests of the strip and of the mirror's key order, and tests of the error shapes.
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
@@ -13,8 +12,9 @@ use super::{
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM};
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
+use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{json_value, object_key};
-use crate::test_support::{assert_js_eq, config, oracle, vectors};
+use crate::test_support::{assert_js_eq, config, vectors};
 
 /// The case name prefixes of `call.json`.
 const KINDS: [&str; 5] = [
@@ -249,11 +249,49 @@ fn result_error_has_no_type() {
     );
 }
 
-/// The TS arguments of a random call, from the oracle: `{name, arguments, registry}`.
-fn ts_strip(input: &Value) -> Value {
-    oracle::call("oracle.strip", std::slice::from_ref(input))
-        .unwrap()
-        .unwrap()
+/// The cases of `call_cases.json`: `strip:` cases, the arguments a handler gets from random
+/// arguments with and without a registry entry, and `structured:` cases, the structured content
+/// of a result after the mirror. The check compares the JSON text, so the key order counts.
+#[test]
+fn strip_and_mirror_match_call_cases() {
+    let mut seen = BTreeSet::new();
+    for case in vectors::cases("call_cases") {
+        let name = vectors::name(&case);
+        let kind = kind_of(name);
+        seen.insert(kind);
+        let input = &case["input"];
+        let actual = match kind {
+            "strip" => {
+                let tool = input["name"].as_str().unwrap();
+                let entry = entry_of(&input["registry"], tool);
+                Value::Object(strip_arguments(
+                    object(&input["arguments"]),
+                    entry.as_ref(),
+                    tool,
+                ))
+            }
+            "structured" => {
+                let mut structured = input.get("structuredContent").cloned();
+                mirror_mint_back(&mut structured, object(&input["mint"]).clone());
+                let mut result = Map::new();
+                if let Some(structured) = structured {
+                    result.insert("structuredContent".to_owned(), structured);
+                }
+                Value::Object(result)
+            }
+            other => panic!("{name}: call_cases.json has no {other} cases"),
+        };
+        assert_eq!(
+            serde_json::to_string(&actual).unwrap(),
+            serde_json::to_string(&case["output"]).unwrap(),
+            "{name}"
+        );
+    }
+    assert_eq!(
+        seen,
+        BTreeSet::from(["strip", "structured"]),
+        "call_cases.json has cases of both kinds"
+    );
 }
 
 fn arg_key() -> impl Strategy<Value = String> {
@@ -266,8 +304,11 @@ fn arg_key() -> impl Strategy<Value = String> {
 proptest! {
     #![proptest_config(config())]
 
+    /// With a registry entry, the strip removes the names the entry recorded; without one, all
+    /// three injected names, or only `session_id` and `agent_id` for `get_more_tools`. Every
+    /// other argument keeps its value and its place.
     #[test]
-    fn strip_matches_ts(
+    fn strip_removes_only_the_injected_names_and_keeps_the_order(
         entries in prop::collection::vec((arg_key(), json_value(1, 2)), 0..=6),
         tool in prop::sample::select(vec!["get_more_tools", "t"]),
         registry in prop_oneof![
@@ -278,14 +319,26 @@ proptest! {
         ],
     ) {
         let arguments: Map<String, Value> = entries.into_iter().collect();
+        let removed: Vec<&str> = match &registry {
+            Some((name, params)) if *name == tool => params.clone(),
+            _ if tool == "get_more_tools" => vec![SESSION_ID_PARAM, AGENT_ID_PARAM],
+            _ => vec![SESSION_ID_PARAM, AGENT_ID_PARAM, CONTEXT_PARAM],
+        };
         let registry = registry.map_or(Value::Null, |(name, params)| json!([[name, params]]));
-        let input = json!({"name": tool, "arguments": arguments, "registry": registry});
-        let ts = ts_strip(&input);
-        check_strip(&input, &ts, &input.to_string());
+        let entry = entry_of(&registry, tool);
+        let actual = strip_arguments(&arguments, entry.as_ref(), tool);
+        let expected: Vec<(&String, &Value)> = arguments
+            .iter()
+            .filter(|(key, _)| !removed.contains(&key.as_str()))
+            .collect();
+        prop_assert_eq!(actual.iter().collect::<Vec<_>>(), expected);
     }
 
+    /// The mirror gives an object without its own `mcp_session` key that key, with the mint as
+    /// its value, after the array-index keys (ascending) and before the other keys (in their
+    /// order); the values stay. Any other structured content stays as it is, key order included.
     #[test]
-    fn mirror_matches_ts(
+    fn mirror_puts_mcp_session_after_the_index_keys(
         structured in prop_oneof![
             3 => prop::collection::vec((object_key(), json_value(1, 2)), 0..=6)
                 .prop_map(|entries| Some(Value::Object(entries.into_iter().collect()))),
@@ -300,29 +353,26 @@ proptest! {
             body.insert("mcp_session".to_owned(), json!("customer"));
         }
         let mint: Map<String, Value> = mint_keys.into_iter().map(|key| (key.to_owned(), json!(format!("<{key}>")))).collect();
-        let mut result = json!({"content": []});
-        if let Some(structured) = &structured {
-            result["structuredContent"] = structured.clone();
-        }
-        let ts = oracle::call(
-            "handles.mirrorStructuredMintBack",
-            &[result, Value::Object(mint.clone())],
-        ).unwrap().unwrap();
-        mirror_mint_back(&mut structured, mint);
-        let context = format!("{structured:?}");
-        match (&structured, ts.get("structuredContent")) {
-            (Some(actual), Some(ts)) => {
-                assert_js_eq(actual, ts, &context);
-                // An object that is left alone keeps its order (R23: TS's index-first order of a
-                // customer's own keys is a JavaScript artifact); a mirrored one has C21's.
-                if let (false, Value::Object(actual), Value::Object(ts)) = (own, actual, ts) {
-                    let actual: Vec<&String> = actual.keys().collect();
-                    let ts: Vec<&String> = ts.keys().collect();
-                    assert_eq!(actual, ts, "{context}: key order");
+        let before = structured.clone();
+        mirror_mint_back(&mut structured, mint.clone());
+        match (&before, &structured) {
+            (Some(Value::Object(body)), Some(Value::Object(mirrored)))
+                if !body.contains_key("mcp_session") =>
+            {
+                let order = index_keys_first(
+                    std::iter::once("mcp_session").chain(body.keys().map(String::as_str)),
+                );
+                let keys: Vec<&str> = mirrored.keys().map(String::as_str).collect();
+                prop_assert_eq!(keys, order);
+                prop_assert_eq!(&mirrored["mcp_session"], &Value::Object(mint));
+                for (key, value) in body {
+                    prop_assert_eq!(&mirrored[key], value);
                 }
             }
-            (None, None) => {}
-            (actual, ts) => panic!("{context}: {actual:?}, TS {ts:?}"),
+            _ => prop_assert_eq!(
+                serde_json::to_string(&structured).unwrap(),
+                serde_json::to_string(&before).unwrap()
+            ),
         }
     }
 }

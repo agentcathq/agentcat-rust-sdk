@@ -1,13 +1,14 @@
-//! `tokens` against TS: the vectors of `tests/vectors/tokens.json`, and property tests that run
-//! the same inputs through the JS oracle.
+//! `tokens`: the cases of `tests/vectors/tokens.json` and `tests/vectors/tokens_cases.json`, and
+//! property tests of the bound and of what each estimate counts.
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{estimate_input_tokens, estimate_output_tokens, estimate_tokens};
+use crate::js;
 use crate::test_support::strategies::{js_string, json_value, object_key};
-use crate::test_support::{config, oracle, vectors};
+use crate::test_support::{config, vectors};
 
 /// The case name prefixes of `tokens.json`, and `divisor` (a case without a prefix).
 const KINDS: [&str; 5] = ["bytes", "utf8", "input", "output", "divisor"];
@@ -109,40 +110,91 @@ fn tool_result() -> impl Strategy<Value = Value> + Clone {
         })
 }
 
-/// What the oracle gives as an `Option<i32>`: `undefined` is `None`.
-fn ts_tokens(func: &str, value: &Value) -> Option<i64> {
-    oracle::call(func, std::slice::from_ref(value))
-        .unwrap()
-        .map(|v| v.as_i64().expect("an integer"))
+/// The cases of `tokens_cases.json`: random arguments (`input:`), random tool results and other
+/// responses (`output:`), and random byte counts (`bytes:`).
+#[test]
+fn estimates_match_tokens_cases() {
+    let seen: BTreeSet<&str> = vectors::cases("tokens_cases")
+        .iter()
+        .map(check_case)
+        .collect();
+    assert_eq!(
+        seen,
+        BTreeSet::from(["bytes", "input", "output"]),
+        "tokens_cases.json has cases of each kind"
+    );
+}
+
+/// The estimate of the byte length of the `stringify` text of `value`.
+fn stringify_tokens(value: &Value) -> i32 {
+    estimate_tokens(u64::try_from(js::stringify(value).len()).unwrap())
+}
+
+/// The UTF-8 bytes of the text a content block counts, from the rule: the `text` string of a
+/// `text` block and the `resource.text` string of a `resource` block; 0 for any other block.
+fn counted_bytes(block: &Value) -> u64 {
+    let text = match block["type"].as_str() {
+        Some("text") => &block["text"],
+        Some("resource") => &block["resource"]["text"],
+        _ => &Value::Null,
+    };
+    text.as_str()
+        .map_or(0, |text| u64::try_from(text.len()).unwrap())
+}
+
+/// The output estimate from the rule: a response without a `content` array counts its JSON; an
+/// empty `content` counts the JSON of `structuredContent`, or 0 without one; any other `content`
+/// counts the text of its blocks, rounded once.
+fn expected_output(response: &Value) -> i32 {
+    match response.get("content").and_then(Value::as_array) {
+        None => stringify_tokens(response),
+        Some(content) if content.is_empty() => match response.get("structuredContent") {
+            None | Some(Value::Null) => 0,
+            Some(structured) => stringify_tokens(structured),
+        },
+        Some(content) => estimate_tokens(content.iter().map(counted_bytes).sum()),
+    }
 }
 
 proptest! {
     #![proptest_config(config())]
 
+    /// The estimate is the fewest tokens whose 3.5 bytes each cover the bytes (`7 * t >= 2 * b`)
+    /// up to `i32::MAX`, and it never falls as the bytes grow.
     #[test]
-    fn input_tokens_match_ts(
+    fn estimate_tokens_is_the_fewest_tokens_of_3_5_bytes_that_cover_the_bytes(
+        bytes in prop_oneof![0_u64..100_000, 0_u64..(1 << 53)],
+        more in 0_u64..1_000,
+    ) {
+        let tokens = estimate_tokens(bytes);
+        let wide = |n: i32| 7 * u128::try_from(n).unwrap();
+        prop_assert!(tokens == i32::MAX || wide(tokens) >= 2 * u128::from(bytes));
+        if tokens > 0 {
+            prop_assert!(wide(tokens - 1) < 2 * u128::from(bytes));
+        }
+        prop_assert!(estimate_tokens(bytes + more) >= tokens);
+    }
+
+    /// The input estimate counts the bytes of the arguments' `stringify` text.
+    #[test]
+    fn input_tokens_count_the_stringify_bytes(
         entries in proptest::collection::vec((object_key(), json_value(5, 6)), 0..6),
     ) {
         let value = Value::Object(entries.into_iter().collect());
-        let ts = ts_tokens("tokenEstimate.estimateInputTokens", &value);
-        prop_assert_eq!(estimate_input_tokens(Some(&value)).map(i64::from), ts);
+        prop_assert_eq!(estimate_input_tokens(Some(&value)), Some(stringify_tokens(&value)));
     }
 
+    /// The output estimate of a tool result counts the text of its text and resource blocks,
+    /// or its structured content when it has no block.
     #[test]
-    fn output_tokens_match_ts(value in tool_result()) {
-        let ts = ts_tokens("tokenEstimate.estimateOutputTokens", &value);
-        prop_assert_eq!(estimate_output_tokens(Some(&value)).map(i64::from), ts);
+    fn output_tokens_count_the_block_texts(value in tool_result()) {
+        prop_assert_eq!(estimate_output_tokens(Some(&value)), Some(expected_output(&value)));
     }
 
+    /// The output estimate of any other response counts its JSON when it has no `content` array.
     #[test]
-    fn any_response_matches_ts(value in json_value(4, 5)) {
-        let ts = ts_tokens("tokenEstimate.estimateOutputTokens", &value);
-        prop_assert_eq!(estimate_output_tokens(Some(&value)).map(i64::from), ts);
-    }
-
-    #[test]
-    fn estimate_tokens_matches_ts(bytes in prop_oneof![0_u64..100_000, 0_u64..(1 << 53)]) {
-        let ts = oracle::call("tokenEstimate.estimateTokens", &[json!(bytes)]).unwrap();
-        prop_assert_eq!(Some(json!(estimate_tokens(bytes))), ts);
+    fn output_tokens_of_any_response_follow_the_same_rule(value in json_value(4, 5)) {
+        let expected = (!value.is_null()).then(|| expected_output(&value));
+        prop_assert_eq!(estimate_output_tokens(Some(&value)), expected);
     }
 }

@@ -1,14 +1,11 @@
-//! Helpers shared by the crate's unit tests: the JS oracle, the markers of the strict JSON
-//! encoding, the vector loader, the proptest strategies, JSON helpers and [`TempHome`].
+//! Helpers shared by the crate's unit tests: the markers of the strict JSON encoding, the vector
+//! loader, the proptest strategies, JSON helpers and [`TempHome`].
 pub(crate) mod json;
 pub(crate) mod markers;
-pub(crate) mod oracle;
 pub(crate) mod queue;
 pub(crate) mod rmcp;
 pub(crate) mod strategies;
 pub(crate) mod vectors;
-
-mod smoke;
 
 use std::path::{Path, PathBuf};
 
@@ -97,8 +94,8 @@ pub(crate) fn config() -> Config {
     Config::default()
 }
 
-/// The most shrink steps of a [`config_capped`] test: each step reruns the test, oracle call
-/// included, on an input that can be several hundred kilobytes.
+/// The most shrink steps of a [`config_capped`] test: each step reruns the test on an input that
+/// can be several hundred kilobytes.
 const SHRINK_ITERS: u32 = 64;
 
 /// The most time, in milliseconds, a [`config_capped`] test spends shrinking.

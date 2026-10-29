@@ -1,14 +1,17 @@
-//! `truncate_event` against TS: the vectors of `tests/vectors/truncate.json` and
-//! `tests/vectors/truncate_size.json` and `tests/vectors/truncate_cut.json`, and property tests that run the same events through the JS
-//! oracle.
+//! `truncate_event`: the cases of `tests/vectors/truncate.json`, `truncate_size.json`,
+//! `truncate_cut.json` and `truncate_cases.json`, and property tests of the field limits and of
+//! the size guard.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::{TruncateError, truncate_event};
+use super::{
+    LIMITED_FIELDS, MAX_ERROR_MESSAGE_LENGTH, MAX_EVENT_BYTES, MAX_STACK_FRAMES, TruncateError,
+    truncate_event,
+};
 use crate::js;
 use crate::pipeline::TsEvent;
 use crate::test_support::strategies::{bmp_string, js_string, number, ts_event};
-use crate::test_support::{assert_js_eq, config, config_capped, markers, oracle, vectors};
+use crate::test_support::{assert_js_eq, config, config_capped, markers, vectors};
 
 /// The largest event, in bytes, of the field-limit property test: far enough under the 102 400
 /// bytes of the size guard that a cut character (RD-22) never meets it.
@@ -19,8 +22,8 @@ fn size_of(event: &TsEvent) -> usize {
     js::stringify(&Value::Object(event.clone())).len()
 }
 
-/// Asserts that `actual` is TS's `expected` reply of `oracle.truncateEvent`: `{"value": event}`,
-/// or `{"error": text}` for the text of the error TS throws.
+/// Asserts that `actual` is the `expected` result of a case: `{"value": event}`, or
+/// `{"error": text}` for the text of the error.
 fn assert_matches_ts(actual: &Result<TsEvent, TruncateError>, expected: &Value, context: &str) {
     match (actual, expected.get("value"), expected.get("error")) {
         (Ok(event), Some(value), None) => {
@@ -95,76 +98,150 @@ fn truncate_event_by_value_matches_vectors() {
     }
 }
 
-/// Runs `event` through Rust and through TS (the oracle) and compares the results.
-fn compare(event: &TsEvent) {
-    let actual = truncate_event(event.clone());
-    let ts = oracle::call("oracle.truncateEvent", &[Value::Object(event.clone())])
-        .unwrap()
-        .expect("a reply");
-    assert_matches_ts(&actual, &ts, "truncateEvent");
+/// The cases of `truncate_cases.json`: events with fields near their limits (`field-limits:`,
+/// some of which fail) and large events for the size guard (`size-guard:`). The two
+/// `size-guard:regression:` cases are the events of the seeds in
+/// `proptest-regressions/pipeline/truncate/tests.txt`.
+#[test]
+fn truncate_matches_truncate_cases() {
+    let cases = vectors::cases("truncate_cases");
+    assert!(cases.len() >= 20, "truncate_cases.json has its cases");
+    for case in &cases {
+        let name = vectors::name(case);
+        let context = format!("truncate_cases.json {name}");
+        let actual = truncate_event(input_of(case, &context));
+        assert_matches_ts(&actual, &reply_of(case, &context), &context);
+    }
 }
 
-/// The last resort cuts strings inside an array as TS does. `properties` is not normalized, so a
-/// list of long strings there is still whole when the size guard runs: the budget reaches all
-/// three strings, each ends in `"..."`, and the event fits.
-#[test]
-fn size_guard_cuts_long_strings_inside_an_array() {
-    let list: Vec<String> = ["a", "b", "c"].iter().map(|c| c.repeat(60_000)).collect();
-    let event = json!({
+/// The event of the two size-guard tests: the four fields every event has, then `properties`.
+fn guard_event(properties: Value) -> TsEvent {
+    let mut event = json!({
         "id": "evt_1",
         "sessionId": "ses_1",
         "eventType": "mcp:tools/call",
         "timestamp": "2025-01-15T12:00:00.000Z",
-        "properties": {"list": list},
-    });
-    let event = event.as_object().cloned().unwrap();
-    compare(&event);
-    let truncated = truncate_event(event).unwrap();
-    let items = truncated["properties"]["list"].as_array().unwrap();
-    assert_eq!(items.len(), 3);
-    for item in items {
-        let text = item.as_str().unwrap();
-        assert!(
-            text.len() < 60_000 && text.ends_with("..."),
-            "{}",
-            text.len()
-        );
-    }
+    })
+    .as_object()
+    .cloned()
+    .unwrap();
+    event.insert("properties".to_owned(), properties);
+    event
+}
+
+/// The last resort cuts strings inside an array. `properties` is not normalized, so a list of
+/// long strings there is still whole when the size guard runs: the budget reaches all three
+/// strings, each ends in `"..."`, and the event fits.
+#[test]
+fn size_guard_cuts_long_strings_inside_an_array() {
+    let list: Vec<String> = ["a", "b", "c"].iter().map(|c| c.repeat(60_000)).collect();
+    let truncated = truncate_event(guard_event(json!({"list": list}))).unwrap();
+    let cut = |c: &str, units: usize| format!("{}...", c.repeat(units));
+    let expected =
+        guard_event(json!({"list": [cut("a", 30_000), cut("b", 30_000), cut("c", 42_065)]}));
+    assert_eq!(
+        serde_json::to_string(&truncated).unwrap(),
+        serde_json::to_string(&expected).unwrap()
+    );
     assert!(
-        size_of(&truncated) <= super::MAX_EVENT_BYTES,
+        size_of(&truncated) <= MAX_EVENT_BYTES,
         "{}",
         size_of(&truncated)
     );
 }
 
 /// The last resort cuts a string whose reduction is exactly [`MIN_REDUCTION`](super::MIN_REDUCTION)
-/// units, as TS does: the cut of the long string leaves a budget of that many bytes, which the
+/// units: the cut of the long string to its half leaves a budget of that many bytes, which the
 /// short string spends, and the event fits.
 #[test]
 fn size_guard_cuts_at_the_minimum_reduction() {
     let event_with = |long: usize, short: usize| {
-        let event = json!({
-            "id": "evt_1",
-            "sessionId": "ses_1",
-            "eventType": "mcp:tools/call",
-            "timestamp": "2025-01-15T12:00:00.000Z",
-            "properties": {"long": "a".repeat(long), "short": "b".repeat(short)},
-        });
-        event.as_object().cloned().unwrap()
+        guard_event(json!({"long": "a".repeat(long), "short": "b".repeat(short)}))
     };
     let short = 200;
     let base = size_of(&event_with(0, 0));
     // The excess plus the buffer is half the long string plus the minimum reduction.
-    let long =
-        2 * (super::MAX_EVENT_BYTES - super::BUFFER_BYTES + super::MIN_REDUCTION - base - short);
-    let event = event_with(long, short);
-    compare(&event);
-    let truncated = truncate_event(event).unwrap();
+    let long = 2 * (MAX_EVENT_BYTES - super::BUFFER_BYTES + super::MIN_REDUCTION - base - short);
+    assert_eq!(long, 203_744, "the event of the frozen result");
+    let truncated = truncate_event(event_with(long, short)).unwrap();
+    assert_eq!(
+        truncated["properties"]["long"],
+        format!("{}...", "a".repeat(long / 2))
+    );
     assert_eq!(
         truncated["properties"]["short"],
         format!("{}...", "b".repeat(short - super::MIN_REDUCTION))
     );
-    assert!(size_of(&truncated) <= super::MAX_EVENT_BYTES);
+    assert!(size_of(&truncated) <= MAX_EVENT_BYTES);
+}
+
+/// Checks a field with a length limit: a string over `limit` UTF-16 units keeps its longest
+/// prefix within the limit and gets `"..."`; an array of more than `limit` items becomes the
+/// `to_js_string` text of its first `limit` items and `"..."`; any other value stays.
+fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), TestCaseError> {
+    match input {
+        Value::String(text) if js::utf16_len(text) > limit => {
+            let kept = output
+                .as_str()
+                .and_then(|out| out.strip_suffix("..."))
+                .unwrap();
+            prop_assert!(text.starts_with(kept), "{:?} is not a prefix", kept);
+            prop_assert!(js::utf16_len(kept) <= limit);
+            let next = text[kept.len()..].chars().next().unwrap();
+            prop_assert!(js::utf16_len(kept) + next.len_utf16() > limit);
+        }
+        Value::Array(items) if items.len() > limit => {
+            let joined = js::to_js_string(Some(&Value::Array(items[..limit].to_vec())));
+            prop_assert_eq!(output, &Value::String(joined + "..."));
+        }
+        _ => prop_assert_eq!(output, input),
+    }
+    Ok(())
+}
+
+/// Checks the field-limited `output` of `input`: each limited field and `error.message` within
+/// its limit, `error.frames` cut to its first and last 25, each content text within 32 768
+/// units, and every other field unchanged.
+fn check_field_limits(input: &TsEvent, output: &TsEvent) -> Result<(), TestCaseError> {
+    for (key, value) in input {
+        let out = &output[key];
+        if let Some((_, limit)) = LIMITED_FIELDS.iter().find(|(field, _)| field == key) {
+            check_limited(value, out, *limit)?;
+        } else if key == "error" && value.is_object() {
+            if let Some(message) = value.get("message") {
+                check_limited(message, &out["message"], MAX_ERROR_MESSAGE_LENGTH)?;
+            }
+            if let Some(Value::Array(frames)) = value.get("frames") {
+                let half = MAX_STACK_FRAMES / 2;
+                let expected: Vec<&Value> = if frames.len() > MAX_STACK_FRAMES {
+                    frames[..half]
+                        .iter()
+                        .chain(&frames[frames.len() - half..])
+                        .collect()
+                } else {
+                    frames.iter().collect()
+                };
+                let out: Vec<&Value> = out["frames"].as_array().unwrap().iter().collect();
+                prop_assert_eq!(out, expected);
+            }
+        } else if key == "response"
+            && let Some(Value::Array(blocks)) = value.get("content")
+        {
+            let out = out["content"].as_array().unwrap();
+            prop_assert_eq!(blocks.len(), out.len());
+            for (block, out) in blocks.iter().zip(out) {
+                if let Some(text @ Value::String(_)) = block.get("text") {
+                    check_limited(text, &out["text"], 32_768)?;
+                } else {
+                    prop_assert_eq!(out, block);
+                }
+            }
+        } else {
+            prop_assert_eq!(out, value, "{}", key);
+        }
+    }
+    prop_assert_eq!(output.len(), input.len());
+    Ok(())
 }
 
 /// The object at `key` of `map`, made an empty object first when it is absent or not an object.
@@ -359,18 +436,43 @@ fn large_event() -> impl Strategy<Value = TsEvent> {
 proptest! {
     #![proptest_config(config())]
 
+    /// An event fails exactly when a limited field holds a number, a boolean or an object.
+    /// Otherwise each limited field is within its limit (see [`check_field_limits`]), and the
+    /// event, well under the size limit, is not cut further.
     #[test]
-    fn truncate_matches_ts_field_limits(event in near_limit_event()) {
-        compare(&event);
+    fn field_limits_cut_each_field_to_its_limit(event in near_limit_event()) {
+        let fails = LIMITED_FIELDS.iter().any(|(field, _)| {
+            matches!(event.get(*field), Some(Value::Number(_) | Value::Bool(_) | Value::Object(_)))
+        });
+        match truncate_event(event.clone()) {
+            Err(error) => {
+                prop_assert!(fails, "{}", error);
+                prop_assert_eq!(error.to_string(), "TypeError: str.slice is not a function");
+            }
+            Ok(truncated) => {
+                prop_assert!(!fails);
+                check_field_limits(&event, &truncated)?;
+            }
+        }
     }
 }
 
+// The size-guard test takes the argument of the seeds in
+// `proptest-regressions/pipeline/truncate/tests.txt`, so they give it the same events.
 proptest! {
-    #![proptest_config(config_capped(1_000))]
+    #![proptest_config(config_capped(64))]
 
+    /// The size guard brings each large event within [`MAX_EVENT_BYTES`] and keeps its fields
+    /// and the four fields every event has.
     #[test]
-    fn truncate_matches_ts_size_guard(event in large_event()) {
-        compare(&event);
+    fn size_guard_brings_large_events_within_the_limit(event in large_event()) {
+        let truncated = truncate_event(event.clone()).unwrap();
+        prop_assert!(size_of(&truncated) <= MAX_EVENT_BYTES, "{} bytes", size_of(&truncated));
+        let keys: Vec<&String> = truncated.keys().collect();
+        prop_assert_eq!(keys, event.keys().collect::<Vec<_>>());
+        for key in ["id", "sessionId", "eventType", "timestamp"] {
+            prop_assert_eq!(&truncated[key], &event[key]);
+        }
     }
 }
 
