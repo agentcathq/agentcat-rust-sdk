@@ -855,7 +855,7 @@
         "is_error": true,
         "error": {
           "message": "boom",
-          "type": "e2e::suite::server::Boom",
+          "type": "e2e::suite::server::tools::Boom",
           "platform": "rust"
         },
         "resource_name": "boom",

@@ -39,7 +39,7 @@ struct Rule {
 const RULES: &[Rule] = &[
     Rule {
         path: "$.**",
-        reason: "the SDK mints evt_, ses_ and agt_ IDs from the clock and random bytes",
+        reason: "the SDK mints evt_ and ses_ IDs from the clock and random bytes",
         rewrite: replace_ids,
     },
     Rule {
@@ -80,7 +80,7 @@ const RULES: &[Rule] = &[
 ];
 
 /// The prefixes of the IDs the SDK mints, each followed by 27 base62 characters (a KSUID).
-const ID_PREFIXES: [&str; 3] = ["evt_", "ses_", "agt_"];
+const ID_PREFIXES: [&str; 2] = ["evt_", "ses_"];
 
 /// The number of base62 characters after an ID prefix.
 const KSUID_CHARS: usize = 27;
@@ -305,7 +305,7 @@ fn visit(value: &mut Value, path: &[Step], rewrite: &mut dyn FnMut(&mut Value)) 
 }
 
 /// In a string: each minted ID (a prefix of [`ID_PREFIXES`] and 27 base62 characters, on word
-/// boundaries) becomes `<evt#n>`, `<ses#n>` or `<agt#n>`. A derived `ses_` ID stays.
+/// boundaries) becomes `<evt#n>` or `<ses#n>`. A derived `ses_` ID stays.
 fn replace_ids(value: &mut Value, placeholders: &mut Placeholders) {
     let Value::String(text) = value else { return };
     let mut replaced = String::with_capacity(text.len());

@@ -18,21 +18,25 @@
 //! The transcript holds one entry per session start (`initialize` or `discover`, with the
 //! negotiated `protocolVersion`, `serverInfo`, `capabilities` and `instructions`) and one per
 //! `listTools` or `callTool` (the `request`, then the `result` or the JSON-RPC `error`).
+//!
+//! Each exchange (the send and the wait for the answer) must end within [`REQUEST_TIMEOUT`]; the
+//! panic names the step. This module holds the steps and the protocol; `pipe` is the stdio
+//! connection and `web` the HTTP one.
+mod pipe;
+mod web;
+
 use std::collections::HashMap;
+use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use reqwest::StatusCode;
-use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use serde_json::{Map, Value, json};
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader, DuplexStream, ReadHalf, WriteHalf};
-use tokio::sync::oneshot;
-use tokio::task::JoinHandle;
 
 use super::Lane;
 use super::scenario::{ClientInfo, Scenario, Step};
 use super::server::Served;
+use pipe::Pipe;
+use web::Web;
 
 /// The `_meta` key of the protocol version of a 2026-07-28 request.
 const META_PROTOCOL_VERSION: &str = "io.modelcontextprotocol/protocolVersion";
@@ -46,11 +50,8 @@ const META_SERVER_INFO: &str = "io.modelcontextprotocol/serverInfo";
 /// The request ID of `server/discover`, outside the count of the other requests.
 const DISCOVER_ID: &str = "discover";
 
-/// What every POST accepts.
-const ACCEPTED_TYPES: &str = "application/json, text/event-stream";
-
-/// How long a stdio server may take to stop once the client closed its end of the pipe.
-const CLOSE_TIMEOUT: Duration = Duration::from_secs(10);
+/// How long one exchange may take: the send of a message and the wait for its answer.
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// The clients of a run, to close once the events have arrived.
 pub(crate) struct Clients(Vec<Client>);
@@ -60,10 +61,11 @@ impl Clients {
     ///
     /// # Panics
     ///
-    /// When a stdio server does not stop cleanly within [`CLOSE_TIMEOUT`], or a `DELETE` fails.
+    /// When a stdio server does not stop cleanly, or a `DELETE` fails or takes longer than
+    /// [`REQUEST_TIMEOUT`].
     pub(crate) async fn close(self) {
-        for client in self.0 {
-            client.close().await;
+        for (index, client) in self.0.into_iter().enumerate() {
+            client.close(&format!("the close of session {index}")).await;
         }
     }
 }
@@ -73,9 +75,9 @@ impl Clients {
 ///
 /// # Panics
 ///
-/// When a request cannot be sent, the server answers what the protocol does not allow, the
-/// session negotiates another version than `lane`, or a step names a handle or cursor that no
-/// earlier step saved.
+/// When a request cannot be sent or gets no answer within [`REQUEST_TIMEOUT`], the server
+/// answers what the protocol does not allow, the session negotiates another version than `lane`,
+/// or a step names a handle or cursor that no earlier step saved.
 pub(crate) async fn drive(
     scenario: &Scenario,
     served: &Served,
@@ -86,7 +88,9 @@ pub(crate) async fn drive(
     let mut answered = 0;
     for (index, session) in scenario.sessions.iter().enumerate() {
         wait_past(answered).await;
-        let (client, entry) = Client::connect(index, served, lane, &session.client, &headers).await;
+        let at = format!("the start of session {index}");
+        let (client, entry) =
+            Client::connect(index, served, lane, &session.client, &headers, &at).await;
         answered = now_ms();
         run.transcript.push(entry);
         run.clients.push(client);
@@ -124,7 +128,9 @@ impl Run {
                 if let Some(params) = &params {
                     entry["request"] = params.clone();
                 }
-                let answer = self.clients[session].request("tools/list", params).await;
+                let answer = self.clients[session]
+                    .request("tools/list", params, at)
+                    .await;
                 if let Some(name) = save_cursor_as {
                     let next = answer
                         .as_ref()
@@ -147,7 +153,7 @@ impl Run {
                 session: None,
             } => {
                 let arguments = self.substitute(args, at);
-                let entry = call(&self.clients[session], session, name, arguments).await;
+                let entry = call(&self.clients[session], session, name, arguments, at).await;
                 self.save_handle(save_handle_as.as_deref(), &entry, at);
                 self.transcript.push(entry);
             }
@@ -177,10 +183,11 @@ impl Run {
             );
             calls.push((on, name, self.substitute(args, &at), save_handle_as, at));
         }
-        let entries = futures::future::join_all(calls.iter().map(|(on, name, arguments, ..)| {
-            call(&self.clients[*on], *on, name, arguments.clone())
-        }))
-        .await;
+        let entries =
+            futures::future::join_all(calls.iter().map(|(on, name, arguments, _, at)| {
+                call(&self.clients[*on], *on, name, arguments.clone(), at)
+            }))
+            .await;
         for ((.., save_handle_as, at), entry) in calls.iter().zip(entries) {
             self.save_handle(save_handle_as.as_deref(), &entry, at);
             self.transcript.push(entry);
@@ -272,12 +279,12 @@ fn issued_handle(result: &Value) -> Option<String> {
     None
 }
 
-/// Calls the tool `name` with `arguments` on `client`, the client of session `session`; returns
-/// the transcript entry.
-async fn call(client: &Client, session: usize, name: &str, arguments: Value) -> Value {
+/// Calls the tool `name` with `arguments` on `client`, the client of session `session`, for the
+/// step `at`; returns the transcript entry.
+async fn call(client: &Client, session: usize, name: &str, arguments: Value, at: &str) -> Value {
     let request = json!({"name": name, "arguments": arguments});
     let mut entry = json!({"session": session, "op": "callTool", "request": request.clone()});
-    let answer = client.request("tools/call", Some(request)).await;
+    let answer = client.request("tools/call", Some(request), at).await;
     record(&mut entry, answer);
     entry
 }
@@ -320,14 +327,15 @@ struct Client {
 
 impl Client {
     /// Connects a client for session `index` as `info` to `served` on `lane`, and starts the
-    /// session (`initialize` or `server/discover`); returns the client and the transcript entry
-    /// of the start.
+    /// session (`initialize` or `server/discover`; `at` names the start in messages); returns the
+    /// client and the transcript entry of the start.
     async fn connect(
         index: usize,
         served: &Served,
         lane: Lane,
         info: &ClientInfo,
         headers: &[(String, String)],
+        at: &str,
     ) -> (Self, Value) {
         let info = json!({"name": info.name, "version": info.version});
         let link = match served {
@@ -349,31 +357,37 @@ impl Client {
             next_id: AtomicU64::new(0),
         };
         let (op, result) = match lane {
-            Lane::V2025_11_25 => ("initialize", client.initialize(info).await),
-            Lane::V2026_07_28 => ("discover", client.discover().await),
+            Lane::V2025_11_25 => ("initialize", client.initialize(info, at).await),
+            Lane::V2026_07_28 => ("discover", client.discover(at).await),
         };
         let entry = json!({"session": index, "op": op, "result": result});
         (client, entry)
     }
 
     /// `initialize` and `notifications/initialized`; returns what the server agreed to.
-    async fn initialize(&mut self, info: Value) -> Value {
+    async fn initialize(&mut self, info: Value, at: &str) -> Value {
         let version = self.lane.version();
         let params = json!({"protocolVersion": version, "capabilities": {}, "clientInfo": info});
-        let (message, session) = self.exchange("initialize", Some(params), None).await;
-        let result = answer(message).unwrap_or_else(|error| panic!("initialize failed: {error}"));
+        let id = self.next_id();
+        let (message, session) = self.exchange(id, "initialize", Some(params), at).await;
+        let result =
+            answer(message).unwrap_or_else(|error| panic!("{at}: initialize failed: {error}"));
         assert_eq!(
             result.get("protocolVersion").and_then(Value::as_str),
             Some(version),
-            "the negotiated protocol version"
+            "{at}: the negotiated protocol version"
         );
         if let Link::Web(web) = &mut self.link {
             web.version = Some(version);
             web.session = session;
         }
-        self.link
-            .notify(&json!({"jsonrpc": "2.0", "method": "notifications/initialized"}))
-            .await;
+        let initialized = json!({"jsonrpc": "2.0", "method": "notifications/initialized"});
+        within(
+            at,
+            "notifications/initialized",
+            self.link.notify(&initialized),
+        )
+        .await;
         json!({
             "protocolVersion": version,
             "serverInfo": result.get("serverInfo").cloned().unwrap_or(Value::Null),
@@ -383,20 +397,25 @@ impl Client {
     }
 
     /// `server/discover`; returns what the server offers, on this lane's version.
-    async fn discover(&mut self) -> Value {
+    async fn discover(&mut self, at: &str) -> Value {
         let version = self.lane.version();
         if let Link::Web(web) = &mut self.link {
             web.version = Some(version);
         }
-        let id = json!(DISCOVER_ID);
         let params = self.with_envelope(None);
-        let (message, _) = self.exchange_with(id, "server/discover", params).await;
-        let result = answer(message).unwrap_or_else(|error| panic!("discover failed: {error}"));
+        let (message, _) = self
+            .exchange(json!(DISCOVER_ID), "server/discover", params, at)
+            .await;
+        let result =
+            answer(message).unwrap_or_else(|error| panic!("{at}: discover failed: {error}"));
         let offered = result
             .get("supportedVersions")
             .and_then(Value::as_array)
             .is_some_and(|versions| versions.iter().any(|v| v.as_str() == Some(version)));
-        assert!(offered, "the server does not offer {version}: {result}");
+        assert!(
+            offered,
+            "{at}: the server does not offer {version}: {result}"
+        );
         let server_info = result
             .get("_meta")
             .and_then(|meta| meta.get(META_SERVER_INFO))
@@ -410,12 +429,17 @@ impl Client {
         })
     }
 
-    /// Sends the request `method` with `params` (the envelope added on 2026-07-28); returns its
-    /// result, or its JSON-RPC error.
-    async fn request(&self, method: &str, params: Option<Value>) -> Result<Value, Value> {
+    /// Sends the request `method` with `params` (the envelope added on 2026-07-28) for the step
+    /// `at`; returns its result, or its JSON-RPC error.
+    async fn request(&self, method: &str, params: Option<Value>, at: &str) -> Result<Value, Value> {
         let params = self.with_envelope(params);
-        let (message, _) = self.exchange(method, params, None).await;
+        let (message, _) = self.exchange(self.next_id(), method, params, at).await;
         answer(message)
+    }
+
+    /// The ID of the next request.
+    fn next_id(&self) -> Value {
+        json!(self.next_id.fetch_add(1, Ordering::Relaxed))
     }
 
     /// `params` with the `_meta` envelope on 2026-07-28, as they are on 2025-11-25.
@@ -430,25 +454,18 @@ impl Client {
         }
     }
 
-    /// Sends the request `method` with the next ID (`id` when given); returns the response and
-    /// the `mcp-session-id` the HTTP server answered with.
+    /// Sends the request `method` with `id` and `params` for the step `at`; returns the response
+    /// and the `mcp-session-id` the HTTP server answered with.
+    ///
+    /// # Panics
+    ///
+    /// When the exchange takes longer than [`REQUEST_TIMEOUT`], or the HTTP server answers 202.
     async fn exchange(
-        &self,
-        method: &str,
-        params: Option<Value>,
-        id: Option<Value>,
-    ) -> (Value, Option<String>) {
-        let id = id.unwrap_or_else(|| json!(self.next_id.fetch_add(1, Ordering::Relaxed)));
-        self.exchange_with(id, method, params).await
-    }
-
-    /// Sends the request `method` with `id` and `params`; returns the response and the
-    /// `mcp-session-id` the HTTP server answered with.
-    async fn exchange_with(
         &self,
         id: Value,
         method: &str,
         params: Option<Value>,
+        at: &str,
     ) -> (Value, Option<String>) {
         let mut message = Map::from_iter([
             ("jsonrpc".to_owned(), json!("2.0")),
@@ -466,21 +483,23 @@ impl Client {
         }
         let message = Value::Object(message);
         match &self.link {
-            Link::Pipe(pipe) => (pipe.request(&message).await, None),
+            Link::Pipe(pipe) => (within(at, method, pipe.request(&message)).await, None),
             Link::Web(web) => {
-                let (reply, session) = web.post(&message, method, tool.as_deref()).await;
-                let reply = reply.unwrap_or_else(|| panic!("{method}: the server answered 202"));
+                let (reply, session) =
+                    within(at, method, web.post(&message, method, tool.as_deref())).await;
+                let reply =
+                    reply.unwrap_or_else(|| panic!("{at}: {method}: the server answered 202"));
                 (reply, session)
             }
         }
     }
 
-    /// Closes the connection: the stdio pipe (and waits for its server to stop), or the HTTP
-    /// session.
-    async fn close(self) {
+    /// Closes the connection (`at` names the close in messages): the stdio pipe (and waits for
+    /// its server to stop), or the HTTP session.
+    async fn close(self, at: &str) {
         match self.link {
             Link::Pipe(pipe) => pipe.close().await,
-            Link::Web(web) => web.close().await,
+            Link::Web(web) => within(at, "DELETE", web.close()).await,
         }
     }
 }
@@ -505,248 +524,17 @@ impl Link {
     }
 }
 
-/// The requests waiting for their answer, by the JSON text of their ID.
-type Waiting = Arc<Mutex<HashMap<String, oneshot::Sender<Value>>>>;
-
-/// The client's end of a stdio connection.
-struct Pipe {
-    writer: tokio::sync::Mutex<Option<WriteHalf<DuplexStream>>>,
-    waiting: Waiting,
-    /// Reads the server's lines and hands each answer to its request.
-    reader: JoinHandle<()>,
-    /// The task of the server, which ends when the client closes the pipe.
-    server: JoinHandle<()>,
-}
-
-impl Pipe {
-    /// The client's end `stream` of the pipe that the task `server` serves.
-    fn new(stream: DuplexStream, server: JoinHandle<()>) -> Self {
-        let (read, write) = tokio::io::split(stream);
-        let waiting = Waiting::default();
-        let reader = tokio::spawn(read_answers(read, Arc::clone(&waiting)));
-        Self {
-            writer: tokio::sync::Mutex::new(Some(write)),
-            waiting,
-            reader,
-            server,
-        }
-    }
-
-    /// Writes `message` and its newline.
-    async fn write(&self, message: &Value) {
-        let mut line = serde_json::to_vec(message).expect("a message serializes");
-        line.push(b'\n');
-        let mut writer = self.writer.lock().await;
-        let writer = writer.as_mut().expect("the pipe is open");
-        writer
-            .write_all(&line)
-            .await
-            .expect("the pipe takes the line");
-        writer.flush().await.expect("the pipe flushes");
-    }
-
-    /// Writes the request `message` and waits for its answer.
-    async fn request(&self, message: &Value) -> Value {
-        let key = message["id"].to_string();
-        let (sender, receiver) = oneshot::channel();
-        self.waiting
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(key.clone(), sender);
-        self.write(message).await;
-        receiver
-            .await
-            .unwrap_or_else(|_| panic!("the stdio server closed the pipe before answering {key}"))
-    }
-
-    /// Closes the client's end and waits for the server, then the reader, to stop.
-    async fn close(self) {
-        if let Some(mut writer) = self.writer.lock().await.take() {
-            writer.shutdown().await.expect("the pipe closes");
-        }
-        for (task, what) in [
-            (self.server, "the stdio server"),
-            (self.reader, "the reader"),
-        ] {
-            match tokio::time::timeout(CLOSE_TIMEOUT, task).await {
-                Ok(Ok(())) => {}
-                Ok(Err(error)) => panic!("{what} failed: {error}"),
-                Err(elapsed) => panic!("{what} did not stop within {CLOSE_TIMEOUT:?} ({elapsed})"),
-            }
-        }
-    }
-}
-
-/// Reads the server's lines from `read` until the pipe closes, and hands each response to the
-/// request in `waiting` with its ID. Notifications and server requests are ignored.
-async fn read_answers(read: ReadHalf<DuplexStream>, waiting: Waiting) {
-    let mut lines = BufReader::new(read).lines();
-    while let Some(line) = lines.next_line().await.expect("the pipe reads") {
-        let message: Value = serde_json::from_str(&line).unwrap_or_else(|error| {
-            panic!("the server wrote a line that is not JSON ({error}): {line}")
-        });
-        let is_response = message.get("result").is_some() || message.get("error").is_some();
-        let Some(id) = message.get("id").filter(|_| is_response) else {
-            continue;
-        };
-        let sender = waiting
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(&id.to_string());
-        if let Some(sender) = sender {
-            let _ignored = sender.send(message);
-        }
-    }
-}
-
-/// The client of a streamable HTTP connection.
-struct Web {
-    http: reqwest::Client,
-    url: String,
-    /// The scenario's headers.
-    headers: Vec<(String, String)>,
-    /// Whether requests carry `mcp-method` and `mcp-name` (2026-07-28).
-    named: bool,
-    /// The `mcp-protocol-version` of later requests, once known.
-    version: Option<&'static str>,
-    /// The `mcp-session-id` the server issued.
-    session: Option<String>,
-}
-
-impl Web {
-    /// A client of the endpoint `url` that sends `headers` with every request, on `lane`.
-    fn new(url: &str, headers: &[(String, String)], lane: Lane) -> Self {
-        let http = reqwest::Client::builder()
-            .no_proxy()
-            .build()
-            .expect("the HTTP client builds");
-        Self {
-            http,
-            url: url.to_owned(),
-            headers: headers.to_vec(),
-            named: lane == Lane::V2026_07_28,
-            version: None,
-            session: None,
-        }
-    }
-
-    /// A request with `method` and every header but the content headers.
-    fn request(&self, method: reqwest::Method) -> reqwest::RequestBuilder {
-        let mut request = self.http.request(method, &self.url);
-        for (name, value) in &self.headers {
-            request = request.header(name, value);
-        }
-        if let Some(version) = self.version {
-            request = request.header("mcp-protocol-version", version);
-        }
-        if let Some(session) = &self.session {
-            request = request.header("mcp-session-id", session);
-        }
-        request
-    }
-
-    /// POSTs `message` (the JSON-RPC `method`, for the tool `tool`); returns the response (none
-    /// for 202 Accepted) and the `mcp-session-id` of the answer.
-    async fn post(
-        &self,
-        message: &Value,
-        method: &str,
-        tool: Option<&str>,
-    ) -> (Option<Value>, Option<String>) {
-        let mut request = self
-            .request(reqwest::Method::POST)
-            .header(ACCEPT, ACCEPTED_TYPES)
-            .header(CONTENT_TYPE, "application/json");
-        if self.named {
-            request = request.header("mcp-method", method);
-            if let Some(tool) = tool {
-                request = request.header("mcp-name", tool);
-            }
-        }
-        let body = serde_json::to_vec(message).expect("a message serializes");
-        let response = request
-            .body(body)
-            .send()
-            .await
-            .unwrap_or_else(|error| panic!("{method}: the POST failed: {error}"));
-        let session = response
-            .headers()
-            .get("mcp-session-id")
-            .and_then(|value| value.to_str().ok())
-            .map(str::to_owned);
-        let status = response.status();
-        if status == StatusCode::ACCEPTED {
-            return (None, session);
-        }
-        let event_stream = response
-            .headers()
-            .get(CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok())
-            .is_some_and(|value| value.starts_with("text/event-stream"));
-        if !status.is_success() {
-            let text = response.text().await.unwrap_or_default();
-            panic!("{method}: HTTP {status}: {text}");
-        }
-        let reply = if event_stream {
-            read_event_stream(response, &message["id"]).await
-        } else {
-            let body = response.bytes().await.expect("the response body reads");
-            serde_json::from_slice(&body).expect("the response body is JSON")
-        };
-        (Some(reply), session)
-    }
-
-    /// Ends the MCP session with `DELETE`, when the server issued one.
-    async fn close(self) {
-        if self.session.is_none() {
-            return;
-        }
-        let response = self
-            .request(reqwest::Method::DELETE)
-            .send()
-            .await
-            .expect("the DELETE is sent");
-        assert!(
-            response.status().is_success(),
-            "DELETE: HTTP {}",
-            response.status()
-        );
-    }
-}
-
-/// Reads the SSE stream of `response` until the JSON-RPC response with `id`; other messages and
-/// events without data are skipped.
+/// The output of `exchange`, the exchange of `what` for the step `at`.
 ///
 /// # Panics
 ///
-/// When the stream ends first, or an event's data is not JSON.
-async fn read_event_stream(mut response: reqwest::Response, id: &Value) -> Value {
-    let mut buffer: Vec<u8> = Vec::new();
-    loop {
-        while let Some(end) = buffer.windows(2).position(|pair| pair == b"\n\n") {
-            let event: Vec<u8> = buffer.drain(..end + 2).collect();
-            let event = String::from_utf8(event).expect("an SSE event is UTF-8");
-            let data: Vec<&str> = event
-                .lines()
-                .filter_map(|line| line.strip_prefix("data:"))
-                .map(|data| data.strip_prefix(' ').unwrap_or(data))
-                .collect();
-            let data = data.join("\n");
-            if data.trim().is_empty() {
-                continue;
-            }
-            let message: Value = serde_json::from_str(&data)
-                .unwrap_or_else(|error| panic!("an SSE event is not JSON ({error}): {data}"));
-            if message.get("id") == Some(id) {
-                return message;
-            }
-        }
-        let chunk = response.chunk().await.expect("the SSE stream reads");
-        let Some(chunk) = chunk else {
-            panic!("the SSE stream ended without the answer to {id}")
-        };
-        buffer.extend(chunk.iter().filter(|byte| **byte != b'\r'));
-    }
+/// When `exchange` takes longer than [`REQUEST_TIMEOUT`].
+async fn within<T>(at: &str, what: &str, exchange: impl Future<Output = T>) -> T {
+    tokio::time::timeout(REQUEST_TIMEOUT, exchange)
+        .await
+        .unwrap_or_else(|elapsed| {
+            panic!("{at}: {what} got no answer within {REQUEST_TIMEOUT:?} ({elapsed})")
+        })
 }
 
 /// The wall clock in milliseconds since the Unix epoch.
@@ -762,4 +550,79 @@ async fn wait_past(ms: u128) {
     while now_ms() <= ms {
         tokio::time::sleep(Duration::from_millis(1)).await;
     }
+}
+
+#[test]
+fn fill_replaces_each_saved_name() {
+    let saved = HashMap::from([("S1".to_owned(), "ses_A".to_owned())]);
+    for (text, filled) in [
+        ("${S1}", "ses_A"),
+        ("a ${S1} b ${S1}", "a ses_A b ses_A"),
+        ("$${S1}}", "$ses_A}"),
+        ("${S1", "${S1"),
+        ("${}", "${}"),
+        ("${not a name}", "${not a name}"),
+        ("start", "start"),
+    ] {
+        assert_eq!(fill(text, &saved, "test", "a handle"), filled, "{text}");
+    }
+}
+
+#[test]
+#[should_panic(expected = "test: no step saved a handle as S2")]
+fn fill_refuses_a_name_that_no_step_saved() {
+    fill("${S2}", &HashMap::new(), "test", "a handle");
+}
+
+#[test]
+fn issued_handle_reads_the_structured_content_then_the_text() {
+    let id = "ses_3LN9sNQXZmvwvVJXsJUQym6w950";
+    let other = "ses_3LN9sTmh7fwKQfXHiW4c9Mc0P0P";
+    let text = |text: String| json!({"content": [{"type": "text", "text": text}]});
+    for (result, handle) in [
+        (
+            json!({
+                "content": [{"type": "text", "text": format!("session_id: {other}")}],
+                "structuredContent": {"mcp_session": {"session_id": id}},
+            }),
+            Some(id),
+        ),
+        (
+            json!({
+                "content": [{"type": "text", "text": format!("session_id: {id}")}],
+                "structuredContent": {"mcp_session": {"session_id": ""}},
+            }),
+            Some(id),
+        ),
+        (
+            text(format!(
+                "[issued]
+session_id: {id}
+more"
+            )),
+            Some(id),
+        ),
+        (text(format!("session_id: {id}x")), None),
+        (text(format!("session_id: {id}_")), None),
+        (
+            text(format!("session_id: {id}x, session_id: {other}")),
+            Some(other),
+        ),
+        (text("session_id: ses_short".to_owned()), None),
+        (json!({"content": [{"type": "image", "data": ""}]}), None),
+        (json!({}), None),
+    ] {
+        assert_eq!(issued_handle(&result).as_deref(), handle, "{result}");
+    }
+}
+
+#[tokio::test(start_paused = true)]
+#[should_panic(expected = "step 3 of session 0: tools/call got no answer within 30s")]
+async fn an_exchange_without_an_answer_names_its_step() {
+    within(
+        "step 3 of session 0",
+        "tools/call",
+        std::future::pending::<()>(),
+    )
+    .await;
 }
