@@ -66,143 +66,71 @@ Injected parameters are stripped from arguments before your tool handler runs, s
 
 To get started with AgentCat, first create an account and obtain your project ID by signing up at [agentcat.com](https://agentcat.com). For detailed setup instructions, read the [crate guide](https://docs.rs/agentcat-sdk) on docs.rs.
 
-Once you have your project ID, set up AgentCat for your `rmcp` server below; the [examples](https://github.com/agentcathq/agentcat-rust-sdk/tree/main/agentcat-sdk/examples) are complete servers for each setup. AgentCat stays on while your tests run: `AGENTCAT_ENABLED=false` turns it off, and [`testing::Fake`](https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/struct.Fake.html) (the `test-util` feature) records the events of a test for your assertions.
-
-### stdio
-
-Add AgentCat, `rmcp` 3 with its stdio transport, and tokio. The `#[tool]` macros of `rmcp` also need `schemars` and `serde`:
+Once you have your project ID, add AgentCat to the crate of your `rmcp` server:
 
 ```sh
 cargo add agentcat-sdk
-cargo add rmcp@3 --features transport-io
-cargo add tokio --features macros,rt-multi-thread
-cargo add schemars
-cargo add serde --features derive
 ```
 
-Then wrap your server with `agentcat_sdk::track`, and serve the wrapper where you served your server:
+AgentCat works with the `rmcp` 3.x and the tokio runtime that your server already uses, so it needs no other crate. The Rust runtimes section below lists the supported versions.
+
+Then track your server as shown below; the [examples](https://github.com/agentcathq/agentcat-rust-sdk/tree/main/agentcat-sdk/examples) are complete servers for each setup. AgentCat stays on while your tests run: `AGENTCAT_ENABLED=false` turns it off, and [`testing::Fake`](https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/struct.Fake.html) (the `test-util` feature) records the events of a test for your assertions.
+
+### stdio
+
+Wrap your server handler with `agentcat_sdk::track`, and serve the wrapper where you serve your handler today:
 
 ```rust,no_run
 use agentcat_sdk::Options;
-use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{InitializeResult, ServerCapabilities};
-use rmcp::{ServerHandler, ServiceExt, tool, tool_handler, tool_router};
-use schemars::JsonSchema;
-use serde::Deserialize;
+use rmcp::{ServerHandler, ServiceExt};
 
-#[derive(Deserialize, JsonSchema)]
-struct AddArgs {
-    a: f64,
-    b: f64,
-}
-
-#[derive(Clone)]
-struct Calculator;
-
-#[tool_router]
-impl Calculator {
-    #[tool(description = "Adds two numbers")]
-    async fn add(&self, Parameters(args): Parameters<AddArgs>) -> String {
-        (args.a + args.b).to_string()
-    }
-}
-
-#[tool_handler]
-impl ServerHandler for Calculator {
-    fn get_info(&self) -> InitializeResult {
-        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
-    }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+// `my_server` is your existing rmcp server handler
+async fn serve_stdio(my_server: impl ServerHandler) -> Result<(), Box<dyn std::error::Error>> {
     // Track the server with AgentCat
-    let server = agentcat_sdk::track(Calculator, "proj_0000000", Options::default());
+    let server = agentcat_sdk::track(my_server, "proj_0000000", Options::default());
     let running = server.serve(rmcp::transport::stdio()).await?;
     running.waiting().await?;
     Ok(())
 }
 ```
 
-To read the project ID from `AGENTCAT_PROJECT_ID` instead, wrap the server with `AgentCat::from_env(Options::default()).track(Calculator)`. A stdio server talks JSON-RPC on stdout: AgentCat writes nothing to stdout or stderr, and its own log lines go to `~/agentcat.log`. Send your own logs to stderr. The server ends when the client closes stdin; the drop of the last AgentCat handle then delivers the queued events, for up to 5 s, so a stdio server needs no `shutdown` call.
+To read the project ID from `AGENTCAT_PROJECT_ID` instead, wrap the server with `AgentCat::from_env(Options::default()).track(my_server)`. A stdio server talks JSON-RPC on stdout: AgentCat writes nothing to stdout or stderr, and its own log lines go to `~/agentcat.log`. Send your own logs to stderr. The server ends when the client closes stdin; the drop of the last AgentCat handle then delivers the queued events, for up to 5 s, so a stdio server needs no `shutdown` call.
 
 ### Streamable HTTP
 
-A streamable HTTP server builds a new server handler for each MCP session. Build one `AgentCat` handle for the process, and wrap each new handler with `AgentCat::track`. Tracking each instance is cheap — the clones of one handle share its event queue and its delivery thread. This server needs the streamable HTTP server of `rmcp`, more tokio features, and `axum`:
-
-```sh
-cargo add agentcat-sdk
-cargo add rmcp@3 --features transport-streamable-http-server
-cargo add tokio --features macros,rt-multi-thread,net,signal
-cargo add axum@0.8
-cargo add schemars
-cargo add serde --features derive
-```
+A streamable HTTP server builds a new server handler for each MCP session. Build one `AgentCat` handle for the process, and wrap each new handler with `AgentCat::track` in the closure that builds it. Tracking each instance is cheap — the clones of one handle share its event queue and its delivery thread. After your server stops, call `AgentCat::shutdown`:
 
 ```rust,no_run
 use std::sync::Arc;
 use std::time::Duration;
 
 use agentcat_sdk::{AgentCat, Options};
-use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{InitializeResult, ServerCapabilities};
+use rmcp::ServerHandler;
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-use rmcp::{ServerHandler, tool, tool_handler, tool_router};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
-#[derive(Deserialize, JsonSchema)]
-struct AddArgs {
-    a: f64,
-    b: f64,
-}
-
-#[derive(Clone)]
-struct Calculator;
-
-#[tool_router]
-impl Calculator {
-    #[tool(description = "Adds two numbers")]
-    async fn add(&self, Parameters(args): Parameters<AddArgs>) -> String {
-        (args.a + args.b).to_string()
-    }
-}
-
-#[tool_handler]
-impl ServerHandler for Calculator {
-    fn get_info(&self) -> InitializeResult {
-        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
-    }
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+// `my_server` is your existing rmcp server handler
+async fn serve_http(my_server: impl ServerHandler + Clone) {
     // One AgentCat handle for the whole process
     let agentcat = AgentCat::new("proj_0000000", Options::default());
 
     // rmcp calls this closure for each new MCP session: track each new server
     let handle = agentcat.clone();
     let service = StreamableHttpService::new(
-        move || Ok(handle.track(Calculator)),
+        move || Ok(handle.track(my_server.clone())),
         Arc::new(LocalSessionManager::default()),
         StreamableHttpServerConfig::default(),
     );
-    let router = axum::Router::new().route_service("/mcp", service);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:8000").await?;
-    tokio::select! {
-        served = axum::serve(listener, router) => served?,
-        _ = tokio::signal::ctrl_c() => {}
-    }
+    // ... mount `service` in your axum router, for example with `.route_service("/mcp", service)`,
+    // and serve the router as you do today, until the server stops ...
 
     // Deliver the queued events before the process ends
     agentcat.shutdown(Duration::from_secs(5)).await;
-    Ok(())
 }
 ```
 
-An HTTP server does not end when a client goes away, and AgentCat installs no signal handler, so call `AgentCat::shutdown` after your server stops. This server stops only on Ctrl-C. Containers and process managers stop a server with SIGTERM: the [`streamable_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/streamable_http.rs) example stops on SIGTERM (Unix) or Ctrl-C, and its `stop_signal` function can take the place of `tokio::signal::ctrl_c()`.
+An HTTP server does not end when a client goes away, and AgentCat installs no signal handler, so call `AgentCat::shutdown` after your server stops. Containers and process managers stop a server with SIGTERM: the [`streamable_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/streamable_http.rs) example is a complete server that stops on SIGTERM (Unix) or Ctrl-C, then calls `shutdown`.
 
 ### Stateless HTTP
 
@@ -225,7 +153,7 @@ We strongly encourage identifying every actor. If you can't resolve a real user,
 
 `identify` (like every AgentCat hook) never adds latency to a tool call: AgentCat runs it on the tokio runtime of the call, and the call never waits for it. When the event is ready to go out, AgentCat waits at most 30 s for the hook, so a lookup that takes longer than that — or a hook that fails outright — costs analytics data for that event, never your tool's response time.
 
-The callback receives a `ToolCall`: the tool name, the arguments and `_meta` of the request, the HTTP headers, the client's name and version, the protocol version, and the `rmcp` request context. Most identity signals live in its `headers()`, with lower-case names (`None` on stdio). This example reads the headers with `serde_json` and hashes the token with the [`sha2`](https://crates.io/crates/sha2) crate (`cargo add serde_json sha2`):
+The callback receives a `ToolCall`: the tool name, the arguments and `_meta` of the request, the HTTP headers, the client's name and version, the protocol version, and the `rmcp` request context. Most identity signals live in its `headers()`, with lower-case names (`None` on stdio). This example reads the headers with `serde_json` and hashes the token with the [`sha2`](https://crates.io/crates/sha2) crate; if your server does not have these crates yet, add them with `cargo add serde_json sha2`:
 
 ```rust,no_run
 use agentcat_sdk::{AgentCat, HookError, Options, ToolCall, UserIdentity};
