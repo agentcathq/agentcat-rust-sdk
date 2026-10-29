@@ -2,6 +2,7 @@
 //! or SSE answer, and `DELETE` at the close of an MCP session.
 use reqwest::StatusCode;
 use reqwest::header::{ACCEPT, CONTENT_TYPE};
+use rmcp::model::ErrorCode;
 use serde_json::Value;
 
 use super::super::Lane;
@@ -56,13 +57,13 @@ impl Web {
     }
 
     /// POSTs `message` (the JSON-RPC `method`, for the tool `tool`); returns the response (none
-    /// for 202 Accepted) and the `mcp-session-id` of the answer. An error status is an answer when
-    /// its body is the JSON-RPC error of the request (see [`error_answer`]).
+    /// for 202 Accepted) and the `mcp-session-id` of the answer. Two error statuses are answers
+    /// (see [`error_answer`]).
     ///
     /// # Panics
     ///
-    /// When the POST fails, the status is an error without the request's JSON-RPC error, or the
-    /// body is not a JSON-RPC message.
+    /// When the POST fails, the status is any other error (the message names it), or the body is
+    /// not a JSON-RPC message.
     pub(super) async fn post(
         &self,
         message: &Value,
@@ -101,8 +102,8 @@ impl Web {
             .is_some_and(|value| value.starts_with("text/event-stream"));
         if !status.is_success() {
             let text = response.text().await.unwrap_or_default();
-            let reply = error_answer(&text, &message["id"])
-                .unwrap_or_else(|| panic!("{method}: HTTP {status}: {text}"));
+            let reply = error_answer(status, method, &text, &message["id"])
+                .unwrap_or_else(|failure| panic!("{failure}"));
             return (Some(reply), session);
         }
         let reply = if event_stream {
@@ -136,15 +137,30 @@ impl Web {
     }
 }
 
-/// The JSON-RPC error with the request ID `id` that the body `text` of an HTTP error status holds.
-/// The streamable HTTP server answers some errors of a 2026-07-28 request with an error status
-/// and the JSON-RPC error as the body: an unknown method gets 404, and rmcp 3.0 to 3.4 also give
-/// 400 to an invalid-params error such as an unknown tool, which later releases answer with 200.
-fn error_answer(text: &str, id: &Value) -> Option<Value> {
-    let reply: Value = serde_json::from_str(text).ok()?;
-    let is_error =
-        reply.get("error").is_some_and(Value::is_object) && reply.get("result").is_none();
-    (is_error && reply.get("id") == Some(id)).then_some(reply)
+/// The answer of the HTTP error status `status`, with the body `text`, to the request `method`
+/// with the ID `id`. The streamable HTTP server answers two errors of a 2026-07-28 request with an
+/// error status and the JSON-RPC error as the body, and only these are answers:
+///
+/// - 404 with code -32601 (`METHOD_NOT_FOUND`): an unknown method.
+/// - 400 with code -32602 (`INVALID_PARAMS`) on `tools/call`: an invalid-params error such as an
+///   unknown tool, from rmcp 3.0 to 3.4; later releases answer it with 200.
+///
+/// The body must be the JSON-RPC error with the request's ID and that code. Anything else is the
+/// error `<method>: HTTP <status>: <text>`.
+fn error_answer(status: StatusCode, method: &str, text: &str, id: &Value) -> Result<Value, String> {
+    let code = match status {
+        StatusCode::NOT_FOUND => Some(ErrorCode::METHOD_NOT_FOUND),
+        StatusCode::BAD_REQUEST if method == "tools/call" => Some(ErrorCode::INVALID_PARAMS),
+        _ => None,
+    };
+    let reply = code.and_then(|code| {
+        let reply: Value = serde_json::from_str(text).ok()?;
+        let answers = reply.get("result").is_none()
+            && reply.get("id") == Some(id)
+            && reply.pointer("/error/code").and_then(Value::as_i64) == Some(i64::from(code.0));
+        answers.then_some(reply)
+    });
+    reply.ok_or_else(|| format!("{method}: HTTP {status}: {text}"))
 }
 
 /// Reads the SSE stream of `response` until the JSON-RPC response with `id`; other messages and
@@ -183,27 +199,52 @@ async fn read_event_stream(mut response: reqwest::Response, id: &Value) -> Value
 }
 
 #[test]
-fn an_error_status_answers_with_the_request_error_only() {
+fn only_the_two_expected_error_statuses_are_answers() {
     use serde_json::json;
 
-    let error = r#"{"jsonrpc":"2.0","id":6,"error":{"code":-32602,"message":"tool not found"}}"#;
-    let parsed: Value = serde_json::from_str(error).expect("the error is JSON");
-    assert_eq!(error_answer(error, &json!(6)), Some(parsed));
-    for (text, id) in [
-        (error, json!(7)),
-        (error, json!("6")),
-        (r#"{"jsonrpc":"2.0","id":6,"result":{}}"#, json!(6)),
-        (
-            r#"{"jsonrpc":"2.0","id":6,"error":"tool not found"}"#,
-            json!(6),
-        ),
-        (
-            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32000}}"#,
-            json!(6),
-        ),
-        ("Bad Request", json!(6)),
-        ("", json!(6)),
+    let (bad, missing) = (StatusCode::BAD_REQUEST, StatusCode::NOT_FOUND);
+    let error = |id: Value, code: i64| {
+        json!({"jsonrpc": "2.0", "id": id, "error": {"code": code, "message": "m"}}).to_string()
+    };
+    for (status, method, text) in [
+        (bad, "tools/call", error(json!(6), -32602)),
+        (missing, "tools/call", error(json!(6), -32601)),
+        (missing, "resources/read", error(json!(6), -32601)),
     ] {
-        assert_eq!(error_answer(text, &id), None, "{text} for {id}");
+        let answer = error_answer(status, method, &text, &json!(6)).map(|reply| reply.to_string());
+        assert_eq!(answer, Ok(text), "{status} {method}");
+    }
+    for (status, method, text) in [
+        // -32020 is HEADER_MISMATCH: a protocol-version header that does not fit the request.
+        (bad, "tools/call", error(json!(6), -32020)),
+        (bad, "tools/list", error(json!(6), -32602)),
+        (bad, "tools/call", error(json!(6), -32601)),
+        (missing, "tools/call", error(json!(6), -32602)),
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "tools/call",
+            error(json!(6), -32602),
+        ),
+        (bad, "tools/call", error(json!(7), -32602)),
+        (bad, "tools/call", error(json!("6"), -32602)),
+        (
+            bad,
+            "tools/call",
+            r#"{"jsonrpc":"2.0","id":6,"result":{}}"#.to_owned(),
+        ),
+        (
+            bad,
+            "tools/call",
+            r#"{"jsonrpc":"2.0","id":6,"error":"m"}"#.to_owned(),
+        ),
+        (bad, "tools/call", "Bad Request".to_owned()),
+        (bad, "tools/call", String::new()),
+    ] {
+        let failure = format!("{method}: HTTP {status}: {text}");
+        assert_eq!(
+            error_answer(status, method, &text, &json!(6)),
+            Err(failure),
+            "{text}"
+        );
     }
 }
