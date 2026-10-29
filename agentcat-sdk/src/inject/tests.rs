@@ -342,7 +342,7 @@ fn inject_tool_matches_ts() {
 fn get_more_tools_tool_is_the_ts_descriptor() {
     let descriptor = vectors::cases("constants")
         .into_iter()
-        .find(|case| vectors::name(case) == "report_missing_tool_descriptor")
+        .find(|case| vectors::name(case) == "get_more_tools_descriptor")
         .and_then(|mut case| case.remove("value"))
         .unwrap();
     let tool = serde_json::to_value(get_more_tools_tool()).unwrap();

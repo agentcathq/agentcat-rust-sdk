@@ -1,7 +1,7 @@
 {
   "cases": [
     {
-      "name": "scenario:handle-injection:after-customer-params",
+      "name": "scenario:handles:after-customer-params",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -74,7 +74,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:creates-required",
+      "name": "scenario:handles:creates-required",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -136,7 +136,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:required-holds-session_id",
+      "name": "scenario:handles:required-holds-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -195,7 +195,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:required-holds-agent_id",
+      "name": "scenario:handles:required-holds-agent_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -253,7 +253,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:owns-agent_id",
+      "name": "scenario:handles:owns-agent_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -312,7 +312,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:full-order",
+      "name": "scenario:handles:full-order",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -391,7 +391,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:hook-mode",
+      "name": "scenario:handles:hook-mode",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -457,7 +457,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:owns-session_id",
+      "name": "scenario:handles:owns-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -535,7 +535,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:complex",
+      "name": "scenario:handles:complex",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -588,7 +588,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:strict",
+      "name": "scenario:handles:strict",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -662,7 +662,7 @@
       ]
     },
     {
-      "name": "unrepresentable:handle-injection:bare",
+      "name": "unrepresentable:handles:bare",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -682,7 +682,7 @@
       "error": "missing field `inputSchema`"
     },
     {
-      "name": "scenario:handle-injection:get_more_tools",
+      "name": "scenario:handles:get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -757,7 +757,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-object",
+      "name": "scenario:handles:output-object",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -879,7 +879,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-hook-mode",
+      "name": "scenario:handles:output-hook-mode",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -981,7 +981,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-tracking-off",
+      "name": "scenario:handles:output-tracking-off",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1093,7 +1093,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-complex",
+      "name": "scenario:handles:output-complex",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1192,7 +1192,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-input-composed",
+      "name": "scenario:handles:output-input-composed",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1279,7 +1279,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-collision",
+      "name": "scenario:handles:output-collision",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1370,7 +1370,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-absent",
+      "name": "scenario:handles:output-absent",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1443,7 +1443,7 @@
       ]
     },
     {
-      "name": "scenario:handle-injection:output-no-handles",
+      "name": "scenario:handles:output-no-handles",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1526,7 +1526,7 @@
       ]
     },
     {
-      "name": "unrepresentable:context-parameters:no-input-schema",
+      "name": "unrepresentable:context:no-input-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1547,7 +1547,7 @@
       "error": "missing field `inputSchema`"
     },
     {
-      "name": "scenario:context-parameters:existing-schema",
+      "name": "scenario:context:existing-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1617,7 +1617,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters:owns-context",
+      "name": "scenario:context:owns-context",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1682,7 +1682,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters:empty-required",
+      "name": "scenario:context:empty-required",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1747,7 +1747,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:default-description",
+      "name": "scenario:context-description:default-description",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2042,7 +2042,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:custom-json-schema",
+      "name": "scenario:context-description:custom-json-schema",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2338,7 +2338,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:custom-object-schema",
+      "name": "scenario:context-description:custom-object-schema",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2634,7 +2634,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:custom-all-tools",
+      "name": "scenario:context-description:custom-all-tools",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2930,7 +2930,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:custom-long",
+      "name": "scenario:context-description:custom-long",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -3226,7 +3226,7 @@
       ]
     },
     {
-      "name": "scenario:todo-server:custom-special-characters",
+      "name": "scenario:context-description:custom-special-characters",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -3522,7 +3522,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:owns-context",
+      "name": "scenario:context-schemas:owns-context",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3579,7 +3579,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:warns-with-name",
+      "name": "scenario:context-schemas:warns-with-name",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3634,7 +3634,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:one-of",
+      "name": "scenario:context-schemas:one-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3713,7 +3713,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:all-of",
+      "name": "scenario:context-schemas:all-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3792,7 +3792,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:any-of",
+      "name": "scenario:context-schemas:any-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3851,7 +3851,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:additional-false",
+      "name": "scenario:context-schemas:additional-false",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3914,7 +3914,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:additional-true",
+      "name": "scenario:context-schemas:additional-true",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3978,7 +3978,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:empty-schema",
+      "name": "scenario:context-schemas:empty-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4029,7 +4029,7 @@
       ]
     },
     {
-      "name": "unrepresentable:context-parameters-edge-cases:no-input-schema",
+      "name": "unrepresentable:context-schemas:no-input-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4049,7 +4049,7 @@
       "error": "missing field `inputSchema`"
     },
     {
-      "name": "scenario:context-parameters-edge-cases:type-only",
+      "name": "scenario:context-schemas:type-only",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4103,7 +4103,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:skips-get_more_tools",
+      "name": "scenario:context-schemas:skips-get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4166,7 +4166,7 @@
       ]
     },
     {
-      "name": "scenario:context-parameters-edge-cases:mixed",
+      "name": "scenario:context-schemas:mixed",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4310,7 +4310,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:server-a-three-listings",
+      "name": "scenario:own-session_id:server-a-three-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4445,7 +4445,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:server-b-two-listings",
+      "name": "scenario:own-session_id:server-b-two-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4541,7 +4541,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:two-tools-two-listings",
+      "name": "scenario:own-session_id:two-tools-two-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4692,7 +4692,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:records-own-schemas-only",
+      "name": "scenario:own-session_id:records-own-schemas-only",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4834,7 +4834,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:records-composed-with-session_id",
+      "name": "scenario:own-session_id:records-composed-with-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4923,7 +4923,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:keys-per-data-object",
+      "name": "scenario:own-session_id:keys-per-data-object",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4980,7 +4980,7 @@
       ]
     },
     {
-      "name": "scenario:handle-conflict-report:hook-mode-records-nothing",
+      "name": "scenario:own-session_id:hook-mode-records-nothing",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -5033,7 +5033,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:composed-input",
+      "name": "scenario:all-switches:composed-input",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5158,7 +5158,7 @@
       ]
     },
     {
-      "name": "unrepresentable:schema-edges:bare",
+      "name": "unrepresentable:all-switches:bare",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5179,7 +5179,7 @@
       "error": "missing field `inputSchema`"
     },
     {
-      "name": "scenario:schema-edges:own-handles",
+      "name": "scenario:all-switches:own-handles",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5299,7 +5299,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:strict",
+      "name": "scenario:all-switches:strict",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5418,7 +5418,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:output-object",
+      "name": "scenario:all-switches:output-object",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5578,7 +5578,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:output-tracking-off",
+      "name": "scenario:all-switches:output-tracking-off",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5714,7 +5714,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:output-composed",
+      "name": "scenario:all-switches:output-composed",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5867,7 +5867,7 @@
       ]
     },
     {
-      "name": "scenario:schema-edges:output-collision",
+      "name": "scenario:all-switches:output-collision",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5998,7 +5998,7 @@
       ]
     },
     {
-      "name": "scenario:engine-listwrap:appends-get_more_tools",
+      "name": "scenario:listing:appends-get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6108,7 +6108,7 @@
       ]
     },
     {
-      "name": "scenario:engine-listwrap:report-missing-off",
+      "name": "scenario:listing:report-missing-off",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -6183,7 +6183,7 @@
       ]
     },
     {
-      "name": "scenario:engine-listwrap:tracing-off",
+      "name": "scenario:listing:tracing-off",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6271,7 +6271,7 @@
       ]
     },
     {
-      "name": "scenario:engine-listwrap:shadow-once",
+      "name": "scenario:listing:shadow-once",
       "input": {
         "options": {
           "enableReportMissing": true,

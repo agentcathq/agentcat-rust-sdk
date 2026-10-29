@@ -47,7 +47,7 @@ fn json_files() -> Res<Vec<String>> {
     Ok(names)
 }
 
-/// The text of every Rust file under `dir` that calls `vectors::cases(`.
+/// The text of every Rust file under `dir`, appended to `out`.
 fn rust_sources(dir: &Path, out: &mut String) -> Res<()> {
     let entries = fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
     for entry in entries {
@@ -56,9 +56,7 @@ fn rust_sources(dir: &Path, out: &mut String) -> Res<()> {
             rust_sources(&path, out)?;
         } else if path.extension().is_some_and(|ext| ext == "rs") {
             let text = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
-            if text.contains("vectors::cases(") {
-                out.push_str(&text);
-            }
+            out.push_str(&text);
         }
     }
     Ok(())
@@ -93,9 +91,11 @@ fn every_fixture_file_has_named_cases() -> Res<()> {
 fn case_names_are_unique_within_a_file() -> Res<()> {
     for file in json_files()? {
         let mut seen = std::collections::BTreeSet::new();
-        for case in cases(&file)? {
-            let name = case["name"].as_str().unwrap_or_default().to_owned();
-            assert!(seen.insert(name.clone()), "{file}: duplicate case {name:?}");
+        for (i, case) in cases(&file)?.iter().enumerate() {
+            let name = case["name"]
+                .as_str()
+                .ok_or_else(|| format!("{file}: case #{i} has no string \"name\""))?;
+            assert!(seen.insert(name), "{file}: duplicate case {name:?}");
         }
     }
     Ok(())
@@ -119,21 +119,18 @@ fn no_fixture_file_has_a_provenance_field() -> Res<()> {
     Ok(())
 }
 
+/// A file `<stem>.json` counts as loaded when a Rust file under `src/` or `tests/` calls
+/// `vectors::cases` with the literal stem.
 #[test]
 fn every_fixture_file_is_loaded_by_a_test() -> Res<()> {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
     let mut sources = String::new();
-    rust_sources(
-        &Path::new(env!("CARGO_MANIFEST_DIR")).join("src"),
-        &mut sources,
-    )?;
-    assert!(
-        sources.contains("vectors::cases("),
-        "no test loads a fixture file"
-    );
+    rust_sources(&root.join("src"), &mut sources)?;
+    rust_sources(&root.join("tests"), &mut sources)?;
     for file in json_files()? {
-        let set = file.trim_end_matches(".json");
+        let stem = file.trim_end_matches(".json");
         assert!(
-            sources.contains(&format!("\"{set}\"")),
+            sources.contains(&format!("vectors::cases(\"{stem}\")")),
             "{file}: no test loads it"
         );
     }

@@ -121,7 +121,7 @@
       "value": "start"
     },
     {
-      "name": "report_missing_tool_descriptor",
+      "name": "get_more_tools_descriptor",
       "input": null,
       "value": {
         "name": "get_more_tools",
@@ -148,7 +148,7 @@
       }
     },
     {
-      "name": "report_missing_result",
+      "name": "get_more_tools_result",
       "input": {
         "context": "Looking for a tool that converts spreadsheets to charts."
       },
