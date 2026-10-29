@@ -1,0 +1,1043 @@
+{
+  "transcript": [
+    {
+      "session": 0,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "start"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#1>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "start"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p1",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p1"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p1"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p2",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p2"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p2"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p3",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p3"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p3"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p4",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p4"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p4"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p5",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p5"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p5"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p6",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p6"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p6"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p7",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p7"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p7"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "p8",
+          "session_id": "<ses#1>",
+          "agent_id": "agent-p8"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "p8"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "b1",
+          "agent_id": "agent-b1"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#2>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "b1"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "b2",
+          "agent_id": "agent-b2"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#3>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "b2"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#1>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p1",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p1"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p1"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p1",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#2>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p2",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p2"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 2
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p2"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p2",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#3>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p3",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p3"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 3
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p3"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p3",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#4>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p4",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p4"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 4
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 4
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p4"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p4",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#5>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p5",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p5"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 5
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 5
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p5"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p5",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#6>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p6",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p6"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 6
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 6
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p6"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p6",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#7>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p7",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p7"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 7
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 7
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p7"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p7",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#8>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 24,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "p8",
+                "session_id": "<ses#1>",
+                "agent_id": "agent-p8"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 8
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 8
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "p8"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-p8",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#9>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "start"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 0
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "start"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#10>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#2>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 10,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "b1",
+                "agent_id": "agent-b1"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-b",
+                  "version": "2.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-b",
+                "version": "2.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 0
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "b1"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-b1",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-b",
+        "client_version": "2.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#11>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#3>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 10,
+        "output_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "b2",
+                "agent_id": "agent-b2"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-b",
+                  "version": "2.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-b",
+                "version": "2.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "b2"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_agent_id": "agent-b2",
+          "agentcat_agent_id_source": "supplied",
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-b",
+        "client_version": "2.0.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,2386 @@
+{
+  "transcript": [
+    {
+      "session": 0,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 0,
+      "op": "listTools",
+      "result": {
+        "resultType": "complete",
+        "ttlMs": 0,
+        "cacheScope": "private",
+        "tools": [
+          {
+            "name": "echo",
+            "description": "Echo a message back",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "description": "Message to echo"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "structured",
+            "description": "Returns structuredContent per its outputSchema",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            },
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "echoed": {
+                  "type": "string",
+                  "description": "The echoed message"
+                },
+                "mcp_session": {
+                  "type": "object",
+                  "description": "Session continuity and agent attribution state for this task, returned on completed responses that carry structured output. This server cannot link your calls between requests on its own, so session continuity travels here instead.",
+                  "properties": {
+                    "session_id": {
+                      "type": "string",
+                      "description": "Opaque correlation ID for this task, issued by this server. Use this as the session_id argument of every later call, and hand it to any subagents working the same task. Absent when status is unrecognized; no replacement is issued in that response — recovery is described under status."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "issued",
+                        "active",
+                        "unrecognized"
+                      ],
+                      "description": "issued: first call of a task; the session_id above was just created. active: the session_id you sent was accepted; keep sending it. unrecognized: the value sent was not issued by this server — re-send the one issued earlier for this task; if none was issued yet, send start to be issued a new one."
+                    }
+                  }
+                }
+              },
+              "required": [
+                "echoed"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "boom",
+            "description": "Always throws",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "required": [
+                "session_id",
+                "context"
+              ]
+            }
+          },
+          {
+            "name": "tool_error",
+            "description": "Returns an isError result",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "required": [
+                "session_id",
+                "context"
+              ]
+            }
+          },
+          {
+            "name": "big",
+            "description": "Returns a large text payload",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "type": "integer"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "size",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "emit_custom",
+            "description": "Publishes an AgentCat custom event",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string"
+                },
+                "resource": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "session",
+                "resource",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "own_session",
+            "description": "Declares its own session_id and returns the value it received",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string"
+                },
+                "x": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "own_context",
+            "description": "Declares its own context and returns it",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                }
+              },
+              "required": [
+                "context",
+                "session_id"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "structured_own",
+            "description": "Returns structuredContent; its outputSchema declares mcp_session",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            },
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "echoed": {
+                  "type": "string"
+                },
+                "mcp_session": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "session_id"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "echoed"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "emit_custom_server",
+            "description": "Publishes an AgentCat custom event in the name of this server",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "session": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "resource",
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "get_more_tools",
+            "description": "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "description": "A description of your goal and what kind of tool would help accomplish it."
+                },
+                "session_id": {
+                  "type": "string",
+                  "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
+                  "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
+                }
+              },
+              "required": [
+                "context",
+                "session_id"
+              ]
+            },
+            "annotations": {
+              "title": "Get More Tools",
+              "readOnlyHint": true,
+              "destructiveHint": false,
+              "idempotentHint": true,
+              "openWorldHint": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "issue a handle"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#1>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "issue a handle"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "own_session",
+        "arguments": {
+          "session_id": "customer-123"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "session_id=customer-123"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "own_session",
+        "arguments": {
+          "session_id": "start",
+          "x": "y"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "session_id=start"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "own_session",
+        "arguments": {
+          "session_id": "<ses#1>",
+          "context": "Passing our handle to a tool that declares its own session_id"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "session_id=<ses#1>"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "own_context",
+        "arguments": {
+          "context": "The tool's own context argument"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#2>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "The tool's own context argument"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "own_context",
+        "arguments": {
+          "context": "The tool's own context, with our handle",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "The tool's own context, with our handle"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "structured_own",
+        "arguments": {
+          "msg": "minted"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#3>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "minted"
+          }
+        ],
+        "structuredContent": {
+          "echoed": "minted"
+        }
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "structured_own",
+        "arguments": {
+          "msg": "supplied",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "supplied"
+          }
+        ],
+        "structuredContent": {
+          "echoed": "supplied"
+        }
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "structured",
+        "arguments": {
+          "msg": "minted"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#4>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "minted"
+          }
+        ],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "<ses#4>",
+            "status": "issued"
+          },
+          "echoed": "minted"
+        }
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "structured",
+        "arguments": {
+          "msg": "supplied",
+          "session_id": "<ses#1>",
+          "context": "Mirroring on a supplied handle"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "supplied"
+          }
+        ],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "<ses#1>",
+            "status": "active"
+          },
+          "echoed": "supplied"
+        }
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "structured",
+        "arguments": {
+          "msg": "invalid",
+          "session_id": "ses_bogus"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
+          },
+          {
+            "type": "text",
+            "text": "invalid"
+          }
+        ],
+        "structuredContent": {
+          "mcp_session": {
+            "status": "unrecognized"
+          },
+          "echoed": "invalid"
+        }
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "nope",
+        "arguments": {}
+      },
+      "error": {
+        "code": -32602,
+        "message": "tool not found"
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "nope",
+        "arguments": {
+          "session_id": "<ses#1>",
+          "context": "Calling a tool that does not exist"
+        }
+      },
+      "error": {
+        "code": -32602,
+        "message": "tool not found"
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": 5
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#5>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "failed to deserialize parameters: invalid type: integer `5`, expected a string"
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": 5,
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "failed to deserialize parameters: invalid type: integer `5`, expected a string"
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "session": 1,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "structured_own",
+        "arguments": {
+          "msg": "before any listing"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#6>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "before any listing"
+          }
+        ],
+        "structuredContent": {
+          "echoed": "before any listing"
+        }
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "own_session",
+        "arguments": {
+          "session_id": "before any listing"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "session_id=before any listing"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "own_context",
+        "arguments": {
+          "context": "before any listing"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#7>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "before any listing"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "structured",
+        "arguments": {
+          "msg": "before any listing",
+          "context": "A call before any listing"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#8>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "before any listing"
+          }
+        ],
+        "structuredContent": {
+          "mcp_session": {
+            "session_id": "<ses#8>",
+            "status": "issued"
+          },
+          "echoed": "before any listing"
+        }
+      }
+    }
+  ],
+  "events": [
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#1>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 7,
+        "output_tokens": 4,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "issue a handle"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "310",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "echo",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "issue a handle"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#2>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": null,
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_session",
+        "duration": "<duration>",
+        "input_tokens": 9,
+        "output_tokens": 7,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_session",
+              "arguments": {
+                "session_id": "customer-123"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 2,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "322",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_session",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "session_id=customer-123"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "foreign"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#3>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": null,
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_session",
+        "duration": "<duration>",
+        "input_tokens": 9,
+        "output_tokens": 5,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_session",
+              "arguments": {
+                "session_id": "start",
+                "x": "y"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 3,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "323",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_session",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "session_id=start"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "foreign"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#4>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": null,
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_session",
+        "duration": "<duration>",
+        "input_tokens": 35,
+        "output_tokens": 12,
+        "timestamp": "<timestamp>",
+        "user_intent": "Passing our handle to a tool that declares its own session_id",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_session",
+              "arguments": {
+                "session_id": "<ses#1>",
+                "context": "Passing our handle to a tool that declares its own session_id"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 4
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 4,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "415",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_session",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "session_id=<ses#1>"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "foreign"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#5>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#2>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_context",
+        "duration": "<duration>",
+        "input_tokens": 13,
+        "output_tokens": 9,
+        "timestamp": "<timestamp>",
+        "user_intent": "The tool's own context argument",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_context",
+              "arguments": {
+                "context": "The tool's own context argument"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 5
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 5,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "338",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_context",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "The tool's own context argument"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#6>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_context",
+        "duration": "<duration>",
+        "input_tokens": 29,
+        "output_tokens": 12,
+        "timestamp": "<timestamp>",
+        "user_intent": "The tool's own context, with our handle",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_context",
+              "arguments": {
+                "context": "The tool's own context, with our handle",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 6
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 6,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "393",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_context",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "The tool's own context, with our handle"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#7>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#3>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured_own",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured_own",
+              "arguments": {
+                "msg": "minted"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 7
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 7,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "312",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured_own",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "minted"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "minted"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#8>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured_own",
+        "duration": "<duration>",
+        "input_tokens": 19,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured_own",
+              "arguments": {
+                "msg": "supplied",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 8
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 8,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "361",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured_own",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "supplied"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "supplied"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#9>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#4>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured",
+              "arguments": {
+                "msg": "minted"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 9
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 9,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "308",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "minted"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "minted"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#10>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured",
+        "duration": "<duration>",
+        "input_tokens": 31,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "user_intent": "Mirroring on a supplied handle",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured",
+              "arguments": {
+                "msg": "supplied",
+                "session_id": "<ses#1>",
+                "context": "Mirroring on a supplied handle"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 10
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 10,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "401",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "supplied"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "supplied"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#11>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": null,
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured",
+        "duration": "<duration>",
+        "input_tokens": 12,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured",
+              "arguments": {
+                "msg": "invalid",
+                "session_id": "ses_bogus"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 11
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 11,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "335",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "invalid"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "invalid"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "invalid"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#12>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#9>",
+        "event_type": "mcp:tools/call",
+        "is_error": true,
+        "error": {
+          "message": "tool not found",
+          "type": "InvalidParams",
+          "platform": "rust"
+        },
+        "resource_name": "nope",
+        "duration": "<duration>",
+        "input_tokens": 1,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "nope",
+              "arguments": {},
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 12
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 12,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "289",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "nope",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#13>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "is_error": true,
+        "error": {
+          "message": "tool not found",
+          "type": "InvalidParams",
+          "platform": "rust"
+        },
+        "resource_name": "nope",
+        "duration": "<duration>",
+        "input_tokens": 28,
+        "timestamp": "<timestamp>",
+        "user_intent": "Calling a tool that does not exist",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "nope",
+              "arguments": {
+                "session_id": "<ses#1>",
+                "context": "Calling a tool that does not exist"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 13
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 13,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "382",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "nope",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#14>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#5>",
+        "event_type": "mcp:tools/call",
+        "is_error": true,
+        "error": {
+          "message": "failed to deserialize parameters: invalid type: integer `5`, expected a string",
+          "platform": "rust"
+        },
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 3,
+        "output_tokens": 23,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": 5
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 14
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 14,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "296",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "echo",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "failed to deserialize parameters: invalid type: integer `5`, expected a string"
+            }
+          ],
+          "isError": true
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#15>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "is_error": true,
+        "error": {
+          "message": "failed to deserialize parameters: invalid type: integer `5`, expected a string",
+          "platform": "rust"
+        },
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 16,
+        "output_tokens": 23,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": 5,
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 15
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 15,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "343",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "echo",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "failed to deserialize parameters: invalid type: integer `5`, expected a string"
+            }
+          ],
+          "isError": true
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#16>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#6>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured_own",
+        "duration": "<duration>",
+        "input_tokens": 8,
+        "output_tokens": 6,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured_own",
+              "arguments": {
+                "msg": "before any listing"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas-b",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas-b",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 0,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "326",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured_own",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "before any listing"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "before any listing"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas-b",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#17>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": null,
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_session",
+        "duration": "<duration>",
+        "input_tokens": 10,
+        "output_tokens": 9,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_session",
+              "arguments": {
+                "session_id": "before any listing"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas-b",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas-b",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "330",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_session",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "session_id=before any listing"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "foreign"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas-b",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#18>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#7>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "own_context",
+        "duration": "<duration>",
+        "input_tokens": 10,
+        "output_tokens": 6,
+        "timestamp": "<timestamp>",
+        "user_intent": "before any listing",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "own_context",
+              "arguments": {
+                "context": "before any listing"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas-b",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas-b",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 2,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "327",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "own_context",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "before any listing"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas-b",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#19>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#8>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "structured",
+        "duration": "<duration>",
+        "input_tokens": 19,
+        "output_tokens": 6,
+        "timestamp": "<timestamp>",
+        "user_intent": "A call before any listing",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "structured",
+              "arguments": {
+                "msg": "before any listing",
+                "context": "A call before any listing"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-schemas-b",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-schemas-b",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 3,
+            "requestInfo": {
+              "headers": {
+                "accept": "application/json, text/event-stream",
+                "content-length": "360",
+                "content-type": "application/json",
+                "host": "127.0.0.1:<port>",
+                "mcp-method": "tools/call",
+                "mcp-name": "structured",
+                "mcp-protocol-version": "2026-07-28",
+                "x-test-header": "harness"
+              },
+              "url": "http://127.0.0.1:<port>/mcp"
+            }
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "before any listing"
+            }
+          ],
+          "structuredContent": {
+            "echoed": "before any listing"
+          }
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-schemas-b",
+        "client_version": "1.0.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "projectId": "proj_HARNESS00000000000000000000",
+  "options": {
+    "resolveSessionId": { "returns": "customer-abc" },
+    "enableAgentTracking": true
+  },
+  "httpHeaders": { "x-test-header": "harness" },
+  "expectPublishes": 10,
+  "sessions": [
+    {
+      "client": { "name": "harness-client-hook", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "with an agent", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "without an agent" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "agent and context", "agent_id": "agent-1", "context": "Hook mode with an agent and a context" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "a session_id is not ours in hook mode", "session_id": "ses_bogus", "agent_id": "agent-2" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "mirror the agent", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "nothing to mirror" } },
+        { "op": "callTool", "name": "structured_own", "args": { "msg": "declares mcp_session", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "customer-1", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "tool_error", "args": { "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "get_more_tools", "args": { "context": "Need a calendar tool", "agent_id": "agent-1" } }
+      ]
+    }
+  ]
+}

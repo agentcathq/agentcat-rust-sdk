@@ -56,11 +56,13 @@ impl Web {
     }
 
     /// POSTs `message` (the JSON-RPC `method`, for the tool `tool`); returns the response (none
-    /// for 202 Accepted) and the `mcp-session-id` of the answer.
+    /// for 202 Accepted) and the `mcp-session-id` of the answer. An error status is an answer when
+    /// its body is the JSON-RPC error of the request (see [`error_answer`]).
     ///
     /// # Panics
     ///
-    /// When the POST fails, the status is not a success, or the body is not a JSON-RPC message.
+    /// When the POST fails, the status is an error without the request's JSON-RPC error, or the
+    /// body is not a JSON-RPC message.
     pub(super) async fn post(
         &self,
         message: &Value,
@@ -99,7 +101,9 @@ impl Web {
             .is_some_and(|value| value.starts_with("text/event-stream"));
         if !status.is_success() {
             let text = response.text().await.unwrap_or_default();
-            panic!("{method}: HTTP {status}: {text}");
+            let reply = error_answer(&text, &message["id"])
+                .unwrap_or_else(|| panic!("{method}: HTTP {status}: {text}"));
+            return (Some(reply), session);
         }
         let reply = if event_stream {
             read_event_stream(response, &message["id"]).await
@@ -130,6 +134,17 @@ impl Web {
             response.status()
         );
     }
+}
+
+/// The JSON-RPC error with the request ID `id` that the body `text` of an HTTP error status holds.
+/// The streamable HTTP server answers some errors of a 2026-07-28 request with an error status
+/// and the JSON-RPC error as the body: an unknown method gets 404, and rmcp 3.0 to 3.4 also give
+/// 400 to an invalid-params error such as an unknown tool, which later releases answer with 200.
+fn error_answer(text: &str, id: &Value) -> Option<Value> {
+    let reply: Value = serde_json::from_str(text).ok()?;
+    let is_error =
+        reply.get("error").is_some_and(Value::is_object) && reply.get("result").is_none();
+    (is_error && reply.get("id") == Some(id)).then_some(reply)
 }
 
 /// Reads the SSE stream of `response` until the JSON-RPC response with `id`; other messages and
@@ -164,5 +179,31 @@ async fn read_event_stream(mut response: reqwest::Response, id: &Value) -> Value
             panic!("the SSE stream ended without the answer to {id}")
         };
         buffer.extend(chunk.iter().filter(|byte| **byte != b'\r'));
+    }
+}
+
+#[test]
+fn an_error_status_answers_with_the_request_error_only() {
+    use serde_json::json;
+
+    let error = r#"{"jsonrpc":"2.0","id":6,"error":{"code":-32602,"message":"tool not found"}}"#;
+    let parsed: Value = serde_json::from_str(error).expect("the error is JSON");
+    assert_eq!(error_answer(error, &json!(6)), Some(parsed));
+    for (text, id) in [
+        (error, json!(7)),
+        (error, json!("6")),
+        (r#"{"jsonrpc":"2.0","id":6,"result":{}}"#, json!(6)),
+        (
+            r#"{"jsonrpc":"2.0","id":6,"error":"tool not found"}"#,
+            json!(6),
+        ),
+        (
+            r#"{"jsonrpc":"2.0","id":null,"error":{"code":-32000}}"#,
+            json!(6),
+        ),
+        ("Bad Request", json!(6)),
+        ("", json!(6)),
+    ] {
+        assert_eq!(error_answer(text, &id), None, "{text} for {id}");
     }
 }

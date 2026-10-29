@@ -1,0 +1,766 @@
+{
+  "transcript": [
+    {
+      "session": 0,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 0,
+      "op": "listTools",
+      "result": {
+        "resultType": "complete",
+        "ttlMs": 0,
+        "cacheScope": "private",
+        "tools": [
+          {
+            "name": "echo",
+            "description": "Echo a message back",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string",
+                  "description": "Message to echo"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "structured",
+            "description": "Returns structuredContent per its outputSchema",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            },
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "echoed": {
+                  "type": "string",
+                  "description": "The echoed message"
+                }
+              },
+              "required": [
+                "echoed"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "boom",
+            "description": "Always throws",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "required": [
+                "context"
+              ]
+            }
+          },
+          {
+            "name": "tool_error",
+            "description": "Returns an isError result",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "required": [
+                "context"
+              ]
+            }
+          },
+          {
+            "name": "big",
+            "description": "Returns a large text payload",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "type": "integer"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "size",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "emit_custom",
+            "description": "Publishes an AgentCat custom event",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session": {
+                  "type": "string"
+                },
+                "resource": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "session",
+                "resource",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "own_session",
+            "description": "Declares its own session_id and returns the value it received",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "session_id": {
+                  "type": "string"
+                },
+                "x": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "session_id",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "own_context",
+            "description": "Declares its own context and returns it",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "context"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "structured_own",
+            "description": "Returns structuredContent; its outputSchema declares mcp_session",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "msg",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            },
+            "outputSchema": {
+              "type": "object",
+              "properties": {
+                "echoed": {
+                  "type": "string"
+                },
+                "mcp_session": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "session_id"
+                  ],
+                  "additionalProperties": true
+                }
+              },
+              "required": [
+                "echoed"
+              ],
+              "additionalProperties": false,
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "emit_custom_server",
+            "description": "Publishes an AgentCat custom event in the name of this server",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "resource": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "session": {
+                  "type": "string"
+                },
+                "tags": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "context": {
+                  "type": "string",
+                  "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
+                }
+              },
+              "required": [
+                "resource",
+                "context"
+              ],
+              "$schema": "http://json-schema.org/draft-07/schema#"
+            }
+          },
+          {
+            "name": "get_more_tools",
+            "description": "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "context": {
+                  "type": "string",
+                  "description": "A description of your goal and what kind of tool would help accomplish it."
+                }
+              },
+              "required": [
+                "context"
+              ]
+            },
+            "annotations": {
+              "title": "Get More Tools",
+              "readOnlyHint": true,
+              "destructiveHint": false,
+              "idempotentHint": true,
+              "openWorldHint": false
+            }
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "first"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "first"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "second"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "second"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "boom",
+        "arguments": {}
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "boom"
+          }
+        ],
+        "isError": true
+      }
+    },
+    {
+      "session": 1,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "other session"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "other session"
+          }
+        ]
+      }
+    },
+    {
+      "session": 1,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "other session again"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "other session again"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#1>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "first"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "first"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted",
+          "team": "core"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#2>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#2>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "second"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 2
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "second"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted",
+          "team": "core"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#3>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#3>",
+        "event_type": "mcp:tools/call",
+        "is_error": true,
+        "error": {
+          "message": "boom",
+          "type": "e2e::suite::server::tools::Boom",
+          "platform": "rust"
+        },
+        "resource_name": "boom",
+        "duration": "<duration>",
+        "input_tokens": 1,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "boom",
+              "arguments": {},
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-a",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-a",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 3
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "boom"
+            }
+          ],
+          "isError": true
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted",
+          "team": "core"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-a",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#4>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#4>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 7,
+        "output_tokens": 4,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "other session"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-b",
+                  "version": "2.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-b",
+                "version": "2.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 0
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "other session"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted",
+          "team": "core"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-b",
+        "client_version": "2.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#5>",
+        "project_id": "proj_HARNESS00000000000000000000",
+        "session_id": "<ses#5>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 9,
+        "output_tokens": 6,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "other session again"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "harness-client-b",
+                  "version": "2.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "harness-client-b",
+                "version": "2.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "other session again"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted",
+          "team": "core"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "harness-client-b",
+        "client_version": "2.0.0"
+      }
+    }
+  ]
+}

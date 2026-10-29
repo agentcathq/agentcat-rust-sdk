@@ -11,6 +11,7 @@ use agentcat_sdk::{AgentCat, Tracked};
 use axum::http::{StatusCode, header};
 use axum::response::IntoResponse;
 use axum::routing::post_service;
+use axum::serve::ListenerExt;
 use rmcp::ServiceExt;
 use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
 use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
@@ -84,6 +85,12 @@ pub(crate) async fn serve(
         .await
         .expect("a loopback port is free");
     let address = listener.local_addr().expect("the listener has an address");
+    // In an MCP session, rmcp answers each request with an SSE stream that it writes in parts.
+    // With Nagle's algorithm, the last small part waits for the client's delayed ACK (about 40 ms
+    // on Linux) on every request. TCP_NODELAY sends each part at once.
+    let listener = listener.tap_io(|stream| {
+        stream.set_nodelay(true).expect("TCP_NODELAY can be set");
+    });
     let task = tokio::spawn(async move {
         axum::serve(listener, router)
             .await

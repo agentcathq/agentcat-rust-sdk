@@ -143,7 +143,8 @@ fn check_environment() {
 }
 
 /// Runs the end-to-end test `test`: the scenario `scenario` over `transport` on `lane`, compared
-/// with its golden file (see [`assert_golden`]).
+/// with its golden file (see [`assert_golden`]). `scenario` is the scenario's name with `_` for
+/// each `-`, as an identifier writes it: `hooks_fail` runs `scenarios/hooks-fail.json`.
 ///
 /// # Panics
 ///
@@ -155,27 +156,31 @@ pub(crate) async fn run_case(test: &str, scenario: &str, transport: Transport, l
         test, expected,
         "the test of {scenario} over {transport:?} on {lane:?}"
     );
-    let document = run_scenario(scenario, transport, lane).await;
-    assert_golden(scenario, transport, lane, &document);
+    let name = scenario.replace('_', "-");
+    let document = run_scenario(&name, transport, lane).await;
+    assert_golden(&name, transport, lane, &document);
 }
 
-/// One end-to-end test: `e2e_case!(<test>, <scenario>, <Transport>, <Lane>)` emits the test
-/// `<test>`, which runs `scenarios/<scenario>.json` over the transport on the lane and compares the
-/// document with `golden/<scenario>/<transport>-<lane>.json`. The test's name must be
-/// `<scenario>_<transport>_<lane>`, for example
+/// End-to-end tests, one per row: `e2e_case!(<test>, <scenario>, <Transport>, <Lane>)` emits the
+/// test `<test>`, which runs `scenarios/<name>.json` over the transport on the lane and compares
+/// the document with `golden/<name>/<transport>-<lane>.json`; `<name>` is `<scenario>` with `-`
+/// for each `_`. The test's name must be `<scenario>_<transport>_<lane>`, for example
 /// `e2e_case!(basic_http_sse_2026_07_28, basic, HttpSse, V2026_07_28)`: the test fails otherwise.
+/// Rows are separated by `;`, so one call lists every case of a scenario.
 macro_rules! e2e_case {
-    ($test:ident, $scenario:ident, $transport:ident, $lane:ident) => {
-        #[tokio::test(flavor = "multi_thread")]
-        async fn $test() {
-            $crate::suite::run_case(
-                stringify!($test),
-                stringify!($scenario),
-                $crate::suite::Transport::$transport,
-                $crate::suite::Lane::$lane,
-            )
-            .await;
-        }
+    ($($test:ident, $scenario:ident, $transport:ident, $lane:ident);+ $(;)?) => {
+        $(
+            #[tokio::test(flavor = "multi_thread")]
+            async fn $test() {
+                $crate::suite::run_case(
+                    stringify!($test),
+                    stringify!($scenario),
+                    $crate::suite::Transport::$transport,
+                    $crate::suite::Lane::$lane,
+                )
+                .await;
+            }
+        )+
     };
 }
 
