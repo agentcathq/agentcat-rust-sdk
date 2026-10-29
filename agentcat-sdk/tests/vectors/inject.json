@@ -679,46 +679,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "bare",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "bare",
-              [
-                "session_id",
-                "agent_id"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `inputSchema`"
     },
     {
       "name": "scenario:handle-injection:get_more_tools",
@@ -1583,40 +1544,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "simple_tool",
-              "description": "A simple tool",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "simple_tool",
-              [
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `inputSchema`"
     },
     {
       "name": "scenario:context-parameters:existing-schema",
@@ -4118,39 +4046,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "no-schema-tool",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "no-schema-tool",
-              [
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `inputSchema`"
     },
     {
       "name": "scenario:context-parameters-edge-cases:type-only",
@@ -5280,94 +5176,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "bare",
-              "description": "no schema",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            },
-            {
-              "name": "get_more_tools",
-              "description": "Check for additional tools whenever your task might benefit from specialized capabilities - even if existing tools could work as a fallback.",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "context": {
-                    "type": "string",
-                    "description": "A description of your goal and what kind of tool would help accomplish it."
-                  },
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  }
-                },
-                "required": [
-                  "context",
-                  "session_id",
-                  "agent_id"
-                ]
-              },
-              "annotations": {
-                "title": "Get More Tools",
-                "readOnlyHint": true,
-                "destructiveHint": false,
-                "idempotentHint": true,
-                "openWorldHint": false
-              }
-            }
-          ],
-          "registry": [
-            [
-              "bare",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ],
-            [
-              "get_more_tools",
-              [
-                "session_id",
-                "agent_id"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `inputSchema`"
     },
     {
       "name": "scenario:schema-edges:own-handles",
@@ -23373,52 +23182,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `inputSchema`"
     },
     {
       "name": "unrepresentable:input-schema-null",
@@ -23439,52 +23203,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: null, expected a map"
     },
     {
       "name": "unrepresentable:input-schema-string",
@@ -23505,29 +23224,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": "x"
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              []
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": [
-            "WARN: Handle injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on string 'x'",
-            "WARN: Context injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on string 'x'"
-          ]
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: string \"x\", expected a map"
     },
     {
       "name": "unrepresentable:input-schema-array",
@@ -23548,30 +23245,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": []
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: sequence, expected a map"
     },
     {
       "name": "unrepresentable:input-schema-true",
@@ -23592,29 +23266,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": true
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              []
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": [
-            "WARN: Handle injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on boolean 'true'",
-            "WARN: Context injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on boolean 'true'"
-          ]
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: boolean `true`, expected a map"
     },
     {
       "name": "unrepresentable:input-schema-false",
@@ -23635,52 +23287,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: boolean `false`, expected a map"
     },
     {
       "name": "unrepresentable:input-schema-zero",
@@ -23701,52 +23308,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: integer `0`, expected a map"
     },
     {
       "name": "unrepresentable:name-missing",
@@ -23768,51 +23330,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "unknown",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "missing field `name`"
     },
     {
       "name": "unrepresentable:name-null",
@@ -23835,52 +23353,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": null,
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              "unknown",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: null, expected a string"
     },
     {
       "name": "unrepresentable:name-number",
@@ -23903,52 +23376,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": 5,
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              5,
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: integer `5`, expected a string"
     },
     {
       "name": "unrepresentable:name-object",
@@ -23973,56 +23401,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": {
-                "a": 1
-              },
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              {
-                "a": 1
-              },
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: map, expected a string"
     },
     {
       "name": "unrepresentable:name-true",
@@ -24045,52 +23424,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": true,
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              }
-            }
-          ],
-          "registry": [
-            [
-              true,
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: boolean `true`, expected a string"
     },
     {
       "name": "unrepresentable:output-schema-string",
@@ -24114,42 +23448,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "context"
-                ]
-              },
-              "outputSchema": "x"
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": [
-            "WARN: Handle injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on string 'x'"
-          ]
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: string \"x\", expected a map"
     },
     {
       "name": "unrepresentable:output-schema-array",
@@ -24173,55 +23472,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              },
-              "outputSchema": []
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [
-            "t"
-          ],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: sequence, expected a map"
     },
     {
       "name": "unrepresentable:output-schema-true",
@@ -24245,42 +23496,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "context"
-                ]
-              },
-              "outputSchema": true
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": [
-            "WARN: Handle injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'properties' on boolean 'true'"
-          ]
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: boolean `true`, expected a map"
     },
     {
       "name": "unrepresentable:output-schema-false",
@@ -24304,53 +23520,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              },
-              "outputSchema": false
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: boolean `false`, expected a map"
     },
     {
       "name": "unrepresentable:output-schema-zero",
@@ -24374,53 +23544,7 @@
           ]
         ]
       },
-      "output": [
-        {
-          "tools": [
-            {
-              "name": "t",
-              "inputSchema": {
-                "type": "object",
-                "properties": {
-                  "session_id": {
-                    "type": "string",
-                    "description": "Session continuity handle, one of two values: the ses_ ID issued for the task underway, or start. This server cannot link your calls between requests on its own, so session continuity travels in this parameter instead. If you were handed a session_id for this task — for example by the agent that spawned you — send that exact value from your first call. Otherwise send start on your first call; the server will issue an opaque correlation ID in the mcp_session field of the result, or in a text block at the start of the result beginning [session_id issued. Then send that exact ses_ value on every later call and hand it to any subagents working the same task. start always begins a new, unrelated task — never send it mid-task. If you send a value this server does not recognize, the result reports it: mcp_session.status of unrecognized, or a text block beginning [session_id unrecognized; re-send the ID issued for this task, or start if none was issued yet. Never invent a ses_ value.",
-                    "pattern": "^(start|ses_[0-9A-Za-z]{27})$"
-                  },
-                  "agent_id": {
-                    "type": "string",
-                    "description": "Agent identity handle, required on every call including your first. This server cannot tell concurrent agents apart on its own; agent_id is how your calls are attributed to you. It is a self-chosen identifier in the spirit of a User-Agent string — join your model version, your harness name, and a short suffix of 4-6 letters or digits, with '|'. Example: opus-4.80-1m|claude-code|k3n9x. Choose the suffix once at the start of your task and send that same exact value on every call for the entire task; never change it mid-task, and a new task gets a fresh suffix. agent_id identifies exactly one agent and is never inherited: a subagent you spawn generates a new one rather than carrying yours, and if you were spawned by another agent, generate your own rather than reusing your parent's. A call without agent_id cannot be attributed to you."
-                  },
-                  "context": {
-                    "type": "string",
-                    "description": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-                  }
-                },
-                "required": [
-                  "session_id",
-                  "agent_id",
-                  "context"
-                ]
-              },
-              "outputSchema": 0
-            }
-          ],
-          "registry": [
-            [
-              "t",
-              [
-                "session_id",
-                "agent_id",
-                "context"
-              ]
-            ]
-          ],
-          "outputRegistry": [],
-          "declaredSessionParams": [],
-          "logs": []
-        }
-      ],
-      "deviation": "RD-20"
+      "error": "invalid type: integer `0`, expected a map"
     },
     {
       "name": "seeded:0",

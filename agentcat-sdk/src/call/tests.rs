@@ -11,7 +11,7 @@ use super::{
     cancelled_error, code_name, error_data_error, mirror_mint_back, prepend_mint_back,
     report_missing, result_error, strip_arguments,
 };
-use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, report_missing_log_line};
+use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM};
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
 use crate::test_support::strategies::{json_value, object_key};
 use crate::test_support::{assert_js_eq, config, oracle, vectors};
@@ -147,27 +147,20 @@ fn vectors_match_ts() {
     );
 }
 
-/// A "report-missing:" case: the result and the log line of `report_missing`. A case with
-/// deviation RD-26 is one where TS reads the `length` of an object (R23): the test asserts
-/// Rust's line, which counts 0, and that it is not TS's.
+/// A "report-missing:" case: the result and the log line of `report_missing`. The line counts
+/// the UTF-16 units of a string context, the items of an array, and 0 for any other value: the
+/// `object-length-*` cases pin that an object with a `length` key counts 0 as well.
 fn check_report_missing(case: &Map<String, Value>, name: &str) {
     let (result, line) = report_missing(case["input"].get("context"));
-    let ts = &case["output"];
-    check_result(&result, &ts["value"], name);
-    let ts_logs: Vec<&str> = ts["logs"]
+    let expected = &case["output"];
+    check_result(&result, &expected["value"], name);
+    let logs: Vec<&str> = expected["logs"]
         .as_array()
         .unwrap()
         .iter()
         .map(|log| log.as_str().unwrap())
         .collect();
-    match case.get("deviation").and_then(Value::as_str) {
-        None => assert_eq!(vec![line.as_str()], ts_logs, "{name}"),
-        Some(deviation) => {
-            assert_eq!(deviation, "RD-26", "{name}");
-            assert_eq!(line, report_missing_log_line(0), "{name}: Rust counts 0");
-            assert_ne!(vec![line.as_str()], ts_logs, "{name}: TS counts the key");
-        }
-    }
+    assert_eq!(vec![line.as_str()], logs, "{name}");
 }
 
 /// The wire order of the mirrored `structured_content` is TS's (C21), also in the `JSON.stringify`

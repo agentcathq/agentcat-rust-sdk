@@ -2691,6 +2691,12 @@
         "sessionId": "s",
         "parameters": {
           "a": "[R:1]",
+          "__proto__": {
+            "x": "[R:y]",
+            "z": [
+              "[R:w]"
+            ]
+          },
           "b": "[R:2]"
         }
       },
@@ -2699,41 +2705,46 @@
         "y",
         "w",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:string-value",
       "input_text": "{\"parameters\":{\"__proto__\":\"text\",\"b\":\"2\"}}",
       "output": {
         "parameters": {
+          "__proto__": "[R:text]",
           "b": "[R:2]"
         }
       },
       "calls": [
         "text",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:null-value",
       "input_text": "{\"parameters\":{\"b\":\"2\",\"__proto__\":null}}",
       "output": {
         "parameters": {
-          "b": "[R:2]"
+          "b": "[R:2]",
+          "__proto__": null
         }
       },
       "calls": [
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:array-value",
       "input_text": "{\"parameters\":{\"__proto__\":[\"x\",{\"c\":\"d\"}],\"b\":\"2\"}}",
       "output": {
         "parameters": {
+          "__proto__": [
+            "[R:x]",
+            {
+              "c": "[R:d]"
+            }
+          ],
           "b": "[R:2]"
         }
       },
@@ -2741,36 +2752,39 @@
         "x",
         "d",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:top-level",
       "input_text": "{\"userIntent\":\"u\",\"__proto__\":{\"x\":\"y\"},\"b\":\"2\"}",
       "output": {
         "userIntent": "[R:u]",
+        "__proto__": {
+          "x": "[R:y]"
+        },
         "b": "[R:2]"
       },
       "calls": [
         "u",
         "y",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:in-protected",
       "input_text": "{\"tags\":{\"__proto__\":{\"x\":\"y\"},\"k\":\"v\"},\"userIntent\":\"u\"}",
       "output": {
         "tags": {
+          "__proto__": {
+            "x": "y"
+          },
           "k": "v"
         },
         "userIntent": "[R:u]"
       },
       "calls": [
         "u"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:nested-twice",
@@ -2778,6 +2792,11 @@
       "output": {
         "parameters": [
           {
+            "__proto__": {
+              "deep": {
+                "__proto__": "[R:x]"
+              }
+            },
             "k": "[R:v]"
           }
         ]
@@ -2785,8 +2804,7 @@
       "calls": [
         "x",
         "v"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "apply:test-sync-hook",
@@ -4625,13 +4643,15 @@
       },
       "output": {
         "a": 1,
+        "__proto__": {
+          "x": "y"
+        },
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
         "projectId": "proj_789",
         "eventType": "mcp:tools/call",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "apply:proto-top-level-string",
@@ -4655,14 +4675,14 @@
         "b": 2
       },
       "output": {
+        "__proto__": "s",
         "b": 2,
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
         "projectId": "proj_789",
         "eventType": "mcp:tools/call",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "apply:proto-nested-kept",

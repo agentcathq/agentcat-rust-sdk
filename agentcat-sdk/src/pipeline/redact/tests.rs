@@ -55,34 +55,14 @@ fn event_of(value: Value, context: &str) -> TsEvent {
     }
 }
 
-/// `value` without its `__proto__` keys, at any depth.
-fn without_proto(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .filter(|(key, _)| *key != "__proto__")
-                .map(|(key, item)| (key.clone(), without_proto(item)))
-                .collect(),
-        ),
-        Value::Array(items) => Value::Array(items.iter().map(without_proto).collect()),
-        other => other.clone(),
-    }
-}
-
-/// `true` when `value` has a `__proto__` key anywhere.
-fn has_proto_key(value: &Value) -> bool {
-    match value {
-        Value::Object(map) => map.contains_key("__proto__") || map.values().any(has_proto_key),
-        Value::Array(items) => items.iter().any(has_proto_key),
-        _ => false,
-    }
-}
-
 /// The calls as a JSON array, to compare with TS's through [`assert_js_eq`].
 fn calls_value(calls: Vec<String>) -> Value {
     Value::Array(calls.into_iter().map(Value::String).collect())
 }
 
+/// The `proto:` and `apply:proto-` cases pin that a `__proto__` key is an ordinary key: the
+/// redactor gets the strings under it, and the key stays, also at the top level of a hook's
+/// result.
 #[test]
 fn vectors_match_ts() {
     let cases = vectors::cases("redact");
@@ -113,16 +93,8 @@ fn check_walk_case(case: &Map<String, Value>) {
         &case["calls"],
         &format!("{context}: calls"),
     );
-    let deviation = case.get("deviation").and_then(Value::as_str);
     match (result, case.get("output"), case.get("error")) {
-        (Ok(event), Some(output), None) => {
-            let actual = Value::Object(event);
-            match deviation {
-                None => assert_js_eq(&actual, output, &context),
-                Some("RD-24") => check_rd24(&actual, output, &context),
-                Some(other) => panic!("{context}: unknown deviation {other}"),
-            }
-        }
+        (Ok(event), Some(output), None) => assert_js_eq(&Value::Object(event), output, &context),
         (Err(call), None, Some(_)) => {
             assert_eq!(Some(call), throw_at, "{context}: the failing call's error");
         }
@@ -130,21 +102,6 @@ fn check_walk_case(case: &Map<String, Value>) {
             panic!("{context}: Rust gives {result:?}; TS gives output {output:?}, error {error:?}")
         }
     }
-}
-
-/// RD-24, walk: TS passes the strings under a `__proto__` key to the redactor (the calls are
-/// checked as for any case) and then drops the key. Rust keeps it, and the rest is TS's output.
-fn check_rd24(actual: &Value, expected: &Value, context: &str) {
-    assert!(
-        has_proto_key(actual),
-        "{context}: RD-24: Rust keeps the key"
-    );
-    assert!(!has_proto_key(expected), "{context}: TS drops the key");
-    assert_js_eq(
-        &without_proto(actual),
-        expected,
-        &format!("{context}: RD-24, without the __proto__ keys"),
-    );
 }
 
 /// A restore case: the event the hook's result becomes, or `None` for a drop.
@@ -158,36 +115,10 @@ fn check_restore_case(case: &Map<String, Value>) {
     };
     let actual = apply_event_redaction(&original, replacement).map(Value::Object);
     let expected = &case["output"];
-    match (actual, case.get("deviation").and_then(Value::as_str)) {
-        (None, None) => assert_eq!(expected, &Value::Null, "{context}: TS drops the event"),
-        (Some(actual), None) => assert_js_eq(&actual, expected, &context),
-        (Some(actual), Some("RD-24")) => check_rd24_restore(&actual, expected, &context),
-        (actual, deviation) => panic!("{context}: Rust gives {actual:?} with {deviation:?}"),
+    match actual {
+        None => assert_eq!(expected, &Value::Null, "{context}: the event is dropped"),
+        Some(actual) => assert_js_eq(&actual, expected, &context),
     }
-}
-
-/// RD-24, restore: `Object.assign` drops a top-level `__proto__` key of the hook's result in TS;
-/// Rust keeps it, and the rest is TS's output.
-fn check_rd24_restore(actual: &Value, expected: &Value, context: &str) {
-    let event = actual.as_object().expect("an event");
-    assert!(
-        event.contains_key("__proto__"),
-        "{context}: RD-24: Rust keeps the top-level key"
-    );
-    assert!(
-        expected.get("__proto__").is_none(),
-        "{context}: TS drops the top-level key"
-    );
-    let rest: Map<String, Value> = event
-        .iter()
-        .filter(|(key, _)| *key != "__proto__")
-        .map(|(key, value)| (key.clone(), value.clone()))
-        .collect();
-    assert_js_eq(
-        &Value::Object(rest),
-        expected,
-        &format!("{context}: RD-24, without the top-level __proto__ key"),
-    );
 }
 
 /// Runs `event` through Rust and through TS (the oracle) and compares the calls and the results.

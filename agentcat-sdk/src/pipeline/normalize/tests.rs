@@ -28,49 +28,8 @@ fn limits_of(case: &Map<String, Value>) -> (usize, usize, usize) {
     (limits[0], limits[1], limits[2])
 }
 
-/// `true` when `value` has a `__proto__` key anywhere.
-fn has_proto_key(value: &Value) -> bool {
-    match value {
-        Value::Object(map) => map.contains_key("__proto__") || map.values().any(has_proto_key),
-        Value::Array(items) => items.iter().any(has_proto_key),
-        _ => false,
-    }
-}
-
-/// `value` without any `__proto__` key.
-fn without_proto(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .filter(|(key, _)| key.as_str() != "__proto__")
-                .map(|(key, item)| (key.clone(), without_proto(item)))
-                .collect(),
-        ),
-        Value::Array(items) => Value::Array(items.iter().map(without_proto).collect()),
-        other => other.clone(),
-    }
-}
-
-/// `value` with each `_proto_` key renamed `__proto__`, in place.
-fn proto_renamed(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .map(|(key, item)| {
-                    let key = if key == "_proto_" {
-                        "__proto__"
-                    } else {
-                        key.as_str()
-                    };
-                    (key.to_owned(), proto_renamed(item))
-                })
-                .collect(),
-        ),
-        Value::Array(items) => Value::Array(items.iter().map(proto_renamed).collect()),
-        other => other.clone(),
-    }
-}
-
+/// The `proto:` cases pin that a `__proto__` key is an ordinary key: it keeps its normalized
+/// value and counts toward the breadth. Each has a `-twin` case that spells the key `_proto_`.
 #[test]
 fn vectors_match_ts() {
     let cases = vectors::cases("normalize");
@@ -79,28 +38,7 @@ fn vectors_match_ts() {
         let name = vectors::name(case);
         let (depth, breadth, max_string) = limits_of(case);
         let actual = normalize(&input_of(case), depth, breadth, max_string);
-        if case.get("deviation").and_then(Value::as_str) == Some("RD-24") {
-            // RD-24: Rust keeps the `__proto__` key. TS drops it, so the case's output is Rust's
-            // without the key. TS keeps the key of the twin case, `_proto_`: Rust's whole output
-            // is the twin's with the key renamed, which is also where TS puts the value.
-            assert!(
-                has_proto_key(&actual),
-                "{name}: Rust keeps the __proto__ key"
-            );
-            let twin_name = format!("{name}-twin");
-            let twin = cases
-                .iter()
-                .find(|c| vectors::name(c) == twin_name)
-                .unwrap_or_else(|| panic!("{name}: no twin case {twin_name}"));
-            assert_js_eq(
-                &actual,
-                &proto_renamed(&twin["output"]),
-                &format!("{name}: against {twin_name}"),
-            );
-            assert_js_eq(&without_proto(&actual), &case["output"], name);
-        } else {
-            assert_js_eq(&actual, &case["output"], name);
-        }
+        assert_js_eq(&actual, &case["output"], name);
     }
 }
 

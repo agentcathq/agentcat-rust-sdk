@@ -3239,10 +3239,9 @@
           ]
         },
         "logs": [
-          "Missing tool reported (context length: 7)"
+          "Missing tool reported (context length: 0)"
         ]
-      },
-      "deviation": "RD-26"
+      }
     },
     {
       "name": "report-missing:object-length-string",
@@ -3261,10 +3260,9 @@
           ]
         },
         "logs": [
-          "Missing tool reported (context length: ab)"
+          "Missing tool reported (context length: 0)"
         ]
-      },
-      "deviation": "RD-26"
+      }
     },
     {
       "name": "report-missing:object-length-null",

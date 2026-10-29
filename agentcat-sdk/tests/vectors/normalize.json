@@ -36048,9 +36048,11 @@
       "input_text": "{\"a\":1,\"__proto__\":{\"x\":\"y\"},\"b\":2}",
       "output": {
         "a": 1,
+        "__proto__": {
+          "x": "y"
+        },
         "b": 2
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "proto:kept-twin",
@@ -36067,9 +36069,9 @@
       "name": "proto:kept-string",
       "input_text": "{\"__proto__\":\"text\",\"b\":2}",
       "output": {
+        "__proto__": "text",
         "b": 2
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "proto:kept-string-twin",
@@ -36088,10 +36090,12 @@
         100
       ],
       "output": {
+        "__proto__": {
+          "x": 1
+        },
         "a": 1,
         "...": "[MaxProperties ~]"
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "proto:counts-toward-breadth-twin",
@@ -36118,9 +36122,11 @@
         100
       ],
       "output": {
+        "__proto__": {
+          "a": "[Object]"
+        },
         "z": 1
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "proto:kept-deep-value-twin",

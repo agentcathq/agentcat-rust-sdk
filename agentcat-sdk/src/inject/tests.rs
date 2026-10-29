@@ -230,8 +230,9 @@ fn check_pages(config: &InjectConfig, pages: Vec<Vec<Tool>>, ts: &[Value], conte
     }
 }
 
-/// An "unrepresentable:" case: one tool on one page, which rmcp's `Tool` cannot hold (RD-20).
-fn check_rd20(case: &Map<String, Value>, name: &str) {
+/// An "unrepresentable:" case: one tool on one page that rmcp's `Tool` rejects, so the listing
+/// never gets it and has no branch for it. The case's `error` is the deserialization error.
+fn check_unrepresentable(case: &Map<String, Value>, name: &str) {
     let pages = case["input"]["pages"].as_array().unwrap();
     let [page] = pages.as_slice() else {
         panic!("{name}: an unrepresentable case has one page");
@@ -239,10 +240,10 @@ fn check_rd20(case: &Map<String, Value>, name: &str) {
     let [tool] = page.as_array().unwrap().as_slice() else {
         panic!("{name}: an unrepresentable case has one tool");
     };
-    assert!(
-        serde_json::from_value::<Tool>(tool.clone()).is_err(),
-        "{name}: rmcp's Tool holds {tool}"
-    );
+    let Err(error) = serde_json::from_value::<Tool>(tool.clone()) else {
+        panic!("{name}: rmcp's Tool holds {tool}");
+    };
+    assert_eq!(Value::String(error.to_string()), case["error"], "{name}");
 }
 
 #[test]
@@ -252,14 +253,13 @@ fn vectors_match_ts() {
         let name = vectors::name(&case);
         let kind = kind_of(name);
         seen.insert(kind);
-        let deviation = case.get("deviation").and_then(Value::as_str);
         assert_eq!(
             kind == "unrepresentable",
-            deviation == Some("RD-20"),
-            "{name}: the unrepresentable cases, and only they, carry RD-20"
+            case.contains_key("error"),
+            "{name}: the unrepresentable cases, and only they, hold an error"
         );
         if kind == "unrepresentable" {
-            check_rd20(&case, name);
+            check_unrepresentable(&case, name);
             continue;
         }
         let input = &case["input"];
