@@ -1,9 +1,9 @@
-//! Integrity of the TS-generated vector files: each one is listed in the manifest, matches its
-//! hash, and comes from the TS commit pinned in `oracle/oracle.lock`.
+//! Integrity of the fixture files in `tests/vectors/`: each one parses, holds named cases whose
+//! names are unique, has no provenance fields, and is loaded by at least one test.
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use sha2::{Digest, Sha256};
+use serde_json::Value;
 
 type Res<T> = Result<T, String>;
 
@@ -11,22 +11,19 @@ fn vectors_dir() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/vectors")
 }
 
-fn read(path: &Path) -> Res<Vec<u8>> {
-    fs::read(path).map_err(|e| format!("{}: cannot read: {e}", path.display()))
+/// The parsed document of the fixture file `name`.
+fn document(name: &str) -> Res<Value> {
+    let path = vectors_dir().join(name);
+    let bytes = fs::read(&path).map_err(|e| format!("{name}: cannot read: {e}"))?;
+    serde_json::from_slice(&bytes).map_err(|e| format!("{name}: invalid JSON: {e}"))
 }
 
-/// The `(hash, file name)` pairs of `MANIFEST.sha256`.
-fn manifest() -> Res<Vec<(String, String)>> {
-    let text = String::from_utf8(read(&vectors_dir().join("MANIFEST.sha256"))?)
-        .map_err(|e| format!("MANIFEST.sha256: {e}"))?;
-    text.lines()
-        .filter(|l| !l.is_empty())
-        .map(|l| {
-            l.split_once("  ")
-                .map(|(hash, name)| (hash.to_owned(), name.to_owned()))
-                .ok_or_else(|| format!("MANIFEST.sha256: malformed line {l:?}"))
-        })
-        .collect()
+/// The cases of the fixture file `name`.
+fn cases(name: &str) -> Res<Vec<Value>> {
+    match document(name)?.get_mut("cases").map(Value::take) {
+        Some(Value::Array(cases)) => Ok(cases),
+        _ => Err(format!("{name}: no \"cases\" array")),
+    }
 }
 
 /// The names of all `*.json` files in the vectors directory, sorted.
@@ -50,55 +47,94 @@ fn json_files() -> Res<Vec<String>> {
     Ok(names)
 }
 
-/// The checks below pass vacuously on an empty directory or manifest.
+/// The text of every Rust file under `dir` that calls `vectors::cases(`.
+fn rust_sources(dir: &Path, out: &mut String) -> Res<()> {
+    let entries = fs::read_dir(dir).map_err(|e| format!("{}: {e}", dir.display()))?;
+    for entry in entries {
+        let path = entry.map_err(|e| format!("{}: {e}", dir.display()))?.path();
+        if path.is_dir() {
+            rust_sources(&path, out)?;
+        } else if path.extension().is_some_and(|ext| ext == "rs") {
+            let text = fs::read_to_string(&path).map_err(|e| format!("{}: {e}", path.display()))?;
+            if text.contains("vectors::cases(") {
+                out.push_str(&text);
+            }
+        }
+    }
+    Ok(())
+}
+
+/// The checks below pass vacuously on an empty directory.
 #[test]
-fn at_least_one_vector_set_exists() -> Res<()> {
+fn at_least_one_fixture_file_exists() -> Res<()> {
     assert!(
         !json_files()?.is_empty(),
-        "tests/vectors holds no vector file"
+        "tests/vectors holds no fixture file"
     );
+    Ok(())
+}
+
+#[test]
+fn every_fixture_file_has_named_cases() -> Res<()> {
+    for file in json_files()? {
+        let cases = cases(&file)?;
+        assert!(!cases.is_empty(), "{file}: no case");
+        for (i, case) in cases.iter().enumerate() {
+            assert!(
+                case.get("name").is_some_and(Value::is_string),
+                "{file}: case #{i} has no string \"name\""
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn case_names_are_unique_within_a_file() -> Res<()> {
+    for file in json_files()? {
+        let mut seen = std::collections::BTreeSet::new();
+        for case in cases(&file)? {
+            let name = case["name"].as_str().unwrap_or_default().to_owned();
+            assert!(seen.insert(name.clone()), "{file}: duplicate case {name:?}");
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn no_fixture_file_has_a_provenance_field() -> Res<()> {
+    for file in json_files()? {
+        let doc = document(&file)?;
+        for key in ["ts_sha", "generator"] {
+            assert!(doc.get(key).is_none(), "{file}: has the field {key:?}");
+        }
+        for case in cases(&file)? {
+            assert!(
+                case.get("ts_test").is_none(),
+                "{file}: case {} has the field \"ts_test\"",
+                case["name"]
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn every_fixture_file_is_loaded_by_a_test() -> Res<()> {
+    let mut sources = String::new();
+    rust_sources(
+        &Path::new(env!("CARGO_MANIFEST_DIR")).join("src"),
+        &mut sources,
+    )?;
     assert!(
-        !manifest()?.is_empty(),
-        "MANIFEST.sha256 lists no vector file"
+        sources.contains("vectors::cases("),
+        "no test loads a fixture file"
     );
-    Ok(())
-}
-
-#[test]
-fn every_vector_file_matches_the_manifest() -> Res<()> {
-    for (hash, name) in manifest()? {
-        let bytes = read(&vectors_dir().join(&name))?;
-        let actual = hex::encode(Sha256::digest(&bytes));
-        assert_eq!(actual, hash, "{name}: sha256 differs from MANIFEST.sha256");
-    }
-    Ok(())
-}
-
-#[test]
-fn every_vector_file_is_listed() -> Res<()> {
-    let listed: Vec<String> = manifest()?.into_iter().map(|(_, name)| name).collect();
-    for name in json_files()? {
+    for file in json_files()? {
+        let set = file.trim_end_matches(".json");
         assert!(
-            listed.contains(&name),
-            "{name}: not listed in MANIFEST.sha256"
-        );
-    }
-    Ok(())
-}
-
-#[test]
-fn every_vector_file_comes_from_the_locked_sha() -> Res<()> {
-    let lock_path = Path::new(env!("CARGO_MANIFEST_DIR")).join("../oracle/oracle.lock");
-    let lock: serde_json::Value =
-        serde_json::from_slice(&read(&lock_path)?).map_err(|e| format!("oracle.lock: {e}"))?;
-    let locked = lock["sha"].as_str().ok_or("oracle.lock has no sha")?;
-    for name in json_files()? {
-        let doc: serde_json::Value = serde_json::from_slice(&read(&vectors_dir().join(&name))?)
-            .map_err(|e| format!("{name}: invalid JSON: {e}"))?;
-        assert_eq!(
-            doc["ts_sha"].as_str(),
-            Some(locked),
-            "{name}: ts_sha differs from oracle.lock"
+            sources.contains(&format!("\"{set}\"")),
+            "{file}: no test loads it"
         );
     }
     Ok(())

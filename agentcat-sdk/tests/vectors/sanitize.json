@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/sanitize.mjs",
   "cases": [
     {
-      "name": "test:image-audio-text",
+      "name": "image-audio-text",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -49,13 +47,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should replace image and audio blocks but keep text blocks"
-      ]
+      }
     },
     {
-      "name": "test:text-only",
+      "name": "text-only",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -91,13 +86,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should leave text-only content unchanged"
-      ]
+      }
     },
     {
-      "name": "test:resource-blob",
+      "name": "resource-blob",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -129,13 +121,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact EmbeddedResource with blob"
-      ]
+      }
     },
     {
-      "name": "test:resource-text",
+      "name": "resource-text",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -171,13 +160,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through EmbeddedResource with text"
-      ]
+      }
     },
     {
-      "name": "test:unknown-type",
+      "name": "unknown-type",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -206,13 +192,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact unknown content types with type name in message"
-      ]
+      }
     },
     {
-      "name": "test:resource-link",
+      "name": "resource-link",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -242,13 +225,10 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should pass through resource_link unchanged"
-      ]
+      }
     },
     {
-      "name": "test:structured-content-base64",
+      "name": "structured-content-base64",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -272,13 +252,10 @@
             "label": "some label"
           }
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should redact large base64 inside structuredContent"
-      ]
+      }
     },
     {
-      "name": "test:no-content-array",
+      "name": "no-content-array",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -296,13 +273,10 @@
         "response": {
           "result": "success"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle response without content array"
-      ]
+      }
     },
     {
-      "name": "test:null-response",
+      "name": "null-response",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -316,10 +290,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2025-01-15T12:00:00.000Z",
         "response": null
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - response content blocks > should handle null and undefined response without error"
-      ]
+      }
     },
     {
       "name": "response:absent",
@@ -337,7 +308,7 @@
       }
     },
     {
-      "name": "test:small-strings",
+      "name": "small-strings",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -357,13 +328,10 @@
           "name": "hello",
           "query": "some query text"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave small strings unchanged"
-      ]
+      }
     },
     {
-      "name": "test:base64-12000",
+      "name": "base64-12000",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -381,13 +349,10 @@
         "parameters": {
           "imageData": "[binary data redacted - not supported by AgentCat]"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 strings (>10KB)"
-      ]
+      }
     },
     {
-      "name": "test:non-base64-12000",
+      "name": "non-base64-12000",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -410,13 +375,10 @@
         "parameters": {
           "longText": "Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. Hello, world! This is NOT base64. "
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should leave large non-base64 strings unchanged"
-      ]
+      }
     },
     {
-      "name": "test:nested-base64",
+      "name": "nested-base64",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -446,13 +408,10 @@
             }
           }
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should find and redact deeply nested large base64"
-      ]
+      }
     },
     {
-      "name": "test:mixed-types",
+      "name": "mixed-types",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -486,13 +445,10 @@
             "c"
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should only redact large base64 in mixed-type parameters"
-      ]
+      }
     },
     {
-      "name": "test:base64-in-array",
+      "name": "base64-in-array",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -518,13 +474,10 @@
             "another small"
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact large base64 inside an array"
-      ]
+      }
     },
     {
-      "name": "test:size-gate-boundary",
+      "name": "size-gate-boundary",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -544,13 +497,10 @@
           "atGate": "[binary data redacted - not supported by AgentCat]",
           "belowGate": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should redact base64 string at exactly SIZE_GATE boundary (10240 chars)"
-      ]
+      }
     },
     {
-      "name": "test:null-parameters",
+      "name": "null-parameters",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -564,10 +514,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2025-01-15T12:00:00.000Z",
         "parameters": null
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - parameter scanning > should handle null and undefined parameters without error"
-      ]
+      }
     },
     {
       "name": "parameters:absent",
@@ -585,7 +532,7 @@
       }
     },
     {
-      "name": "test:full-event",
+      "name": "full-event",
       "input": {
         "id": "evt_1",
         "sessionId": "ses_1",
@@ -634,10 +581,7 @@
             }
           ]
         }
-      },
-      "ts_test": [
-        "v1|src/tests/sanitization.test.ts|sanitizeEvent - integration > should sanitize both parameters and response in a full event"
-      ]
+      }
     },
     {
       "name": "gate:a-10239",

@@ -18,9 +18,9 @@ const NOT_PORTED: [&str; 4] = [
 
 /// The TS function cases; every other case is a plain constant.
 const FUNCTION_CASES: [&str; 3] = [
-    "mintBackSessionLine",
-    "getReportMissingToolDescriptor",
-    "handleReportMissing",
+    "mint_back_session_line",
+    "report_missing_tool_descriptor",
+    "report_missing_result",
 ];
 
 /// Every ported constant, by its TS export name.
@@ -135,17 +135,17 @@ fn every_ts_constant_is_ported_or_listed() {
 
 #[test]
 fn mint_back_session_line_matches_ts() {
-    let case = case("mintBackSessionLine");
+    let case = case("mint_back_session_line");
     let input = case["input"].as_str().unwrap_or_else(|| {
         panic!(
-            "mintBackSessionLine: input is not a string: {:?}",
+            "mint_back_session_line: input is not a string: {:?}",
             case["input"]
         )
     });
     assert_js_eq(
         &Value::from(mint_back_session_line(input)),
         &case["value"],
-        "mintBackSessionLine",
+        "mint_back_session_line",
     );
 }
 
@@ -153,8 +153,8 @@ fn mint_back_session_line_matches_ts() {
 fn get_more_tools_descriptor_matches_ts() {
     assert_js_eq(
         &get_more_tools_descriptor(),
-        &expected("getReportMissingToolDescriptor"),
-        "getReportMissingToolDescriptor",
+        &expected("report_missing_tool_descriptor"),
+        "report_missing_tool_descriptor",
     );
 }
 
@@ -162,42 +162,46 @@ fn get_more_tools_descriptor_matches_ts() {
 fn get_more_tools_result_matches_ts() {
     assert_js_eq(
         &get_more_tools_result(),
-        &expected("handleReportMissing"),
-        "handleReportMissing",
+        &expected("report_missing_result"),
+        "report_missing_result",
     );
 }
 
 #[test]
 fn get_more_tools_result_text_matches_ts() {
-    let value = expected("handleReportMissing");
+    let value = expected("report_missing_result");
     assert_js_eq(
         &Value::from(GET_MORE_TOOLS_RESULT_TEXT),
         &value["content"][0]["text"],
-        "handleReportMissing text",
+        "report_missing_result text",
     );
 }
 
-/// The case's `logs` are the lines `handleReportMissing` wrote for its input; the length TS
+/// The case's `logs` are the lines `report_missing_result` wrote for its input; the length TS
 /// reads off the `context` string is its length in UTF-16 units.
 #[test]
 fn report_missing_log_line_matches_ts() {
-    let case = case("handleReportMissing");
+    let case = case("report_missing_result");
     let context = case["input"]["context"].as_str().unwrap_or_else(|| {
         panic!(
-            "handleReportMissing: input.context is not a string: {:?}",
+            "report_missing_result: input.context is not a string: {:?}",
             case["input"]
         )
     });
     let logs = case["logs"].as_array().unwrap_or_else(|| {
         panic!(
-            "handleReportMissing: logs is not an array: {:?}",
+            "report_missing_result: logs is not an array: {:?}",
             case.get("logs")
         )
     });
-    assert_eq!(logs.len(), 1, "handleReportMissing logs one line: {logs:?}");
+    assert_eq!(
+        logs.len(),
+        1,
+        "report_missing_result logs one line: {logs:?}"
+    );
     assert_js_eq(
         &Value::from(report_missing_log_line(js::utf16_len(context))),
         &logs[0],
-        "handleReportMissing log",
+        "report_missing_result log",
     );
 }

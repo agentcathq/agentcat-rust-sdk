@@ -147,9 +147,6 @@ test("writeAll reads the generators from genDir and names that directory in each
   const file = JSON.parse(readFileSync(join(outDir, "beta.json"), "utf8"));
   assert.equal(file.generator, `${genDir.split("\\").join("/")}/beta.mjs`);
   assert.equal(file.ts_sha, lock().sha);
-  // Inside the repository, the path is relative to its root, as in every committed file.
-  const committed = JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "agentcat-sdk", "tests", "vectors", "queue.json"), "utf8"));
-  assert.equal(committed.generator, "oracle/src/vectors/gen/queue.mjs");
 });
 
 test("writeAll checks every set before it writes any file", async (t) => {

@@ -17,13 +17,13 @@ use crate::test_support::{assert_js_eq, config, oracle, vectors};
 
 /// The case name prefixes of `inject.json`.
 const KINDS: [&str; 8] = [
-    "ts",
+    "scenario",
     "flags",
     "schema",
     "output",
     "report-missing",
     "pages",
-    "rd20",
+    "unrepresentable",
     "seeded",
 ];
 
@@ -230,14 +230,14 @@ fn check_pages(config: &InjectConfig, pages: Vec<Vec<Tool>>, ts: &[Value], conte
     }
 }
 
-/// An "rd20:" case: one tool on one page, which rmcp's `Tool` cannot hold (RD-20).
+/// An "unrepresentable:" case: one tool on one page, which rmcp's `Tool` cannot hold (RD-20).
 fn check_rd20(case: &Map<String, Value>, name: &str) {
     let pages = case["input"]["pages"].as_array().unwrap();
     let [page] = pages.as_slice() else {
-        panic!("{name}: an rd20 case has one page");
+        panic!("{name}: an unrepresentable case has one page");
     };
     let [tool] = page.as_array().unwrap().as_slice() else {
-        panic!("{name}: an rd20 case has one tool");
+        panic!("{name}: an unrepresentable case has one tool");
     };
     assert!(
         serde_json::from_value::<Tool>(tool.clone()).is_err(),
@@ -254,11 +254,11 @@ fn vectors_match_ts() {
         seen.insert(kind);
         let deviation = case.get("deviation").and_then(Value::as_str);
         assert_eq!(
-            kind == "rd20",
+            kind == "unrepresentable",
             deviation == Some("RD-20"),
-            "{name}: the rd20 cases, and only they, carry RD-20"
+            "{name}: the unrepresentable cases, and only they, carry RD-20"
         );
-        if kind == "rd20" {
+        if kind == "unrepresentable" {
             check_rd20(&case, name);
             continue;
         }
@@ -282,7 +282,7 @@ fn inject_tool_matches_ts() {
     let mut checked = 0;
     for case in vectors::cases("inject") {
         let name = vectors::name(&case);
-        if kind_of(name) == "rd20" {
+        if kind_of(name) == "unrepresentable" {
             continue;
         }
         let input = &case["input"];
@@ -342,7 +342,7 @@ fn inject_tool_matches_ts() {
 fn get_more_tools_tool_is_the_ts_descriptor() {
     let descriptor = vectors::cases("constants")
         .into_iter()
-        .find(|case| vectors::name(case) == "getReportMissingToolDescriptor")
+        .find(|case| vectors::name(case) == "report_missing_tool_descriptor")
         .and_then(|mut case| case.remove("value"))
         .unwrap();
     let tool = serde_json::to_value(get_more_tools_tool()).unwrap();

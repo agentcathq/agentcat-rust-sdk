@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/event.mjs",
   "cases": [
     {
-      "name": "client-info:ts:meta-preferred",
+      "name": "client-info:meta-preferred",
       "input": {
         "meta": {
           "io.modelcontextprotocol/clientInfo": {
@@ -19,13 +17,10 @@
       "output": {
         "name": "claude",
         "version": "3.0"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > prefers per-request _meta clientInfo (modern client)"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:initialize-fallback",
+      "name": "client-info:initialize-fallback",
       "input": {
         "initialize": {
           "name": "legacy",
@@ -35,31 +30,22 @@
       "output": {
         "name": "legacy",
         "version": "1"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > falls back to getClientVersion (legacy initialize capture)"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:both-missing",
-      "input": {},
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > both missing -> undefined (client declined to identify)"
-      ]
+      "name": "client-info:both-missing",
+      "input": {}
     },
     {
-      "name": "client-info:ts:malformed-string",
+      "name": "client-info:malformed-string",
       "input": {
         "meta": {
           "io.modelcontextprotocol/clientInfo": "not-an-object"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > ignores malformed _meta clientInfo"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:non-string-version",
+      "name": "client-info:non-string-version",
       "input": {
         "meta": {
           "io.modelcontextprotocol/clientInfo": {
@@ -70,13 +56,10 @@
       },
       "output": {
         "name": "x"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getClientInfoForRequest > drops non-string fields from partially malformed _meta clientInfo"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:meta-name-only",
+      "name": "client-info:meta-name-only",
       "input": {
         "meta": {
           "io.modelcontextprotocol/clientInfo": {
@@ -90,13 +73,10 @@
       },
       "output": {
         "name": "meta-client"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:handshake",
+      "name": "client-info:handshake",
       "input": {
         "initialize": {
           "name": "from-handshake",
@@ -106,13 +86,10 @@
       "output": {
         "name": "from-handshake",
         "version": "9.9.9"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > falls back to _meta (v1 passthrough), then getClientVersion()"
-      ]
+      }
     },
     {
-      "name": "client-info:ts:non-string-name",
+      "name": "client-info:non-string-name",
       "input": {
         "meta": {
           "io.modelcontextprotocol/clientInfo": {
@@ -127,10 +104,7 @@
       "output": {
         "name": "from-handshake",
         "version": "9.9.9"
-      },
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|envelope-first identity ladder (v2 ctx.mcpReq.envelope) > rejects non-string envelope fields (field-level narrowing)"
-      ]
+      }
     },
     {
       "name": "client-info:name-version:no-initialize",
@@ -1090,23 +1064,17 @@
       }
     },
     {
-      "name": "protocol-version:ts:reads-meta",
+      "name": "protocol-version:reads-meta",
       "input": {
         "meta": {
           "io.modelcontextprotocol/protocolVersion": "2026-07-28"
         }
       },
-      "output": "2026-07-28",
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getProtocolVersion > reads _meta protocolVersion"
-      ]
+      "output": "2026-07-28"
     },
     {
-      "name": "protocol-version:ts:absent",
-      "input": {},
-      "ts_test": [
-        "v1|src/tests/client-identity.test.ts|getProtocolVersion > absent -> undefined"
-      ]
+      "name": "protocol-version:absent",
+      "input": {}
     },
     {
       "name": "protocol-version:legacy",

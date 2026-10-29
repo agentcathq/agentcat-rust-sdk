@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/inject.mjs",
   "cases": [
     {
-      "name": "ts:handle-injection:after-customer-params",
+      "name": "scenario:handle-injection:after-customer-params",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -73,13 +71,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > injects session_id and agent_id after customer params, both required"
       ]
     },
     {
-      "name": "ts:handle-injection:creates-required",
+      "name": "scenario:handle-injection:creates-required",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -138,13 +133,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > creates the required array when the schema has none"
       ]
     },
     {
-      "name": "ts:handle-injection:required-holds-session_id",
+      "name": "scenario:handle-injection:required-holds-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -200,13 +192,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate session_id in an existing required array"
       ]
     },
     {
-      "name": "ts:handle-injection:required-holds-agent_id",
+      "name": "scenario:handle-injection:required-holds-agent_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -261,13 +250,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does not duplicate agent_id in an existing required array"
       ]
     },
     {
-      "name": "ts:handle-injection:owns-agent_id",
+      "name": "scenario:handle-injection:owns-agent_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -323,13 +309,10 @@
             "WARN: Tool \"owns_agent\" already has 'agent_id' parameter. Skipping agent_id injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > leaves required untouched when the customer declares agent_id"
       ]
     },
     {
-      "name": "ts:handle-injection:full-order",
+      "name": "scenario:handle-injection:full-order",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -405,13 +388,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > full order with context injector: customer, session_id, agent_id, context"
       ]
     },
     {
-      "name": "ts:handle-injection:hook-mode",
+      "name": "scenario:handle-injection:hook-mode",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -474,13 +454,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > hook mode: no session_id, agent_id uses the same single description"
       ]
     },
     {
-      "name": "ts:handle-injection:owns-session_id",
+      "name": "scenario:handle-injection:owns-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -555,13 +532,10 @@
             "ERROR: Tool \"deploy\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips a param the tool already defines, and does not record it"
       ]
     },
     {
-      "name": "ts:handle-injection:complex",
+      "name": "scenario:handle-injection:complex",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -611,13 +585,10 @@
             "WARN: Tool \"odd\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > skips complex schemas entirely"
       ]
     },
     {
-      "name": "ts:handle-injection:strict",
+      "name": "scenario:handle-injection:strict",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -688,13 +659,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > removes additionalProperties:false and handles missing schemas"
       ]
     },
     {
-      "name": "rd20:ts:handle-injection:bare",
+      "name": "unrepresentable:handle-injection:bare",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -750,13 +718,10 @@
           "logs": []
         }
       ],
-      "deviation": "RD-20",
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > removes additionalProperties:false and handles missing schemas"
-      ]
+      "deviation": "RD-20"
     },
     {
-      "name": "ts:handle-injection:get_more_tools",
+      "name": "scenario:handle-injection:get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -828,13 +793,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|addHandleParametersToTools > does NOT skip get_more_tools (handles are injected; context stays bespoke)"
       ]
     },
     {
-      "name": "ts:handle-injection:output-object",
+      "name": "scenario:handle-injection:output-object",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -953,13 +915,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > injects mcp_session into a plain object outputSchema and registers the tool"
       ]
     },
     {
-      "name": "ts:handle-injection:output-hook-mode",
+      "name": "scenario:handle-injection:output-hook-mode",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1058,13 +1017,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > sub-properties track modes: hook mode drops session_id and status, tracking off drops agent_id"
       ]
     },
     {
-      "name": "ts:handle-injection:output-tracking-off",
+      "name": "scenario:handle-injection:output-tracking-off",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1173,13 +1129,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > sub-properties track modes: hook mode drops session_id and status, tracking off drops agent_id"
       ]
     },
     {
-      "name": "ts:handle-injection:output-complex",
+      "name": "scenario:handle-injection:output-complex",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1275,13 +1228,10 @@
             "WARN: Tool \"poly\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > skips complex outputSchema (oneOf/allOf/anyOf) and does not register"
       ]
     },
     {
-      "name": "ts:handle-injection:output-input-composed",
+      "name": "scenario:handle-injection:output-input-composed",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1365,13 +1315,10 @@
             "WARN: Tool \"mixed\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > composed inputSchema: early-return skips output injection too, nothing registered"
       ]
     },
     {
-      "name": "ts:handle-injection:output-collision",
+      "name": "scenario:handle-injection:output-collision",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1459,13 +1406,10 @@
             "WARN: Tool \"t\" already declares 'mcp_session' in outputSchema. Skipping injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > collision: a customer-declared mcp_session is never clobbered"
       ]
     },
     {
-      "name": "ts:handle-injection:output-absent",
+      "name": "scenario:handle-injection:output-absent",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1535,13 +1479,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > no outputSchema: untouched, nothing registered"
       ]
     },
     {
-      "name": "ts:handle-injection:output-no-handles",
+      "name": "scenario:handle-injection:output-no-handles",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1621,13 +1562,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|outputSchema injection > no injection at all (neither handle) leaves outputSchema alone"
       ]
     },
     {
-      "name": "rd20:ts:context-parameters:no-input-schema",
+      "name": "unrepresentable:context-parameters:no-input-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1678,13 +1616,10 @@
           "logs": []
         }
       ],
-      "deviation": "RD-20",
-      "ts_test": [
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools without inputSchema"
-      ]
+      "deviation": "RD-20"
     },
     {
-      "name": "ts:context-parameters:existing-schema",
+      "name": "scenario:context-parameters:existing-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1751,13 +1686,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should add context parameter to tools with existing inputSchema"
       ]
     },
     {
-      "name": "ts:context-parameters:owns-context",
+      "name": "scenario:context-parameters:owns-context",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1819,13 +1751,10 @@
             "WARN: Tool \"tool_with_context\" already has 'context' parameter. Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should not duplicate context parameter if already exists"
       ]
     },
     {
-      "name": "ts:context-parameters:empty-required",
+      "name": "scenario:context-parameters:empty-required",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -1887,13 +1816,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > addContextParameterToTools > should handle tools with empty required array"
       ]
     },
     {
-      "name": "ts:todo-server:default-description",
+      "name": "scenario:todo-server:default-description",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2185,15 +2111,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should inject context into tool schemas when listing tools",
-        "v1|src/tests/context-parameters.test.ts|Context Parameters > Integration with MCP server tracking > should use default context description when no custom description is provided",
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use default description when customContextDescription is not provided"
       ]
     },
     {
-      "name": "ts:todo-server:custom-json-schema",
+      "name": "scenario:todo-server:custom-json-schema",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2486,13 +2407,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description instead of default for JSON Schema tools"
       ]
     },
     {
-      "name": "ts:todo-server:custom-zod-object",
+      "name": "scenario:todo-server:custom-object-schema",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -2785,13 +2703,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description for Zod object schemas"
       ]
     },
     {
-      "name": "ts:todo-server:custom-all-tools",
+      "name": "scenario:todo-server:custom-all-tools",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -3084,13 +2999,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should apply custom description to all tools when listing"
       ]
     },
     {
-      "name": "ts:todo-server:custom-long",
+      "name": "scenario:todo-server:custom-long",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -3383,13 +3295,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description even with long descriptions"
       ]
     },
     {
-      "name": "ts:todo-server:custom-special-characters",
+      "name": "scenario:todo-server:custom-special-characters",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -3682,13 +3591,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/custom-context-description.test.ts|Custom Context Description > should use custom description with special characters"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:owns-context",
+      "name": "scenario:context-parameters-edge-cases:owns-context",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3742,13 +3648,10 @@
             "WARN: Tool \"test-tool\" already has 'context' parameter. Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should skip injection for tools with existing context parameter"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:warns-with-name",
+      "name": "scenario:context-parameters-edge-cases:warns-with-name",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3800,13 +3703,10 @@
             "WARN: Tool \"my-special-tool\" already has 'context' parameter. Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > existing context parameter collision > should warn with tool name when context exists"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:one-of",
+      "name": "scenario:context-parameters-edge-cases:one-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3882,13 +3782,10 @@
             "WARN: Tool \"union-tool\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for oneOf schemas"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:all-of",
+      "name": "scenario:context-parameters-edge-cases:all-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -3964,13 +3861,10 @@
             "WARN: Tool \"intersection-tool\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for allOf schemas"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:any-of",
+      "name": "scenario:context-parameters-edge-cases:any-of",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4026,13 +3920,10 @@
             "WARN: Tool \"anyof-tool\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > complex schema handling > should skip injection for anyOf schemas"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:additional-false",
+      "name": "scenario:context-parameters-edge-cases:additional-false",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4092,13 +3983,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should inject context and remove additionalProperties:false constraint"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:additional-true",
+      "name": "scenario:context-parameters-edge-cases:additional-true",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4159,13 +4047,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > additionalProperties constraint > should preserve additionalProperties:true when injecting"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:empty-schema",
+      "name": "scenario:context-parameters-edge-cases:empty-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4213,13 +4098,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle empty object schema {}"
       ]
     },
     {
-      "name": "rd20:ts:context-parameters-edge-cases:no-input-schema",
+      "name": "unrepresentable:context-parameters-edge-cases:no-input-schema",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4268,13 +4150,10 @@
           "logs": []
         }
       ],
-      "deviation": "RD-20",
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with no inputSchema"
-      ]
+      "deviation": "RD-20"
     },
     {
-      "name": "ts:context-parameters-edge-cases:type-only",
+      "name": "scenario:context-parameters-edge-cases:type-only",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4325,13 +4204,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > edge case schemas > should handle schema with only type specified"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:skips-get_more_tools",
+      "name": "scenario:context-parameters-edge-cases:skips-get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4391,13 +4267,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should skip get_more_tools entirely"
       ]
     },
     {
-      "name": "ts:context-parameters-edge-cases:mixed",
+      "name": "scenario:context-parameters-edge-cases:mixed",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4538,13 +4411,10 @@
             "WARN: Tool \"collision-tool\" already has 'context' parameter. Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/context-parameters-edge-cases.test.ts|Context Parameters Edge Cases > addContextParameterToTools batch handling > should handle mixed valid and complex schemas"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:server-a-three-listings",
+      "name": "scenario:handle-conflict-report:server-a-three-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4676,14 +4546,10 @@
           ],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports a session_id collision once per tool, as an error with remediation",
-        "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > buildInjectedList dedupes per AgentCatData object: repeat tools/list on the same server logs once, a second server logs its own once"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:server-b-two-listings",
+      "name": "scenario:handle-conflict-report:server-b-two-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4776,13 +4642,10 @@
           ],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > buildInjectedList dedupes per AgentCatData object: repeat tools/list on the same server logs once, a second server logs its own once"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:two-tools-two-listings",
+      "name": "scenario:handle-conflict-report:two-tools-two-listings",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -4930,13 +4793,10 @@
           ],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|session_id collision report > reports two different colliding tools each once"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:records-own-schemas-only",
+      "name": "scenario:handle-conflict-report:records-own-schemas-only",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -5075,13 +4935,10 @@
             "WARN: Tool \"union_tool\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records only the tools whose own schema declares session_id"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:records-composed-with-session_id",
+      "name": "scenario:handle-conflict-report:records-composed-with-session_id",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -5167,13 +5024,10 @@
             "WARN: Tool \"union_with_own_session\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records a composed schema that also declares session_id at its root"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:keys-per-data-object",
+      "name": "scenario:handle-conflict-report:keys-per-data-object",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -5227,13 +5081,10 @@
             "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > keys per AgentCatData object, like reportedConflicts"
       ]
     },
     {
-      "name": "ts:handle-conflict-report:hook-mode-records-nothing",
+      "name": "scenario:handle-conflict-report:hook-mode-records-nothing",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -5283,13 +5134,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/handle-conflict-report.test.ts|customer-declared session_id tracking > records nothing in hook mode, where session_id is never injected"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:composed-input",
+      "name": "scenario:schema-edges:composed-input",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5411,13 +5259,10 @@
             "WARN: Tool \"composed\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > skips handle injection entirely on composed (oneOf) input schemas"
       ]
     },
     {
-      "name": "rd20:ts:v2/schema-edges:bare",
+      "name": "unrepresentable:schema-edges:bare",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5522,13 +5367,10 @@
           "logs": []
         }
       ],
-      "deviation": "RD-20",
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > builds a default object schema for a tool listed without one"
-      ]
+      "deviation": "RD-20"
     },
     {
-      "name": "ts:v2/schema-edges:own-handles",
+      "name": "scenario:schema-edges:own-handles",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5645,13 +5487,10 @@
             "WARN: Tool \"own_handles\" already has 'agent_id' parameter. Skipping agent_id injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > preserves a customer-declared session_id/agent_id instead of overwriting"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:strict",
+      "name": "scenario:schema-edges:strict",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5767,13 +5606,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: input injection > drops additionalProperties:false so optional handles can ride along"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:output-object",
+      "name": "scenario:schema-edges:output-object",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -5930,13 +5766,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > declares mcp_session in a listed plain-object outputSchema"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:output-tracking-off",
+      "name": "scenario:schema-edges:output-tracking-off",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6069,13 +5902,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > omits agent_id from mcp_session when agent tracking is off"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:output-composed",
+      "name": "scenario:schema-edges:output-composed",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6225,13 +6055,10 @@
             "WARN: Tool \"either\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool."
           ]
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > leaves composed (anyOf) outputSchemas untouched"
       ]
     },
     {
-      "name": "ts:v2/schema-edges:output-collision",
+      "name": "scenario:schema-edges:output-collision",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6359,13 +6186,10 @@
             "WARN: Tool \"claims_key\" already declares 'mcp_session' in outputSchema. Skipping injection."
           ]
         }
-      ],
-      "ts_test": [
-        "v2|src/tests/v2/schema-edges.test.ts|v2 schema edges: outputSchema injection > never overwrites a customer-declared mcp_session output field"
       ]
     },
     {
-      "name": "ts:engine-listwrap:appends-get_more_tools",
+      "name": "scenario:engine-listwrap:appends-get_more_tools",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6472,13 +6296,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > appends get_more_tools and injects session_id + context"
       ]
     },
     {
-      "name": "ts:engine-listwrap:report-missing-off",
+      "name": "scenario:engine-listwrap:report-missing-off",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -6550,13 +6371,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips get_more_tools when enableReportMissing is false"
       ]
     },
     {
-      "name": "ts:engine-listwrap:tracing-off",
+      "name": "scenario:engine-listwrap:tracing-off",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6641,13 +6459,10 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/engine-listwrap.test.ts|buildInjectedList > skips handle injection entirely when tracing is off, but still registers empty entries"
       ]
     },
     {
-      "name": "ts:engine-listwrap:shadow-once",
+      "name": "scenario:engine-listwrap:shadow-once",
       "input": {
         "options": {
           "enableReportMissing": true,
@@ -6842,9 +6657,6 @@
           "declaredSessionParams": [],
           "logs": []
         }
-      ],
-      "ts_test": [
-        "v1|src/tests/engine-listwrap.test.ts|tools/list fault containment > warns once when the customer owns get_more_tools while report-missing is enabled"
       ]
     },
     {
@@ -23544,7 +23356,7 @@
       ]
     },
     {
-      "name": "rd20:input-schema-missing",
+      "name": "unrepresentable:input-schema-missing",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23609,7 +23421,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-null",
+      "name": "unrepresentable:input-schema-null",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23675,7 +23487,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-string",
+      "name": "unrepresentable:input-schema-string",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23718,7 +23530,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-array",
+      "name": "unrepresentable:input-schema-array",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23762,7 +23574,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-true",
+      "name": "unrepresentable:input-schema-true",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23805,7 +23617,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-false",
+      "name": "unrepresentable:input-schema-false",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23871,7 +23683,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:input-schema-zero",
+      "name": "unrepresentable:input-schema-zero",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -23937,7 +23749,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:name-missing",
+      "name": "unrepresentable:name-missing",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24003,7 +23815,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:name-null",
+      "name": "unrepresentable:name-null",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24071,7 +23883,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:name-number",
+      "name": "unrepresentable:name-number",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24139,7 +23951,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:name-object",
+      "name": "unrepresentable:name-object",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24213,7 +24025,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:name-true",
+      "name": "unrepresentable:name-true",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24281,7 +24093,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:output-schema-string",
+      "name": "unrepresentable:output-schema-string",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24340,7 +24152,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:output-schema-array",
+      "name": "unrepresentable:output-schema-array",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24412,7 +24224,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:output-schema-true",
+      "name": "unrepresentable:output-schema-true",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24471,7 +24283,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:output-schema-false",
+      "name": "unrepresentable:output-schema-false",
       "input": {
         "options": {
           "enableReportMissing": false,
@@ -24541,7 +24353,7 @@
       "deviation": "RD-20"
     },
     {
-      "name": "rd20:output-schema-zero",
+      "name": "unrepresentable:output-schema-zero",
       "input": {
         "options": {
           "enableReportMissing": false,

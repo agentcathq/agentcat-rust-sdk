@@ -1,6 +1,4 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/handles.mjs",
   "cases": [
     {
       "name": "derive:customer-abc+proj_1",
@@ -8,24 +6,14 @@
         "id": "customer-abc",
         "projectId": "proj_1"
       },
-      "output": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > derives deterministic session ids from id+project",
-        "v1|src/tests/handles.test.ts|handle primitives > different project yields a different derived id",
-        "v1|src/tests/handles.test.ts|handle primitives > derives without a project id",
-        "v1|src/tests/handles.test.ts|handle primitives > pins derived session ids to their golden values"
-      ]
+      "output": "ses_2cOHEO0LYGADMzRvWTXXVbbgxgm"
     },
     {
       "name": "derive:customer-abc",
       "input": {
         "id": "customer-abc"
       },
-      "output": "ses_2cZY3tvyI25O2AmL2CGVo2B1IIj",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > derives without a project id",
-        "v1|src/tests/handles.test.ts|handle primitives > pins derived session ids to their golden values"
-      ]
+      "output": "ses_2cZY3tvyI25O2AmL2CGVo2B1IIj"
     },
     {
       "name": "derive:space-x-space+p",
@@ -33,10 +21,7 @@
         "id": " x ",
         "projectId": "p"
       },
-      "output": "ses_2c3yR5mYKQdLaXsJNgZH6erbfQK",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > does not trim its input"
-      ]
+      "output": "ses_2c3yR5mYKQdLaXsJNgZH6erbfQK"
     },
     {
       "name": "derive:x+p",
@@ -44,10 +29,7 @@
         "id": "x",
         "projectId": "p"
       },
-      "output": "ses_2bw285VY9apdgUgTPXKFnT6P4G0",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > does not trim its input"
-      ]
+      "output": "ses_2bw285VY9apdgUgTPXKFnT6P4G0"
     },
     {
       "name": "derive:task-123+proj_abc",
@@ -78,10 +60,7 @@
         "id": "customer-abc",
         "projectId": "proj_2"
       },
-      "output": "ses_2cFXVQrdzlmLR8IrUu3p739t1Le",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > different project yields a different derived id"
-      ]
+      "output": "ses_2cFXVQrdzlmLR8IrUu3p739t1Le"
     },
     {
       "name": "derive:customer-42+proj_1",
@@ -89,10 +68,7 @@
         "id": "customer-42",
         "projectId": "proj_1"
       },
-      "output": "ses_2aTxnCSlMJJlr6zHNzWiKah0FLH",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > derives deterministically from the hook value + project"
-      ]
+      "output": "ses_2aTxnCSlMJJlr6zHNzWiKah0FLH"
     },
     {
       "name": "derive:corr-1+proj_1",
@@ -100,10 +76,7 @@
         "id": "corr-1",
         "projectId": "proj_1"
       },
-      "output": "ses_2afjLT0irA6g3tOA5CklOPgcSqQ",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > trims the value before deriving"
-      ]
+      "output": "ses_2afjLT0irA6g3tOA5CklOPgcSqQ"
     },
     {
       "name": "derive:anything+proj_1",
@@ -688,94 +661,64 @@
       "pattern": false
     },
     {
-      "name": "valid:ts:sid-parent",
+      "name": "valid:sid-parent",
       "input": "ses_parent000000000000000000000",
       "output": true,
-      "pattern": true,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > accepts the test helper's IDs"
-      ]
+      "pattern": true
     },
     {
-      "name": "valid:ts:wrong-prefix",
+      "name": "valid:wrong-prefix",
       "input": "task_2xF9kQm3rTvB8nLpYw7ZcHd4Ke",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects wrong prefix"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:no-prefix",
+      "name": "valid:no-prefix",
       "input": "2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects no prefix"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:too-short",
+      "name": "valid:too-short",
       "input": "ses_abc",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects too short"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:too-long",
+      "name": "valid:too-long",
       "input": "ses_aaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects too long"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:empty",
+      "name": "valid:empty",
       "input": "",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects empty"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:prefix-only",
+      "name": "valid:prefix-only",
       "input": "ses_",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects prefix only"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:customer-value",
+      "name": "valid:customer-value",
       "input": "my-app-session-42",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects customer value"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:non-base62-body",
+      "name": "valid:non-base62-body",
       "input": "ses_---------------------------",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects non-base62 body"
-      ]
+      "pattern": false
     },
     {
-      "name": "valid:ts:inner-whitespace",
+      "name": "valid:inner-whitespace",
       "input": "ses_ aaaaaaaaaaaaaaaaaaaaaaaaaa",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|isValidSessionId > rejects inner whitespace"
-      ]
+      "pattern": false
     },
     {
       "name": "valid:ses_short",
@@ -787,143 +730,104 @@
       "name": "valid:contract:start",
       "input": "start",
       "output": false,
-      "pattern": true,
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "pattern": true
     },
     {
       "name": "valid:contract:ses-27-a",
       "input": "ses_aaaaaaaaaaaaaaaaaaaaaaaaaaa",
       "output": true,
-      "pattern": true,
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "pattern": true
     },
     {
       "name": "valid:contract:ses-25-a",
       "input": "ses_aaaaaaaaaaaaaaaaaaaaaaaaa",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "pattern": false
     },
     {
       "name": "valid:contract:restart",
       "input": "restart",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "pattern": false
     },
     {
       "name": "valid:contract:upper-start",
       "input": "START",
       "output": false,
-      "pattern": false,
-      "ts_test": [
-        "v1|src/tests/constants.test.ts|v4 copy pins (byte-exact) > pins the session_id value-contract constants"
-      ]
+      "pattern": false
     },
     {
-      "name": "extract:ts:spaced-ses_x",
+      "name": "extract:spaced-ses_x",
       "input": {
         "args": {
           "session_id": " ses_x "
         },
         "name": "session_id"
       },
-      "output": "ses_x",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": "ses_x"
     },
     {
-      "name": "extract:ts:empty",
+      "name": "extract:empty",
       "input": {
         "args": {
           "session_id": ""
         },
         "name": "session_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:spaces",
+      "name": "extract:spaces",
       "input": {
         "args": {
           "session_id": "   "
         },
         "name": "session_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:number",
+      "name": "extract:number",
       "input": {
         "args": {
           "session_id": 42
         },
         "name": "session_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:args-undefined",
+      "name": "extract:args-undefined",
       "input": {
         "name": "session_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:args-null",
+      "name": "extract:args-null",
       "input": {
         "args": null,
         "name": "agent_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:args-string",
+      "name": "extract:args-string",
       "input": {
         "args": "not-an-object",
         "name": "session_id"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns trimmed non-empty strings only"
-      ]
+      "output": null
     },
     {
-      "name": "extract:ts:any-string",
+      "name": "extract:any-string",
       "input": {
         "args": {
           "session_id": "my-own-correlation-id"
         },
         "name": "session_id"
       },
-      "output": "my-own-correlation-id",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|handle primitives > extractHandle returns any non-empty string; validation happens in resolveHandles"
-      ]
+      "output": "my-own-correlation-id"
     },
     {
       "name": "extract:string",
@@ -7697,7 +7601,7 @@
       }
     },
     {
-      "name": "resolve:ts:mint-no-agent",
+      "name": "resolve:mint-no-agent",
       "input": {
         "args": {},
         "hookMode": false,
@@ -7708,13 +7612,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > mints the task but never the agent when nothing supplied (agent tracking on)"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:subagent",
+      "name": "resolve:subagent",
       "input": {
         "args": {
           "session_id": "ses_parent000000000000000000000"
@@ -7727,13 +7628,10 @@
         "sessionId": "ses_parent000000000000000000000",
         "sessionSource": "supplied",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > subagent flow: supplied task + omitted agent leaves the agent unresolved"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:supplied-verbatim",
+      "name": "resolve:supplied-verbatim",
       "input": {
         "args": {
           "session_id": "ses_anythinggoes000000000000000",
@@ -7749,13 +7647,10 @@
         "hookMode": false,
         "agentId": "opus-4.80-1m|claude-code|k3n9x",
         "agentSource": "supplied"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > uses supplied handles verbatim"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:tracking-off",
+      "name": "resolve:tracking-off",
       "input": {
         "args": {
           "agent_id": "agt_ignored"
@@ -7768,13 +7663,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > enableAgentTracking:false resolves no agent id at all"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:malformed",
+      "name": "resolve:malformed",
       "input": {
         "args": {
           "session_id": "nope"
@@ -7787,13 +7679,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > rejects a malformed supplied session_id: sessionless, source invalid"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:secret",
+      "name": "resolve:secret",
       "input": {
         "args": {
           "session_id": "sk_live_secret_token"
@@ -7806,13 +7695,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > never stores the raw rejected value"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:well-formed",
+      "name": "resolve:well-formed",
       "input": {
         "args": {
           "session_id": "ses_parent000000000000000000000"
@@ -7825,13 +7711,10 @@
         "sessionId": "ses_parent000000000000000000000",
         "sessionSource": "supplied",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > accepts a well-formed supplied session_id verbatim"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:foreign-with-value",
+      "name": "resolve:foreign-with-value",
       "input": {
         "args": {
           "session_id": "customer-value"
@@ -7844,13 +7727,10 @@
         "sessionId": "",
         "sessionSource": "foreign",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: sessionless regardless of what the agent sent"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:foreign-without-value",
+      "name": "resolve:foreign-without-value",
       "input": {
         "args": {},
         "hookMode": false,
@@ -7861,13 +7741,10 @@
         "sessionId": "",
         "sessionSource": "foreign",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: sessionless regardless of what the agent sent"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:hook-over-foreign",
+      "name": "resolve:hook-over-foreign",
       "input": {
         "args": {
           "session_id": "customer-value"
@@ -7880,13 +7757,10 @@
         "sessionId": "",
         "sessionSource": "hook",
         "hookMode": true
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > hook mode wins over foreign: arguments are never read"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:still-mints",
+      "name": "resolve:still-mints",
       "input": {
         "args": {},
         "hookMode": false,
@@ -7897,13 +7771,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > still mints when nothing is supplied on our own param"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:start",
+      "name": "resolve:start",
       "input": {
         "args": {
           "session_id": "start"
@@ -7916,13 +7787,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel resolves exactly like omission: fresh mint, source minted"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:sentinel-START",
+      "name": "resolve:sentinel-START",
       "input": {
         "args": {
           "session_id": "START"
@@ -7935,13 +7803,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"START\" mints"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:sentinel-Start",
+      "name": "resolve:sentinel-Start",
       "input": {
         "args": {
           "session_id": "Start"
@@ -7954,13 +7819,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"Start\" mints"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:sentinel-sTaRt",
+      "name": "resolve:sentinel-sTaRt",
       "input": {
         "args": {
           "session_id": "sTaRt"
@@ -7973,13 +7835,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"sTaRt\" mints"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:sentinel-spaces-start-spaces",
+      "name": "resolve:sentinel-spaces-start-spaces",
       "input": {
         "args": {
           "session_id": "  start  "
@@ -7992,13 +7851,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \"  start  \" mints"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:sentinel-space-START-tab",
+      "name": "resolve:sentinel-space-START-tab",
       "input": {
         "args": {
           "session_id": " START\t"
@@ -8011,13 +7867,10 @@
         "sessionId": "<minted>",
         "sessionSource": "minted",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > start sentinel is case-insensitive and whitespace-tolerant: \" START\\t\" mints"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:near-sentinel-restart",
+      "name": "resolve:near-sentinel-restart",
       "input": {
         "args": {
           "session_id": "restart"
@@ -8030,13 +7883,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:near-sentinel-start-space-now",
+      "name": "resolve:near-sentinel-start-space-now",
       "input": {
         "args": {
           "session_id": "start now"
@@ -8049,13 +7899,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:near-sentinel-starts",
+      "name": "resolve:near-sentinel-starts",
       "input": {
         "args": {
           "session_id": "starts"
@@ -8068,13 +7915,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:near-sentinel-star-space-t",
+      "name": "resolve:near-sentinel-star-space-t",
       "input": {
         "args": {
           "session_id": "star t"
@@ -8087,13 +7931,10 @@
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > near-sentinel values stay on the invalid path"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:foreign-start",
+      "name": "resolve:foreign-start",
       "input": {
         "args": {
           "session_id": "start"
@@ -8106,13 +7947,10 @@
         "sessionId": "",
         "sessionSource": "foreign",
         "hookMode": false
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — prompted mode > foreign param: start is the customer's value, never a sentinel"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:hook-provisional",
+      "name": "resolve:hook-provisional",
       "input": {
         "args": {},
         "hookMode": true,
@@ -8123,13 +7961,10 @@
         "sessionId": "",
         "sessionSource": "hook",
         "hookMode": true
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — hook mode > returns a provisional resolution: empty id, source 'hook', hookMode on"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:hook-ignores-session",
+      "name": "resolve:hook-ignores-session",
       "input": {
         "args": {
           "session_id": "ses_agent_sent"
@@ -8142,13 +7977,10 @@
         "sessionId": "",
         "sessionSource": "hook",
         "hookMode": true
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — hook mode > ignores agent-supplied session_id — the hook wins"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:hook-agent-supplied",
+      "name": "resolve:hook-agent-supplied",
       "input": {
         "args": {
           "agent_id": "opus-4.80-1m|claude-code|k3n9x"
@@ -8163,13 +7995,10 @@
         "hookMode": true,
         "agentId": "opus-4.80-1m|claude-code|k3n9x",
         "agentSource": "supplied"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved"
-      ]
+      }
     },
     {
-      "name": "resolve:ts:hook-agent-omitted",
+      "name": "resolve:hook-agent-omitted",
       "input": {
         "args": {},
         "hookMode": true,
@@ -8180,10 +8009,7 @@
         "sessionId": "",
         "sessionSource": "hook",
         "hookMode": true
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|resolveHandles — hook mode > hook mode: supplied agent_id resolves, omitted stays unresolved"
-      ]
+      }
     },
     {
       "name": "mint-back:minted",
@@ -8900,7 +8726,7 @@
       "output": null
     },
     {
-      "name": "mint-back:ts:minted-with-agent",
+      "name": "mint-back:minted-with-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "minted",
@@ -8908,25 +8734,19 @@
         "agentId": "opus-4.80-1m|claude-code|k3n9x",
         "agentSource": "supplied"
       },
-      "output": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description.",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildMintBackText > task minted: task-only block, no agent mention even when agent supplied"
-      ]
+      "output": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
     },
     {
-      "name": "mint-back:ts:minted-without-agent",
+      "name": "mint-back:minted-without-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "minted",
         "hookMode": false
       },
-      "output": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description.",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildMintBackText > task minted without agent tracking: same task-only block"
-      ]
+      "output": "[session_id issued — see this tool's session_id parameter description]\nsession_id: ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\nThis is the first-call issuance described in this tool's session_id parameter description."
     },
     {
-      "name": "mint-back:ts:supplied",
+      "name": "mint-back:supplied-with-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "supplied",
@@ -8934,13 +8754,10 @@
         "agentId": "opus-4.80-1m|claude-code|k3n9x",
         "agentSource": "supplied"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildMintBackText > task supplied -> null (nothing to announce, agent never mints)"
-      ]
+      "output": null
     },
     {
-      "name": "mint-back:ts:hook-mode-minted",
+      "name": "mint-back:hook-mode-minted",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "minted",
@@ -8948,38 +8765,28 @@
         "agentId": "opus-4.80-1m|claude-code|k3n9x",
         "agentSource": "supplied"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildMintBackText > hook mode never emits task instructions, even when hook-null minted"
-      ]
+      "output": null
     },
     {
-      "name": "mint-back:ts:invalid",
+      "name": "mint-back:invalid-without-agent",
       "input": {
         "sessionId": "",
         "sessionSource": "invalid",
         "hookMode": false
       },
-      "output": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued.",
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: corrects the agent without issuing a replacement",
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: offers an escape to an agent that was never issued one"
-      ]
+      "output": "[session_id unrecognized — see this tool's session_id parameter description]\nThe value sent was not issued by this server. Re-send the session_id issued earlier for this task; if none was issued yet, send start and one will be issued."
     },
     {
-      "name": "mint-back:ts:foreign",
+      "name": "mint-back:foreign-without-agent",
       "input": {
         "sessionId": "",
         "sessionSource": "foreign",
         "hookMode": false
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: says nothing when agent_id is not in play either"
-      ]
+      "output": null
     },
     {
-      "name": "structured:ts:minted-with-agent",
+      "name": "structured:minted-with-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "minted",
@@ -8991,13 +8798,10 @@
         "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "agent_id": "opus-4.80-1m|claude-code|k3n9x",
         "status": "issued"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildStructuredMintBack > task minted + agent supplied: both ids, status issued"
-      ]
+      }
     },
     {
-      "name": "structured:ts:supplied-with-agent",
+      "name": "structured:supplied-with-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "supplied",
@@ -9009,13 +8813,10 @@
         "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "agent_id": "opus-4.80-1m|claude-code|k3n9x",
         "status": "active"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildStructuredMintBack > steady state (both supplied): ids plus status active"
-      ]
+      }
     },
     {
-      "name": "structured:ts:supplied-without-agent",
+      "name": "structured:supplied-without-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "supplied",
@@ -9024,13 +8825,10 @@
       "output": {
         "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "status": "active"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildStructuredMintBack > agent tracking off: task only, status active"
-      ]
+      }
     },
     {
-      "name": "structured:ts:hook-mode-minted-with-agent",
+      "name": "structured:hook-mode-minted-with-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "minted",
@@ -9040,25 +8838,19 @@
       },
       "output": {
         "agent_id": "opus-4.80-1m|claude-code|k3n9x"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode never exposes session_id or status; supplied agent is echoed"
-      ]
+      }
     },
     {
-      "name": "structured:ts:hook-mode-without-agent",
+      "name": "structured:hook-mode-without-agent",
       "input": {
         "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
         "sessionSource": "hook",
         "hookMode": true
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildStructuredMintBack > hook mode with agent tracking off: nothing echoable -> null"
-      ]
+      "output": null
     },
     {
-      "name": "structured:ts:invalid",
+      "name": "structured:invalid",
       "input": {
         "sessionId": "",
         "sessionSource": "invalid",
@@ -9066,13 +8858,10 @@
       },
       "output": {
         "status": "unrecognized"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid: structured mirror carries status unrecognized but no session_id"
-      ]
+      }
     },
     {
-      "name": "structured:ts:invalid-with-agent",
+      "name": "structured:invalid-with-agent",
       "input": {
         "sessionId": "",
         "sessionSource": "invalid",
@@ -9083,25 +8872,19 @@
       "output": {
         "agent_id": "opus|cc|k3n9x",
         "status": "unrecognized"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > invalid + agent supplied: agent_id rides along with the unrecognized status"
-      ]
+      }
     },
     {
-      "name": "structured:ts:foreign",
+      "name": "structured:foreign",
       "input": {
         "sessionId": "",
         "sessionSource": "foreign",
         "hookMode": false
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: says nothing when agent_id is not in play either"
-      ]
+      "output": null
     },
     {
-      "name": "structured:ts:foreign-with-agent",
+      "name": "structured:foreign-with-agent",
       "input": {
         "sessionId": "",
         "sessionSource": "foreign",
@@ -9111,11 +8894,7 @@
       },
       "output": {
         "agent_id": "opus|cc|k3n9x"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: never echoes session state, which is the customer's",
-        "v1|src/tests/handles.test.ts|invalid and foreign mint-back > foreign: still echoes agent_id, which AgentCat did inject"
-      ]
+      }
     },
     {
       "name": "tags:agent-id-plain",
@@ -10633,7 +10412,7 @@
       }
     },
     {
-      "name": "tags:ts:stamps-all",
+      "name": "tags:stamps-all",
       "input": {
         "res": {
           "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -10649,13 +10428,10 @@
         "agentcat_agent_id": "opus-4.80-1m|claude-code|k3n9x",
         "agentcat_agent_id_source": "supplied",
         "agentcat_protocol_version": "2026-07-28"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildHandleTags > stamps sources, agent id, and protocol version"
-      ]
+      }
     },
     {
-      "name": "tags:ts:omits-absent",
+      "name": "tags:omits-absent",
       "input": {
         "res": {
           "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -10665,13 +10441,10 @@
       },
       "output": {
         "agentcat_session_id_source": "hook"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildHandleTags > omits agent and protocol keys when absent"
-      ]
+      }
     },
     {
-      "name": "tags:ts:clamps-500",
+      "name": "tags:clamps-500",
       "input": {
         "res": {
           "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -10685,13 +10458,10 @@
         "agentcat_session_id_source": "supplied",
         "agentcat_agent_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "agentcat_agent_id_source": "supplied"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildHandleTags > clamps a >200-char agent_id to exactly 200 chars in the tag only"
-      ]
+      }
     },
     {
-      "name": "tags:ts:strips-newlines",
+      "name": "tags:strips-newlines",
       "input": {
         "res": {
           "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -10705,13 +10475,10 @@
         "agentcat_session_id_source": "supplied",
         "agentcat_agent_id": "line1 line2  line3",
         "agentcat_agent_id_source": "supplied"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildHandleTags > strips newlines from the agent_id tag"
-      ]
+      }
     },
     {
-      "name": "tags:ts:normal-agent",
+      "name": "tags:normal-agent",
       "input": {
         "res": {
           "sessionId": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -10725,10 +10492,7 @@
         "agentcat_session_id_source": "supplied",
         "agentcat_agent_id": "opus-4.80-1m|claude-code|k3n9x",
         "agentcat_agent_id_source": "supplied"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|buildHandleTags > passes a normal agent_id through unchanged"
-      ]
+      }
     },
     {
       "name": "hook-value:value-customer-abc:project-absent",
@@ -10951,7 +10715,7 @@
       }
     },
     {
-      "name": "hook-value:ts:customer-42",
+      "name": "hook-value:customer-42",
       "input": {
         "value": "customer-42",
         "projectId": "proj_1"
@@ -10959,13 +10723,10 @@
       "output": {
         "sessionId": "ses_2aTxnCSlMJJlr6zHNzWiKah0FLH",
         "sessionSource": "hook"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > derives deterministically from the hook value + project"
-      ]
+      }
     },
     {
-      "name": "hook-value:ts:padded-corr-1",
+      "name": "hook-value:padded-corr-1",
       "input": {
         "value": "  corr-1  ",
         "projectId": "proj_1"
@@ -10973,13 +10734,10 @@
       "output": {
         "sessionId": "ses_2afjLT0irA6g3tOA5CklOPgcSqQ",
         "sessionSource": "hook"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > trims the value before deriving"
-      ]
+      }
     },
     {
-      "name": "hook-value:ts:null",
+      "name": "hook-value:null",
       "input": {
         "value": null,
         "projectId": "proj_1"
@@ -10987,13 +10745,10 @@
       "output": {
         "sessionId": "<minted>",
         "sessionSource": "minted"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > mints a fresh id per null — silent mint, never 'supplied'"
-      ]
+      }
     },
     {
-      "name": "hook-value:ts:spaces",
+      "name": "hook-value:spaces",
       "input": {
         "value": "   ",
         "projectId": "proj_1"
@@ -11001,10 +10756,7 @@
       "output": {
         "sessionId": "<minted>",
         "sessionSource": "minted"
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|sessionFromHookValue > treats a whitespace-only value as null"
-      ]
+      }
     },
     {
       "name": "lowercase:sentinel-letters",

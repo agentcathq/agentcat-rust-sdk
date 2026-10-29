@@ -1,6 +1,4 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/event_order.mjs",
   "cases": [
     {
       "name": "tool_call",

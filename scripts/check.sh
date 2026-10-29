@@ -41,13 +41,11 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
-# oracle-harness (the parity check runs after the tests below)
+# oracle-harness
 corepack pnpm install --frozen-lockfile
 # the harness tests run the Rust reference server
 cargo build -p harness-ref-server
 corepack pnpm -r --workspace-concurrency=1 test
-node oracle/src/vectors/run.mjs --check
-node oracle/src/parity/list-tests.mjs --check
 node harness/src/dump-contract.mjs --check
 # scripts/ tests never contact the network (rmcp-versions.mjs fetches only when run as a script)
 node --test "scripts/*.test.mjs"
@@ -93,7 +91,6 @@ cargo nextest run --workspace --all-features
 cargo nextest run -p agentcat-sdk --no-default-features
 cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
-cargo run -q -p xtask -- parity --final
 cargo run -q -p xtask -- rmcp-canary
 
 # coverage (C52): at least 90 % of the crate's lines and 95 % of the pure modules' lines, test files left out

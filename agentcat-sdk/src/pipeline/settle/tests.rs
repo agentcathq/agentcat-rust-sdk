@@ -383,7 +383,7 @@ hook_cases! {
     queue_hooks_tags_invalid_mixed => "hooks:tags-invalid:mixed",
     queue_hooks_tags_invalid_51_valid => "hooks:tags-invalid:51-valid",
     queue_hooks_tags_invalid_none_valid => "hooks:tags-invalid:none-valid",
-    queue_hooks_tags_invalid_ts_bang_key => "hooks:tags-invalid:ts-bang-key",
+    queue_hooks_tags_invalid_bang_key => "hooks:tags-invalid:bang-key",
     queue_hooks_tags_collide => "hooks:tags-collide",
     queue_hooks_tags_throws => "hooks:tags-throws",
     queue_hooks_properties => "hooks:properties",

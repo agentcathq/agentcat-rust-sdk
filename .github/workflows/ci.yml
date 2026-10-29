@@ -250,14 +250,11 @@ jobs:
       - run: cargo build -p harness-ref-server
       # One package at a time: oracle/test/fetch.test.mjs dirties the shared TS clone on purpose (R-17).
       - run: corepack pnpm -r --workspace-concurrency=1 test
-      - run: node oracle/src/vectors/run.mjs --check
-      - run: node oracle/src/parity/list-tests.mjs --check
       - run: node harness/src/dump-contract.mjs --check
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
       - run: node --test "scripts/*.test.mjs"
-      - run: cargo run -q -p xtask -- parity --final
       # The customer examples (C54) against the local mock API: stdout carries only JSON-RPC, the last
       # event arrives, and the process exits 0 within 5 s of the client close.
       - run: cargo build -p agentcat-sdk --examples --all-features

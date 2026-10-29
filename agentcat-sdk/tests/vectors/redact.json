@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/redact.mjs",
   "cases": [
     {
-      "name": "test:basic",
+      "name": "basic",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "userIntent": "sensitive user intent",
@@ -16,13 +14,10 @@
       },
       "calls": [
         "sensitive user intent"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should redact basic string fields"
       ]
     },
     {
-      "name": "test:protected-fields",
+      "name": "protected-fields",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "id": "evt_456",
@@ -53,13 +48,10 @@
         "eventType": "mcp:tools/call",
         "actorId": "actor_456"
       },
-      "calls": [],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should not redact protected fields"
-      ]
+      "calls": []
     },
     {
-      "name": "test:nested-strings",
+      "name": "nested-strings",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -97,13 +89,10 @@
         "secret-key-123",
         "sensitive response data",
         "sensitive source"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should redact nested string fields"
       ]
     },
     {
-      "name": "test:arrays-of-strings",
+      "name": "arrays-of-strings",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -138,13 +127,10 @@
         "sensitive1",
         "sensitive2",
         "sensitive3"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle arrays of strings"
       ]
     },
     {
-      "name": "test:mixed-nested",
+      "name": "mixed-nested",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -184,13 +170,10 @@
         "john@example.com",
         "Jane",
         "jane@example.com"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle mixed nested structures"
       ]
     },
     {
-      "name": "test:identify-data",
+      "name": "identify-data",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "identifyData": {
@@ -219,13 +202,10 @@
           }
         }
       },
-      "calls": [],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle complex identifyData object without redacting it"
-      ]
+      "calls": []
     },
     {
-      "name": "test:error-object",
+      "name": "error-object",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "isError": true,
@@ -248,13 +228,10 @@
         "Sensitive error message",
         "ERR_001",
         "Error: Sensitive error message\n    at functionName (file.js:10:5)"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle error objects"
       ]
     },
     {
-      "name": "test:deeply-nested-protected-name",
+      "name": "deeply-nested-protected-name",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -280,13 +257,10 @@
       "calls": [
         "This should be redacted",
         "sensitive data"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle deeply nested protected fields correctly"
       ]
     },
     {
-      "name": "test:redactor-throws",
+      "name": "redactor-throws",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "userIntent": "sensitive data"
@@ -295,13 +269,10 @@
       "error": "Error: redactor failed",
       "calls": [
         "sensitive data"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle custom redaction function errors gracefully"
       ]
     },
     {
-      "name": "test:nested-in-protected",
+      "name": "nested-in-protected",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "identifyData": {
@@ -348,13 +319,10 @@
       },
       "calls": [
         "this SHOULD be redacted"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should not redact nested fields within any protected field"
       ]
     },
     {
-      "name": "test:all-fields",
+      "name": "all-fields",
       "input": {
         "id": "evt_123",
         "projectId": "proj_123",
@@ -417,9 +385,6 @@
         "user intent text",
         "value1",
         "success"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle events with all possible fields"
       ]
     },
     {
@@ -2869,10 +2834,7 @@
           "content": "sensitive response"
         },
         "userIntent": "sensitive intent"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
-      ]
+      }
     },
     {
       "name": "apply:test-async-hook",
@@ -2920,10 +2882,7 @@
           "content": "sensitive response"
         },
         "userIntent": "[SCRUBBED]"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply an asynchronous hook in place"
-      ]
+      }
     },
     {
       "name": "apply:test-drop-null",
@@ -2943,10 +2902,7 @@
         "userIntent": "sensitive intent"
       },
       "replacement": null,
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
-      ]
+      "output": null
     },
     {
       "name": "apply:test-drop-undefined",
@@ -2965,10 +2921,7 @@
         },
         "userIntent": "sensitive intent"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop when the hook returns undefined"
-      ]
+      "output": null
     },
     {
       "name": "apply:test-deletions",
@@ -3008,10 +2961,7 @@
         "parameters": {
           "text": "sensitive text"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should honor field deletions instead of resurrecting them"
-      ]
+      }
     },
     {
       "name": "apply:test-restore",
@@ -3058,10 +3008,7 @@
         },
         "userIntent": "sensitive intent",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should restore system-managed fields if the hook changes or removes them"
-      ]
+      }
     },
     {
       "name": "apply:change-id",

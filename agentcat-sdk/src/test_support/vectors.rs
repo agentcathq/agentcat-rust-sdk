@@ -1,6 +1,5 @@
-//! The TS-generated vector files in `agentcat-sdk/tests/vectors/`: `{"ts_sha", "generator",
-//! "cases": [...]}`, each case an object with a unique `name` (written by
-//! `oracle/src/vectors/write.mjs`; `tests/vector_integrity.rs` checks hashes and the TS SHA).
+//! The fixture files in `agentcat-sdk/tests/vectors/`: `{"cases": [...]}`, each case an object
+//! with a `name` that is unique in its file (`tests/vector_integrity.rs` checks the files).
 use std::path::Path;
 
 use serde_json::{Map, Value};
@@ -9,7 +8,7 @@ use super::markers;
 
 /// The cases of `tests/vectors/<set>.json`, with every `$f64` marker decoded and every `$repeat`
 /// macro of a case's `input` expanded. `$utf16` markers stay: a test compares through
-/// [`markers::d09`] where RD-22 applies.
+/// [`markers::d09`], which drops the unpaired surrogates that a Rust string cannot hold.
 ///
 /// # Panics
 ///

@@ -1,6 +1,4 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/queue.mjs",
   "cases": [
     {
       "name": "call:plain",
@@ -383,9 +381,6 @@
     },
     {
       "name": "call:no-session",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -427,9 +422,6 @@
     },
     {
       "name": "call:tokens",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -475,9 +467,6 @@
     },
     {
       "name": "call:no-tokens",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should leave the token fields undefined when the event has none"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -519,9 +508,6 @@
     },
     {
       "name": "call:log-metadata-only",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > logs only event metadata on successful send, never the payload"
-      ],
       "event": {
         "id": "",
         "sessionId": "test-session",
@@ -1586,10 +1572,7 @@
       ]
     },
     {
-      "name": "hooks:tags-invalid:ts-bang-key",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should validate tags from callback"
-      ],
+      "name": "hooks:tags-invalid:bang-key",
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -1701,9 +1684,6 @@
     },
     {
       "name": "hooks:tags-collide",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -2885,9 +2865,6 @@
     },
     {
       "name": "redact-event:drop",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook returns null"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -2945,9 +2922,6 @@
     },
     {
       "name": "redact-event:throws",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook throws"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -3116,9 +3090,6 @@
     },
     {
       "name": "redact-event:merge-parameters",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events"
-      ],
       "event": {
         "id": "",
         "sessionId": "test-session",
@@ -4318,9 +4289,6 @@
     },
     {
       "name": "custom:string-form",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should use the session ID string verbatim as the session ID"
-      ],
       "custom": {
         "form": "string",
         "session": "user-session-12345",
@@ -4363,9 +4331,6 @@
     },
     {
       "name": "custom:string-form-session-precedence",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should let eventData.sessionId take precedence over the string"
-      ],
       "custom": {
         "form": "string",
         "session": "ignored-string",
@@ -4397,9 +4362,6 @@
     },
     {
       "name": "custom:string-form-all-fields",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should handle all event data fields"
-      ],
       "custom": {
         "form": "string",
         "session": "user-session-12345",
@@ -4463,9 +4425,6 @@
     },
     {
       "name": "custom:string-form-empty",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle empty event data object"
-      ],
       "custom": {
         "form": "string",
         "session": "test-session",
@@ -4672,9 +4631,6 @@
     },
     {
       "name": "custom:server-form",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish custom event with tracked server"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4746,9 +4702,6 @@
     },
     {
       "name": "custom:server-form-no-session",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish with an empty session id and warn when no sessionId is provided"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4808,9 +4761,6 @@
     },
     {
       "name": "custom:server-form-error",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle error data correctly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4942,9 +4892,6 @@
     },
     {
       "name": "custom:server-form-tags-properties",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5034,9 +4981,6 @@
     },
     {
       "name": "custom:server-form-invalid-tags",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should validate tags passed directly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5107,9 +5051,6 @@
     },
     {
       "name": "custom:server-form-properties-empty",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should normalize empty properties to omission"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5215,9 +5156,6 @@
     },
     {
       "name": "custom:server-form-redact-merge",
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should apply the hook to custom events published on a tracked server"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
