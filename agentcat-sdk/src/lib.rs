@@ -702,7 +702,9 @@ pub use event::Event;
 pub use hooks::ToolCall;
 pub use tracked::Tracked;
 
-/// The code blocks of `README.md`, compiled as doctests (C55). Only `cargo test --doc` builds it.
+/// The code blocks of `README.md`, compiled as doctests (C55, R30). In the repository the file is a
+/// symlink to the root README, which GitHub shows; in the package it is a copy, which crates.io shows.
+/// Only `cargo test --doc` builds it.
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]
 pub struct ReadmeDoctests;
