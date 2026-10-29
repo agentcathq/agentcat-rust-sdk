@@ -1,14 +1,14 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "enableAgentTracking": true,
-    "customContextDescription": "Say why you are calling this tool, in one sentence, for the harness"
+    "customContextDescription": "Say why you are calling this tool, in one sentence, for the test suite"
   },
-  "httpHeaders": { "x-test-header": "harness" },
+  "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 14,
   "sessions": [
     {
-      "client": { "name": "harness-client-agent", "version": "1.0.0" },
+      "client": { "name": "e2e-client-agent", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "minted with an agent", "agent_id": "agent-1" }, "saveHandleAs": "S1" },
@@ -27,7 +27,7 @@
       ]
     },
     {
-      "client": { "name": "harness-client-agent-b", "version": "1.0.0" },
+      "client": { "name": "e2e-client-agent-b", "version": "1.0.0" },
       "steps": [
         { "op": "callTool", "name": "structured", "args": { "msg": "before any listing", "agent_id": "agent-2" } }
       ]

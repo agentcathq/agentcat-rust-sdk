@@ -1,5 +1,5 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "identify": { "throws": "identify failed", "sleepMs": 200 },
     "eventTags": { "returns": { "bad key!": "dropped", "abcdefghijklmnopqrstuvwxyz0123456": "dropped", "count": 5, "multi": "line\nbreak", "team": "core" } },
@@ -8,7 +8,7 @@
   "expectPublishes": 5,
   "sessions": [
     {
-      "client": { "name": "harness-client-a", "version": "1.0.0" },
+      "client": { "name": "e2e-client-a", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "first" }, "saveHandleAs": "S1" },
@@ -17,7 +17,7 @@
       ]
     },
     {
-      "client": { "name": "harness-client-b", "version": "2.0.0" },
+      "client": { "name": "e2e-client-b", "version": "2.0.0" },
       "steps": [
         { "op": "callTool", "name": "echo", "args": { "msg": "other session" }, "saveHandleAs": "S2" },
         { "op": "callTool", "name": "echo", "args": { "msg": "other session again", "session_id": "${S2}" } }

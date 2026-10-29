@@ -481,7 +481,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "agentcat:custom",
         "resource_name": "kept",

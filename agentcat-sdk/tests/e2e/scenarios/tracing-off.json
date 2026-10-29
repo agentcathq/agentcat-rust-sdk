@@ -1,13 +1,13 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "enableTracing": false
   },
-  "httpHeaders": { "x-test-header": "harness" },
+  "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 0,
   "sessions": [
     {
-      "client": { "name": "harness-client-tracing-off", "version": "1.0.0" },
+      "client": { "name": "e2e-client-tracing-off", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "with a context", "context": "Tracing is off, so nothing strips this" } },

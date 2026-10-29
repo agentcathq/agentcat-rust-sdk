@@ -1,19 +1,19 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "identify": { "returns": { "userId": "user-1", "userName": "User One", "userData": { "plan": "pro" } } },
     "eventTags": { "returns": { "team": "core" } },
     "eventProperties": { "returns": { "region": "eu" } },
     "redactSensitiveInformation": { "replace": "SECRET_TOKEN" }
   },
-  "httpHeaders": { "x-test-header": "harness", "user-agent": "harness-driver/1.0" },
+  "httpHeaders": { "x-test-header": "e2e", "user-agent": "e2e-driver/1.0" },
   "expectPublishes": 11,
   "sessions": [
     {
-      "client": { "name": "harness-client-a", "version": "1.0.0" },
+      "client": { "name": "e2e-client-a", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
-        { "op": "callTool", "name": "echo", "args": { "msg": "hi", "context": "Checking that the echo tool returns the message so the harness can compare published events" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "hi", "context": "Checking that the echo tool returns the message so the test suite can compare published events" }, "saveHandleAs": "S1" },
         { "op": "callTool", "name": "echo", "args": { "msg": "again with SECRET_TOKEN", "session_id": "${S1}", "context": "Second call in the same task" } },
         { "op": "callTool", "name": "structured", "args": { "msg": "s", "session_id": "${S1}" } },
         { "op": "callTool", "name": "boom", "args": { "session_id": "${S1}" } },
@@ -25,7 +25,7 @@
       ]
     },
     {
-      "client": { "name": "harness-client-b", "version": "2.0.0" },
+      "client": { "name": "e2e-client-b", "version": "2.0.0" },
       "steps": [
         { "op": "callTool", "name": "echo", "args": { "msg": "second client", "session_id": "start" } }
       ]

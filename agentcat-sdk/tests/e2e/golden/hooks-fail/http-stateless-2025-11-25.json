@@ -509,7 +509,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
@@ -567,7 +567,7 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
@@ -626,7 +626,7 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "is_error": true,
@@ -691,7 +691,7 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#2>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
@@ -749,7 +749,7 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#2>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",

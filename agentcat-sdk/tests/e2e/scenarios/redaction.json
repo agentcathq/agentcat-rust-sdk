@@ -1,5 +1,5 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "identify": { "returns": { "userId": "user-late", "userName": "Late User", "userData": { "plan": "late" } }, "sleepMs": 200 },
     "eventTags": { "returns": { "note": "SECRET_TOKEN" } },
@@ -10,7 +10,7 @@
   "expectPublishes": 7,
   "sessions": [
     {
-      "client": { "name": "harness-client", "version": "1.0.0" },
+      "client": { "name": "e2e-client", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "first SECRET_TOKEN", "context": "Checking that SECRET_TOKEN leaves the process redacted" }, "saveHandleAs": "S1" },

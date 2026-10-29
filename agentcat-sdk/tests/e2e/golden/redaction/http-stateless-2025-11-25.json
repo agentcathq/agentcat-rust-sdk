@@ -494,7 +494,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-late",
         "event_type": "mcp:tools/call",
@@ -562,7 +562,7 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-late",
         "event_type": "mcp:tools/call",
@@ -629,7 +629,7 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-late",
         "event_type": "mcp:tools/call",
@@ -702,7 +702,7 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-late",
         "event_type": "mcp:tools/call",
@@ -771,7 +771,7 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "agentcat:custom",
         "resource_name": "checkout",
@@ -790,7 +790,7 @@
       "query": "",
       "body": {
         "id": "<evt#6>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-late",
         "event_type": "mcp:tools/call",
@@ -859,7 +859,7 @@
       "query": "",
       "body": {
         "id": "<evt#7>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "agentcat:custom",
         "resource_name": "renamed",

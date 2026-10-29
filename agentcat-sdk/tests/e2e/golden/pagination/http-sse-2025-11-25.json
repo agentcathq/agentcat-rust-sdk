@@ -538,7 +538,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
@@ -592,7 +592,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client",
+        "client_name": "e2e-client",
         "client_version": "1.0.0"
       }
     },
@@ -601,7 +601,7 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "big",
@@ -656,7 +656,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client",
+        "client_name": "e2e-client",
         "client_version": "1.0.0"
       }
     },
@@ -665,7 +665,7 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "big",
@@ -720,7 +720,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client",
+        "client_name": "e2e-client",
         "client_version": "1.0.0"
       }
     },
@@ -729,7 +729,7 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "own_context",
@@ -783,7 +783,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client",
+        "client_name": "e2e-client",
         "client_version": "1.0.0"
       }
     },
@@ -792,7 +792,7 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
@@ -845,7 +845,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client",
+        "client_name": "e2e-client",
         "client_version": "1.0.0"
       }
     }

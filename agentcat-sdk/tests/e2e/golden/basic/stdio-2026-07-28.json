@@ -394,7 +394,7 @@
         "name": "echo",
         "arguments": {
           "msg": "hi",
-          "context": "Checking that the echo tool returns the message so the harness can compare published events"
+          "context": "Checking that the echo tool returns the message so the test suite can compare published events"
         }
       },
       "result": {
@@ -636,7 +636,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -645,7 +645,7 @@
         "input_tokens": 34,
         "output_tokens": 1,
         "timestamp": "<timestamp>",
-        "user_intent": "Checking that the echo tool returns the message so the harness can compare published events",
+        "user_intent": "Checking that the echo tool returns the message so the test suite can compare published events",
         "parameters": {
           "request": {
             "method": "tools/call",
@@ -653,12 +653,12 @@
               "name": "echo",
               "arguments": {
                 "msg": "hi",
-                "context": "Checking that the echo tool returns the message so the harness can compare published events"
+                "context": "Checking that the echo tool returns the message so the test suite can compare published events"
               },
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -671,7 +671,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -704,7 +704,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -713,7 +713,7 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -736,7 +736,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -749,7 +749,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -782,7 +782,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -791,7 +791,7 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -812,7 +812,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -825,7 +825,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -861,7 +861,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -870,7 +870,7 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -896,7 +896,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -909,7 +909,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -943,7 +943,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -952,7 +952,7 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -977,7 +977,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -990,7 +990,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1024,7 +1024,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -1033,7 +1033,7 @@
       "query": "",
       "body": {
         "id": "<evt#6>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": null,
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1054,7 +1054,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -1067,7 +1067,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1100,7 +1100,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -1109,7 +1109,7 @@
       "query": "",
       "body": {
         "id": "<evt#7>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1130,7 +1130,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -1143,7 +1143,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1176,7 +1176,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -1185,7 +1185,7 @@
       "query": "",
       "body": {
         "id": "<evt#8>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#2>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1206,7 +1206,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -1219,7 +1219,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1252,7 +1252,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -1261,7 +1261,7 @@
       "query": "",
       "body": {
         "id": "<evt#9>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1284,7 +1284,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-a",
+                  "name": "e2e-client-a",
                   "version": "1.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -1297,7 +1297,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-a",
+                "name": "e2e-client-a",
                 "version": "1.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1330,7 +1330,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-a",
+        "client_name": "e2e-client-a",
         "client_version": "1.0.0"
       }
     },
@@ -1339,7 +1339,7 @@
       "query": "",
       "body": {
         "id": "<evt#10>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "agentcat:custom",
         "resource_name": "checkout",
@@ -1358,7 +1358,7 @@
       "query": "",
       "body": {
         "id": "<evt#11>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#3>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1379,7 +1379,7 @@
               "_meta": {
                 "io.modelcontextprotocol/protocolVersion": "2026-07-28",
                 "io.modelcontextprotocol/clientInfo": {
-                  "name": "harness-client-b",
+                  "name": "e2e-client-b",
                   "version": "2.0.0"
                 },
                 "io.modelcontextprotocol/clientCapabilities": {}
@@ -1392,7 +1392,7 @@
             "_meta": {
               "io.modelcontextprotocol/protocolVersion": "2026-07-28",
               "io.modelcontextprotocol/clientInfo": {
-                "name": "harness-client-b",
+                "name": "e2e-client-b",
                 "version": "2.0.0"
               },
               "io.modelcontextprotocol/clientCapabilities": {}
@@ -1425,7 +1425,7 @@
         "agentcat_version": "1.0.0",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
-        "client_name": "harness-client-b",
+        "client_name": "e2e-client-b",
         "client_version": "2.0.0"
       }
     }

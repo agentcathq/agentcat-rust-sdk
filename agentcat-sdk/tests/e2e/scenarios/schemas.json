@@ -1,11 +1,11 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {},
-  "httpHeaders": { "x-test-header": "harness" },
+  "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 19,
   "sessions": [
     {
-      "client": { "name": "harness-client-schemas", "version": "1.0.0" },
+      "client": { "name": "e2e-client-schemas", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "issue a handle" }, "saveHandleAs": "S1" },
@@ -26,7 +26,7 @@
       ]
     },
     {
-      "client": { "name": "harness-client-schemas-b", "version": "1.0.0" },
+      "client": { "name": "e2e-client-schemas-b", "version": "1.0.0" },
       "steps": [
         { "op": "callTool", "name": "structured_own", "args": { "msg": "before any listing" } },
         { "op": "callTool", "name": "own_session", "args": { "session_id": "before any listing" } },

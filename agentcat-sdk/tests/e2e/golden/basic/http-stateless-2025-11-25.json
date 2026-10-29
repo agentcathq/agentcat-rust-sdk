@@ -391,7 +391,7 @@
         "name": "echo",
         "arguments": {
           "msg": "hi",
-          "context": "Checking that the echo tool returns the message so the harness can compare published events"
+          "context": "Checking that the echo tool returns the message so the test suite can compare published events"
         }
       },
       "result": {
@@ -623,7 +623,7 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -632,7 +632,7 @@
         "input_tokens": 34,
         "output_tokens": 1,
         "timestamp": "<timestamp>",
-        "user_intent": "Checking that the echo tool returns the message so the harness can compare published events",
+        "user_intent": "Checking that the echo tool returns the message so the test suite can compare published events",
         "parameters": {
           "request": {
             "method": "tools/call",
@@ -640,7 +640,7 @@
               "name": "echo",
               "arguments": {
                 "msg": "hi",
-                "context": "Checking that the echo tool returns the message so the harness can compare published events"
+                "context": "Checking that the echo tool returns the message so the test suite can compare published events"
               }
             },
             "jsonrpc": "2.0",
@@ -651,12 +651,12 @@
             "requestInfo": {
               "headers": {
                 "accept": "application/json, text/event-stream",
-                "content-length": "200",
+                "content-length": "203",
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -693,7 +693,7 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -726,8 +726,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -764,7 +764,7 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -795,8 +795,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -836,7 +836,7 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -872,8 +872,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -911,7 +911,7 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -946,8 +946,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -985,7 +985,7 @@
       "query": "",
       "body": {
         "id": "<evt#6>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": null,
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1016,8 +1016,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1054,7 +1054,7 @@
       "query": "",
       "body": {
         "id": "<evt#7>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1085,8 +1085,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1123,7 +1123,7 @@
       "query": "",
       "body": {
         "id": "<evt#8>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#2>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1154,8 +1154,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1192,7 +1192,7 @@
       "query": "",
       "body": {
         "id": "<evt#9>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1225,8 +1225,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1263,7 +1263,7 @@
       "query": "",
       "body": {
         "id": "<evt#10>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#1>",
         "event_type": "agentcat:custom",
         "resource_name": "checkout",
@@ -1282,7 +1282,7 @@
       "query": "",
       "body": {
         "id": "<evt#11>",
-        "project_id": "proj_HARNESS00000000000000000000",
+        "project_id": "proj_E2E000000000000000000000000",
         "session_id": "<ses#3>",
         "actor_id": "user-1",
         "event_type": "mcp:tools/call",
@@ -1313,8 +1313,8 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "user-agent": "harness-driver/1.0",
-                "x-test-header": "harness"
+                "user-agent": "e2e-driver/1.0",
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }

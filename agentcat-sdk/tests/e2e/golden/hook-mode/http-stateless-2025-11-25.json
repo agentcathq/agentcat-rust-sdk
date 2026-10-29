@@ -579,8 +579,8 @@
       "query": "",
       "body": {
         "id": "<evt#1>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
         "duration": "<duration>",
@@ -609,7 +609,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -640,8 +640,8 @@
       "query": "",
       "body": {
         "id": "<evt#2>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
         "duration": "<duration>",
@@ -669,7 +669,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -698,8 +698,8 @@
       "query": "",
       "body": {
         "id": "<evt#3>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
         "duration": "<duration>",
@@ -730,7 +730,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -761,8 +761,8 @@
       "query": "",
       "body": {
         "id": "<evt#4>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "echo",
         "duration": "<duration>",
@@ -792,7 +792,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -823,8 +823,8 @@
       "query": "",
       "body": {
         "id": "<evt#5>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "structured",
         "duration": "<duration>",
@@ -853,7 +853,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -887,8 +887,8 @@
       "query": "",
       "body": {
         "id": "<evt#6>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "structured",
         "duration": "<duration>",
@@ -916,7 +916,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -948,8 +948,8 @@
       "query": "",
       "body": {
         "id": "<evt#7>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "structured_own",
         "duration": "<duration>",
@@ -978,7 +978,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1012,8 +1012,8 @@
       "query": "",
       "body": {
         "id": "<evt#8>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "own_session",
         "duration": "<duration>",
@@ -1042,7 +1042,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1073,8 +1073,8 @@
       "query": "",
       "body": {
         "id": "<evt#9>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "is_error": true,
         "error": {
@@ -1107,7 +1107,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }
@@ -1139,8 +1139,8 @@
       "query": "",
       "body": {
         "id": "<evt#10>",
-        "project_id": "proj_HARNESS00000000000000000000",
-        "session_id": "ses_2ax3QmAmKkY3ZNHYxy4pJ5tJUkN",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "ses_2aLOUo8m52lK02rdiYFSbl2aoHL",
         "event_type": "mcp:tools/call",
         "resource_name": "get_more_tools",
         "duration": "<duration>",
@@ -1170,7 +1170,7 @@
                 "content-type": "application/json",
                 "host": "127.0.0.1:<port>",
                 "mcp-protocol-version": "2025-11-25",
-                "x-test-header": "harness"
+                "x-test-header": "e2e"
               },
               "url": "http://127.0.0.1:<port>/mcp"
             }

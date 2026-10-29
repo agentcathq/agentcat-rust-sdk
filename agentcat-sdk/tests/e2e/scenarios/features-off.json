@@ -1,14 +1,14 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "enableReportMissing": false,
     "enableToolCallContext": false
   },
-  "httpHeaders": { "x-test-header": "harness" },
+  "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 6,
   "sessions": [
     {
-      "client": { "name": "harness-client-off", "version": "1.0.0" },
+      "client": { "name": "e2e-client-off", "version": "1.0.0" },
       "steps": [
         { "op": "listTools" },
         { "op": "callTool", "name": "echo", "args": { "msg": "issue a handle" }, "saveHandleAs": "S1" },

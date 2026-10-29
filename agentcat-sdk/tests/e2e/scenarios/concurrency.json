@@ -1,17 +1,17 @@
 {
-  "projectId": "proj_HARNESS00000000000000000000",
+  "projectId": "proj_E2E000000000000000000000000",
   "options": { "enableAgentTracking": true },
   "eventOrder": "multiset",
   "expectPublishes": 11,
   "sessions": [
     {
-      "client": { "name": "harness-client-a", "version": "1.0.0" },
+      "client": { "name": "e2e-client-a", "version": "1.0.0" },
       "steps": [
         { "op": "callTool", "name": "echo", "args": { "msg": "start" }, "saveHandleAs": "S1" }
       ]
     },
     {
-      "client": { "name": "harness-client-b", "version": "2.0.0" },
+      "client": { "name": "e2e-client-b", "version": "2.0.0" },
       "steps": [
         {
           "op": "parallel",
