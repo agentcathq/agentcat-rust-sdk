@@ -1,0 +1,34 @@
+{
+  "projectId": "proj_HARNESS00000000000000000000",
+  "options": {
+    "identify": { "returns": { "userId": "user-1", "userName": "User One", "userData": { "plan": "pro" } } },
+    "eventTags": { "returns": { "team": "core" } },
+    "eventProperties": { "returns": { "region": "eu" } },
+    "redactSensitiveInformation": { "replace": "SECRET_TOKEN" }
+  },
+  "httpHeaders": { "x-test-header": "harness", "user-agent": "harness-driver/1.0" },
+  "expectPublishes": 11,
+  "sessions": [
+    {
+      "client": { "name": "harness-client-a", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "hi", "context": "Checking that the echo tool returns the message so the harness can compare published events" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "again with SECRET_TOKEN", "session_id": "${S1}", "context": "Second call in the same task" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "s", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "boom", "args": { "session_id": "${S1}" } },
+        { "op": "callTool", "name": "tool_error", "args": { "session_id": "${S1}" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "bad handle", "session_id": "ses_invented" } },
+        { "op": "callTool", "name": "big", "args": { "size": 120000, "session_id": "${S1}" } },
+        { "op": "callTool", "name": "get_more_tools", "args": { "context": "Need a SQL query tool" } },
+        { "op": "callTool", "name": "emit_custom", "args": { "session": "${S1}", "resource": "checkout", "message": "hello", "session_id": "${S1}" } }
+      ]
+    },
+    {
+      "client": { "name": "harness-client-b", "version": "2.0.0" },
+      "steps": [
+        { "op": "callTool", "name": "echo", "args": { "msg": "second client", "session_id": "start" } }
+      ]
+    }
+  ]
+}
