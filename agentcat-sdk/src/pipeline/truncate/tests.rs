@@ -58,8 +58,8 @@ fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
     }
 }
 
-/// The TS result a case holds, in the shape of an `oracle.truncateEvent` reply: `{"value":
-/// output}`, or `{"error": error}` when TS throws.
+/// The Rust result a case holds: `{"value": output}` for the truncated event, or `{"error":
+/// error}` with the error's text when `truncate_event` returns an error.
 fn reply_of(case: &Map<String, Value>, context: &str) -> Value {
     match (case.get("output"), case.get("error")) {
         (Some(output), None) => json!({ "value": output }),

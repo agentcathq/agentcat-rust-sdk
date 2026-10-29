@@ -35,6 +35,10 @@ fn vectors_match_ts() {
     for case in &cases {
         let name = vectors::name(case);
         let context = format!("sanitize.json {name}");
+        assert!(
+            !case.contains_key("error"),
+            "{context}: sanitize never fails, so a case holds no error"
+        );
         let actual = Value::Object(sanitize_event(&input_of(case, &context)));
         assert_js_eq(&actual, &case["output"], &context);
     }

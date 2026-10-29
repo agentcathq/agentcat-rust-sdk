@@ -131,11 +131,7 @@ fn vectors_match_ts() {
             }
             "result-error" => {
                 let result = result_from_ts(input);
-                let mut ts = output.clone();
-                // RD-06: the platform is "rust".
-                assert_eq!(ts["platform"], "javascript", "{name}");
-                ts["platform"] = json!("rust");
-                assert_js_eq(&Value::Object(result_error(&result)), &ts, name);
+                assert_js_eq(&Value::Object(result_error(&result)), output, name);
             }
             _ => check_report_missing(&case, name),
         }

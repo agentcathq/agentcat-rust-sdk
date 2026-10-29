@@ -244,6 +244,10 @@ fn check_unrepresentable(case: &Map<String, Value>, name: &str) {
         panic!("{name}: rmcp's Tool holds {tool}");
     };
     assert_eq!(Value::String(error.to_string()), case["error"], "{name}");
+    assert!(
+        !case.contains_key("output"),
+        "{name}: an unrepresentable case holds no output"
+    );
 }
 
 #[test]

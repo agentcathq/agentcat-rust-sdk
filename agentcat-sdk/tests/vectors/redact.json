@@ -2807,7 +2807,7 @@
       ]
     },
     {
-      "name": "apply:test-sync-hook",
+      "name": "apply:sync-hook",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2855,7 +2855,7 @@
       }
     },
     {
-      "name": "apply:test-async-hook",
+      "name": "apply:async-hook",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2903,7 +2903,7 @@
       }
     },
     {
-      "name": "apply:test-drop-null",
+      "name": "apply:drop-null",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2923,7 +2923,7 @@
       "output": null
     },
     {
-      "name": "apply:test-drop-undefined",
+      "name": "apply:drop-undefined",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2942,7 +2942,7 @@
       "output": null
     },
     {
-      "name": "apply:test-deletions",
+      "name": "apply:deletions",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2982,7 +2982,7 @@
       }
     },
     {
-      "name": "apply:test-restore",
+      "name": "apply:restore",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",

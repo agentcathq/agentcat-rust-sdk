@@ -2491,7 +2491,7 @@
       },
       "output": {
         "message": "tool failed",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2511,7 +2511,7 @@
       },
       "output": {
         "message": "first second",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2535,7 +2535,7 @@
       },
       "output": {
         "message": "a b c",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2551,7 +2551,7 @@
       },
       "output": {
         "message": "padded",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2571,7 +2571,7 @@
       },
       "output": {
         "message": "a\n \tb",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2591,7 +2591,7 @@
       },
       "output": {
         "message": "later",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2611,7 +2611,7 @@
       },
       "output": {
         "message": "early",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2627,7 +2627,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2643,7 +2643,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2659,7 +2659,7 @@
       },
       "output": {
         "message": "fail 😀 — é",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2675,7 +2675,7 @@
       },
       "output": {
         "message": "x",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2700,7 +2700,7 @@
       },
       "output": {
         "message": "a b",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2723,7 +2723,7 @@
       },
       "output": {
         "message": "shown",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2749,7 +2749,7 @@
       },
       "output": {
         "message": "z",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2766,7 +2766,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2785,7 +2785,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2796,7 +2796,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2815,7 +2815,7 @@
       },
       "output": {
         "message": "with data",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2834,7 +2834,7 @@
       },
       "output": {
         "message": "with meta",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2850,7 +2850,7 @@
       },
       "output": {
         "message": "not an error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
