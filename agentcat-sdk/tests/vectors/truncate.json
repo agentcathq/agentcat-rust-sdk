@@ -162,481 +162,481 @@
           "message": "test",
           "frames": [
             {
-              "filename": "file0.ts",
+              "filename": "file0.rs",
               "function": "func0",
               "lineno": 1,
               "in_app": true
             },
             {
-              "filename": "file1.ts",
+              "filename": "file1.rs",
               "function": "func1",
               "lineno": 2,
               "in_app": true
             },
             {
-              "filename": "file2.ts",
+              "filename": "file2.rs",
               "function": "func2",
               "lineno": 3,
               "in_app": true
             },
             {
-              "filename": "file3.ts",
+              "filename": "file3.rs",
               "function": "func3",
               "lineno": 4,
               "in_app": true
             },
             {
-              "filename": "file4.ts",
+              "filename": "file4.rs",
               "function": "func4",
               "lineno": 5,
               "in_app": true
             },
             {
-              "filename": "file5.ts",
+              "filename": "file5.rs",
               "function": "func5",
               "lineno": 6,
               "in_app": true
             },
             {
-              "filename": "file6.ts",
+              "filename": "file6.rs",
               "function": "func6",
               "lineno": 7,
               "in_app": true
             },
             {
-              "filename": "file7.ts",
+              "filename": "file7.rs",
               "function": "func7",
               "lineno": 8,
               "in_app": true
             },
             {
-              "filename": "file8.ts",
+              "filename": "file8.rs",
               "function": "func8",
               "lineno": 9,
               "in_app": true
             },
             {
-              "filename": "file9.ts",
+              "filename": "file9.rs",
               "function": "func9",
               "lineno": 10,
               "in_app": true
             },
             {
-              "filename": "file10.ts",
+              "filename": "file10.rs",
               "function": "func10",
               "lineno": 11,
               "in_app": true
             },
             {
-              "filename": "file11.ts",
+              "filename": "file11.rs",
               "function": "func11",
               "lineno": 12,
               "in_app": true
             },
             {
-              "filename": "file12.ts",
+              "filename": "file12.rs",
               "function": "func12",
               "lineno": 13,
               "in_app": true
             },
             {
-              "filename": "file13.ts",
+              "filename": "file13.rs",
               "function": "func13",
               "lineno": 14,
               "in_app": true
             },
             {
-              "filename": "file14.ts",
+              "filename": "file14.rs",
               "function": "func14",
               "lineno": 15,
               "in_app": true
             },
             {
-              "filename": "file15.ts",
+              "filename": "file15.rs",
               "function": "func15",
               "lineno": 16,
               "in_app": true
             },
             {
-              "filename": "file16.ts",
+              "filename": "file16.rs",
               "function": "func16",
               "lineno": 17,
               "in_app": true
             },
             {
-              "filename": "file17.ts",
+              "filename": "file17.rs",
               "function": "func17",
               "lineno": 18,
               "in_app": true
             },
             {
-              "filename": "file18.ts",
+              "filename": "file18.rs",
               "function": "func18",
               "lineno": 19,
               "in_app": true
             },
             {
-              "filename": "file19.ts",
+              "filename": "file19.rs",
               "function": "func19",
               "lineno": 20,
               "in_app": true
             },
             {
-              "filename": "file20.ts",
+              "filename": "file20.rs",
               "function": "func20",
               "lineno": 21,
               "in_app": true
             },
             {
-              "filename": "file21.ts",
+              "filename": "file21.rs",
               "function": "func21",
               "lineno": 22,
               "in_app": true
             },
             {
-              "filename": "file22.ts",
+              "filename": "file22.rs",
               "function": "func22",
               "lineno": 23,
               "in_app": true
             },
             {
-              "filename": "file23.ts",
+              "filename": "file23.rs",
               "function": "func23",
               "lineno": 24,
               "in_app": true
             },
             {
-              "filename": "file24.ts",
+              "filename": "file24.rs",
               "function": "func24",
               "lineno": 25,
               "in_app": true
             },
             {
-              "filename": "file25.ts",
+              "filename": "file25.rs",
               "function": "func25",
               "lineno": 26,
               "in_app": true
             },
             {
-              "filename": "file26.ts",
+              "filename": "file26.rs",
               "function": "func26",
               "lineno": 27,
               "in_app": true
             },
             {
-              "filename": "file27.ts",
+              "filename": "file27.rs",
               "function": "func27",
               "lineno": 28,
               "in_app": true
             },
             {
-              "filename": "file28.ts",
+              "filename": "file28.rs",
               "function": "func28",
               "lineno": 29,
               "in_app": true
             },
             {
-              "filename": "file29.ts",
+              "filename": "file29.rs",
               "function": "func29",
               "lineno": 30,
               "in_app": true
             },
             {
-              "filename": "file30.ts",
+              "filename": "file30.rs",
               "function": "func30",
               "lineno": 31,
               "in_app": true
             },
             {
-              "filename": "file31.ts",
+              "filename": "file31.rs",
               "function": "func31",
               "lineno": 32,
               "in_app": true
             },
             {
-              "filename": "file32.ts",
+              "filename": "file32.rs",
               "function": "func32",
               "lineno": 33,
               "in_app": true
             },
             {
-              "filename": "file33.ts",
+              "filename": "file33.rs",
               "function": "func33",
               "lineno": 34,
               "in_app": true
             },
             {
-              "filename": "file34.ts",
+              "filename": "file34.rs",
               "function": "func34",
               "lineno": 35,
               "in_app": true
             },
             {
-              "filename": "file35.ts",
+              "filename": "file35.rs",
               "function": "func35",
               "lineno": 36,
               "in_app": true
             },
             {
-              "filename": "file36.ts",
+              "filename": "file36.rs",
               "function": "func36",
               "lineno": 37,
               "in_app": true
             },
             {
-              "filename": "file37.ts",
+              "filename": "file37.rs",
               "function": "func37",
               "lineno": 38,
               "in_app": true
             },
             {
-              "filename": "file38.ts",
+              "filename": "file38.rs",
               "function": "func38",
               "lineno": 39,
               "in_app": true
             },
             {
-              "filename": "file39.ts",
+              "filename": "file39.rs",
               "function": "func39",
               "lineno": 40,
               "in_app": true
             },
             {
-              "filename": "file40.ts",
+              "filename": "file40.rs",
               "function": "func40",
               "lineno": 41,
               "in_app": true
             },
             {
-              "filename": "file41.ts",
+              "filename": "file41.rs",
               "function": "func41",
               "lineno": 42,
               "in_app": true
             },
             {
-              "filename": "file42.ts",
+              "filename": "file42.rs",
               "function": "func42",
               "lineno": 43,
               "in_app": true
             },
             {
-              "filename": "file43.ts",
+              "filename": "file43.rs",
               "function": "func43",
               "lineno": 44,
               "in_app": true
             },
             {
-              "filename": "file44.ts",
+              "filename": "file44.rs",
               "function": "func44",
               "lineno": 45,
               "in_app": true
             },
             {
-              "filename": "file45.ts",
+              "filename": "file45.rs",
               "function": "func45",
               "lineno": 46,
               "in_app": true
             },
             {
-              "filename": "file46.ts",
+              "filename": "file46.rs",
               "function": "func46",
               "lineno": 47,
               "in_app": true
             },
             {
-              "filename": "file47.ts",
+              "filename": "file47.rs",
               "function": "func47",
               "lineno": 48,
               "in_app": true
             },
             {
-              "filename": "file48.ts",
+              "filename": "file48.rs",
               "function": "func48",
               "lineno": 49,
               "in_app": true
             },
             {
-              "filename": "file49.ts",
+              "filename": "file49.rs",
               "function": "func49",
               "lineno": 50,
               "in_app": true
             },
             {
-              "filename": "file50.ts",
+              "filename": "file50.rs",
               "function": "func50",
               "lineno": 51,
               "in_app": true
             },
             {
-              "filename": "file51.ts",
+              "filename": "file51.rs",
               "function": "func51",
               "lineno": 52,
               "in_app": true
             },
             {
-              "filename": "file52.ts",
+              "filename": "file52.rs",
               "function": "func52",
               "lineno": 53,
               "in_app": true
             },
             {
-              "filename": "file53.ts",
+              "filename": "file53.rs",
               "function": "func53",
               "lineno": 54,
               "in_app": true
             },
             {
-              "filename": "file54.ts",
+              "filename": "file54.rs",
               "function": "func54",
               "lineno": 55,
               "in_app": true
             },
             {
-              "filename": "file55.ts",
+              "filename": "file55.rs",
               "function": "func55",
               "lineno": 56,
               "in_app": true
             },
             {
-              "filename": "file56.ts",
+              "filename": "file56.rs",
               "function": "func56",
               "lineno": 57,
               "in_app": true
             },
             {
-              "filename": "file57.ts",
+              "filename": "file57.rs",
               "function": "func57",
               "lineno": 58,
               "in_app": true
             },
             {
-              "filename": "file58.ts",
+              "filename": "file58.rs",
               "function": "func58",
               "lineno": 59,
               "in_app": true
             },
             {
-              "filename": "file59.ts",
+              "filename": "file59.rs",
               "function": "func59",
               "lineno": 60,
               "in_app": true
             },
             {
-              "filename": "file60.ts",
+              "filename": "file60.rs",
               "function": "func60",
               "lineno": 61,
               "in_app": true
             },
             {
-              "filename": "file61.ts",
+              "filename": "file61.rs",
               "function": "func61",
               "lineno": 62,
               "in_app": true
             },
             {
-              "filename": "file62.ts",
+              "filename": "file62.rs",
               "function": "func62",
               "lineno": 63,
               "in_app": true
             },
             {
-              "filename": "file63.ts",
+              "filename": "file63.rs",
               "function": "func63",
               "lineno": 64,
               "in_app": true
             },
             {
-              "filename": "file64.ts",
+              "filename": "file64.rs",
               "function": "func64",
               "lineno": 65,
               "in_app": true
             },
             {
-              "filename": "file65.ts",
+              "filename": "file65.rs",
               "function": "func65",
               "lineno": 66,
               "in_app": true
             },
             {
-              "filename": "file66.ts",
+              "filename": "file66.rs",
               "function": "func66",
               "lineno": 67,
               "in_app": true
             },
             {
-              "filename": "file67.ts",
+              "filename": "file67.rs",
               "function": "func67",
               "lineno": 68,
               "in_app": true
             },
             {
-              "filename": "file68.ts",
+              "filename": "file68.rs",
               "function": "func68",
               "lineno": 69,
               "in_app": true
             },
             {
-              "filename": "file69.ts",
+              "filename": "file69.rs",
               "function": "func69",
               "lineno": 70,
               "in_app": true
             },
             {
-              "filename": "file70.ts",
+              "filename": "file70.rs",
               "function": "func70",
               "lineno": 71,
               "in_app": true
             },
             {
-              "filename": "file71.ts",
+              "filename": "file71.rs",
               "function": "func71",
               "lineno": 72,
               "in_app": true
             },
             {
-              "filename": "file72.ts",
+              "filename": "file72.rs",
               "function": "func72",
               "lineno": 73,
               "in_app": true
             },
             {
-              "filename": "file73.ts",
+              "filename": "file73.rs",
               "function": "func73",
               "lineno": 74,
               "in_app": true
             },
             {
-              "filename": "file74.ts",
+              "filename": "file74.rs",
               "function": "func74",
               "lineno": 75,
               "in_app": true
             },
             {
-              "filename": "file75.ts",
+              "filename": "file75.rs",
               "function": "func75",
               "lineno": 76,
               "in_app": true
             },
             {
-              "filename": "file76.ts",
+              "filename": "file76.rs",
               "function": "func76",
               "lineno": 77,
               "in_app": true
             },
             {
-              "filename": "file77.ts",
+              "filename": "file77.rs",
               "function": "func77",
               "lineno": 78,
               "in_app": true
             },
             {
-              "filename": "file78.ts",
+              "filename": "file78.rs",
               "function": "func78",
               "lineno": 79,
               "in_app": true
             },
             {
-              "filename": "file79.ts",
+              "filename": "file79.rs",
               "function": "func79",
               "lineno": 80,
               "in_app": true
@@ -653,301 +653,301 @@
           "message": "test",
           "frames": [
             {
-              "filename": "file0.ts",
+              "filename": "file0.rs",
               "function": "func0",
               "lineno": 1,
               "in_app": true
             },
             {
-              "filename": "file1.ts",
+              "filename": "file1.rs",
               "function": "func1",
               "lineno": 2,
               "in_app": true
             },
             {
-              "filename": "file2.ts",
+              "filename": "file2.rs",
               "function": "func2",
               "lineno": 3,
               "in_app": true
             },
             {
-              "filename": "file3.ts",
+              "filename": "file3.rs",
               "function": "func3",
               "lineno": 4,
               "in_app": true
             },
             {
-              "filename": "file4.ts",
+              "filename": "file4.rs",
               "function": "func4",
               "lineno": 5,
               "in_app": true
             },
             {
-              "filename": "file5.ts",
+              "filename": "file5.rs",
               "function": "func5",
               "lineno": 6,
               "in_app": true
             },
             {
-              "filename": "file6.ts",
+              "filename": "file6.rs",
               "function": "func6",
               "lineno": 7,
               "in_app": true
             },
             {
-              "filename": "file7.ts",
+              "filename": "file7.rs",
               "function": "func7",
               "lineno": 8,
               "in_app": true
             },
             {
-              "filename": "file8.ts",
+              "filename": "file8.rs",
               "function": "func8",
               "lineno": 9,
               "in_app": true
             },
             {
-              "filename": "file9.ts",
+              "filename": "file9.rs",
               "function": "func9",
               "lineno": 10,
               "in_app": true
             },
             {
-              "filename": "file10.ts",
+              "filename": "file10.rs",
               "function": "func10",
               "lineno": 11,
               "in_app": true
             },
             {
-              "filename": "file11.ts",
+              "filename": "file11.rs",
               "function": "func11",
               "lineno": 12,
               "in_app": true
             },
             {
-              "filename": "file12.ts",
+              "filename": "file12.rs",
               "function": "func12",
               "lineno": 13,
               "in_app": true
             },
             {
-              "filename": "file13.ts",
+              "filename": "file13.rs",
               "function": "func13",
               "lineno": 14,
               "in_app": true
             },
             {
-              "filename": "file14.ts",
+              "filename": "file14.rs",
               "function": "func14",
               "lineno": 15,
               "in_app": true
             },
             {
-              "filename": "file15.ts",
+              "filename": "file15.rs",
               "function": "func15",
               "lineno": 16,
               "in_app": true
             },
             {
-              "filename": "file16.ts",
+              "filename": "file16.rs",
               "function": "func16",
               "lineno": 17,
               "in_app": true
             },
             {
-              "filename": "file17.ts",
+              "filename": "file17.rs",
               "function": "func17",
               "lineno": 18,
               "in_app": true
             },
             {
-              "filename": "file18.ts",
+              "filename": "file18.rs",
               "function": "func18",
               "lineno": 19,
               "in_app": true
             },
             {
-              "filename": "file19.ts",
+              "filename": "file19.rs",
               "function": "func19",
               "lineno": 20,
               "in_app": true
             },
             {
-              "filename": "file20.ts",
+              "filename": "file20.rs",
               "function": "func20",
               "lineno": 21,
               "in_app": true
             },
             {
-              "filename": "file21.ts",
+              "filename": "file21.rs",
               "function": "func21",
               "lineno": 22,
               "in_app": true
             },
             {
-              "filename": "file22.ts",
+              "filename": "file22.rs",
               "function": "func22",
               "lineno": 23,
               "in_app": true
             },
             {
-              "filename": "file23.ts",
+              "filename": "file23.rs",
               "function": "func23",
               "lineno": 24,
               "in_app": true
             },
             {
-              "filename": "file24.ts",
+              "filename": "file24.rs",
               "function": "func24",
               "lineno": 25,
               "in_app": true
             },
             {
-              "filename": "file55.ts",
+              "filename": "file55.rs",
               "function": "func55",
               "lineno": 56,
               "in_app": true
             },
             {
-              "filename": "file56.ts",
+              "filename": "file56.rs",
               "function": "func56",
               "lineno": 57,
               "in_app": true
             },
             {
-              "filename": "file57.ts",
+              "filename": "file57.rs",
               "function": "func57",
               "lineno": 58,
               "in_app": true
             },
             {
-              "filename": "file58.ts",
+              "filename": "file58.rs",
               "function": "func58",
               "lineno": 59,
               "in_app": true
             },
             {
-              "filename": "file59.ts",
+              "filename": "file59.rs",
               "function": "func59",
               "lineno": 60,
               "in_app": true
             },
             {
-              "filename": "file60.ts",
+              "filename": "file60.rs",
               "function": "func60",
               "lineno": 61,
               "in_app": true
             },
             {
-              "filename": "file61.ts",
+              "filename": "file61.rs",
               "function": "func61",
               "lineno": 62,
               "in_app": true
             },
             {
-              "filename": "file62.ts",
+              "filename": "file62.rs",
               "function": "func62",
               "lineno": 63,
               "in_app": true
             },
             {
-              "filename": "file63.ts",
+              "filename": "file63.rs",
               "function": "func63",
               "lineno": 64,
               "in_app": true
             },
             {
-              "filename": "file64.ts",
+              "filename": "file64.rs",
               "function": "func64",
               "lineno": 65,
               "in_app": true
             },
             {
-              "filename": "file65.ts",
+              "filename": "file65.rs",
               "function": "func65",
               "lineno": 66,
               "in_app": true
             },
             {
-              "filename": "file66.ts",
+              "filename": "file66.rs",
               "function": "func66",
               "lineno": 67,
               "in_app": true
             },
             {
-              "filename": "file67.ts",
+              "filename": "file67.rs",
               "function": "func67",
               "lineno": 68,
               "in_app": true
             },
             {
-              "filename": "file68.ts",
+              "filename": "file68.rs",
               "function": "func68",
               "lineno": 69,
               "in_app": true
             },
             {
-              "filename": "file69.ts",
+              "filename": "file69.rs",
               "function": "func69",
               "lineno": 70,
               "in_app": true
             },
             {
-              "filename": "file70.ts",
+              "filename": "file70.rs",
               "function": "func70",
               "lineno": 71,
               "in_app": true
             },
             {
-              "filename": "file71.ts",
+              "filename": "file71.rs",
               "function": "func71",
               "lineno": 72,
               "in_app": true
             },
             {
-              "filename": "file72.ts",
+              "filename": "file72.rs",
               "function": "func72",
               "lineno": 73,
               "in_app": true
             },
             {
-              "filename": "file73.ts",
+              "filename": "file73.rs",
               "function": "func73",
               "lineno": 74,
               "in_app": true
             },
             {
-              "filename": "file74.ts",
+              "filename": "file74.rs",
               "function": "func74",
               "lineno": 75,
               "in_app": true
             },
             {
-              "filename": "file75.ts",
+              "filename": "file75.rs",
               "function": "func75",
               "lineno": 76,
               "in_app": true
             },
             {
-              "filename": "file76.ts",
+              "filename": "file76.rs",
               "function": "func76",
               "lineno": 77,
               "in_app": true
             },
             {
-              "filename": "file77.ts",
+              "filename": "file77.rs",
               "function": "func77",
               "lineno": 78,
               "in_app": true
             },
             {
-              "filename": "file78.ts",
+              "filename": "file78.rs",
               "function": "func78",
               "lineno": 79,
               "in_app": true
             },
             {
-              "filename": "file79.ts",
+              "filename": "file79.rs",
               "function": "func79",
               "lineno": 80,
               "in_app": true
@@ -967,252 +967,252 @@
           "message": "test",
           "frames": [
             {
-              "filename": "file0.ts",
+              "filename": "file0.rs",
               "function": "func0",
               "in_app": true
             },
             {
-              "filename": "file1.ts",
+              "filename": "file1.rs",
               "function": "func1",
               "in_app": true
             },
             {
-              "filename": "file2.ts",
+              "filename": "file2.rs",
               "function": "func2",
               "in_app": true
             },
             {
-              "filename": "file3.ts",
+              "filename": "file3.rs",
               "function": "func3",
               "in_app": true
             },
             {
-              "filename": "file4.ts",
+              "filename": "file4.rs",
               "function": "func4",
               "in_app": true
             },
             {
-              "filename": "file5.ts",
+              "filename": "file5.rs",
               "function": "func5",
               "in_app": true
             },
             {
-              "filename": "file6.ts",
+              "filename": "file6.rs",
               "function": "func6",
               "in_app": true
             },
             {
-              "filename": "file7.ts",
+              "filename": "file7.rs",
               "function": "func7",
               "in_app": true
             },
             {
-              "filename": "file8.ts",
+              "filename": "file8.rs",
               "function": "func8",
               "in_app": true
             },
             {
-              "filename": "file9.ts",
+              "filename": "file9.rs",
               "function": "func9",
               "in_app": true
             },
             {
-              "filename": "file10.ts",
+              "filename": "file10.rs",
               "function": "func10",
               "in_app": true
             },
             {
-              "filename": "file11.ts",
+              "filename": "file11.rs",
               "function": "func11",
               "in_app": true
             },
             {
-              "filename": "file12.ts",
+              "filename": "file12.rs",
               "function": "func12",
               "in_app": true
             },
             {
-              "filename": "file13.ts",
+              "filename": "file13.rs",
               "function": "func13",
               "in_app": true
             },
             {
-              "filename": "file14.ts",
+              "filename": "file14.rs",
               "function": "func14",
               "in_app": true
             },
             {
-              "filename": "file15.ts",
+              "filename": "file15.rs",
               "function": "func15",
               "in_app": true
             },
             {
-              "filename": "file16.ts",
+              "filename": "file16.rs",
               "function": "func16",
               "in_app": true
             },
             {
-              "filename": "file17.ts",
+              "filename": "file17.rs",
               "function": "func17",
               "in_app": true
             },
             {
-              "filename": "file18.ts",
+              "filename": "file18.rs",
               "function": "func18",
               "in_app": true
             },
             {
-              "filename": "file19.ts",
+              "filename": "file19.rs",
               "function": "func19",
               "in_app": true
             },
             {
-              "filename": "file20.ts",
+              "filename": "file20.rs",
               "function": "func20",
               "in_app": true
             },
             {
-              "filename": "file21.ts",
+              "filename": "file21.rs",
               "function": "func21",
               "in_app": true
             },
             {
-              "filename": "file22.ts",
+              "filename": "file22.rs",
               "function": "func22",
               "in_app": true
             },
             {
-              "filename": "file23.ts",
+              "filename": "file23.rs",
               "function": "func23",
               "in_app": true
             },
             {
-              "filename": "file24.ts",
+              "filename": "file24.rs",
               "function": "func24",
               "in_app": true
             },
             {
-              "filename": "file25.ts",
+              "filename": "file25.rs",
               "function": "func25",
               "in_app": true
             },
             {
-              "filename": "file26.ts",
+              "filename": "file26.rs",
               "function": "func26",
               "in_app": true
             },
             {
-              "filename": "file27.ts",
+              "filename": "file27.rs",
               "function": "func27",
               "in_app": true
             },
             {
-              "filename": "file28.ts",
+              "filename": "file28.rs",
               "function": "func28",
               "in_app": true
             },
             {
-              "filename": "file29.ts",
+              "filename": "file29.rs",
               "function": "func29",
               "in_app": true
             },
             {
-              "filename": "file30.ts",
+              "filename": "file30.rs",
               "function": "func30",
               "in_app": true
             },
             {
-              "filename": "file31.ts",
+              "filename": "file31.rs",
               "function": "func31",
               "in_app": true
             },
             {
-              "filename": "file32.ts",
+              "filename": "file32.rs",
               "function": "func32",
               "in_app": true
             },
             {
-              "filename": "file33.ts",
+              "filename": "file33.rs",
               "function": "func33",
               "in_app": true
             },
             {
-              "filename": "file34.ts",
+              "filename": "file34.rs",
               "function": "func34",
               "in_app": true
             },
             {
-              "filename": "file35.ts",
+              "filename": "file35.rs",
               "function": "func35",
               "in_app": true
             },
             {
-              "filename": "file36.ts",
+              "filename": "file36.rs",
               "function": "func36",
               "in_app": true
             },
             {
-              "filename": "file37.ts",
+              "filename": "file37.rs",
               "function": "func37",
               "in_app": true
             },
             {
-              "filename": "file38.ts",
+              "filename": "file38.rs",
               "function": "func38",
               "in_app": true
             },
             {
-              "filename": "file39.ts",
+              "filename": "file39.rs",
               "function": "func39",
               "in_app": true
             },
             {
-              "filename": "file40.ts",
+              "filename": "file40.rs",
               "function": "func40",
               "in_app": true
             },
             {
-              "filename": "file41.ts",
+              "filename": "file41.rs",
               "function": "func41",
               "in_app": true
             },
             {
-              "filename": "file42.ts",
+              "filename": "file42.rs",
               "function": "func42",
               "in_app": true
             },
             {
-              "filename": "file43.ts",
+              "filename": "file43.rs",
               "function": "func43",
               "in_app": true
             },
             {
-              "filename": "file44.ts",
+              "filename": "file44.rs",
               "function": "func44",
               "in_app": true
             },
             {
-              "filename": "file45.ts",
+              "filename": "file45.rs",
               "function": "func45",
               "in_app": true
             },
             {
-              "filename": "file46.ts",
+              "filename": "file46.rs",
               "function": "func46",
               "in_app": true
             },
             {
-              "filename": "file47.ts",
+              "filename": "file47.rs",
               "function": "func47",
               "in_app": true
             },
             {
-              "filename": "file48.ts",
+              "filename": "file48.rs",
               "function": "func48",
               "in_app": true
             },
             {
-              "filename": "file49.ts",
+              "filename": "file49.rs",
               "function": "func49",
               "in_app": true
             }
@@ -1228,252 +1228,252 @@
           "message": "test",
           "frames": [
             {
-              "filename": "file0.ts",
+              "filename": "file0.rs",
               "function": "func0",
               "in_app": true
             },
             {
-              "filename": "file1.ts",
+              "filename": "file1.rs",
               "function": "func1",
               "in_app": true
             },
             {
-              "filename": "file2.ts",
+              "filename": "file2.rs",
               "function": "func2",
               "in_app": true
             },
             {
-              "filename": "file3.ts",
+              "filename": "file3.rs",
               "function": "func3",
               "in_app": true
             },
             {
-              "filename": "file4.ts",
+              "filename": "file4.rs",
               "function": "func4",
               "in_app": true
             },
             {
-              "filename": "file5.ts",
+              "filename": "file5.rs",
               "function": "func5",
               "in_app": true
             },
             {
-              "filename": "file6.ts",
+              "filename": "file6.rs",
               "function": "func6",
               "in_app": true
             },
             {
-              "filename": "file7.ts",
+              "filename": "file7.rs",
               "function": "func7",
               "in_app": true
             },
             {
-              "filename": "file8.ts",
+              "filename": "file8.rs",
               "function": "func8",
               "in_app": true
             },
             {
-              "filename": "file9.ts",
+              "filename": "file9.rs",
               "function": "func9",
               "in_app": true
             },
             {
-              "filename": "file10.ts",
+              "filename": "file10.rs",
               "function": "func10",
               "in_app": true
             },
             {
-              "filename": "file11.ts",
+              "filename": "file11.rs",
               "function": "func11",
               "in_app": true
             },
             {
-              "filename": "file12.ts",
+              "filename": "file12.rs",
               "function": "func12",
               "in_app": true
             },
             {
-              "filename": "file13.ts",
+              "filename": "file13.rs",
               "function": "func13",
               "in_app": true
             },
             {
-              "filename": "file14.ts",
+              "filename": "file14.rs",
               "function": "func14",
               "in_app": true
             },
             {
-              "filename": "file15.ts",
+              "filename": "file15.rs",
               "function": "func15",
               "in_app": true
             },
             {
-              "filename": "file16.ts",
+              "filename": "file16.rs",
               "function": "func16",
               "in_app": true
             },
             {
-              "filename": "file17.ts",
+              "filename": "file17.rs",
               "function": "func17",
               "in_app": true
             },
             {
-              "filename": "file18.ts",
+              "filename": "file18.rs",
               "function": "func18",
               "in_app": true
             },
             {
-              "filename": "file19.ts",
+              "filename": "file19.rs",
               "function": "func19",
               "in_app": true
             },
             {
-              "filename": "file20.ts",
+              "filename": "file20.rs",
               "function": "func20",
               "in_app": true
             },
             {
-              "filename": "file21.ts",
+              "filename": "file21.rs",
               "function": "func21",
               "in_app": true
             },
             {
-              "filename": "file22.ts",
+              "filename": "file22.rs",
               "function": "func22",
               "in_app": true
             },
             {
-              "filename": "file23.ts",
+              "filename": "file23.rs",
               "function": "func23",
               "in_app": true
             },
             {
-              "filename": "file24.ts",
+              "filename": "file24.rs",
               "function": "func24",
               "in_app": true
             },
             {
-              "filename": "file25.ts",
+              "filename": "file25.rs",
               "function": "func25",
               "in_app": true
             },
             {
-              "filename": "file26.ts",
+              "filename": "file26.rs",
               "function": "func26",
               "in_app": true
             },
             {
-              "filename": "file27.ts",
+              "filename": "file27.rs",
               "function": "func27",
               "in_app": true
             },
             {
-              "filename": "file28.ts",
+              "filename": "file28.rs",
               "function": "func28",
               "in_app": true
             },
             {
-              "filename": "file29.ts",
+              "filename": "file29.rs",
               "function": "func29",
               "in_app": true
             },
             {
-              "filename": "file30.ts",
+              "filename": "file30.rs",
               "function": "func30",
               "in_app": true
             },
             {
-              "filename": "file31.ts",
+              "filename": "file31.rs",
               "function": "func31",
               "in_app": true
             },
             {
-              "filename": "file32.ts",
+              "filename": "file32.rs",
               "function": "func32",
               "in_app": true
             },
             {
-              "filename": "file33.ts",
+              "filename": "file33.rs",
               "function": "func33",
               "in_app": true
             },
             {
-              "filename": "file34.ts",
+              "filename": "file34.rs",
               "function": "func34",
               "in_app": true
             },
             {
-              "filename": "file35.ts",
+              "filename": "file35.rs",
               "function": "func35",
               "in_app": true
             },
             {
-              "filename": "file36.ts",
+              "filename": "file36.rs",
               "function": "func36",
               "in_app": true
             },
             {
-              "filename": "file37.ts",
+              "filename": "file37.rs",
               "function": "func37",
               "in_app": true
             },
             {
-              "filename": "file38.ts",
+              "filename": "file38.rs",
               "function": "func38",
               "in_app": true
             },
             {
-              "filename": "file39.ts",
+              "filename": "file39.rs",
               "function": "func39",
               "in_app": true
             },
             {
-              "filename": "file40.ts",
+              "filename": "file40.rs",
               "function": "func40",
               "in_app": true
             },
             {
-              "filename": "file41.ts",
+              "filename": "file41.rs",
               "function": "func41",
               "in_app": true
             },
             {
-              "filename": "file42.ts",
+              "filename": "file42.rs",
               "function": "func42",
               "in_app": true
             },
             {
-              "filename": "file43.ts",
+              "filename": "file43.rs",
               "function": "func43",
               "in_app": true
             },
             {
-              "filename": "file44.ts",
+              "filename": "file44.rs",
               "function": "func44",
               "in_app": true
             },
             {
-              "filename": "file45.ts",
+              "filename": "file45.rs",
               "function": "func45",
               "in_app": true
             },
             {
-              "filename": "file46.ts",
+              "filename": "file46.rs",
               "function": "func46",
               "in_app": true
             },
             {
-              "filename": "file47.ts",
+              "filename": "file47.rs",
               "function": "func47",
               "in_app": true
             },
             {
-              "filename": "file48.ts",
+              "filename": "file48.rs",
               "function": "func48",
               "in_app": true
             },
             {
-              "filename": "file49.ts",
+              "filename": "file49.rs",
               "function": "func49",
               "in_app": true
             }
@@ -1796,7 +1796,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "projectId": "proj_test",
         "duration": 342,
-        "sdkLanguage": "typescript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "0.1.12",
         "ipAddress": "192.168.1.1",
         "isError": false
@@ -1808,7 +1808,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "projectId": "proj_test",
         "duration": 342,
-        "sdkLanguage": "typescript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "0.1.12",
         "ipAddress": "192.168.1.1",
         "isError": false

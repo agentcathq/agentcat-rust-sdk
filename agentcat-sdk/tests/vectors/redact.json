@@ -212,7 +212,7 @@
         "error": {
           "message": "Sensitive error message",
           "code": "ERR_001",
-          "stack": "Error: Sensitive error message\n    at functionName (file.js:10:5)"
+          "stack": "Error: Sensitive error message\n    at functionName (file.rs:10:5)"
         }
       },
       "output": {
@@ -221,13 +221,13 @@
         "error": {
           "message": "[R:Sensitive error message]",
           "code": "[R:ERR_001]",
-          "stack": "[R:Error: Sensitive error message\n    at functionName (file.js:10:5)]"
+          "stack": "[R:Error: Sensitive error message\n    at functionName (file.rs:10:5)]"
         }
       },
       "calls": [
         "Sensitive error message",
         "ERR_001",
-        "Error: Sensitive error message\n    at functionName (file.js:10:5)"
+        "Error: Sensitive error message\n    at functionName (file.rs:10:5)"
       ]
     },
     {

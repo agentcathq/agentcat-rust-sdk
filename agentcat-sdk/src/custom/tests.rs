@@ -453,18 +453,15 @@ fn identity_of(info: &Value) -> (String, String) {
     )
 }
 
-/// `request` as the vector compares it: TS's `sdkLanguage` and `agentcatVersion` are Rust's (RD-14).
+/// `request` as the vector compares it: an `agentcatVersion` is this crate's version.
 fn rust_identity(mut request: Value) -> Value {
-    if let Some(fields) = request.as_object_mut() {
-        if fields.contains_key("sdkLanguage") {
-            fields.insert("sdkLanguage".to_owned(), Value::from("Rust"));
-        }
-        if fields.contains_key("agentcatVersion") {
-            fields.insert(
-                "agentcatVersion".to_owned(),
-                Value::from(env!("CARGO_PKG_VERSION")),
-            );
-        }
+    if let Some(fields) = request.as_object_mut()
+        && fields.contains_key("agentcatVersion")
+    {
+        fields.insert(
+            "agentcatVersion".to_owned(),
+            Value::from(env!("CARGO_PKG_VERSION")),
+        );
     }
     request
 }
