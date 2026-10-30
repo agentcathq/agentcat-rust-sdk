@@ -3,12 +3,13 @@
 //! normalization and truncation.
 //!
 //! The pipeline works on the event as the delivery queue holds it ([`EventObject`]): a JSON object
-//! with the camelCase field names of the wire (`sessionId`, `eventType`, `userIntent`,
-//! `inputTokens`, ...). Its `timestamp` is an ISO-8601 string with milliseconds, and the
-//! redaction walk treats that string as a time, not as text: it keeps it and does not pass it to
-//! the redaction hook. Field values are JSON values; a field without a value is an absent key.
-//! The keys are in the order of [`TOOL_CALL_KEYS`], which decides, for example, which of two
-//! strings of equal length the size guard cuts first.
+//! with camelCase field names (`sessionId`, `eventType`, `userIntent`, `inputTokens`, ...), which
+//! [`publish_request`](crate::delivery::request::publish_request) maps to the snake-case fields of
+//! the publish request (`session_id`, `event_type`, ...). Its `timestamp` is an ISO-8601 string
+//! with milliseconds, and the redaction walk treats that string as a time, not as text: it keeps it
+//! and does not pass it to the redaction hook. Field values are JSON values; a field without a
+//! value is an absent key. The keys are in the order of [`TOOL_CALL_KEYS`], which decides, for
+//! example, which of two strings of equal length the size guard cuts first.
 use serde_json::{Map, Value};
 
 pub(crate) mod normalize;

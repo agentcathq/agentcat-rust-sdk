@@ -61,7 +61,7 @@ pub(crate) fn prepend_mint_back(result: &mut CallToolResult, text: String) {
 /// object without its own `mcp_session` key: the customer's value wins, and an array, a string, a
 /// number, `null` or no value at all stays as it is.
 ///
-/// The new object holds `mcp_session` and then the keys of `structured`, in the order of
+/// The new object holds `mcp_session` and the keys of `structured`, in the order of
 /// [`wire::own_entries`]: the array-index keys ascending, then `mcp_session`, then the other keys
 /// in their order.
 pub(crate) fn mirror_mint_back(structured: &mut Option<Value>, mint: Map<String, Value>) {

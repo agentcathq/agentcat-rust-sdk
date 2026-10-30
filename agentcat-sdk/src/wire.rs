@@ -98,7 +98,7 @@ pub(crate) fn write_quoted(out: &mut impl fmt::Write, text: &str) -> fmt::Result
 /// `f64`, which `serde_json` writes in its own text (`1e-6` where [`stringify()`] writes
 /// `0.000001`). A value nested deeper than `serde_json` reads (128 levels) does not read back and
 /// comes back unchanged.
-pub(crate) fn round_trip(value: &Value) -> Value {
+pub(crate) fn as_published(value: &Value) -> Value {
     serde_json::from_str(&stringify(value)).unwrap_or_else(|_| value.clone())
 }
 

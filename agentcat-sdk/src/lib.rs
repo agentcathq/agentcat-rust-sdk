@@ -39,8 +39,8 @@
 //! gets the type of the error and the texts of its `source()` chain.
 //!
 //! A tool that returns `Err(ErrorData)` gives the client a JSON-RPC error, as `rmcp` sends it.
-//! The event gets the name of the JSON-RPC error code as `error.type`. The `error` of an event
-//! always has the platform `rust`, and it has no parsed stack frames.
+//! The event gets the name of the JSON-RPC error code as `error.type`. The `error` that the SDK
+//! records for a failed tool call has the platform `rust` and no parsed stack frames.
 //!
 //! The SDK gives each tool call a [`CallContext`], which a tool reads as an
 //! `Extension<CallContext>` parameter. With it, a tool can read its session ID and publish a
@@ -593,11 +593,11 @@
 //!   `serde_json::Map` in your program keeps the order of insertion and does not sort its keys.
 //! - When another crate in your build turns on the `arbitrary_precision` or the `float_roundtrip`
 //!   feature of `serde_json`, Cargo turns it on for the SDK too. These features change how
-//!   `serde_json` reads and writes numbers. Without them, `serde_json` can read a decimal of 16 or
-//!   17 significant digits as the neighboring `f64`, and the SDK counts each number as the
-//!   shortest text that reads back as the same `f64`. With either feature, the text of some
-//!   numbers in the events, the token estimates and the size checks can change. The SDK logs a
-//!   warning that names the feature each time its delivery thread starts.
+//!   `serde_json` reads and writes numbers. Without them, `serde_json` can read some decimals (for
+//!   example `7.038531e-26`, and some of 16 or 17 significant digits) as a neighboring `f64`, and
+//!   the SDK counts each number as the shortest text that reads back as the same `f64`. With either
+//!   feature, the text of some numbers in the events, the token estimates and the size checks can
+//!   change. The SDK logs a warning that names the feature each time its delivery thread starts.
 //! - `parameters.extra.requestInfo.url` of an event is the URL that the `rmcp` service sees.
 //!   `axum::Router::nest_service` removes the path prefix of the route before that, so the event
 //!   records the URL without the prefix. `route_service` keeps the full path.

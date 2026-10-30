@@ -23,7 +23,7 @@ mod tests;
 /// - `event_type` is the variant of `mcp:tools/call` or `agentcat:custom`; any other text has
 ///   none and is left out.
 /// - `parameters`, `response`, `error` and `identify_data` (the event's `identifyActorData`) are
-///   the event's values through [`wire::round_trip`], so the numbers and key orders are those of
+///   the event's values through [`wire::as_published`], so the numbers and key orders are those of
 ///   [`wire::stringify`]; `properties` too, left out when it is `null` or absent.
 /// - `user_intent` is a string `userIntent` as it is, any other value as its [`wire::stringify`]
 ///   text, and `null` as no value.
@@ -32,7 +32,7 @@ mod tests;
 ///   and `event_id` are never set.
 pub(crate) fn publish_request(event: &EventObject) -> PublishEventRequest {
     let text = |key: &str| event.get(key).and_then(Value::as_str).map(str::to_owned);
-    let json = |key: &str| event.get(key).map(wire::round_trip);
+    let json = |key: &str| event.get(key).map(wire::as_published);
     let number = |key: &str| event.get(key).and_then(Value::as_number).map(saturate);
     let identify_actor_given_id = text("identifyActorGivenId");
     PublishEventRequest {
@@ -69,7 +69,7 @@ pub(crate) fn publish_request(event: &EventObject) -> PublishEventRequest {
         properties: event
             .get("properties")
             .filter(|properties| !properties.is_null())
-            .map(wire::round_trip),
+            .map(wire::as_published),
         ip_address: None,
         sdk_language: text("sdkLanguage"),
         agentcat_version: text("agentcatVersion"),

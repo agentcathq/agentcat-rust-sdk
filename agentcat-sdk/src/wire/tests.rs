@@ -8,8 +8,8 @@ use proptest::prelude::*;
 use serde_json::{Map, Number, Value, json};
 
 use super::{
-    coerce_to_string, cut_utf16, iso_millis, number_to_string, own_entries, parse_iso_millis,
-    round_trip, stringify, trim, type_of, utf16_len, write_stringify,
+    as_published, coerce_to_string, cut_utf16, iso_millis, number_to_string, own_entries,
+    parse_iso_millis, stringify, trim, type_of, utf16_len, write_stringify,
 };
 use crate::test_support::json::index_keys_first;
 use crate::test_support::rules::check_cut;
@@ -204,7 +204,7 @@ fn to_js_value_writes_stringify_text() {
         "2": [-0.0, 9_007_199_254_740_993_u64, {"b": 2.0, "1": 0.5}],
         "text": "a\u{2028}b",
     });
-    let read_back = round_trip(&value);
+    let read_back = as_published(&value);
     assert_eq!(
         serde_json::to_string(&read_back).unwrap(),
         stringify(&value)
@@ -223,7 +223,7 @@ fn to_js_value_past_the_nesting_limit_is_a_copy() {
     for _ in 0..200 {
         value = json!([value]);
     }
-    assert_eq!(round_trip(&value), value);
+    assert_eq!(as_published(&value), value);
 }
 
 /// An object with a `toString` key, alone or at any depth inside an array, is written as any

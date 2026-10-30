@@ -77,8 +77,9 @@ struct Schema {
 enum SchemaLogs {
     /// A traced call writes them to the sink.
     Written,
-    /// A call with tracing off writes none of them: the tracing-off path logs nothing. So a
-    /// tracing-off handle starts no delivery thread and writes no log file on this path.
+    /// A call with tracing off writes none of them: learning the schema with tracing off logs
+    /// nothing. So a tracing-off handle starts no delivery thread and writes no log file on this
+    /// path.
     Silent,
 }
 
