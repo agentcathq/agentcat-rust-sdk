@@ -237,7 +237,7 @@ fn a_publish_for_another_project_fails() {
     let at = Instant::now();
     let mut requests = plain_publishes(at);
     requests[0] = tool_publish("add", "proj_other", at);
-    let custom = json!({"projectId": PROJECT_ID, "eventType": "agentcat:custom"});
+    let custom = json!({"project_id": PROJECT_ID, "event_type": "agentcat:custom"});
     requests.push(request(Method::POST, PUBLISH_PATH, &custom.to_string(), at));
     let failures = judge_publishes(&requests, &STDIO.calls(), Some(at));
     assert_eq!(
@@ -355,15 +355,27 @@ fn the_custom_event_must_come_once_with_its_name() {
 }
 
 #[test]
-fn the_event_fields_may_be_camel_case() {
+fn only_the_wire_names_of_the_event_fields_count() {
     let event = json!({
         "eventType": "mcp:tools/call",
         "event_type": "other",
-        "resourceName": null,
-        "resource_name": "add",
+        "resourceName": "camel",
+        "resource_name": null,
     });
-    assert_eq!(event_type(&event), Some("mcp:tools/call"));
-    assert_eq!(resource_name(&event), Some("add"));
+    assert_eq!(event_type(&event), Some("other"));
+    assert_eq!(resource_name(&event), None);
+}
+
+#[test]
+fn a_tool_event_without_a_resource_name_is_called_absent() {
+    let mut requests = hooks_publishes();
+    requests[0].body["resource_name"] = Value::Null;
+    requests[0].body["identifyActorGivenId"] = json!("demo-user");
+    requests[0].body["identify_actor_given_id"] = Value::Null;
+    assert_eq!(
+        judge_hooks(&requests),
+        [r#"<absent>: identify user_id is not "demo-user""#]
+    );
 }
 
 #[test]

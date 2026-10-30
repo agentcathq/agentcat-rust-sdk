@@ -91,22 +91,19 @@ pub(super) fn is_truthy(value: &Value) -> bool {
     }
 }
 
-/// The field `camel` of an event, else the field `snake`; `None` when both are absent or null.
-pub(super) fn field<'a>(event: &'a Value, camel: &str, snake: &str) -> Option<&'a Value> {
-    [camel, snake]
-        .into_iter()
-        .filter_map(|name| event.get(name))
-        .find(|value| !value.is_null())
+/// The field `name` of a publish body; `None` when it is absent or null.
+pub(super) fn field<'a>(event: &'a Value, name: &str) -> Option<&'a Value> {
+    event.get(name).filter(|value| !value.is_null())
 }
 
 /// The event type of a publish body.
 pub(super) fn event_type(event: &Value) -> Option<&str> {
-    field(event, "eventType", "event_type").and_then(Value::as_str)
+    field(event, "event_type").and_then(Value::as_str)
 }
 
 /// The resource name of a publish body.
 pub(super) fn resource_name(event: &Value) -> Option<&str> {
-    field(event, "resourceName", "resource_name").and_then(Value::as_str)
+    field(event, "resource_name").and_then(Value::as_str)
 }
 
 /// The failures of the requests the mock received: one tool-call publish per call (`calls`),
@@ -159,7 +156,7 @@ pub(super) fn judge_publishes(
         failures.push("the publish of the last call arrived after the example exited".into());
     }
     for request in &publishes {
-        let project = field(&request.body, "projectId", "project_id");
+        let project = field(&request.body, "project_id");
         if project.and_then(Value::as_str) != Some(PROJECT_ID) {
             failures.push(format!(
                 "a publish names the project {}, expected {PROJECT_ID}",
@@ -180,12 +177,12 @@ pub(super) fn judge_hooks(requests: &[Recorded]) -> Vec<String> {
         .filter(|event| event_type(event) == Some("mcp:tools/call"))
         .collect();
     for event in &tool_events {
-        let tool = resource_name(event).unwrap_or("undefined");
-        let text = |camel: &str, snake: &str| field(event, camel, snake).and_then(Value::as_str);
-        if text("identifyActorGivenId", "identify_actor_given_id") != Some("demo-user") {
+        let tool = resource_name(event).unwrap_or("<absent>");
+        let text = |name: &str| field(event, name).and_then(Value::as_str);
+        if text("identify_actor_given_id") != Some("demo-user") {
             failures.push(format!("{tool}: identify user_id is not \"demo-user\""));
         }
-        if text("identifyActorName", "identify_actor_name") != Some("Demo User") {
+        if text("identify_actor_name") != Some("Demo User") {
             failures.push(format!("{tool}: identify user_name is not \"Demo User\""));
         }
         if event["tags"]["example"] != "hooks" {
@@ -211,8 +208,8 @@ pub(super) fn judge_hooks(requests: &[Recorded]) -> Vec<String> {
         .find(|event| resource_name(event) == Some("fail"));
     let recorded = fail_event.is_some_and(|event| {
         let error = &event["error"];
-        let error_type = field(error, "type", "name").unwrap_or(&Value::Null);
-        field(event, "isError", "is_error") == Some(&Value::Bool(true)) && is_truthy(error_type)
+        let error_type = field(error, "type").unwrap_or(&Value::Null);
+        field(event, "is_error") == Some(&Value::Bool(true)) && is_truthy(error_type)
     });
     if !recorded {
         failures.push("the fail call has no error recorded by capture_error".to_owned());
@@ -224,7 +221,7 @@ pub(super) fn judge_hooks(requests: &[Recorded]) -> Vec<String> {
         .collect();
     match customs.as_slice() {
         [custom] => {
-            let name = field(custom, "resourceName", "resource_name");
+            let name = field(custom, "resource_name");
             if name.and_then(Value::as_str) != Some("echo-called") {
                 failures.push(format!(
                     "the custom event has resource {}, expected \"echo-called\"",
