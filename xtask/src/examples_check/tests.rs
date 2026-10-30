@@ -11,6 +11,22 @@ use super::*;
 const STDIO: Example = EXAMPLES[0];
 const HOOKS: Example = EXAMPLES[2];
 
+/// A new file in `agentcat-sdk/examples/` must be listed in `EXAMPLES`, or `--all` would skip it.
+#[test]
+fn the_examples_are_the_files_of_the_examples_directory() {
+    let directory = Path::new(env!("CARGO_MANIFEST_DIR")).join("../agentcat-sdk/examples");
+    let mut files: Vec<String> = std::fs::read_dir(&directory)
+        .unwrap_or_else(|error| panic!("cannot read {}: {error}", directory.display()))
+        .map(|entry| entry.expect("a directory entry").path())
+        .filter(|path| path.extension().is_some_and(|extension| extension == "rs"))
+        .filter_map(|path| Some(path.file_stem()?.to_string_lossy().into_owned()))
+        .collect();
+    files.sort_unstable();
+    let mut listed: Vec<&str> = EXAMPLES.iter().map(|example| example.name).collect();
+    listed.sort_unstable();
+    assert_eq!(files, listed);
+}
+
 /// A recorded request with `body` (JSON text, or any text), received at `received`.
 fn request(method: Method, path: &str, body: &str, received: Instant) -> Recorded {
     Recorded {

@@ -2,9 +2,8 @@
 //! pretty JSON with a final newline.
 //!
 //! With `UPDATE_GOLDEN=1`, [`assert_golden`] writes the file; with `CI=true` it refuses to.
-//! Otherwise the document must equal
-//! the parsed file, key order included; the panic names the first path that differs. Line ends
-//! do not matter: the file is compared as JSON, not as text.
+//! Otherwise the document must equal the parsed file, key order included; the panic names the
+//! first path that differs. Line ends do not matter: the file is compared as JSON, not as text.
 use std::path::PathBuf;
 
 use serde_json::{Map, Value};

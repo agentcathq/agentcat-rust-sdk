@@ -85,10 +85,9 @@ per test. For the doctests, run `cargo test --workspace --doc`.
 - **The examples check** (`cargo run -q -p xtask -- examples-check --all`) runs each example of
   `agentcat-sdk/examples/` against a local mock API. It fails when a line on stdout is not
   JSON-RPC, when the event of a call does not arrive, or when the example does not exit within
-  5 s after the client closes stdin or sends SIGTERM. To run one example, build the examples
-  (`cargo build -p agentcat-sdk --examples --all-features`) and run
-  `cargo run -q -p xtask -- examples-check stdio` (or `streamable_http`, `hooks`,
-  `stateless_http`).
+  5 s after the client closes stdin or sends SIGTERM. xtask builds the examples itself. To run
+  one example, run `cargo run -q -p xtask -- examples-check stdio` (or `streamable_http`,
+  `hooks`, `stateless_http`).
 - **Coverage floors**: `cargo run -q -p xtask -- coverage target/coverage.json` fails below 90 %
   of the lines of the crate, or below 95 % of the lines of the pure modules. `scripts/check.sh`
   shows the `cargo llvm-cov` command that writes the JSON file.
@@ -106,8 +105,12 @@ per test. For the doctests, run `cargo test --workspace --doc`.
   the one that you intended, not a regression.
 - **A golden fails.** Run `UPDATE_GOLDEN=1 cargo nextest run -p agentcat-sdk --test e2e`. It
   rewrites the golden files. Read `git diff agentcat-sdk/tests/e2e/golden/` before you commit.
-- **The publish schema changes.** When the AgentCat API changes its request schema, refresh
-  `agentcat-sdk/tests/e2e/publish-event.schema.json` by hand.
+- **A version bump.** The version of the crate is the `agentcat_version` field of every golden
+  file. A release re-captures the goldens with `UPDATE_GOLDEN=1`, and the diff must show only
+  that field.
+- **The publish schema changes.** The maintainers refresh
+  `agentcat-sdk/tests/e2e/publish-event.schema.json` from the AgentCat API definition when the
+  API changes its request schema.
 - **The public API changes.** Run `cargo run -q -p xtask -- public-api --bless`. A bump of `rmcp`
   changes the `Tracked` `ServerHandler` lines of the snapshot, so it needs a new bless.
 

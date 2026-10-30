@@ -29,7 +29,7 @@ pub mod sdk_manifest;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: cargo run -p xtask -- rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json> | rmcp-versions | examples-check <example>";
+const USAGE: &str = "usage: cargo run -p xtask -- rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json> | rmcp-versions | examples-check <--all | stdio | streamable_http | hooks | stateless_http>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
