@@ -1,8 +1,8 @@
-//! `ApiPublisher` against a `wiremock` server on loopback: the request it sends,
-//! the base URL it uses, and which answers are failed attempts that the worker retries. Every
-//! test but `real_transport_process_publishes` builds its handle through
-//! `AgentCat::with_delivery` with shrunk delays; that one builds the transport of
-//! `AgentCat::new`. Every test posts to the mock only, never to a production endpoint.
+//! `ApiPublisher` against a `wiremock` server on loopback: the request it sends, the base URL it
+//! uses, and which answers are failed attempts that the worker retries. Every test but
+//! `real_transport_process_publishes` builds its handle through `AgentCat::with_delivery` with
+//! shrunk delays; that one builds the transport of `AgentCat::new`. Every test posts to the mock
+//! only, never to a production endpoint.
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
@@ -110,12 +110,12 @@ async fn posts_to_public_events_path() {
     }
 }
 
-/// The transport of `AgentCat::new` outside unit tests (`Transport::api`) sets the
-/// process logger to the home directory of its environment and posts to the API URL it resolves:
-/// the event reaches the mock, and the worker's success line, with the version prefix, reaches
-/// `<home>/agentcat.log`. The option and both environment variables name the mock, so no single
-/// fault in the URL resolution sends the event to the production default. The first
-/// `logging::configure` of a process wins, so this test relies on nextest's process per test.
+/// The transport of `AgentCat::new` outside unit tests (`Transport::api`) sets the process logger
+/// to the home directory of its environment and posts to the API URL it resolves: the event reaches
+/// the mock, and the worker's success line, with the version prefix, reaches `<home>/agentcat.log`.
+/// The option and both environment variables name the mock, so no single fault in the URL
+/// resolution sends the event to the production default. The first `logging::configure` of a
+/// process wins, so this test relies on nextest's process per test.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn real_transport_process_publishes() {
     let server = MockServer::start().await;
@@ -152,8 +152,8 @@ async fn real_transport_process_publishes() {
     );
 }
 
-/// The `api_base_url` option wins over `AGENTCAT_API_URL`, so the event reaches the mock
-/// and not the address the environment names (a port nothing listens on).
+/// The `api_base_url` option wins over `AGENTCAT_API_URL`, so the event reaches the mock and not
+/// the address the environment names (a port nothing listens on).
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn base_url_option_wins_over_env() {
     let server = MockServer::start().await;
@@ -170,8 +170,8 @@ async fn base_url_option_wins_over_env() {
     assert_eq!(received(&server).await.len(), 1);
 }
 
-/// Nothing listens on the port, so each of the four attempts fails; the delivery settles
-/// after the last one, within the shrunk delays.
+/// Nothing listens on the port, so each of the four attempts fails; the delivery settles after the
+/// last one, within the shrunk delays.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn refused_connection_is_retried() {
     // Bind and drop a listener to get a port that refuses connections.
@@ -224,8 +224,8 @@ async fn server_error_is_retried() {
     assert_eq!(received(&server).await.len(), 4);
 }
 
-/// An attempt that hangs is cut off by the attempt timeout (200 ms here, 10 s by default),
-/// retried, and the whole delivery still settles inside `WAIT`.
+/// An attempt that hangs is cut off by the attempt timeout (200 ms here, 10 s by default), retried,
+/// and the whole delivery still settles inside `WAIT`.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn hung_attempt_times_out() {
     let server = MockServer::start().await;
@@ -266,9 +266,9 @@ async fn accepted_json_body_is_success() {
     assert_eq!(received(&server).await.len(), 1);
 }
 
-/// A build without a TLS feature logs one warning for an `https:` base URL, and none for an
-/// `http:` one. Runs only in that build: `scripts/check.sh` and the CI test job run
-/// `cargo nextest run -p agentcat-sdk --no-default-features`.
+/// A build without a TLS feature logs one warning for an `https:` base URL, and none for an `http:`
+/// one. Runs only in that build: `scripts/check.sh` and the CI test job run `cargo nextest run -p
+/// agentcat-sdk --no-default-features`.
 #[cfg(not(any(feature = "rustls", feature = "native-tls")))]
 #[test]
 fn https_without_tls_feature_warns_once() {
@@ -281,8 +281,8 @@ fn https_without_tls_feature_warns_once() {
     assert!(log.is_empty(), "{log:?}");
 }
 
-/// A build with a TLS feature can reach an `https:` base URL, so it logs no warning for one,
-/// as for an `http:` one. Runs in the builds with a TLS feature, the default included.
+/// A build with a TLS feature can reach an `https:` base URL, so it logs no warning for one, as for
+/// an `http:` one. Runs in the builds with a TLS feature, the default included.
 #[cfg(any(feature = "rustls", feature = "native-tls"))]
 #[test]
 fn https_with_tls_feature_does_not_warn() {
@@ -293,8 +293,8 @@ fn https_with_tls_feature_does_not_warn() {
     }
 }
 
-/// `new` builds no client. The first `prepare`, which the worker calls before an
-/// event's first attempt, builds it, and a client that builds logs nothing.
+/// `new` builds no client. The first `prepare`, which the worker calls before an event's first
+/// attempt, builds it, and a client that builds logs nothing.
 #[test]
 fn client_is_built_at_first_use() {
     let mut log = Vec::new();
@@ -306,9 +306,9 @@ fn client_is_built_at_first_use() {
     assert!(publisher.configuration.get().is_some_and(Option::is_some));
 }
 
-/// A client that fails to build gives one log line, at its first use only, and a publisher
-/// that can never send: every `prepare` gives the reason for the final failure line. reqwest has
-/// no natural build failure here, so the test hands the publisher a build that fails.
+/// A client that fails to build gives one log line, at its first use only, and a publisher that can
+/// never send: every `prepare` gives the reason for the final failure line. reqwest has no natural
+/// build failure here, so the test hands the publisher a build that fails.
 #[test]
 fn failed_client_build_logs_once_at_first_use() {
     let publisher = ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |_| {

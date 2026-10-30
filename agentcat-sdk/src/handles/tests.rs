@@ -54,8 +54,8 @@ fn source_from_json(text: &str) -> SessionSource {
         .unwrap_or_else(|| panic!("no session source {text:?}"))
 }
 
-/// The resolution `value` holds in camelCase form. An `agentId` comes with
-/// `agentSource: "supplied"`, the one agent source there is.
+/// The resolution `value` holds in camelCase form. An `agentId` comes with `agentSource:
+/// "supplied"`, the one agent source there is.
 fn resolution_from_json(value: &Value) -> HandleResolution {
     let field = |name: &str| {
         value
@@ -108,8 +108,8 @@ fn masked_resolution(res: &HandleResolution) -> Value {
     fixture
 }
 
-/// The tool arguments of an `{args?, ...}` input: `None` when absent or not an object (rmcp's
-/// tool arguments are an object or absent; nothing is read off any other value).
+/// The tool arguments of an `{args?, ...}` input: `None` when absent or not an object (rmcp's tool
+/// arguments are an object or absent; nothing is read off any other value).
 fn args_of(input: &Value) -> Option<&Map<String, Value>> {
     input.get("args").and_then(Value::as_object)
 }
@@ -214,10 +214,11 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
     kind
 }
 
-/// The sentinel test of `resolve_handles` is `eq_ignore_ascii_case` against `start`, the same as
-/// lower-casing the value and comparing it with `start`. The two agree when no character but the letter in its two ASCII
-/// cases has that letter as its lowercase, and no character lowercases to a part of the sentinel.
-/// The case lists them for every character of the BMP, as this ICU version gives them.
+/// The sentinel test of `resolve_handles` is `eq_ignore_ascii_case` against `start`, which stands
+/// in for lower-casing the value and comparing it with `start`. The two agree when no character but
+/// the letter in its two ASCII cases has that letter as its lowercase, and no character lowercases
+/// to a part of the sentinel. The case lists them for every character of the BMP, from the Unicode
+/// tables of this build.
 fn check_lowercase(case: &Map<String, Value>) {
     let name = vectors::name(case);
     let letters = case["output"]["letters"]
@@ -355,7 +356,7 @@ fn session_shaped() -> impl Strategy<Value = String> + Clone {
     })
 }
 
-/// White space that `trim` removes and its neighbors that `trim` keeps, 0 to 2 of them.
+/// White space that `wire::trim` removes and its neighbors that it keeps, 0 to 2 of them.
 fn padding() -> impl Strategy<Value = String> + Clone {
     let c = prop::sample::select(vec![
         ' ', '\t', '\n', '\r', '\u{A0}', '\u{3000}', '\u{FEFF}', '\u{85}', '\u{180E}', '\u{200B}',

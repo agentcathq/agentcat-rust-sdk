@@ -18,7 +18,7 @@ const REDACTED: &str = "[REDACTED]";
 /// - Flags: `enable_tracing`, `enable_report_missing`, `enable_tool_call_context` and
 ///   `enable_agent_tracking` (booleans), `custom_context_description` (a string).
 /// - Hooks, each a canned behavior (see [`behavior`]): `resolve_session_id` (`returns` a string or
-///   `null`), `identify` (`returns` `null` or `{"userId", "userName"?, "userData"?}`),
+///   `null`), `identify` (`returns` `null` or `{"user_id", "user_name"?, "user_data"?}`),
 ///   `event_tags` and `event_properties` (`returns` an object or `null`),
 ///   `redact_sensitive_information` (`replace` a secret with `[REDACTED]`, or `returns` a string)
 ///   and `redact_event` (`returns: null` drops the event; `merge` sets the event fields it names:
@@ -171,26 +171,27 @@ fn hook<R: serde::de::DeserializeOwned, T: Clone + Send + Sync + 'static>(
     }
 }
 
-/// An `identify` answer: `{"userId", "userName"?, "userData"?}`.
+/// An `identify` answer: `{"user_id", "user_name"?, "user_data"?}`. An unknown key is an error.
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
+#[expect(
+    clippy::struct_field_names,
+    reason = "the field names are the keys of the profile"
+)]
 struct Identity {
-    #[serde(rename = "userId")]
-    id: String,
-    #[serde(rename = "userName")]
-    name: Option<String>,
-    #[serde(rename = "userData")]
-    data: Option<Map<String, Value>>,
+    user_id: String,
+    user_name: Option<String>,
+    user_data: Option<Map<String, Value>>,
 }
 
 impl Identity {
     /// The SDK's identity.
     fn user(self) -> UserIdentity {
-        let mut user = UserIdentity::new(self.id);
-        if let Some(name) = self.name {
+        let mut user = UserIdentity::new(self.user_id);
+        if let Some(name) = self.user_name {
             user = user.user_name(name);
         }
-        if let Some(data) = self.data {
+        if let Some(data) = self.user_data {
             user = user.user_data(data);
         }
         user

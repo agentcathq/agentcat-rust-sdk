@@ -1,7 +1,7 @@
 //! `Tracked<H>` forwards: each `ServerHandler` method that a client can reach answers through the
-//! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only
-//! the streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle
-//! that `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes.
+//! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only the
+//! streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle that
+//! `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes.
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
@@ -287,9 +287,9 @@ async fn forwards_every_method() {
     tracked.cancel().await.unwrap();
 }
 
-/// Every other method forwards unchanged: `accepted_subscription_filter`, which
-/// rmcp asks for a `subscriptions/listen` request, is the wrapped handler's own answer: the filter
-/// the [`Probe`] accepts, and none from a handler that keeps rmcp's default.
+/// Every other method forwards unchanged: `accepted_subscription_filter`, which rmcp asks for a
+/// `subscriptions/listen` request, is the wrapped handler's own answer: the filter the [`Probe`]
+/// accepts, and none from a handler that keeps rmcp's default.
 #[test]
 fn accepted_subscription_filter_is_forwarded() {
     /// A handler with rmcp's default methods only.
@@ -518,10 +518,10 @@ fn conflict_lines(sink: &RecordingSink) -> usize {
         .count()
 }
 
-/// A stable set of reported conflicts per key, and independent sets for different
-/// keys (the set lives in the registry of a handle and an inner type, a per-server
-/// key): listing again through the same handle, also through a second `track` of the same type,
-/// does not log the conflict again, and another handle has its own set and logs it once.
+/// A stable set of reported conflicts per key, and independent sets for different keys (the set
+/// lives in the registry of a handle and an inner type, a per-server key): listing again through
+/// the same handle, also through a second `track` of the same type, does not log the conflict
+/// again, and another handle has its own set and logs it once.
 #[tokio::test]
 async fn conflict_reports_are_kept_per_handle_and_type() {
     let (first, first_sink) = recording_handle();
@@ -566,11 +566,11 @@ async fn call_answer(
     answer(client, ClientRequest::CallToolRequest(request)).await
 }
 
-/// A handle that `AGENTCAT_ENABLED` turned off forwards untouched. The listing is the
-/// handler's own (no `get_more_tools`, no injected parameters), `get_tool` is the handler's, a
-/// call reaches the handler with its raw arguments and a `CallContext` without session or agent,
-/// `get_more_tools` is the handler's to answer, `initialize` keeps no client identity, and nothing
-/// reaches the sink: no record, no log line.
+/// A handle that `AGENTCAT_ENABLED` turned off forwards untouched. The listing is the handler's own
+/// (no `get_more_tools`, no injected parameters), `get_tool` is the handler's, a call reaches the
+/// handler with its raw arguments and a `CallContext` without session or agent, `get_more_tools` is
+/// the handler's to answer, `initialize` keeps no client identity, and nothing reaches the sink: no
+/// record, no log line.
 #[tokio::test]
 async fn disabled_handle_forwards_untouched() {
     let options = || Options::default().enable_agent_tracking(true);
@@ -629,10 +629,10 @@ impl ServerHandler for CountedInfo {
     }
 }
 
-/// On a handle that `AGENTCAT_ENABLED` turned off, each form of custom event returns
-/// `Ok(())` before it does any work, an empty project ID included: the string form, the
-/// `CallContext` form, and the `Tracked` form, which does not call the handler's `get_info`.
-/// Nothing reaches the sink, not even the "Published custom event" line.
+/// On a handle that `AGENTCAT_ENABLED` turned off, each form of custom event returns `Ok(())`
+/// before it does any work, an empty project ID included: the string form, the `CallContext` form,
+/// and the `Tracked` form, which does not call the handler's `get_info`. Nothing reaches the sink,
+/// not even the "Published custom event" line.
 #[tokio::test]
 async fn disabled_handle_custom_events_do_nothing() {
     let sink = Arc::new(RecordingSink::default());

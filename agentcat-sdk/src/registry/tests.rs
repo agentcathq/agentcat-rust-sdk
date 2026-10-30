@@ -1,5 +1,4 @@
-//! `ToolRegistry`: pages merge per tool name and the declared-session set only
-//! grows.
+//! `ToolRegistry`: pages merge per tool name and the declared-session set only grows.
 use rmcp::model::{JsonObject, Tool};
 use serde_json::{Value, json};
 

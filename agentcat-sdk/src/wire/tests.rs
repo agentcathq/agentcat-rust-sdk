@@ -99,10 +99,10 @@ fn at_millis(ms: i64) -> SystemTime {
     }
 }
 
-/// `iso_millis` writes the ISO 8601 text with milliseconds, for epoch 0, 7 ms, 999 ms and
-/// the other `iso:` cases of `wire.json`.
+/// `iso_millis` writes the ISO 8601 text with milliseconds, for epoch 0, 7 ms, 999 ms and the other
+/// `iso:` cases of `wire.json`.
 #[test]
-fn iso_millis_matches_to_iso_string() {
+fn iso_millis_writes_the_iso_8601_millisecond_text() {
     let mut seen = 0;
     for case in vectors::cases("wire") {
         let name = vectors::name(&case);
@@ -121,8 +121,8 @@ fn iso_millis_matches_to_iso_string() {
     );
 }
 
-/// A time outside chrono's range gives the epoch text, not a panic; a time before the epoch with
-/// a fraction cuts the milliseconds as `toISOString` does.
+/// A time outside chrono's range gives the epoch text, not a panic; a time before the epoch with a
+/// fraction cuts the milliseconds, not rounds them.
 ///
 /// The far times exist only where `SystemTime` can hold them: on Windows it counts 100 ns ticks
 /// in a `u64`, so no `SystemTime` lies outside chrono's range and the far cases are skipped.
@@ -142,8 +142,8 @@ fn iso_millis_out_of_range_does_not_panic() {
     );
 }
 
-/// `parse_iso_millis` reads the `parse-iso:` texts of `wire.json` to the instant the case
-/// gives, and the `iso:` outputs back to their instants; text that is not a date gives `None`.
+/// `parse_iso_millis` reads the `parse-iso:` texts of `wire.json` to the instant the case gives,
+/// and the `iso:` outputs back to their instants; text that is not a date gives `None`.
 #[test]
 fn parse_iso_millis_reads_both_forms() {
     let mut seen = 0;
@@ -278,9 +278,9 @@ fn plain_number_text() -> impl Strategy<Value = String> + Clone {
     ]
 }
 
-/// A JSON text of `json_value`'s shape with [`plain_number_text`] numbers, whose objects list
-/// their keys in shuffled order and often repeat one (a repeated key keeps its first position
-/// and takes its last value, in `JSON.stringify` and in `serde_json`'s `preserve_order` map).
+/// A JSON text of `json_value`'s shape with [`plain_number_text`] numbers, whose objects list their
+/// keys in shuffled order and often repeat one (a repeated key keeps its first position and takes
+/// its last value, in `JSON.stringify` and in `serde_json`'s `preserve_order` map).
 fn json_text() -> impl Strategy<Value = String> + Clone {
     let leaf = prop_oneof![
         Just("null".to_owned()),
@@ -393,8 +393,8 @@ fn check_read_back(read: &Value, original: &Value, path: &str) -> Result<(), Tes
     Ok(())
 }
 
-/// What `coerce_to_string` gives for a JSON value, from the rule: arrays are their items joined with
-/// `,` (a `null` item as `""`), objects `[object Object]`.
+/// What `coerce_to_string` gives for a JSON value, from the rule: arrays are their items joined
+/// with `,` (a `null` item as `""`), objects `[object Object]`.
 fn joined(value: &Value) -> String {
     match value {
         Value::Null => "null".to_owned(),
@@ -481,8 +481,8 @@ proptest! {
         prop_assert_eq!(utf16_len(&text), text.encode_utf16().count());
     }
 
-    /// `coerce_to_string` writes no value as `undefined`, joins arrays with `,` and writes objects as
-    /// `[object Object]`.
+    /// `coerce_to_string` writes no value as `undefined`, joins arrays with `,` and writes objects
+    /// as `[object Object]`.
     #[test]
     fn coerce_to_string_joins_arrays_and_writes_objects_as_object_object(
         value in proptest::option::of(json_value(3, 4)),
@@ -507,8 +507,8 @@ proptest! {
     }
 }
 
-/// `write_stringify` writes the text `stringify` returns, for every `stringify` case of
-/// `wire.json` (the text) and every `stringify-text` case.
+/// `write_stringify` writes the text `stringify` returns, for every `stringify` case of `wire.json`
+/// (the text) and every `stringify-text` case.
 #[test]
 fn write_stringify_equals_stringify() {
     let mut seen = 0;
@@ -549,9 +549,9 @@ fn own_entries_fast_path_keeps_order() {
     assert_eq!(own_entries(&Map::new()).count(), 0);
 }
 
-/// This pins a Rust contract, `ExactSizeIterator` (its `size_hint` is exact and `len`
-/// is the number of entries left), which `OwnEntries`, the iterator of the key order, implements.
-/// It holds on both paths, before and while the iterator is consumed.
+/// This pins a Rust contract, `ExactSizeIterator` (its `size_hint` is exact and `len` is the number
+/// of entries left), which `OwnEntries`, the iterator of the key order, implements. It holds on
+/// both paths, before and while the iterator is consumed.
 #[test]
 fn own_entries_len_is_exact() {
     for text in [r#"{"b":1,"a":2,"c":3}"#, r#"{"b":1,"10":2,"2":3}"#] {

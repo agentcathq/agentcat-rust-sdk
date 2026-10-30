@@ -1,8 +1,8 @@
-//! The settling of the call hooks and the application of their results: each `hooks:*`
-//! case of `tests/vectors/queue.json` against the fixture, and the Rust-only paths (the abort after the
-//! budget; a panicking hook). Each hook is a task on the test runtime that has finished
-//! (`returns`, `throws`) or never finishes (`hangs`), and every wait uses a 50 ms budget; the
-//! timeout text keeps the fixed `30000` whatever the budget is.
+//! The settling of the call hooks and the application of their results: each `hooks:*` case of
+//! `tests/vectors/queue.json` against the fixture, and the Rust-only paths (the abort after the
+//! budget; a panicking hook). Each hook is a task on the test runtime that has finished (`returns`,
+//! `throws`) or never finishes (`hangs`), and every wait uses a 50 ms budget; the timeout text
+//! keeps the fixed `30000` whatever the budget is.
 use std::future::pending;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -42,8 +42,8 @@ fn hangs_watched<T: Send + 'static>(dropped: &Arc<AtomicBool>) -> Task<T> {
     })
 }
 
-/// A tool-call event as `from_call` leaves it, in key order, with the session `session` (`""`
-/// in hook mode) and the SDK tags `tags`.
+/// A tool-call event as `from_call` leaves it, in key order, with the session `session` (`""` in
+/// hook mode) and the SDK tags `tags`.
 fn call_event(session: &str, tags: Value) -> EventObject {
     let mut event = object(json!({
         "id": "",
@@ -69,8 +69,8 @@ fn keys(event: &EventObject) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 
-/// The order in which the hooks' results apply: the hook-mode session first, then
-/// the identity in its places, then the customer tags under the SDK tags, then the properties.
+/// The order in which the hooks' results apply: the hook-mode session first, then the identity in
+/// its places, then the customer tags under the SDK tags, then the properties.
 #[tokio::test]
 async fn settled_hooks_apply_in_the_documented_order() {
     let user = UserIdentity::new("user-42")
@@ -115,8 +115,8 @@ async fn settled_hooks_apply_in_the_documented_order() {
     );
 }
 
-/// A hook that has not settled within the budget is aborted after the timeout line,
-/// which names 30 000 ms whatever the budget is, and the event goes on without it.
+/// A hook that has not settled within the budget is aborted after the timeout line, which names 30
+/// 000 ms whatever the budget is, and the event goes on without it.
 #[tokio::test]
 async fn hanging_hook_is_aborted_after_budget() {
     let dropped = Arc::new(AtomicBool::new(false));
@@ -148,11 +148,11 @@ async fn hanging_hook_is_aborted_after_budget() {
     );
 }
 
-/// A hook that panics gives the background-failure line with the panic's message and no
-/// value; the other hooks still apply. A panicking `resolve_session_id` (what a failing
-/// hook becomes, since a hook's code runs when its task is first polled) leaves hook mode
-/// to mint a session, as a contained failure does. The panic also prints through the process
-/// panic hook.
+/// A hook that panics gives the background-failure line with the panic's message and no value; the
+/// other hooks still apply. A panicking `resolve_session_id` (a panic anywhere in the hook's code
+/// happens inside its task, since the code runs when the task is first polled) leaves hook mode to
+/// mint a session, as a contained failure does. The panic also prints through the process panic
+/// hook.
 #[tokio::test]
 async fn panicking_hook_logs_and_publishes_without_it() {
     let session: Task<String> = tokio::spawn(async { panic!("sync hook boom") });
@@ -186,9 +186,8 @@ async fn panicking_hook_logs_and_publishes_without_it() {
     assert_eq!(event["properties"], json!({"device": "mobile"}));
 }
 
-/// A hook that is not set and a hook that gives nothing (`None`) give no result and no log
-/// line, and the event keeps what the call gave it: no identity, the SDK tags only, no
-/// properties.
+/// A hook that is not set and a hook that gives nothing (`None`) give no result and no log line,
+/// and the event keeps what the call gave it: no identity, the SDK tags only, no properties.
 #[tokio::test]
 async fn unset_and_null_hooks_change_nothing() {
     let mut log = Vec::new();
@@ -211,8 +210,8 @@ async fn unset_and_null_hooks_change_nothing() {
     );
 }
 
-/// A hook's own error gives the per-hook text followed by the error's `Display`, in the
-/// order the hooks settle together.
+/// A hook's own error gives the per-hook text followed by the error's `Display`, in the order the
+/// hooks settle together.
 #[tokio::test]
 async fn hook_errors_use_the_pinned_texts() {
     let hooks = PendingHooks {
@@ -238,8 +237,8 @@ async fn hook_errors_use_the_pinned_texts() {
     assert_eq!(results.properties, None);
 }
 
-/// The `event_tags` result goes through `validate_tags` when it settles; each dropped tag
-/// gives the pinned line, and only the valid tags remain.
+/// The `event_tags` result goes through `validate_tags` when it settles; each dropped tag gives the
+/// pinned line, and only the valid tags remain.
 #[tokio::test]
 async fn invalid_tags_are_dropped_with_the_pinned_logs() {
     let raw = object(json!({"bad/key": "x", "count": 5, "env": "prod"}));
@@ -275,8 +274,8 @@ fn sdk_tags_win_collisions() {
     );
 }
 
-/// In hook mode a missing hook value mints a session with the `minted` source;
-/// outside hook mode the session stays as the call resolved it.
+/// In hook mode a missing hook value mints a session with the `minted` source; outside hook mode
+/// the session stays as the call resolved it.
 #[test]
 fn hook_mode_without_value_mints() {
     let mut event = call_event("", json!({"agentcat_session_id_source": "hook"}));
@@ -316,8 +315,9 @@ const APPLIED: [(&str, &str); 6] = [
 
 /// Runs the `queue.json` case `name`: its hook outcomes settle under [`BUDGET`] and apply to its
 /// event. The log lines must be the fixture's, as `queue::expected_logs` gives them, and each field
-/// of [`APPLIED`] must be the one of the fixture's first request; a minted session (`<minted>`) must be a
-/// valid session ID with the `minted` source. A case without a request checks only the logs.
+/// of [`APPLIED`] must be the one of the fixture's first request; a minted session (`<minted>`)
+/// must be a valid session ID with the `minted` source. A case without a request checks only the
+/// logs.
 async fn check_hook_case(name: &str) {
     let case = queue::case(name);
     let hooks = case["hooks"].as_object().expect("hooks");
@@ -325,7 +325,7 @@ async fn check_hook_case(name: &str) {
     let mut event = object(case["event"].clone());
 
     let mut log = Vec::new();
-    let results = settle(queue::pending_of(hooks), BUDGET, &mut log).await;
+    let results = settle(queue::pending_of(name, hooks), BUDGET, &mut log).await;
     assert_eq!(log, queue::expected_logs(&case), "{name}: logs");
 
     apply(&mut event, results, hook_mode).expect("minting works");

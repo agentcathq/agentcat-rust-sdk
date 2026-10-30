@@ -1,5 +1,5 @@
-//! `CustomEvent`: each setter stores its own field and no other, and the two
-//! `publish_custom_event` forms build the event the fixture gives.
+//! `CustomEvent`: each setter stores its own field and no other, and the two `publish_custom_event`
+//! forms build the event the fixture gives.
 use std::future::ready;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
@@ -248,7 +248,7 @@ fn server_form_dropped_with_tracing_off() {
 }
 
 #[test]
-fn server_form_without_session_logs_the_drop_line() {
+fn server_form_without_session_logs_the_no_session_warning() {
     let (agentcat, _publisher, lines) = rig("proj_handle", Options::default());
     let call = bare_call(&agentcat);
     call.publish_custom_event("proj", CustomEvent::new())
@@ -587,9 +587,8 @@ impl Sink for OrderSink {
     }
 }
 
-/// `publish_custom_event` logs its `Published` line after the queue's `add`:
-/// a sink without its own `event_then_log` takes the event, then the line, through the trait's
-/// default.
+/// `publish_custom_event` logs its `Published` line after the queue's `add`: a sink without its own
+/// `event_then_log` takes the event, then the line, through the trait's default.
 #[test]
 fn default_event_then_log_hands_the_event_then_the_line() {
     let sink = Arc::new(OrderSink::default());

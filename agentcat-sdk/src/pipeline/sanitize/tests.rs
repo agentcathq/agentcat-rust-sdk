@@ -144,9 +144,9 @@ fn text() -> impl Strategy<Value = String> + Clone {
     prop_oneof![30 => edge_string(8), 1 => base64_run()]
 }
 
-/// A content block that [`tool_call_event`] does not make: a `type` that is a number, `null`, a boolean,
-/// absent, an array or an object without a `toString` key (the text of such an object is pinned by the fixtures); a block that is not an
-/// object; a `resource` of each shape.
+/// A content block that [`tool_call_event`] does not make: a `type` that is a number, `null`, a
+/// boolean, absent, an array or an object without a `toString` key (the text of such an object is
+/// pinned by the fixtures); a block that is not an object; a `resource` of each shape.
 fn odd_block() -> impl Strategy<Value = Value> {
     prop_oneof![
         prop::sample::select(vec![

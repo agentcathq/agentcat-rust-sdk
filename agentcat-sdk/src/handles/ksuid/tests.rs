@@ -24,7 +24,7 @@ fn is_base62(text: &str) -> bool {
     text.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 
-/// Checks one `from-parts:*` case: the ID, or `None` where the fixture has no ID.
+/// Checks one `from-parts:*` case: the ID, or `None` where the case expects an error.
 fn check_from_parts(case: &Map<String, Value>) {
     let name = vectors::name(case);
     let input = &case["input"];
@@ -38,7 +38,7 @@ fn check_from_parts(case: &Map<String, Value>) {
     let actual = from_parts(prefix, time_ms, &payload_of(payload_hex));
     match (case.get("output"), case.get("error")) {
         (Some(output), None) => assert_eq!(actual.as_deref(), output.as_str(), "{name}"),
-        (None, Some(_)) => assert_eq!(actual, None, "{name}: the fixture has no ID"),
+        (None, Some(_)) => assert_eq!(actual, None, "{name}: the case expects an error"),
         _ => panic!("{name}: a case has exactly one of output and error"),
     }
 }

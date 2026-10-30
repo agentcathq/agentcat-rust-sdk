@@ -81,8 +81,8 @@ fn result_from_json(fixture: &Value) -> CallToolResult {
     result
 }
 
-/// Checks the fields of an rmcp result that the fixture result has: `content`, `structuredContent` and
-/// `isError`.
+/// Checks the fields of an rmcp result that the fixture result has: `content`, `structuredContent`
+/// and `isError`.
 fn check_result(result: &CallToolResult, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(result).unwrap();
     for key in ["content", "structuredContent", "isError"] {
@@ -98,8 +98,8 @@ fn check_result(result: &CallToolResult, fixture: &Value, context: &str) {
     }
 }
 
-/// Checks `strip_arguments` against the arguments the fixture gives for the call `input` (`{name, arguments,
-/// registry}`).
+/// Checks `strip_arguments` against the arguments the fixture gives for the call `input` (`{name,
+/// arguments, registry}`).
 fn check_strip(input: &Value, fixture: &Value, context: &str) {
     let name = input["name"].as_str().unwrap();
     let arguments = object(&input["arguments"]);
@@ -165,8 +165,9 @@ fn check_report_missing(case: &Map<String, Value>, name: &str) {
     assert_eq!(vec![line.as_str()], logs, "{name}");
 }
 
-/// The wire order of the mirrored `structured_content` is the fixture's, also in the `JSON.stringify`
-/// text of each `structured:` case: `assert_same_json_text` sorts index keys itself and cannot see this.
+/// The wire order of the mirrored `structured_content` is the fixture's, also in the
+/// `JSON.stringify` text of each `structured:` case: `assert_same_json_text` sorts index keys
+/// itself and cannot see this.
 #[test]
 fn mirror_wire_order_keeps_the_index_keys_first() {
     let mut checked = 0;
@@ -211,8 +212,8 @@ fn code_names_are_the_json_rpc_names() {
     }
 }
 
-/// An `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that
-/// key order, and its `data` stays out.
+/// An `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that key order, and
+/// its `data` stays out.
 #[test]
 fn error_data_error_has_message_type_and_platform() {
     let error = ErrorData::new(
@@ -232,8 +233,8 @@ fn error_data_error_has_message_type_and_platform() {
     );
 }
 
-/// The error of a call whose future was dropped before it completed is
-/// `{message, type: "cancelled", platform: "rust"}`, in that key order.
+/// The error of a call whose future was dropped before it completed is `{message, type:
+/// "cancelled", platform: "rust"}`, in that key order.
 #[test]
 fn cancelled_error_has_message_type_and_platform() {
     let shape = Value::Object(cancelled_error());
@@ -243,8 +244,8 @@ fn cancelled_error_has_message_type_and_platform() {
     );
 }
 
-/// An error result without text has the message `Unknown error`, and one with text has
-/// no `type` (the fixture has none).
+/// An error result without text has the message `Unknown error`, and one with text has no `type`
+/// (`type` is absent).
 #[test]
 fn result_error_has_no_type() {
     let result = CallToolResult::error(vec![]);

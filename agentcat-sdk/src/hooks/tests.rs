@@ -1,7 +1,7 @@
-//! The hooks: what a [`ToolCall`] holds, the order in which the hooks
-//! start, that they start before the tool runs and never delay the call, that a panic stays in its
-//! task, and what hook mode changes for the listing, the resolution and the mirror. The
-//! behavior is the contract; the settling of the hooks and the event body are tested elsewhere.
+//! The hooks: what a [`ToolCall`] holds, the order in which the hooks start, that they start before
+//! the tool runs and never delay the call, that a panic stays in its task, and what hook mode
+//! changes for the listing, the resolution and the mirror. The settling of the hooks and the event
+//! body are tested elsewhere.
 use std::future::{Future, pending, ready};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::Duration;
@@ -136,11 +136,11 @@ async fn hooks_receive_raw_arguments() {
     );
 }
 
-/// The snapshot keeps the credential headers, and its `Debug` output hides them: the values
-/// of `authorization`, `proxy-authorization`, `cookie` and `set-cookie` print as `<redacted>`
-/// under their names, other headers print as they are, and the request context prints as a
-/// summary (its id, whether HTTP parts are present), not with the raw headers of its parts.
-/// This is Rust-only.
+/// The snapshot keeps the credential headers, and its `Debug` output hides them: the values of
+/// `authorization`, `proxy-authorization`, `cookie` and `set-cookie` print as `<redacted>` under
+/// their names, other headers print as they are, and the request context prints as a summary (its
+/// id, whether HTTP parts are present), not with the raw headers of its parts. `Debug` output
+/// exists only in Rust.
 #[tokio::test(flavor = "current_thread")]
 async fn tool_call_debug_hides_credentials() {
     let mut context = bare_context(None);
@@ -158,8 +158,8 @@ async fn tool_call_debug_hides_credentials() {
     }
 }
 
-/// The snapshot gives the protocol version the request's `_meta` names
-/// and the `mcp-session-id` of a streamable HTTP request, each as sent.
+/// The snapshot gives the protocol version the request's `_meta` names and the `mcp-session-id` of
+/// a streamable HTTP request, each as sent.
 #[tokio::test(flavor = "current_thread")]
 async fn tool_call_reads_protocol_version_and_transport_session() {
     let mut context = bare_context(None);
@@ -182,7 +182,8 @@ async fn tool_call_reads_protocol_version_and_transport_session() {
 #[tokio::test(flavor = "current_thread")]
 async fn hooks_fire_in_the_documented_order() {
     let log = Log::default();
-    // Set in an order that differs from the firing order, so that the firing order is not the setting order.
+    // Set in the reverse of the firing order, so that the test would fail if hooks fired in the
+    // order they were set.
     let options = Options::default()
         .event_properties(labelled(&log, "event_properties"))
         .event_tags(labelled(&log, "event_tags"))
@@ -246,8 +247,8 @@ async fn hooks_fire_before_the_tool_runs() {
     client.cancel().await.unwrap();
 }
 
-/// Each hook set alone also makes its first poll before the tool runs, as every hook
-/// is called before the tool.
+/// Each hook set alone also makes its first poll before the tool runs, as every hook is called
+/// before the tool.
 #[tokio::test(flavor = "current_thread")]
 async fn each_hook_alone_fires_before_the_tool_runs() {
     for label in [
@@ -272,8 +273,8 @@ async fn each_hook_alone_fires_before_the_tool_runs() {
     }
 }
 
-/// The call returns while all four hooks hang, in hook mode (`resolve_session_id` set), so
-/// a hanging `resolve_session_id`, `identify`, `event_tags` or `event_properties` never delays it.
+/// The call returns while all four hooks hang, in hook mode (`resolve_session_id` set), so a
+/// hanging `resolve_session_id`, `identify`, `event_tags` or `event_properties` never delays it.
 #[tokio::test(flavor = "current_thread")]
 async fn hooks_never_delay_the_call() {
     let options = Options::default()
@@ -309,9 +310,9 @@ async fn hooks_never_delay_the_call() {
     client.cancel().await.unwrap();
 }
 
-/// Hanging `resolve_session_id`, `event_tags` and `event_properties` hooks do not delay the tool call:
-/// with no `identify` hook, the call returns while those three hooks hang, and the record holds the
-/// three unsettled tasks and no `identify` task.
+/// Hanging `resolve_session_id`, `event_tags` and `event_properties` hooks do not delay the tool
+/// call: with no `identify` hook, the call returns while those three hooks hang, and the record
+/// holds the three unsettled tasks and no `identify` task.
 #[tokio::test(flavor = "current_thread")]
 async fn hanging_session_tags_and_properties_hooks_do_not_delay_call() {
     let options = Options::default()
@@ -467,8 +468,8 @@ async fn hook_mode_mirror_has_only_agent_id() {
     client.cancel().await.unwrap();
 }
 
-/// A hook that returns an error gives the call no trace of it, and the error stays in the
-/// task for the event pipeline to settle.
+/// A hook that returns an error gives the call no trace of it, and the error stays in the task for
+/// the event pipeline to settle.
 #[tokio::test(flavor = "current_thread")]
 async fn hook_error_does_not_reach_the_call() {
     let options = Options::default().event_properties(|_call| async {
@@ -485,8 +486,7 @@ async fn hook_error_does_not_reach_the_call() {
     client.cancel().await.unwrap();
 }
 
-/// Only `tools/call` runs the hooks. `initialize` and `tools/list` run none and record
-/// nothing.
+/// Only `tools/call` runs the hooks. `initialize` and `tools/list` run none and record nothing.
 #[tokio::test(flavor = "current_thread")]
 async fn listing_fires_no_hooks() {
     let log = Log::default();

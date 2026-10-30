@@ -196,8 +196,8 @@ pub(crate) const PROBE_VERSIONS: &[ProtocolVersion] =
 ///
 /// Its `get_info` has the instructions `probe` and declares the tasks extension, so `tasks/*`
 /// requests reach the handler. The answers of `call_tool`, `list_tools` and `initialize` stay the
-/// same when a wrapper intercepts those methods: an error passes through unchanged,
-/// an empty tool page gets nothing, and the initialize result is forwarded unchanged.
+/// same when a wrapper intercepts those methods: an error passes through unchanged, an empty tool
+/// page gets nothing, and the initialize result is forwarded unchanged.
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Probe;
 

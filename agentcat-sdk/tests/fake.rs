@@ -86,8 +86,8 @@ async fn fake_records_tool_calls() {
     assert_eq!(events[0].project_id, "proj_1");
 }
 
-/// A telemetry-only handle (an empty project ID) publishes nothing, and the fake still
-/// records its events, with the empty project.
+/// A telemetry-only handle (an empty project ID) publishes nothing, and the fake still records its
+/// events, with the empty project.
 #[tokio::test]
 async fn telemetry_only_events_are_recorded_by_fake() {
     let fake = Fake::new();
@@ -142,9 +142,9 @@ async fn failing_assert_custom_event_published_names_it() {
     fake.assert_custom_event_published("echo").await;
 }
 
-/// A failing assertion says when a handle did not finish delivering. The call's event waits
-/// for an `identify` hook that never settles; a shutdown 20 ms in, with a 50 ms timeout, abandons
-/// it while the assertion's flush waits, so that flush answers `false`.
+/// A failing assertion says when a handle did not finish delivering. The call's event waits for an
+/// `identify` hook that never settles; a shutdown 20 ms in, with a 50 ms timeout, abandons it while
+/// the assertion's flush waits, so that flush answers `false`.
 #[tokio::test]
 #[should_panic(expected = "recorded: [] (a handle did not finish delivering within the 5 s flush")]
 async fn failing_assertion_notes_an_unfinished_delivery() {
@@ -209,11 +209,10 @@ fn call_number(call: &ToolCall) -> u64 {
 }
 
 /// Concurrent calls ("each event keeps its own `session_id`, `agent_id`, and actor under
-/// interleaving"): ten calls at once, each with its own agent, each minting its own
-/// session, an `identify` hook that names a user per call and answers in the reverse order of the
-/// calls, and a tool that answers in the order of the calls (`slow_echo` waits too), so the
-/// hooks and the tools of the calls overlap. Each published event keeps the session, the agent
-/// and the actor of its own call.
+/// interleaving"): ten calls at once, each with its own agent, each minting its own session, an
+/// `identify` hook that names a user per call and answers in the reverse order of the calls, and a
+/// tool that answers in the order of the calls (it waits too), so the hooks and the tools of the
+/// calls overlap. Each published event keeps the session, the agent and the actor of its own call.
 #[tokio::test]
 async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
     const CALLS: u64 = 10;
@@ -295,10 +294,9 @@ async fn concurrent_calls_keep_their_own_session_agent_and_actor() {
     assert_eq!(seen.len(), 10, "one event per call");
 }
 
-/// Identity is re-resolved per request, so a changed identity lands on the next event (v1 and
-/// v2): the
-/// `identify` hook runs on every call, so when it names a new user on its second call, the second
-/// event carries that user. The identities are the fixture's; there is no `identify` event.
+/// Identity is re-resolved per request, so a changed identity lands on the next event (v1 and v2):
+/// the `identify` hook runs on every call, so when it names a new user on its second call, the
+/// second event carries that user. The identities are the fixture's; there is no `identify` event.
 #[tokio::test]
 async fn identify_re_resolves_per_call() {
     let fake = Fake::new();

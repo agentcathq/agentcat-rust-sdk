@@ -634,9 +634,9 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-42",
+            "user_name": "Ada",
+            "user_data": {
               "plan": "pro",
               "seats": 3
             }
@@ -753,7 +753,7 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-7"
+            "user_id": "user-7"
           }
         }
       },
@@ -2781,9 +2781,9 @@
         },
         "identify": {
           "returns": {
-            "userId": "user-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-42",
+            "user_name": "Ada",
+            "user_data": {
               "plan": "pro",
               "seats": 3
             }
@@ -3315,9 +3315,9 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-SECRET-VALUE-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-SECRET-VALUE-42",
+            "user_name": "Ada",
+            "user_data": {
               "token": "SECRET-VALUE-42"
             }
           }

@@ -1,6 +1,6 @@
 //! `AgentCat`: clones share one handle, `track` wraps a handler with a handle, `Debug` prints the
-//! project ID and the options only, `from_env` reads the project ID, `AGENTCAT_ENABLED`
-//! turns a handle off, and the lifecycle methods.
+//! project ID and the options only, `from_env` reads the project ID, `AGENTCAT_ENABLED` turns a
+//! handle off, and the lifecycle methods.
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -259,9 +259,9 @@ fn from_env_without_project_is_telemetry_only() {
     assert!(!agentcat.inner().enabled);
 }
 
-/// A handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool
-/// call, a custom event in any of its three forms (which returns `Ok(())`, also for an empty
-/// project ID) or the lifecycle methods, which return `true`.
+/// A handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool call, a
+/// custom event in any of its three forms (which returns `Ok(())`, also for an empty project ID) or
+/// the lifecycle methods, which return `true`.
 #[cfg(target_os = "linux")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn disabled_handle_starts_no_thread() {
@@ -306,10 +306,10 @@ async fn disabled_handle_starts_no_thread() {
     client.cancel().await.unwrap();
 }
 
-/// Under `cfg(test)`, `AgentCat::new` and `track` build their handle in an empty environment,
-/// so an `AGENTCAT_ENABLED=false` in the developer's shell cannot turn the handles of unit tests
-/// off. The test runs [`new_handle_is_on`] in a child process of this test binary with that
-/// variable set, as `forbid(unsafe_code)` rules out `std::env::set_var`.
+/// Under `cfg(test)`, `AgentCat::new` and `track` build their handle in an empty environment, so an
+/// `AGENTCAT_ENABLED=false` in the developer's shell cannot turn the handles of unit tests off. The
+/// test runs [`new_handle_is_on`] in a child process of this test binary with that variable set, as
+/// `forbid(unsafe_code)` rules out `std::env::set_var`.
 #[test]
 fn new_ignores_the_process_environment() {
     let binary = std::env::current_exe().unwrap();

@@ -1,7 +1,7 @@
-//! The `PublishEventRequest` of an event: its JSON values in the `JSON.stringify` text, the
-//! session as `null` without one, `actor_id` from the identity, a `userIntent` that is not a string
-//! as text, and the timestamp's milliseconds. The queue vectors pin every field
-//! against the expected request (`pipeline::process::tests::queue_fixture_cases_hold`).
+//! The `PublishEventRequest` of an event: its JSON values in the `JSON.stringify` text, the session
+//! as `null` without one, `actor_id` from the identity, a `userIntent` that is not a string as
+//! text, and the timestamp's milliseconds. The queue vectors pin every field against the expected
+//! request (`pipeline::process::tests::queue_fixture_cases_hold`).
 use serde_json::{Map, Value, json};
 
 use super::publish_request;
@@ -76,9 +76,8 @@ fn wire_values_follow_the_stringify_text() {
     }
 
     // A number whose `JSON.stringify` text is not a 64-bit integer reads back as an `f64`, which
-    // serde_json writes in its own text: the same number, here `1e-6` for `0.000001`.
-    // (serde_json 1.0.154 writes `1e+21` like `JSON.stringify`; older releases wrote
-    // `1e21`.)
+    // serde_json writes in its own text: the same number, here `1e-6` for `0.000001`. (serde_json
+    // 1.0.154 writes `1e+21` like `JSON.stringify`; older releases wrote `1e21`.)
     let floats = json!({"small": 0.000_001, "large": 1e21});
     assert_eq!(
         wire::stringify(&floats),
@@ -102,8 +101,8 @@ fn sessionless_event_sends_null_session() {
     assert!(body(&event(json!({}))).contains(r#""session_id":"ses_wire00000000000000000000000""#));
 }
 
-/// A Rust event has no `actorId`, so
-/// `actor_id` is the actor the `identify` hook gave, and absent without one.
+/// A Rust event has no `actorId`, so `actor_id` is the actor the `identify` hook gave, and absent
+/// without one.
 #[test]
 fn actor_id_follows_identity() {
     let request = publish_request(&event(json!({"identifyActorGivenId": "user-42"})));
@@ -114,8 +113,8 @@ fn actor_id_follows_identity() {
     assert!(!body(&event(json!({}))).contains("actor_id"));
 }
 
-/// `agentcat-api` types `user_intent` as a string, so a `userIntent` that is not a string
-/// goes as its `JSON.stringify` text; a string goes as it is, and a `null` as no value.
+/// `agentcat-api` types `user_intent` as a string, so a `userIntent` that is not a string goes as
+/// its `JSON.stringify` text; a string goes as it is, and a `null` as no value.
 #[test]
 fn non_string_user_intent_is_text() {
     let intent = |value: Value| publish_request(&event(json!({"userIntent": value}))).user_intent;

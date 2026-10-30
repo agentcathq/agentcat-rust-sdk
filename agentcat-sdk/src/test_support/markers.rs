@@ -23,8 +23,8 @@ pub(crate) fn decode_f64(value: Value) -> Value {
     try_decode_f64(value).unwrap_or_else(|e| panic!("{e}"))
 }
 
-/// `value` with every `$utf16` marker replaced by its string, every unpaired surrogate dropped
-/// (a Rust cut drops the whole character where the original text keeps half of it), at any depth.
+/// `value` with every `$utf16` marker replaced by its string, every unpaired surrogate dropped (a
+/// Rust cut drops the whole character where a UTF-16 cut keeps half of it), at any depth.
 ///
 /// # Panics
 ///

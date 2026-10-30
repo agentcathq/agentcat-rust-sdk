@@ -1,39 +1,38 @@
-//! The `queue.json` vectors (the event queue fixtures): the
-//! loader, each case's hook outcomes as tasks and its redaction hooks as [`Redactors`], the fixture's log
-//! lines as the pipeline writes them, and the fixture's camelCase request model of a
-//! [`PublishEventRequest`].
+//! The `queue.json` vectors (the event queue fixtures): the loader, each case's hook outcomes as
+//! tasks and its redaction hooks as [`Redactors`], the fixture's log lines as the pipeline writes
+//! them, and the fixture's camelCase request model of a [`PublishEventRequest`].
 //!
 //! Log lines compare after these steps ([`expected_logs`]):
 //!
 //! - The delivery lines (`Successfully sent event ...`, `Failed to send event ...`) are the
 //!   delivery worker's, not the pipeline's, so they leave the expected lines.
-//! - In a `custom:*` case, the lines `publish_custom_event` writes before the queue takes the event
-//!   (`Published custom event ...`, `publish_custom_event: ...` and its `Dropping invalid tag: ...`)
-//!   are the custom-event builder's, so they leave too ([`full_logs`] keeps them
-//!   for `custom::tests::custom_fixture_cases_hold`, which runs the builders).
+//! - In a `custom:*` case, the lines `publish_custom_event` writes before the queue takes the
+//!   event (`Published custom event ...`, `publish_custom_event: ...` and its
+//!   `Dropping invalid tag: ...`) are the custom-event builder's, so they leave too
+//!   ([`full_logs`] keeps them for `custom::tests::custom_fixture_cases_hold`, which runs the
+//!   builders).
 //! - One normalization: where a fixture line writes a thrown error after a stage's or a hook's
 //!   text, as `Error: <message>`, Rust writes the error's `Display`, `<message>`
-//!   ([`expected_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries the
-//!   fixture's text (`a length-limited field is a number, a boolean or an object`), so that line
-//!   compares whole, not only by the prefix `Failed to truncate event: `.
+//!   ([`expected_line_as_rust`]). The truncation error needs none: Rust's `TruncateError`
+//!   carries the fixture's text (`a length-limited field is a number, a boolean or an object`),
+//!   so that line compares whole, not only by the prefix `Failed to truncate event: `.
 //!
-//! The delivery worker's runners ([`worker_logs`]) keep the delivery lines, with one
-//! more normalization: where a delivery line embeds the error of a failed attempt,
-//! after `[Error: ` and after `Failed to deliver AgentCat event after retries: `, the fixture writes the
-//! error as a JSON object `{"stack":"Error: M","message":M}`
-//! (or `Error: M`), and Rust writes the publisher's text `M` ([`expected_delivery_line_as_rust`]). On the
-//! Rust side each `evt_` ID becomes `<evt>` ([`mask_event_ids`]), as the generator masked the fixture's.
+//! The delivery worker's runners ([`worker_logs`]) keep the delivery lines, with one more
+//! normalization: where a delivery line embeds the error of a failed attempt, after `[Error: ` and
+//! after `Failed to deliver AgentCat event after retries: `, the fixture writes the error as a JSON
+//! object `{"stack":"Error: M","message":M}` (or `Error: M`), and Rust writes the publisher's text
+//! `M` ([`expected_delivery_line_as_rust`]). On the Rust side each `evt_` ID becomes `<evt>`
+//! ([`mask_event_ids`]), as the generator masked the fixture's.
 //!
 //! The delivery tests share a [`RecordingPublisher`] (scripted failures, a gate that holds every
 //! attempt, start notices, a per-attempt delay) and [`CapturedLines`], the worker's log lines with
 //! the thread that wrote each one.
 //!
-//! Requests compare as [`to_request_model`] writes the Rust request and [`expected_requests`] the fixture's
-//! one: each `evt_` ID is `<evt>` and each minted session `<minted>` (as the generator masks
-//! them), the timestamp is compared to the millisecond, tags compare as a map (sorted keys: the
-//! Rust request holds them in a `HashMap`), a `null` `userIntent` is omitted, as the Rust
-//! wire omits it, and any other `userIntent` that is not a string is its
-//! `JSON.stringify` text.
+//! Requests compare as [`to_request_model`] writes the Rust request and [`expected_requests`] the
+//! fixture's one: each `evt_` ID is `<evt>` and each minted session `<minted>` (as the generator
+//! masks them), the timestamp is compared to the millisecond, tags compare as a map (sorted keys:
+//! the Rust request holds them in a `HashMap`), a `null` `userIntent` is omitted, as the Rust wire
+//! omits it, and any other `userIntent` that is not a string is its `JSON.stringify` text.
 use std::collections::BTreeMap;
 use std::future::{pending, ready};
 use std::mem;
@@ -110,20 +109,48 @@ fn outcome_task<T: Send + 'static>(outcome: &Value, value: fn(&Value) -> T) -> T
     returns((!returned.is_null()).then(|| value(returned)))
 }
 
-/// The `UserIdentity` of an identify result `{userId, userName?, userData?}`.
+/// The `UserIdentity` of an identify result `{user_id, user_name?, user_data?}`.
+///
+/// # Panics
+///
+/// When the result has a key other than those three, or no `user_id`.
 fn identity_of(value: &Value) -> UserIdentity {
-    let mut identity = UserIdentity::new(value["userId"].as_str().expect("a userId"));
-    if let Some(name) = value.get("userName").and_then(Value::as_str) {
+    let keys = value.as_object().expect("an identify result is an object");
+    for key in keys.keys() {
+        assert!(
+            ["user_id", "user_name", "user_data"].contains(&key.as_str()),
+            "the identify result has the unknown key {key:?}"
+        );
+    }
+    let mut identity = UserIdentity::new(value["user_id"].as_str().expect("a user_id"));
+    if let Some(name) = value.get("user_name").and_then(Value::as_str) {
         identity = identity.user_name(name);
     }
-    if let Some(Value::Object(data)) = value.get("userData") {
+    if let Some(Value::Object(data)) = value.get("user_data") {
         identity = identity.user_data(data.clone());
     }
     identity
 }
 
-/// The hook tasks of a case's `hooks`, spawned on the current runtime.
-pub(crate) fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
+/// The hook tasks of the `hooks` of the case `name`, spawned on the current runtime.
+///
+/// # Panics
+///
+/// When `hooks` has a key other than `resolve_session_id`, `identify`, `event_tags` and
+/// `event_properties`: a stale key would otherwise drop its hook without a sound.
+pub(crate) fn pending_of(name: &str, hooks: &Map<String, Value>) -> PendingHooks {
+    for key in hooks.keys() {
+        assert!(
+            [
+                "resolve_session_id",
+                "identify",
+                "event_tags",
+                "event_properties"
+            ]
+            .contains(&key.as_str()),
+            "queue.json {name}: the hooks have the unknown key {key:?}"
+        );
+    }
     PendingHooks {
         resolve_session_id: hooks.get("resolve_session_id").map(|outcome| {
             outcome_task(outcome, |value| {
@@ -145,8 +172,8 @@ pub(crate) fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
 // ------------------------------------------------------------------------------------- jobs
 
 /// The redaction stages of a case's job: a tool call runs both; a custom event never runs the
-/// string stage, and only its server form runs the event stage (as the custom-event builders
-/// run them; `custom::tests::custom_fixture_cases_hold` runs these cases through the builders).
+/// string stage, and only its server form runs the event stage (as the custom-event builders run
+/// them; `custom::tests::custom_fixture_cases_hold` runs these cases through the builders).
 fn redaction_stages(case: &Map<String, Value>) -> (bool, bool) {
     match case
         .get("custom")
@@ -168,7 +195,7 @@ fn redaction_stages(case: &Map<String, Value>) -> (bool, bool) {
 pub(crate) fn job_of(case: &Map<String, Value>, runtime: Option<&Handle>) -> EventJob {
     let hooks = case.get("hooks").and_then(Value::as_object).map(|hooks| {
         let _entered = runtime.expect("a runtime for the hooks").enter();
-        pending_of(hooks)
+        pending_of(vectors::name(case), hooks)
     });
     let (string_redaction, event_redaction) = redaction_stages(case);
     EventJob {
@@ -250,8 +277,8 @@ const CUSTOM_BUILDER_LINES: [&str; 3] = [
     "Dropping invalid tag: ",
 ];
 
-/// The texts after which a fixture line writes a thrown error (the hooks' and the stages'): the text of each
-/// call hook's `catch`, then the queue's stage lines.
+/// The texts after which a fixture line writes a thrown error (the hooks' and the stages'): the
+/// text of each call hook's `catch`, then the queue's stage lines.
 const ERROR_PREFIXES: [&str; 8] = [
     "resolve_session_id hook error: ",
     "Error: identify hook returned an error - ",
@@ -325,9 +352,8 @@ pub(crate) fn expected_delivery_line_as_rust(line: &str) -> String {
     line.to_owned()
 }
 
-/// The message of a thrown error as the fixture renders it: the
-/// `message` of its JSON `{"stack": "Error: M", "message": M}`, or `M` of `Error: M`;
-/// any other text as it is.
+/// The message of a thrown error as the fixture renders it: the `message` of its JSON `{"stack":
+/// "Error: M", "message": M}`, or `M` of `Error: M`; any other text as it is.
 fn error_message_of_rendered(rendered: &str) -> String {
     if let Ok(Value::Object(error)) = serde_json::from_str::<Value>(rendered)
         && let Some(Value::String(message)) = error.get("message")
@@ -341,7 +367,8 @@ fn error_message_of_rendered(rendered: &str) -> String {
 }
 
 /// The lines of `case`'s `logs` that the delivery worker writes, the delivery lines included, as
-/// Rust writes them: [`expected_line_as_rust`], then [`expected_delivery_line_as_rust`] (module docs).
+/// Rust writes them: [`expected_line_as_rust`], then [`expected_delivery_line_as_rust`] (module
+/// docs).
 pub(crate) fn worker_logs(case: &Map<String, Value>) -> Vec<String> {
     queue_lines(case)
         .map(|line| expected_delivery_line_as_rust(&expected_line_as_rust(line)))
@@ -349,9 +376,9 @@ pub(crate) fn worker_logs(case: &Map<String, Value>) -> Vec<String> {
 }
 
 /// Every line of `case`'s `logs`, as Rust writes it: [`expected_line_as_rust`], then
-/// [`expected_delivery_line_as_rust`], with the custom-event builder's lines kept (module docs). The
-/// runner of `custom::tests::custom_fixture_cases_hold` compares these against all that the worker
-/// writes.
+/// [`expected_delivery_line_as_rust`], with the custom-event builder's lines kept (module docs).
+/// The runner of `custom::tests::custom_fixture_cases_hold` compares these against all that the
+/// worker writes.
 pub(crate) fn full_logs(case: &Map<String, Value>) -> Vec<String> {
     case["logs"]
         .as_array()
@@ -432,8 +459,8 @@ fn sort_tags(model: &mut Map<String, Value>) {
     }
 }
 
-/// `request` as the fixture's camelCase model, from its `serde_json` text (module docs): the `evt_` ID as
-/// `<evt>`, a session minted for it (its `agentcat_session_id_source` tag says `minted`) as
+/// `request` as the fixture's camelCase model, from its `serde_json` text (module docs): the `evt_`
+/// ID as `<evt>`, a session minted for it (its `agentcat_session_id_source` tag says `minted`) as
 /// `<minted>`, the timestamp in the ISO 8601 form with milliseconds, the tags sorted.
 ///
 /// # Panics
@@ -480,8 +507,7 @@ pub(crate) fn to_request_model(request: &PublishEventRequest) -> Value {
 }
 
 /// The `requests` of `case`, compared as the module docs say: the tags sorted, a `null`
-/// `userIntent` omitted, any other `userIntent` that is not a string as its
-/// `JSON.stringify` text.
+/// `userIntent` omitted, any other `userIntent` that is not a string as its `JSON.stringify` text.
 pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
     case["requests"]
         .as_array()
@@ -758,9 +784,8 @@ mod tests {
 
     use super::{expected_requests, object};
 
-    /// A `null` `userIntent` leaves the expected request, as the Rust wire
-    /// omits it; any other value that is not a string becomes its `JSON.stringify` text; a string
-    /// stays as it is.
+    /// A `null` `userIntent` leaves the expected request, as the Rust wire omits it; any other
+    /// value that is not a string becomes its `JSON.stringify` text; a string stays as it is.
     #[test]
     fn expected_user_intent_follows_the_wire() {
         let case = object(json!({

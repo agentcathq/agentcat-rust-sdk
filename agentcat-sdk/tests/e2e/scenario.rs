@@ -3,7 +3,7 @@
 //! ```json
 //! {
 //!   "projectId": "proj_...",
-//!   "options": { "identify": { "returns": { "userId": "user-1" } } },
+//!   "options": { "identify": { "returns": { "user_id": "user-1" } } },
 //!   "httpHeaders": { "x-test-header": "value" },
 //!   "pageSize": 3,
 //!   "expectPublishes": 2,

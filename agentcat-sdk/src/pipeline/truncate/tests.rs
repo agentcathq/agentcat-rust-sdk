@@ -180,8 +180,8 @@ fn size_guard_cuts_at_the_minimum_reduction() {
     assert!(size_of(&truncated) <= MAX_EVENT_BYTES);
 }
 
-/// Checks a field with a length limit: a string over `limit` UTF-16 units keeps its longest
-/// prefix within the limit and gets `"..."`; an array of more than `limit` items becomes the
+/// Checks a field with a length limit: a string over `limit` UTF-16 units keeps its longest prefix
+/// within the limit and gets `"..."`; an array of more than `limit` items becomes the
 /// `coerce_to_string` text of its first `limit` items and `"..."`; any other value stays.
 fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), TestCaseError> {
     match input {
@@ -299,8 +299,8 @@ fn near(limit: usize) -> impl Strategy<Value = String> + Clone {
     })
 }
 
-/// An item of a joined `userIntent` array: a string, a number, `null`, a boolean, a nested
-/// array, or `{"a": 1}` (no `toString` key).
+/// An item of a joined `userIntent` array: a string, a number, `null`, a boolean, a nested array,
+/// or `{"a": 1}` (no `toString` key).
 fn intent_item() -> impl Strategy<Value = Value> + Clone {
     prop_oneof![
         edge_string(4).prop_map(Value::String),
@@ -414,8 +414,8 @@ fn bulk() -> impl Strategy<Value = Vec<(u8, usize, String)>> {
 /// Puts the `i`th bulk string `text` into `event` at `spot`: inside `depth` objects `{"n": ...}`
 /// under a key of `parameters`, `response.structuredContent`, `identifyActorData`, `error` or
 /// `properties`; as a content text block; or as `error.message`, a tag, `userIntent` or
-/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: the index keys come
-/// first in the text of `JSON.stringify`.
+/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: the index keys come first in the
+/// text of `JSON.stringify`.
 fn place(event: &mut EventObject, i: usize, spot: u8, depth: usize, text: String) {
     let key = if i.is_multiple_of(2) {
         (9 - i).to_string()
@@ -505,8 +505,8 @@ proptest! {
     #![proptest_config(config())]
 
     /// The size guard measures an event with `byte_size`, which counts the UTF-8 bytes of
-    /// `JSON.stringify(event)` without building the text: over random
-    /// events, it is the length of the text `wire::stringify` writes.
+    /// `JSON.stringify(event)` without building the text: over random events, it is the length of
+    /// the text `wire::stringify` writes.
     #[test]
     fn byte_size_matches_stringify_len(event in tool_call_event(edge_string(40))) {
         prop_assert_eq!(super::byte_size(&event), size_of(&event));

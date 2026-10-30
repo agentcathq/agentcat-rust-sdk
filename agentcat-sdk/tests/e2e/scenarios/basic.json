@@ -1,7 +1,7 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "identify": { "returns": { "userId": "user-1", "userName": "User One", "userData": { "plan": "pro" } } },
+    "identify": { "returns": { "user_id": "user-1", "user_name": "User One", "user_data": { "plan": "pro" } } },
     "event_tags": { "returns": { "team": "core" } },
     "event_properties": { "returns": { "region": "eu" } },
     "redact_sensitive_information": { "replace": "SECRET_TOKEN" }

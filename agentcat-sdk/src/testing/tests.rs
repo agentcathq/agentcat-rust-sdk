@@ -4,8 +4,8 @@ use std::time::{Duration, Instant};
 use super::{FLUSH, Fake, Recorded};
 use crate::event::Event;
 
-/// A fake that built no handle has nothing to flush and nothing recorded. `events` answers
-/// at once with no events, the record counts as settled, and `assert_nothing_tracked` passes.
+/// A fake that built no handle has nothing to flush and nothing recorded. `events` answers at once
+/// with no events, the record counts as settled, and `assert_nothing_tracked` passes.
 #[tokio::test]
 async fn fake_events_with_no_handles_is_empty() {
     let fake = Fake::new();

@@ -1,13 +1,13 @@
-//! The delivery queue and its worker thread: what the worker posts and logs
-//! (the lines the fixture pins, retries after the configured delays, telemetry-only events never posted), the
-//! queue's limits (drop the oldest pending, at most `concurrency` in flight, a push that never
-//! blocks), `flush` and `shutdown` with their deadlines and the blocking twins, their edge cases
-//! (before the first event, twice, cancelled, after a timed-out shutdown, the stop's wait for the
-//! aborted tasks), and the drain on the last drop (`Queue::close`), off and on the worker thread.
-//! Every test shrinks the budgets through [`DeliveryConfig`] and writes the worker's lines to a
+//! The delivery queue and its worker thread: what the worker posts and logs (the lines the fixture
+//! pins, retries after the configured delays, telemetry-only events never posted), the queue's
+//! limits (drop the oldest pending, at most `concurrency` in flight, a push that never blocks),
+//! `flush` and `shutdown` with their deadlines and the blocking twins, their edge cases (before the
+//! first event, twice, cancelled, after a timed-out shutdown, the stop's wait for the aborted
+//! tasks), and the drain on the last drop (`Queue::close`), off and on the worker thread. Every
+//! test shrinks the budgets through [`DeliveryConfig`] and writes the worker's lines to a
 //! [`CapturedLines`], except `log_lines_are_written_by_the_worker`, which uses the process logger.
-//! The texts come from `queue.json` (`success_line_matches_the_fixture` here; the retry cases run in
-//! `pipeline::process::tests::queue_retry_fixture_cases_hold`).
+//! The texts come from `queue.json` (`success_line_matches_the_fixture` here; the retry cases run
+//! in `pipeline::process::tests::queue_retry_fixture_cases_hold`).
 use std::future::pending;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
@@ -163,8 +163,8 @@ impl ServerHandler for Empty {}
 
 // ------------------------------------------------------------------------------- defaults
 
-/// The default budgets are the queue values (10 000 pending, 5 in
-/// flight, retries after 1, 2 and 4 s, 30 s per hook) and the 5 s drain of the last drop.
+/// The default budgets are the queue values (10 000 pending, 5 in flight, retries after 1, 2 and 4
+/// s, 30 s per hook) and the 5 s drain of the last drop.
 #[test]
 fn default_config_is_the_queue_limits() {
     let config = DeliveryConfig::default();
@@ -177,9 +177,9 @@ fn default_config_is_the_queue_limits() {
 
 // ------------------------------------------------------------------------------- publishing
 
-/// The record of a tool call served by rmcp is assembled on the worker and posted
-/// once, with the handle's project, the tool, the server and client of the call, a minted session
-/// and an `evt_` ID, with server tracking data and session info.
+/// The record of a tool call served by rmcp is assembled on the worker and posted once, with the
+/// handle's project, the tool, the server and client of the call, a minted session and an `evt_`
+/// ID, with server tracking data and session info.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn call_record_is_published() {
     let publisher = RecordingPublisher::new();
@@ -209,9 +209,8 @@ async fn call_record_is_published() {
     assert!(lines[0].starts_with(&format!("{SUCCESS}{id} | mcp:tools/call | session ses_")));
 }
 
-/// An event without a project (telemetry only) finishes the pipeline and goes
-/// to the observer, but is never posted and logs no success line; an event with a project goes to
-/// both.
+/// An event without a project (telemetry only) finishes the pipeline and goes to the observer, but
+/// is never posted and logs no success line; an event with a project goes to both.
 #[test]
 fn telemetry_only_is_not_posted_but_observed() {
     let publisher = RecordingPublisher::new();
@@ -294,8 +293,8 @@ impl Publisher for Unusable {
     }
 }
 
-/// An unusable publisher gets no attempt and no retry. The final failure line is logged at
-/// once, well under one retry delay, and `flush` returns `true`.
+/// An unusable publisher gets no attempt and no retry. The final failure line is logged at once,
+/// well under one retry delay, and `flush` returns `true`.
 #[test]
 fn unusable_publisher_drops_the_event_at_once() {
     let attempts = Arc::new(std::sync::atomic::AtomicUsize::new(0));
@@ -323,10 +322,10 @@ fn unusable_publisher_drops_the_event_at_once() {
     );
 }
 
-/// The real publisher builds its client on the worker thread, at the first
-/// event, not when the handle is built: the failing build here names the thread it ran on. A
-/// build that fails is logged once, and each event is then dropped at once with the final
-/// failure line (here with retry delays of 1 s and more, which a retry would show).
+/// The real publisher builds its client on the worker thread, at the first event, not when the
+/// handle is built: the failing build here names the thread it ran on. A build that fails is logged
+/// once, and each event is then dropped at once with the final failure line (here with retry delays
+/// of 1 s and more, which a retry would show).
 #[test]
 fn failed_client_build_is_logged_once_by_the_worker() {
     let publisher = super::http::ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |_| {
@@ -373,8 +372,8 @@ fn failed_client_build_is_logged_once_by_the_worker() {
     }
 }
 
-/// An event's ID is set once, before the first attempt, so every attempt sends the same `evt_` ID and
-/// every line names it. `queue.json` masks the IDs as `<evt>`, so only this test pins it.
+/// An event's ID is set once, before the first attempt, so every attempt sends the same `evt_` ID
+/// and every line names it. `queue.json` masks the IDs as `<evt>`, so only this test pins it.
 #[test]
 fn retry_attempts_share_one_event_id() {
     let publisher = RecordingPublisher::failing(2);
@@ -403,10 +402,10 @@ fn retry_attempts_share_one_event_id() {
 }
 
 /// Each non-retry `queue.json` case through the worker with a publisher that works: every line the
-/// worker writes must be the fixture's after [`queue::worker_logs`], the success line of a posted event
-/// included (`session ` with an empty session, `undefined ms` without a duration, the identify
-/// hook's user or `anonymous`), with `<evt>` for each `evt_` ID and `<minted>` for a session the
-/// hooks minted. A telemetry-only case logs no success line.
+/// worker writes must be the fixture's after [`queue::worker_logs`], the success line of a posted
+/// event included (`session ` with an empty session, `undefined ms` without a duration, the
+/// identify hook's user or `anonymous`), with `<evt>` for each `evt_` ID and `<minted>` for a
+/// session the hooks minted. A telemetry-only case logs no success line.
 #[test]
 fn success_line_matches_the_fixture() {
     let runtime = hooks_runtime();
@@ -457,8 +456,8 @@ fn minted_session(request: &PublishEventRequest) -> Option<String> {
     request.session_id.clone().flatten()
 }
 
-/// The success line names the actor with the given ID of the `identify` hook, or `anonymous`:
-/// an empty given ID counts as none, so it is `anonymous`.
+/// The success line names the actor with the given ID of the `identify` hook, or `anonymous`: an
+/// empty given ID counts as none, so it is `anonymous`.
 #[test]
 fn success_line_names_an_empty_actor_anonymous() {
     let publisher = RecordingPublisher::new();
@@ -480,9 +479,8 @@ fn success_line_names_an_empty_actor_anonymous() {
 
 // -------------------------------------------------------------------------------- the queue
 
-/// A push onto `max_pending` pending events drops the oldest pending one, not the one in
-/// flight, with `Event queue full, dropping oldest event` (`flush` does not wait for the dropped
-/// event).
+/// A push onto `max_pending` pending events drops the oldest pending one, not the one in flight,
+/// with `Event queue full, dropping oldest event` (`flush` does not wait for the dropped event).
 #[test]
 fn overflow_drops_oldest_pending() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -510,8 +508,8 @@ fn overflow_drops_oldest_pending() {
     assert_eq!(other, ["Event queue full, dropping oldest event"]);
 }
 
-/// The job an overflow drops aborts its hook tasks on the customer's
-/// runtime instead of leaving them running detached.
+/// The job an overflow drops aborts its hook tasks on the customer's runtime instead of leaving
+/// them running detached.
 #[test]
 fn overflow_drop_aborts_hooks() {
     let runtime = hooks_runtime();
@@ -539,8 +537,8 @@ fn overflow_drop_aborts_hooks() {
     assert_eq!(publisher.resource_names(), ["a", "c"]);
 }
 
-/// With every slot held, 10 000 pushes take under a second: a push only
-/// appends under a short lock and wakes the worker.
+/// With every slot held, 10 000 pushes take under a second: a push only appends under a short lock
+/// and wakes the worker.
 #[test]
 fn enqueue_never_blocks() {
     let (publisher, _gate) = RecordingPublisher::gated();
@@ -561,8 +559,8 @@ fn enqueue_never_blocks() {
     assert!(!agentcat.shutdown_blocking(ms(50)));
 }
 
-/// At most 5 events are in flight at once, each holding its slot through its attempts; the
-/// others wait in the queue, and all of them are posted in the end.
+/// At most 5 events are in flight at once, each holding its slot through its attempts; the others
+/// wait in the queue, and all of them are posted in the end.
 #[test]
 fn at_most_five_in_flight() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -584,9 +582,9 @@ fn at_most_five_in_flight() {
 
 // ------------------------------------------------------------------------- flush, shutdown
 
-/// `flush` answers once the queue and the in-flight events are empty: it waits for an
-/// attempt in flight and returns `true` after it ends (until ingestion completes, the registered
-/// task stays pending).
+/// `flush` answers once the queue and the in-flight events are empty: it waits for an attempt in
+/// flight and returns `true` after it ends (until ingestion completes, the registered task stays
+/// pending).
 #[test]
 fn flush_waits_for_in_flight() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -611,9 +609,9 @@ fn flush_waits_for_in_flight() {
     thread.join().unwrap();
 }
 
-/// A timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about
-/// a century ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for
-/// the queue to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
+/// A timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about a century
+/// ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for the queue
+/// to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
 #[test]
 fn unbounded_timeout_waits_for_the_queue() {
     const YEAR: u64 = 365 * 24 * 60 * 60;
@@ -632,9 +630,9 @@ fn unbounded_timeout_waits_for_the_queue() {
     assert_eq!(publisher.finished(), 1);
 }
 
-/// With an event held by a hook that hangs, `flush` returns `false` at
-/// its deadline, in its blocking form and in its async form on a runtime without a time driver:
-/// the worker owns the deadline, so the customer's runtime needs no timer.
+/// With an event held by a hook that hangs, `flush` returns `false` at its deadline, in its
+/// blocking form and in its async form on a runtime without a time driver: the worker owns the
+/// deadline, so the customer's runtime needs no timer.
 #[test]
 fn flush_returns_false_at_deadline() {
     let hooks = hooks_runtime();
@@ -669,8 +667,8 @@ fn flush_returns_false_at_deadline() {
     assert!(!agentcat.shutdown_blocking(ms(50)));
 }
 
-/// `shutdown` drains, then a push is dropped with `Queue is shutting down, event
-/// dropped`, which the worker writes.
+/// `shutdown` drains, then a push is dropped with `Queue is shutting down, event dropped`, which
+/// the worker writes.
 #[tokio::test]
 async fn shutdown_rejects_later_events() {
     let publisher = RecordingPublisher::new();
@@ -695,9 +693,8 @@ async fn shutdown_rejects_later_events() {
     );
 }
 
-/// A `shutdown` that reaches its deadline abandons what is left after
-/// `Shutting down with 2 events still in queue` (the pending queue only, not the event in flight)
-/// and returns `false`.
+/// A `shutdown` that reaches its deadline abandons what is left after `Shutting down with 2 events
+/// still in queue` (the pending queue only, not the event in flight) and returns `false`.
 #[test]
 fn shutdown_logs_events_left() {
     let (publisher, _gate) = RecordingPublisher::gated();
@@ -727,8 +724,8 @@ fn shutdown_logs_events_left() {
     );
 }
 
-/// The blocking twins work on a thread without a tokio runtime: `flush_blocking` waits for
-/// the queue to empty, and `shutdown_blocking` drains before it stops, without errors.
+/// The blocking twins work on a thread without a tokio runtime: `flush_blocking` waits for the
+/// queue to empty, and `shutdown_blocking` drains before it stops, without errors.
 #[test]
 fn blocking_twins_work_outside_a_runtime() {
     assert!(Handle::try_current().is_err());
@@ -786,9 +783,9 @@ fn other_lines(lines: &CapturedLines) -> Vec<String> {
         .collect()
 }
 
-/// A `shutdown` that reaches its deadline stops the worker for good and answers
-/// `false`. A `flush` after it answers `true` at once, in both forms: the stop abandoned what was
-/// left, so nothing is left to wait for.
+/// A `shutdown` that reaches its deadline stops the worker for good and answers `false`. A `flush`
+/// after it answers `true` at once, in both forms: the stop abandoned what was left, so nothing is
+/// left to wait for.
 #[test]
 fn flush_after_timed_out_shutdown_returns_true() {
     let (publisher, _gate) = RecordingPublisher::gated();
@@ -810,12 +807,12 @@ fn flush_after_timed_out_shutdown_returns_true() {
     );
 }
 
-/// The worker cannot tell a caller that stopped waiting from one that waits. A cancelled
-/// async `flush` (its future dropped after its first poll, here by the customer's timeout)
-/// leaves its request in the worker's waiting list until the queue and the in-flight events are
-/// empty (or its deadline passes); then the worker sends an answer that nobody reads and lets the
-/// request go. The test sees that moment through a probe: a request like the cancelled one, whose
-/// answer the test reads. The cancelled flush stops nothing: the queue takes the next event.
+/// The worker cannot tell a caller that stopped waiting from one that waits. A cancelled async
+/// `flush` (its future dropped after its first poll, here by the customer's timeout) leaves its
+/// request in the worker's waiting list until the queue and the in-flight events are empty (or its
+/// deadline passes); then the worker sends an answer that nobody reads and lets the request go. The
+/// test sees that moment through a probe: a request like the cancelled one, whose answer the test
+/// reads. The cancelled flush stops nothing: the queue takes the next event.
 #[test]
 fn cancelled_flush_leaves_waiting_list_when_worker_idles() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -874,8 +871,8 @@ fn handle_with_held_attempt() -> (
     (agentcat, delivery, publisher, gate, lines)
 }
 
-/// A cancelled async `shutdown` still shuts the handle down. Only the cancelled
-/// shutdown can mark the queue or stop the worker here: the probes are flushes.
+/// A cancelled async `shutdown` still shuts the handle down. Only the cancelled shutdown can mark
+/// the queue or stop the worker here: the probes are flushes.
 ///
 /// - Its first poll marks the queue shutting down, so the next event, `b`, is dropped with the
 ///   line before any probe exists.
@@ -955,9 +952,9 @@ fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
     assert_eq!(other_lines(&lines), Vec::<String>::new());
 }
 
-/// `shutdown` is terminal, and a second call answers `true` at once in both forms and
-/// logs nothing: after a first one that drained, and after a first one that timed out and
-/// abandoned the event in flight.
+/// `shutdown` is terminal, and a second call answers `true` at once in both forms and logs nothing:
+/// after a first one that drained, and after a first one that timed out and abandoned the event in
+/// flight.
 #[test]
 fn shutdown_twice_second_returns_true() {
     let no_timer = Builder::new_current_thread().build().unwrap();
@@ -989,8 +986,8 @@ fn shutdown_twice_second_returns_true() {
     assert_eq!(lines.lines(), Vec::<String>::new());
 }
 
-/// `flush` on a handle that has taken no event and no log line answers `true` at once
-/// in both forms and starts no thread: nothing was taken. The first event then starts the worker.
+/// `flush` on a handle that has taken no event and no log line answers `true` at once in both forms
+/// and starts no thread: nothing was taken. The first event then starts the worker.
 #[test]
 fn flush_before_first_event_returns_true_without_thread() {
     let publisher = RecordingPublisher::new();
@@ -1009,9 +1006,9 @@ fn flush_before_first_event_returns_true_without_thread() {
     assert_eq!(publisher.resource_names(), ["first"]);
 }
 
-/// `shutdown` on a handle that has taken no event answers `true` at once in both forms
-/// and starts no thread. It is still terminal: a later event is dropped and starts no thread
-/// either, and a `flush` after it answers `true` at once.
+/// `shutdown` on a handle that has taken no event answers `true` at once in both forms and starts
+/// no thread. It is still terminal: a later event is dropped and starts no thread either, and a
+/// `flush` after it answers `true` at once.
 #[test]
 fn shutdown_before_first_event_returns_true_without_thread() {
     let publisher = RecordingPublisher::new();
@@ -1030,9 +1027,9 @@ fn shutdown_before_first_event_returns_true_without_thread() {
 }
 
 /// The queue logs `Queue is shutting down, event dropped` for an event after `shutdown`. On a
-/// handle whose worker never started, Rust drops that line with the event, and a log line after
-/// the shutdown too (`Queue::takes_lines`): a handle whose worker never starts writes nothing, and
-/// no thread starts to write a line. With a worker, the line is written
+/// handle whose worker never started, Rust drops that line with the event, and a log line after the
+/// shutdown too (`Queue::takes_lines`): a handle whose worker never starts writes nothing, and no
+/// thread starts to write a line. With a worker, the line is written
 /// (`shutdown_rejects_later_events`).
 #[test]
 fn shutting_down_line_dropped_when_worker_never_started() {
@@ -1084,12 +1081,12 @@ impl Publisher for HangsHolding {
     }
 }
 
-/// The stop of a `shutdown` at its deadline aborts the event in flight and awaits its
-/// task before the worker answers, so the abandoned event's future, and what it holds (here an
-/// attempt; hooks and redaction tasks alike), is gone when the caller hears `false`. The test holds
-/// that future's drop: while it is held no answer comes, and the answer comes after the drop.
-/// Deterministic both ways: on the worker's current-thread runtime an aborted task's future is
-/// dropped only when the worker yields, so a stop that did not await would answer first.
+/// The stop of a `shutdown` at its deadline aborts the event in flight and awaits its task before
+/// the worker answers, so the abandoned event's future, and what it holds (here an attempt; hooks
+/// and redaction tasks alike), is gone when the caller hears `false`. The test holds that future's
+/// drop: while it is held no answer comes, and the answer comes after the drop. Deterministic both
+/// ways: on the worker's current-thread runtime an aborted task's future is dropped only when the
+/// worker yields, so a stop that did not await would answer first.
 #[test]
 fn stop_awaits_aborted_tasks_before_answering() {
     let dropped = Arc::new(AtomicBool::new(false));
@@ -1182,11 +1179,11 @@ fn worker_that_panics_is_gone() {
 
 // ------------------------------------------------------------------------------- last drop
 
-/// `Queue::close`, the queue side of the last drop, marks the queue closed and shutting
-/// down in every state of the worker. A worker that runs gets a shutdown with the drain, and the
-/// caller waits for its answer only when that worker runs on another thread: on the worker thread
-/// nobody can wait, so nobody gets the answer. Without a running worker nothing was taken, so
-/// nothing is queued and nobody waits.
+/// `Queue::close`, the queue side of the last drop, marks the queue closed and shutting down in
+/// every state of the worker. A worker that runs gets a shutdown with the drain, and the caller
+/// waits for its answer only when that worker runs on another thread: on the worker thread nobody
+/// can wait, so nobody gets the answer. Without a running worker nothing was taken, so nothing is
+/// queued and nobody waits.
 #[test]
 fn close_waits_only_for_a_worker_on_another_thread() {
     let here = std::thread::current().id();
@@ -1224,8 +1221,8 @@ fn close_waits_only_for_a_worker_on_another_thread() {
     }
 }
 
-/// When the last handle drops, `Drop` drains the queue within `drop_drain`: the events
-/// pushed before it are posted, and their lines written, when the drop returns.
+/// When the last handle drops, `Drop` drains the queue within `drop_drain`: the events pushed
+/// before it are posted, and their lines written, when the drop returns.
 #[test]
 fn last_drop_drains_queue() {
     let publisher = RecordingPublisher::slow(ms(20));
@@ -1253,10 +1250,10 @@ impl Drop for OnDrop {
     }
 }
 
-/// On a current-thread customer runtime, the last handle drops inside
-/// `block_on` while the call's `identify` hook still needs that runtime. The hook cannot run while
-/// `Drop` blocks the only thread, so the drain waits for `drop_drain` (300 ms) and returns in under
-/// a second; the abandoned event is not posted, and its hook is aborted, not left to finish.
+/// On a current-thread customer runtime, the last handle drops inside `block_on` while the call's
+/// `identify` hook still needs that runtime. The hook cannot run while `Drop` blocks the only
+/// thread, so the drain waits for `drop_drain` (300 ms) and returns in under a second; the
+/// abandoned event is not posted, and its hook is aborted, not left to finish.
 #[test]
 fn last_drop_on_current_thread_runtime_returns_within_budget() {
     let runtime = Builder::new_current_thread().enable_all().build().unwrap();
@@ -1355,9 +1352,9 @@ impl Publisher for DropsLastHandle {
     }
 }
 
-/// When the last handle drops on the worker thread itself (here inside an attempt, as a
-/// publisher or a hook output holding the last clone can), `Drop` does not wait for the drain,
-/// which would be a wait for its own thread; the worker drains and exits on its own.
+/// When the last handle drops on the worker thread itself (here inside an attempt, as a publisher
+/// or a hook output holding the last clone can), `Drop` does not wait for the drain, which would be
+/// a wait for its own thread; the worker drains and exits on its own.
 #[test]
 fn drop_on_worker_thread_does_not_wait() {
     let slot = Arc::new(Mutex::new(None));
@@ -1398,9 +1395,9 @@ fn drop_on_worker_thread_does_not_wait() {
 
 // ---------------------------------------------------------------------------------- logging
 
-/// A call-path line, the warning of an empty tool listing, reaches the file of the
-/// process logger in a temp home through the worker. The first `logging::configure` of a process
-/// wins, so this test relies on nextest's process per test.
+/// A call-path line, the warning of an empty tool listing, reaches the file of the process logger
+/// in a temp home through the worker. The first `logging::configure` of a process wins, so this
+/// test relies on nextest's process per test.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn log_lines_are_written_by_the_worker() {
     let home = TempHome::new("delivery-log");
@@ -1419,14 +1416,14 @@ async fn log_lines_are_written_by_the_worker() {
     assert!(text.lines().any(|line| line.ends_with(&expected)), "{text}");
 }
 
-/// The workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so
-/// the self-check finds nothing and the worker writes no warning.
+/// The workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so the self-check
+/// finds nothing and the worker writes no warning.
 #[test]
 fn json_features_empty_in_this_build() {
     assert_eq!(super::worker::json_features(), Vec::<&str>::new());
 }
 
-/// The self-check line names the feature, with the text the plan fixes.
+/// The self-check line names the feature, with its fixed text.
 #[test]
 fn feature_warning_has_the_fixed_text() {
     assert_eq!(

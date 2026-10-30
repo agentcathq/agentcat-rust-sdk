@@ -13,7 +13,8 @@ use crate::wire;
 /// The case name prefixes of `tokens.json`, and `divisor` (a case without a prefix).
 const KINDS: [&str; 5] = ["bytes", "utf8", "input", "output", "divisor"];
 
-/// What a case expects: a token count, or `None` where the fixture has no count (the file has `null`).
+/// What a case expects: a token count, or `None` where the fixture has no count (the file has
+/// `null`).
 fn expected(case: &Map<String, Value>) -> Option<i32> {
     let output = &case["output"];
     if output.is_null() {
@@ -46,7 +47,8 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
         "input" => assert_eq!(estimate_input_tokens(input), expected(case), "{name}"),
         "output" => assert_eq!(estimate_output_tokens(input), expected(case), "{name}"),
         "divisor" => {
-            // The divisor the fixture pins, applied to every byte count up to 2000, in float arithmetic.
+            // The divisor the fixture pins, applied to every byte count up to 2000, in float
+            // arithmetic.
             let divisor = case["output"].as_f64().expect("divisor");
             assert_eq!(divisor, 3.5, "the fixture pins the divisor 3.5");
             for bytes in 0_u32..=2000 {

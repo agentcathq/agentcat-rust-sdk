@@ -74,8 +74,8 @@ fn options_from_json(fixture: &Value) -> Options {
     }
 }
 
-/// The [`InjectConfig`] of an `{options, hookMode}` input ([`InjectConfig::new`] with
-/// the case's hook mode). Without hook mode it is also what [`InjectConfig::from_options`] gives.
+/// The [`InjectConfig`] of an `{options, hookMode}` input ([`InjectConfig::new`] with the case's
+/// hook mode). Without hook mode it is also what [`InjectConfig::from_options`] gives.
 fn config_of(input: &Value) -> InjectConfig {
     let options = options_from_json(&input["options"]);
     let hook_mode = input["hookMode"].as_bool().unwrap();
@@ -139,8 +139,8 @@ fn expected_registry(page: &Value) -> BTreeMap<&str, Vec<&str>> {
     map
 }
 
-/// Checks one tool against the fixture's: the schemas as `JSON.stringify` writes them (key order counts)
-/// and the whole tool with key order ignored.
+/// Checks one tool against the fixture's: the schemas as `JSON.stringify` writes them (key order
+/// counts) and the whole tool with key order ignored.
 fn check_tool(tool: &Tool, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(tool).unwrap();
     assert_same_json_text(
@@ -160,10 +160,10 @@ fn check_tool(tool: &Tool, fixture: &Value, context: &str) {
     assert_eq!(actual, *fixture, "{context}: the tool (key order ignored)");
 }
 
-/// Checks the list of one page against the fixture's: tool names in order, each tool, the registry (map
-/// order ignored, parameter order compared), the output registry and the declared set as sets,
-/// and the log lines in order. `declared_before` is the declared set before the page: the names
-/// the page adds are the entries that declare `session_id`.
+/// Checks the list of one page against the fixture's: tool names in order, each tool, the registry
+/// (map order ignored, parameter order compared), the output registry and the declared set as sets,
+/// and the log lines in order. `declared_before` is the declared set before the page: the names the
+/// page adds are the entries that declare `session_id`.
 fn check_page(
     list: &InjectedList,
     state: &InjectState,
@@ -296,8 +296,8 @@ fn fixture_cases_hold() {
 
 /// [`inject_tool`] gives a tool what the listing gives it: on the first page of each case (so the
 /// state is fresh, as it is for a first listing), each listed tool whose registry name no other
-/// tool there shares is injected alone and compared with the fixture's tool and registry records. A page of
-/// one tool, with no `get_more_tools` shadow warning, also has the fixture's log lines.
+/// tool there shares is injected alone and compared with the fixture's tool and registry records. A
+/// page of one tool, with no `get_more_tools` shadow warning, also has the fixture's log lines.
 #[test]
 fn inject_tool_follows_the_fixture_cases() {
     let mut checked = 0;
@@ -370,10 +370,9 @@ fn get_more_tools_tool_is_the_pinned_descriptor() {
     assert_same_json_text(&tool, &descriptor, "get_more_tools");
 }
 
-/// The tests "does not mutate the customer's outputSchema object" (handle-injection) and "does
-/// not mutate the input tool objects" (engine-listwrap): the pipeline edits schemas with
-/// `Arc::make_mut`, so a clone of a listed tool that shares its schemas keeps them as they were,
-/// also for a tool whose injection fails.
+/// A listing never mutates the customer's tool objects or their output schemas: the pipeline edits
+/// schemas with `Arc::make_mut`, so a clone of a listed tool that shares its schemas keeps them as
+/// they were, also for a tool whose injection fails.
 #[test]
 fn shared_schemas_stay_unchanged() {
     let tools: Vec<Tool> = [
@@ -396,8 +395,8 @@ fn shared_schemas_stay_unchanged() {
         .iter()
         .map(|tool| serde_json::to_value(tool).unwrap())
         .collect();
-    // The context step stays off: it runs after a failed handle step and would give
-    // `failing` its `context`.
+    // The context step stays off: it runs after a failed handle step and would give `failing` its
+    // `context`.
     let options = Options::default()
         .enable_agent_tracking(true)
         .enable_tool_call_context(false);

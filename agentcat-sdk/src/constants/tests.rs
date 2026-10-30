@@ -1,4 +1,4 @@
-//! The constants of `constants` against `tests/vectors/constants.json`, which the SDK wrote.
+//! The constants of `constants` against `tests/vectors/constants.json`.
 use std::sync::OnceLock;
 
 use serde_json::{Map, Value};
@@ -7,8 +7,7 @@ use super::*;
 use crate::test_support::{assert_same_json_text, vectors};
 use crate::wire;
 
-/// Fixture exports that stay out of the crate for now (exporters and diagnostics: a later
-/// release).
+/// Fixture exports that stay out of the crate for now (exporters and diagnostics: a later release).
 const NOT_PORTED: [&str; 4] = [
     "AGENTCAT_SOURCE",
     "DIAGNOSTICS_SCOPE_NAME",

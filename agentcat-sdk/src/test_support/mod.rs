@@ -49,9 +49,9 @@ impl Drop for TempHome {
 /// The bytes of each side [`assert_same_json_text`] shows around the first difference.
 const SHOWN_BYTES: usize = 40;
 
-/// Asserts that `actual` is `expected` as `JSON.stringify` writes it: [`wire::stringify`] of `actual`
-/// equals [`wire::stringify`] of `expected` after [`markers::decode_utf16`] (each `$utf16` marker, a string
-/// cut inside a surrogate pair, becomes that string without its half character).
+/// Asserts that `actual` is `expected` as `JSON.stringify` writes it: [`wire::stringify`] of
+/// `actual` equals [`wire::stringify`] of `expected` after [`markers::decode_utf16`] (each `$utf16`
+/// marker, a string cut inside a surrogate pair, becomes that string without its half character).
 ///
 /// # Panics
 ///

@@ -1,12 +1,12 @@
-//! Panics and captured errors of a tool call, over in-memory connections: a panic of the
-//! tool is recorded and resumed, so the client gets no response, as
-//! without the SDK, and the server keeps serving; [`capture_error`] replaces the error of the
-//! record; a panic in a customer call the SDK makes on the `tools/call` path (the rebuild's
-//! `list_tools`, `get_tool`, `get_info`) is contained and the call goes on.
+//! Panics and captured errors of a tool call, over in-memory connections: a panic of the tool is
+//! recorded and resumed, so the client gets no response, as without the SDK, and the server keeps
+//! serving; [`capture_error`] replaces the error of the record; a panic in a customer call the SDK
+//! makes on the `tools/call` path (the rebuild's `list_tools`, `get_tool`, `get_info`) is contained
+//! and the call goes on.
 //!
 //! These are Rust-only paths (panics, `Error::source`), so the expected values are shapes, not
-//! fixture outputs. Each panic prints its message through the default panic hook into the test's captured
-//! output, which the test runner shows only for a failing test.
+//! fixture outputs. Each panic prints its message through the default panic hook into the test's
+//! captured output, which the test runner shows only for a failing test.
 use std::any::type_name;
 use std::backtrace::{Backtrace, BacktraceStatus};
 use std::error::Error;
@@ -42,17 +42,16 @@ const NO_RESPONSE: Duration = Duration::from_millis(500);
 /// How long a call that must be answered may take (a rebuild that times out takes 5 s).
 const ANSWERED: Duration = Duration::from_secs(2);
 
-/// The log line of a rebuild that failed with the panic of [`PanickingList`]
-/// when the call path rebuilds the registry.
+/// The log line of a rebuild that failed with the panic of [`PanickingList`] when the call path
+/// rebuilds the registry.
 const LIST_PANICKED: &str =
     "Warning: registry rebuild-on-demand failed - Error: list_tools exploded";
 
-/// The log line of a `get_tool` lookup of `beta` that panicked on the call path, in the
-/// style of [`LIST_PANICKED`].
+/// The log line of a `get_tool` lookup of `beta` that panicked on the call path, in the style of
+/// [`LIST_PANICKED`].
 const LOOKUP_PANICKED: &str = "Warning: Tool lookup for beta panicked: get_tool exploded";
 
-/// The log line of a `get_info` that panicked on the call path, in the style of
-/// [`LIST_PANICKED`].
+/// The log line of a `get_info` that panicked on the call path, in the style of [`LIST_PANICKED`].
 const INFO_PANICKED: &str = "Warning: get_info panicked: get_info exploded";
 
 /// A handle with the default options whose log lines and records go to a [`RecordingSink`].
@@ -349,10 +348,9 @@ impl ServerHandler for PanickingInfo {
     }
 }
 
-/// A panic of the tool reaches the client as it does without
-/// the SDK (no response), and the record has the panic: `type: "panic"`, the payload as the
-/// message, no response and no output tokens. The SDK resumes the panic with the tool's own
-/// payload.
+/// A panic of the tool reaches the client as it does without the SDK (no response), and the record
+/// has the panic: `type: "panic"`, the payload as the message, no response and no output tokens.
+/// The SDK resumes the panic with the tool's own payload.
 #[tokio::test]
 async fn panic_is_recorded_and_resumed() {
     let plain = connect(Sample, "plain").await;
@@ -381,8 +379,8 @@ async fn panic_is_recorded_and_resumed() {
     assert_eq!(only_record(&sink).error, Some(panic_shape("explode")));
 }
 
-/// After a tool panicked, the server answers the next call, which gets its own
-/// record without the panic.
+/// After a tool panicked, the server answers the next call, which gets its own record without the
+/// panic.
 #[tokio::test]
 async fn server_keeps_serving_after_panic() {
     let (agentcat, sink) = recording();
@@ -428,10 +426,9 @@ fn panic_payload_kinds() {
     }
 }
 
-/// An error a tool records with `capture_error` before it fails is the error
-/// of the record, in place of the result's: its `Display` text, its type path, the `rust`
-/// platform and one chained entry per `source()`, in that key order. The result still reaches
-/// the client as rmcp made it.
+/// An error a tool records with `capture_error` before it fails is the error of the record, in
+/// place of the result's: its `Display` text, its type path, the `rust` platform and one chained
+/// entry per `source()`, in that key order. The result still reaches the client as rmcp made it.
 #[tokio::test]
 async fn capture_error_records_type_and_chain() {
     let plain = connect(Capturing, "plain").await;
@@ -518,9 +515,9 @@ impl Error for Looping {
     }
 }
 
-/// `capture_error` outside a tool call does nothing and does not panic. A task the tool spawns
-/// does not inherit the call, and a call's captured error does not outlive it, so the next call's
-/// record has the error of its own result.
+/// `capture_error` outside a tool call does nothing and does not panic. A task the tool spawns does
+/// not inherit the call, and a call's captured error does not outlive it, so the next call's record
+/// has the error of its own result.
 #[tokio::test]
 async fn capture_error_outside_a_call_does_nothing() {
     capture_error(&Wrapper(RootCause));
@@ -556,10 +553,10 @@ async fn captured_error_without_a_failure_is_dropped() {
     assert_eq!(record.error, None);
 }
 
-/// An error recorded with `capture_error` replaces the JSON-RPC code name of an
-/// `Err(ErrorData)`, which still reaches the client unchanged; a panic after it gives
-/// `type: "panic"`. The handler calls `capture_error` before it returns its future, so the SDK's
-/// scope covers that part of `call_tool` too.
+/// An error recorded with `capture_error` replaces the JSON-RPC code name of an `Err(ErrorData)`,
+/// which still reaches the client unchanged; a panic after it gives `type: "panic"`. The handler
+/// calls `capture_error` before it returns its future, so the SDK's scope covers that part of
+/// `call_tool` too.
 #[tokio::test]
 async fn captured_error_wins_over_error_data() {
     let plain = connect(Eager, "plain").await;
@@ -590,9 +587,9 @@ async fn captured_error_wins_over_error_data() {
     );
 }
 
-/// A `list_tools` that panics in the registry rebuild is a failed
-/// rebuild: the warning carries the panic's message, nothing is recorded, so the next call
-/// tries again, and the call goes on with the heuristic strip.
+/// A `list_tools` that panics in the registry rebuild is a failed rebuild: the warning carries the
+/// panic's message, nothing is recorded, so the next call tries again, and the call goes on with
+/// the heuristic strip.
 #[tokio::test]
 async fn rebuild_panic_is_a_failed_rebuild() {
     let (agentcat, sink) = recording();
@@ -614,9 +611,9 @@ async fn rebuild_panic_is_a_failed_rebuild() {
     assert!(records.iter().all(|record| record.error.is_none()));
 }
 
-/// A `get_tool` that panics gives no schema, so the call takes
-/// the registry's entry after a rebuild: `beta` keeps its own `context`, which the heuristic strip
-/// would drop. Each panic is logged with its message.
+/// A `get_tool` that panics gives no schema, so the call takes the registry's entry after a
+/// rebuild: `beta` keeps its own `context`, which the heuristic strip would drop. Each panic is
+/// logged with its message.
 #[tokio::test]
 async fn get_tool_panic_is_no_schema() {
     let (agentcat, sink) = recording();
@@ -648,10 +645,10 @@ async fn get_tool_panic_is_no_schema() {
     );
 }
 
-/// With tracing off, learning the schema writes no log line. A `get_tool`
-/// that panics and a rebuild whose `list_tools` panics stay silent, and the calls still go out
-/// stripped: `beta` keeps its own `context` (the registry after the rebuild), and a tool that the
-/// failed rebuild taught nothing gets the heuristic strip.
+/// With tracing off, learning the schema writes no log line. A `get_tool` that panics and a rebuild
+/// whose `list_tools` panics stay silent, and the calls still go out stripped: `beta` keeps its own
+/// `context` (the registry after the rebuild), and a tool that the failed rebuild taught nothing
+/// gets the heuristic strip.
 #[tokio::test]
 async fn tracing_off_lookup_panics_log_nothing() {
     let sink = Arc::new(RecordingSink::default());
@@ -674,8 +671,8 @@ async fn tracing_off_lookup_panics_log_nothing() {
     assert!(sink.take_records().is_empty());
 }
 
-/// A `get_info` that panics leaves the record without a server name
-/// and version, and the panic is logged with its message; the call goes on.
+/// A `get_info` that panics leaves the record without a server name and version, and the panic is
+/// logged with its message; the call goes on.
 #[tokio::test]
 async fn get_info_panic_records_no_server() {
     let (agentcat, sink) = recording();
@@ -696,8 +693,8 @@ async fn get_info_panic_records_no_server() {
     assert_eq!(infos, [INFO_PANICKED], "{logs:?}");
 }
 
-/// `capture_error` takes an unsized `dyn Error`, such as the content of a `Box<dyn Error>`;
-/// the record has its message, and the `dyn` type's name as its type.
+/// `capture_error` takes an unsized `dyn Error`, such as the content of a `Box<dyn Error>`; the
+/// record has its message, and the `dyn` type's name as its type.
 #[tokio::test]
 async fn capture_error_accepts_dyn_error() {
     let (agentcat, sink) = recording();

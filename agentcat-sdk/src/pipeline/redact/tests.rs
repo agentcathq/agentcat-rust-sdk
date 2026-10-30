@@ -15,7 +15,7 @@ use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{edge_string, json_value, object_key, tool_call_event};
 use crate::test_support::{assert_same_json_text, config, markers, vectors};
 
-/// The fixture's fields for the two hooks, which the restore treats in its own way.
+/// The fields of the string hook and the event hook, which the restore treats in its own way.
 const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 
 /// What [`redact`] gives: the event, or the number of the call that failed.
@@ -79,7 +79,8 @@ fn fixture_cases_hold() {
     }
 }
 
-/// A walk case: the calls are the fixture's exactly, and the event (or the error after those calls).
+/// A walk case: the calls are the fixture's exactly, and the event (or the error after those
+/// calls).
 fn check_walk_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
     let context = format!("{file} {name}");

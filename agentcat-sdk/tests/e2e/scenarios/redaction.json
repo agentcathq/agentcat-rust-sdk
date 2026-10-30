@@ -1,7 +1,7 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "identify": { "returns": { "userId": "user-late", "userName": "Late User", "userData": { "plan": "late" } }, "sleep_ms": 200 },
+    "identify": { "returns": { "user_id": "user-late", "user_name": "Late User", "user_data": { "plan": "late" } }, "sleep_ms": 200 },
     "event_tags": { "returns": { "note": "SECRET_TOKEN" } },
     "event_properties": { "returns": { "region": "SECRET_TOKEN" } },
     "redact_sensitive_information": { "replace": "SECRET_TOKEN" },
