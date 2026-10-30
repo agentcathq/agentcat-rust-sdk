@@ -61,8 +61,8 @@ exclude_re = [
   # The two checks of the canonical form only spare a parse: `str::parse::<u32>` rejects every key they
   # let through by mistake. With `<=`, an 11-digit key overflows `u32`; with `||`, a key with a non-digit
   # after its first digit is not a number.
-  'agentcat-sdk/src/js\.rs:\d+:\d+: replace < with <= in array_index$',
-  'agentcat-sdk/src/js\.rs:\d+:\d+: replace && with \|\| in array_index$',
+  'agentcat-sdk/src/wire\.rs:\d+:\d+: replace < with <= in array_index$',
+  'agentcat-sdk/src/wire\.rs:\d+:\d+: replace && with \|\| in array_index$',
   # A key of the event with the same rank as the new key is the new key itself, which the early return
   # handles, so no present key has an equal rank and `>=` finds the same place as `>`.
   'agentcat-sdk/src/pipeline/mod\.rs:\d+:\d+: replace > with >= in set_field$',
