@@ -38,7 +38,7 @@ const COMPOSITION_KEYS: [&str; 3] = ["oneOf", "allOf", "anyOf"];
 
 /// The warning logged once per [`InjectState`] when the listing has its own `get_more_tools`
 /// while report-missing is on.
-const SHADOW_WARNING: &str = "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.";
+const SHADOW_WARNING: &str = "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.";
 
 /// What the pipeline injects, from the [`Options`].
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -400,7 +400,7 @@ fn add_handles(
             state.declared_session_params.insert(key.to_owned());
             if state.reported_conflicts.insert(key.to_owned()) {
                 logs.push(format!(
-                    "ERROR: Tool \"{key}\" already declares a '{SESSION_ID_PARAM}' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() \u{2014} AgentCat will derive its session from your identifier and stop injecting {SESSION_ID_PARAM} entirely."
+                    "ERROR: Tool \"{key}\" already declares a '{SESSION_ID_PARAM}' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook \u{2014} AgentCat will derive its session from your identifier and stop injecting {SESSION_ID_PARAM} entirely."
                 ));
             }
         } else {

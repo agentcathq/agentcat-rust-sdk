@@ -136,8 +136,7 @@ impl Inner {
 }
 
 /// The warning a handle logs when no project ID is given.
-const NO_PROJECT_WARNING: &str =
-    "Warning: No projectId provided and no exporters configured. Events will not be sent anywhere.";
+const NO_PROJECT_WARNING: &str = "Warning: No project_id provided (AgentCat::from_env reads it from AGENTCAT_PROJECT_ID). Events will not be sent anywhere.";
 
 /// What a handle posts with, the lines it logs first and where its worker writes them.
 struct Transport {

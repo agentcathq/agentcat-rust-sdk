@@ -34,26 +34,26 @@ struct Label {
 
 /// The `resolve_session_id` hook.
 const RESOLVE_SESSION_ID: Label = Label {
-    name: "resolveSessionId",
-    error_prefix: "resolveSessionId hook error: ",
+    name: "resolve_session_id",
+    error_prefix: "resolve_session_id hook error: ",
 };
 
 /// The `identify` hook.
 const IDENTIFY: Label = Label {
     name: "identify",
-    error_prefix: "Error: identify callback threw - ",
+    error_prefix: "Error: identify hook returned an error - ",
 };
 
 /// The `event_tags` hook.
 const EVENT_TAGS: Label = Label {
-    name: "eventTags",
-    error_prefix: "eventTags callback error: ",
+    name: "event_tags",
+    error_prefix: "event_tags callback error: ",
 };
 
 /// The `event_properties` hook.
 const EVENT_PROPERTIES: Label = Label {
-    name: "eventProperties",
-    error_prefix: "eventProperties callback error: ",
+    name: "event_properties",
+    error_prefix: "event_properties callback error: ",
 };
 
 /// What the hooks of one call gave once they settled; `None` for a hook that is not set, gave
@@ -90,14 +90,14 @@ impl fmt::Display for SessionMintFailed {
 ///   hook failed in background - <message>`, the panic's message or the cancellation. The process
 ///   panic hook has already printed the panic, as for any task.
 /// - A hook's own error gives the text of that hook followed by the error's `Display`:
-///   `resolveSessionId hook error: `, `Error: identify callback threw - `, `eventTags callback
-///   error: ` or `eventProperties callback error: `.
+///   `resolve_session_id hook error: `, `Error: identify hook returned an error - `,
+///   `event_tags callback error: ` or `event_properties callback error: `.
 /// - The `event_tags` result goes through [`validate_tags`] when it settles, with a line for each
 ///   tag it drops.
 ///
 /// The lines are in the order `settle` sees the hooks settle. Hooks that settled before `settle`
-/// first polls them, or between two of its polls, log in the label order (`resolveSessionId`,
-/// `identify`, `eventTags`, `eventProperties`), whatever order they finished in. The hooks of an
+/// first polls them, or between two of its polls, log in the label order (`resolve_session_id`,
+/// `identify`, `event_tags`, `event_properties`), whatever order they finished in. The hooks of an
 /// event that the queue drops before `settle` runs log nothing. Runs on a runtime with the
 /// time driver; the hook tasks may run on another runtime. Dropping the future aborts the hook
 /// tasks it has not settled.

@@ -405,10 +405,10 @@ fn no_runtime_no_start() {
     assert_eq!(
         sink.logs(),
         [
-            "Warning: resolveSessionId hook not started - no tokio runtime",
+            "Warning: resolve_session_id hook not started - no tokio runtime",
             "Warning: identify hook not started - no tokio runtime",
-            "Warning: eventTags hook not started - no tokio runtime",
-            "Warning: eventProperties hook not started - no tokio runtime",
+            "Warning: event_tags hook not started - no tokio runtime",
+            "Warning: event_properties hook not started - no tokio runtime",
         ]
     );
 }

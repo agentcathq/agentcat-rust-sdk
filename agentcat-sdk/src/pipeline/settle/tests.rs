@@ -167,7 +167,7 @@ async fn panicking_hook_logs_and_publishes_without_it() {
     assert_eq!(
         log,
         [
-            "Warning: resolveSessionId hook failed in background - sync hook boom",
+            "Warning: resolve_session_id hook failed in background - sync hook boom",
             "Warning: identify hook failed in background - identify exploded",
         ]
     );
@@ -227,10 +227,10 @@ async fn hook_errors_use_ts_texts() {
     assert_eq!(
         log,
         [
-            "resolveSessionId hook error: no session",
-            "Error: identify callback threw - no identity",
-            "eventTags callback error: no tags",
-            "eventProperties callback error: no properties",
+            "resolve_session_id hook error: no session",
+            "Error: identify hook returned an error - no identity",
+            "event_tags callback error: no tags",
+            "event_properties callback error: no properties",
         ]
     );
     assert_eq!(results.session_value, None);

@@ -5,7 +5,7 @@
 #[non_exhaustive]
 pub enum Error {
     /// A custom event was published on a handle that has no project ID.
-    #[error("projectId is required for publishCustomEvent")]
+    #[error("project_id is required for publish_custom_event")]
     ProjectIdRequired,
 }
 

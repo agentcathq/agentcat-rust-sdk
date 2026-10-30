@@ -31,7 +31,7 @@ use crate::wire;
 const WAIT: Duration = Duration::from_secs(2);
 
 /// The text TS logs for a server-form event without a session.
-const NO_SESSION_LINE: &str = "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.";
+const NO_SESSION_LINE: &str = "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.";
 
 /// The frozen clock of the vectors.
 const FROZEN: &str = "2026-10-23T12:00:00.000Z";
@@ -140,7 +140,7 @@ fn string_form_requires_project() {
     assert!(matches!(result, Err(Error::ProjectIdRequired)));
     assert_eq!(
         result.unwrap_err().to_string(),
-        "projectId is required for publishCustomEvent"
+        "project_id is required for publish_custom_event"
     );
     assert_eq!(delivered(&agentcat, &publisher).len(), 0);
 }

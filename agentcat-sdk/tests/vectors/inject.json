@@ -529,7 +529,7 @@
             "deploy"
           ],
           "logs": [
-            "ERROR: Tool \"deploy\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"deploy\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -4387,7 +4387,7 @@
             "own_session"
           ],
           "logs": [
-            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         },
         {
@@ -4509,7 +4509,7 @@
             "own_session"
           ],
           "logs": [
-            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         },
         {
@@ -4643,8 +4643,8 @@
             "tool_b"
           ],
           "logs": [
-            "ERROR: Tool \"tool_a\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
-            "ERROR: Tool \"tool_b\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"tool_a\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"tool_b\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         },
         {
@@ -4827,7 +4827,7 @@
             "own_session"
           ],
           "logs": [
-            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"union_tool\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         }
@@ -4974,7 +4974,7 @@
             "own_session"
           ],
           "logs": [
-            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"own_session\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -5292,7 +5292,7 @@
             "own_handles"
           ],
           "logs": [
-            "ERROR: Tool \"own_handles\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"own_handles\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"own_handles\" already has 'agent_id' parameter. Skipping agent_id injection."
           ]
         }
@@ -6398,7 +6398,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -14939,7 +14939,7 @@
             "t"
           ],
           "logs": [
-            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -15315,7 +15315,7 @@
             "t"
           ],
           "logs": [
-            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -16294,7 +16294,7 @@
             "t"
           ],
           "logs": [
-            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"t\" already has 'agent_id' parameter. Skipping agent_id injection.",
             "WARN: Tool \"t\" already has 'context' parameter. Skipping context injection."
           ]
@@ -17494,7 +17494,7 @@
             "unknown"
           ],
           "logs": [
-            "ERROR: Tool \"unknown\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"unknown\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -17600,7 +17600,7 @@
             "dup"
           ],
           "logs": [
-            "ERROR: Tool \"dup\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"dup\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -17856,7 +17856,7 @@
             "dup"
           ],
           "logs": [
-            "ERROR: Tool \"dup\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"dup\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -19951,7 +19951,7 @@
             "t"
           ],
           "logs": [
-            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"t\" already has 'agent_id' parameter. Skipping agent_id injection.",
             "WARN: Handle injection failed for tool \"t\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'"
           ]
@@ -20066,7 +20066,7 @@
             "t"
           ],
           "logs": [
-            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"t\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -20573,7 +20573,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -20763,7 +20763,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -20947,7 +20947,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -21687,7 +21687,7 @@
             "s"
           ],
           "logs": [
-            "ERROR: Tool \"s\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"s\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"a\" already has 'agent_id' parameter. Skipping agent_id injection.",
             "WARN: Tool \"composed\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
             "WARN: Tool \"c\" already has 'context' parameter. Skipping context injection.",
@@ -22031,7 +22031,7 @@
             "s"
           ],
           "logs": [
-            "ERROR: Tool \"s\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"s\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         },
         {
@@ -22278,7 +22278,7 @@
             "s2"
           ],
           "logs": [
-            "ERROR: Tool \"s2\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"s2\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"composed\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
             "WARN: Tool \"composed\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
@@ -22401,7 +22401,7 @@
             "x"
           ],
           "logs": [
-            "ERROR: Tool \"x\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"x\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         },
         {
@@ -22692,7 +22692,7 @@
             "x"
           ],
           "logs": [
-            "ERROR: Tool \"x\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"x\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -23749,7 +23749,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -24084,7 +24084,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"own\" already has 'context' parameter. Skipping context injection."
           ]
         }
@@ -24553,7 +24553,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -25007,7 +25007,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Handle injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'session_id' on boolean 'true'",
             "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
           ]
@@ -25462,7 +25462,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -25743,7 +25743,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -25941,7 +25941,7 @@
           ],
           "logs": [
             "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'session_id' on boolean 'true'",
-            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Context injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
           ]
         }
@@ -27042,8 +27042,8 @@
             "get_more_tools"
           ],
           "logs": [
-            "ERROR: Tool \"search\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
-            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
+            "ERROR: Tool \"search\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely."
           ]
         }
       ]
@@ -27806,9 +27806,9 @@
             "get_more_tools"
           ],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"echo\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool.",
-            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"get_more_tools\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"own\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection."
           ]
         },
@@ -28404,7 +28404,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'",
             "WARN: Tool \"own\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool."
           ]
@@ -29062,7 +29062,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -29336,7 +29336,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'session_id' on number '5'"
           ]
         }
@@ -29653,7 +29653,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"echo\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
             "WARN: Tool \"echo\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
@@ -29767,7 +29767,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]

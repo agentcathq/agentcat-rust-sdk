@@ -1589,7 +1589,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -1934,7 +1934,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
           ]
         }
@@ -2873,7 +2873,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"own\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         },
@@ -3492,7 +3492,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -3730,7 +3730,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'",
             "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
           ]
@@ -4416,7 +4416,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
           ]
         }
@@ -4568,7 +4568,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -5675,7 +5675,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"own\" has complex schema (oneOf/allOf/anyOf). Skipping context injection.",
             "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
           ]
@@ -6330,7 +6330,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -6900,7 +6900,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -7620,7 +7620,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'",
             "WARN: Context injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'",
             "WARN: Tool \"unknown\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
@@ -9037,7 +9037,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -9368,7 +9368,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -10405,9 +10405,9 @@
             "echo"
           ],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"unknown\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
-            "ERROR: Tool \"echo\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, pass a resolveSessionId hook to track() — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
+            "ERROR: Tool \"echo\" already declares a 'session_id' parameter. AgentCat will not inject its own, and calls to this tool are published without a session, so they cannot be correlated. Your parameter is untouched and still reaches your handler. If you already manage sessions, set an Options::resolve_session_id hook — AgentCat will derive its session from your identifier and stop injecting session_id entirely.",
             "WARN: Tool \"unknown\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool."
           ]
         }
@@ -11729,7 +11729,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -12130,7 +12130,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -13369,7 +13369,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -13620,7 +13620,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on boolean 'true'"
           ]
         }
@@ -13927,7 +13927,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -14121,7 +14121,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         }
       ]
@@ -14568,7 +14568,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable."
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable."
           ]
         },
         {
@@ -15689,7 +15689,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.",
+            "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'"
           ]
         },

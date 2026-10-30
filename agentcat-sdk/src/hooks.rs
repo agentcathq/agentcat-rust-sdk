@@ -278,10 +278,10 @@ pub(crate) fn fire(
     let event_tags = options.event_tags_hook();
     let event_properties = options.event_properties_hook();
     let set = [
-        ("resolveSessionId", resolve_session_id.is_some()),
+        ("resolve_session_id", resolve_session_id.is_some()),
         ("identify", identify.is_some()),
-        ("eventTags", event_tags.is_some()),
-        ("eventProperties", event_properties.is_some()),
+        ("event_tags", event_tags.is_some()),
+        ("event_properties", event_properties.is_some()),
     ];
     if !set.iter().any(|&(_, is_set)| is_set) {
         return PendingHooks::default();

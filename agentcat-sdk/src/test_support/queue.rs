@@ -246,17 +246,17 @@ const DELIVERY_LINES: [&str; 2] = ["Successfully sent event ", "Failed to send e
 /// docs).
 const CUSTOM_BUILDER_LINES: [&str; 3] = [
     "Published custom event ",
-    "publishCustomEvent: ",
+    "publish_custom_event: ",
     "Dropping invalid tag: ",
 ];
 
 /// The texts after which TS writes a thrown `Error` (the hooks' and the stages'): the text of each
 /// call hook's `catch`, then the queue's stage lines.
 const ERROR_PREFIXES: [&str; 8] = [
-    "resolveSessionId hook error: ",
-    "Error: identify callback threw - ",
-    "eventTags callback error: ",
-    "eventProperties callback error: ",
+    "resolve_session_id hook error: ",
+    "Error: identify hook returned an error - ",
+    "event_tags callback error: ",
+    "event_properties callback error: ",
     "Failed to resolve pending hook results: ",
     "Failed to redact event (event-level hook): ",
     "Failed to redact event: ",

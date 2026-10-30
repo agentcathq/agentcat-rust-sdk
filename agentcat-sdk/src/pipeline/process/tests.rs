@@ -806,7 +806,7 @@ async fn event_hook_replaces_fields_and_drops_rejected_events() {
         ("list_todos", json!({"context": "Listing todos"})),
     ];
     let (published, log) = publish_calls(Payloads, options, calls).await;
-    assert_eq!(log, ["Event dropped by redactEvent hook"]);
+    assert_eq!(log, ["Event dropped by redact_event hook"]);
     assert_eq!(
         *seen.lock().unwrap(),
         [Some("add_todo".to_owned()), Some("list_todos".to_owned())]
@@ -903,7 +903,10 @@ async fn identify_error_still_publishes_the_call() {
         json!({"msg": "hi", "context": "Testing identify error"}),
     )];
     let (published, log) = publish_calls(Sample, options, calls).await;
-    assert_eq!(log, ["Error: identify callback threw - Identify error"]);
+    assert_eq!(
+        log,
+        ["Error: identify hook returned an error - Identify error"]
+    );
     let events = all(published);
     assert_eq!(events.len(), 1);
     assert_eq!(events[0]["eventType"], json!("mcp:tools/call"));

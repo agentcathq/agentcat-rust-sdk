@@ -129,7 +129,7 @@ impl CustomEvent {
 const CUSTOM_EVENT_TYPE: &str = "agentcat:custom";
 
 /// The warning that a server-form event without a session logs.
-const NO_SESSION_WARNING: &str = "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.";
+const NO_SESSION_WARNING: &str = "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.";
 
 /// Sets `key` of `event` when there is a value; `None` leaves no key.
 fn put(event: &mut EventObject, key: &str, value: Option<Value>) {

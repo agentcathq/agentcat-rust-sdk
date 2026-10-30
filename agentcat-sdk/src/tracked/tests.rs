@@ -319,7 +319,7 @@ fn tracked_debug_names_the_inner_type() {
 }
 
 /// The warning for a listing with no tools.
-const EMPTY_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
+const EMPTY_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat::track.";
 
 /// A tracked handle that logs to a [`RecordingSink`].
 fn recording_handle() -> (AgentCat, Arc<RecordingSink>) {

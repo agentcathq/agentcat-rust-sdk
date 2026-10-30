@@ -1021,7 +1021,7 @@
       ],
       "delays": [],
       "logs": [
-        "Error: identify callback threw - Error: Failed to identify user",
+        "Error: identify hook returned an error - Error: Failed to identify user",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -1895,7 +1895,7 @@
       ],
       "delays": [],
       "logs": [
-        "eventTags callback error: Error: Tags callback failed",
+        "event_tags callback error: Error: Tags callback failed",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2232,7 +2232,7 @@
       ],
       "delays": [],
       "logs": [
-        "eventProperties callback error: Error: Properties callback failed",
+        "event_properties callback error: Error: Properties callback failed",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2605,7 +2605,7 @@
       ],
       "delays": [],
       "logs": [
-        "resolveSessionId hook error: Error: no session here",
+        "resolve_session_id hook error: Error: no session here",
         "Successfully sent event <evt> | mcp:tools/call | session <minted> | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2720,10 +2720,10 @@
       ],
       "delays": [],
       "logs": [
-        "Warning: resolveSessionId hook did not settle within 30000ms; publishing event without it",
+        "Warning: resolve_session_id hook did not settle within 30000ms; publishing event without it",
         "Warning: identify hook did not settle within 30000ms; publishing event without it",
-        "Warning: eventTags hook did not settle within 30000ms; publishing event without it",
-        "Warning: eventProperties hook did not settle within 30000ms; publishing event without it",
+        "Warning: event_tags hook did not settle within 30000ms; publishing event without it",
+        "Warning: event_properties hook did not settle within 30000ms; publishing event without it",
         "Successfully sent event <evt> | mcp:tools/call | session <minted> | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2917,7 +2917,7 @@
       "requests": [],
       "delays": [],
       "logs": [
-        "Event dropped by redactEvent hook"
+        "Event dropped by redact_event hook"
       ]
     },
     {
@@ -4754,7 +4754,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -4825,7 +4825,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -4974,7 +4974,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -5043,7 +5043,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Dropping invalid tag: \"bad!key\" — key contains invalid characters or is empty",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
@@ -5104,7 +5104,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -5151,7 +5151,7 @@
       "delays": [],
       "logs": [
         "Published custom event for session ses_drop00000000000000000000000 with type 'agentcat:custom'",
-        "Event dropped by redactEvent hook"
+        "Event dropped by redact_event hook"
       ]
     },
     {
@@ -5224,7 +5224,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]

@@ -57,7 +57,7 @@ impl<H: Clone> Clone for Tracked<H> {
 }
 
 /// The warning logged for a listing with no tools.
-const EMPTY_LISTING_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
+const EMPTY_LISTING_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat::track.";
 
 const _: () = {
     const fn send_sync_static<T: Send + Sync + 'static>() {}

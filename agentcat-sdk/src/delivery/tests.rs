@@ -1417,7 +1417,7 @@ async fn log_lines_are_written_by_the_worker() {
     assert!(agentcat.flush(WAIT).await);
 
     let text = std::fs::read_to_string(home.path().join("agentcat.log")).unwrap();
-    let warning = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
+    let warning = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat::track.";
     let expected = format!("] {} {warning}", logging::prefix());
     assert!(text.lines().any(|line| line.ends_with(&expected)), "{text}");
 }

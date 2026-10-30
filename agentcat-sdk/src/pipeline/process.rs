@@ -47,7 +47,7 @@ pub(crate) struct Redactors {
 /// 3. With `job.event_redaction` and an event hook: the hook gets the event as an [`Event`] on the
 ///    job's runtime, and the system fields come back from the original
 ///    ([`apply_event_redaction`]). The hook's `None` drops the event with `Event dropped by
-///    redactEvent hook`; its error, its task's panic or no runtime drops it with `Failed to redact
+///    redact_event hook`; its error, its task's panic or no runtime drops it with `Failed to redact
 ///    event (event-level hook): <why>`.
 /// 4. With `job.string_redaction` and a string hook: the hook gets each string of the walk of
 ///    [`redact_strings`] in walk order, all in one task on the job's runtime, and its results
@@ -102,7 +102,7 @@ async fn process_with_ids(
             Ok(result) => {
                 let Some(redacted) = apply_event_redaction(&event, result.map(Event::into_object))
                 else {
-                    log.push("Event dropped by redactEvent hook".to_owned());
+                    log.push("Event dropped by redact_event hook".to_owned());
                     return None;
                 };
                 event = redacted;

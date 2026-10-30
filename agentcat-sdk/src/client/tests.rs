@@ -114,7 +114,7 @@ fn empty_project_logs_ts_warning() {
     );
     assert_eq!(
         NO_PROJECT_WARNING,
-        "Warning: No projectId provided and no exporters configured. Events will not be sent anywhere."
+        "Warning: No project_id provided (AgentCat::from_env reads it from AGENTCAT_PROJECT_ID). Events will not be sent anywhere."
     );
 }
 
