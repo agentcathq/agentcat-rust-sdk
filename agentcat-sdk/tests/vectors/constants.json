@@ -5,10 +5,6 @@
       "value": "agentcat:custom"
     },
     {
-      "name": "AGENTCAT_SOURCE",
-      "value": "agentcat"
-    },
-    {
       "name": "AGENTCAT_TAG_AGENT_ID",
       "value": "agentcat_agent_id"
     },
@@ -39,18 +35,6 @@
     {
       "name": "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION",
       "value": "Explain why you are calling this tool and how it fits into the user's overall goal. This parameter is used for analytics and user intent tracking. YOU MUST provide 15-25 words (count carefully). NEVER use first person ('I', 'we', 'you') - maintain third-person perspective. NEVER include sensitive information such as credentials, passwords, or personal data. Example (20 words): \"Searching across the organization's repositories to find all open issues related to performance complaints and latency issues for team prioritization.\""
-    },
-    {
-      "name": "DEFAULT_DIAGNOSTICS_ENDPOINT",
-      "value": "https://otel.agentcat.com"
-    },
-    {
-      "name": "DEFAULT_DIAGNOSTICS_TOKEN",
-      "value": "dgk_sdk_diag_3f9a2c7e1b8d4065af2e9c1d7b6a4f80"
-    },
-    {
-      "name": "DIAGNOSTICS_SCOPE_NAME",
-      "value": "agentcat-diagnostics"
     },
     {
       "name": "GET_MORE_TOOLS_NAME",

@@ -7,14 +7,6 @@ use super::*;
 use crate::test_support::{assert_same_json_text, vectors};
 use crate::wire;
 
-/// Fixture exports that stay out of the crate for now (exporters and diagnostics: a later release).
-const NOT_PORTED: [&str; 4] = [
-    "AGENTCAT_SOURCE",
-    "DIAGNOSTICS_SCOPE_NAME",
-    "DEFAULT_DIAGNOSTICS_ENDPOINT",
-    "DEFAULT_DIAGNOSTICS_TOKEN",
-];
-
 /// The cases of functions, each named after the function it pins; every other case is a
 /// constant, named after the constant.
 const FUNCTION_CASES: [&str; 3] = [
@@ -23,8 +15,8 @@ const FUNCTION_CASES: [&str; 3] = [
     "get_more_tools_result",
 ];
 
-/// Every ported constant, by its export name.
-const PORTED: [(&str, &str); 26] = [
+/// Every constant of the crate, by its fixture name.
+const CONSTANTS: [(&str, &str); 26] = [
     (
         "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION",
         DEFAULT_CONTEXT_PARAMETER_DESCRIPTION,
@@ -99,33 +91,25 @@ fn expected(name: &str) -> Value {
 
 #[test]
 fn every_constant_equals_its_fixture_value() {
-    for (name, actual) in PORTED {
+    for (name, actual) in CONSTANTS {
         assert_same_json_text(&Value::from(actual), &expected(name), name);
     }
 }
 
 #[test]
-fn every_fixture_constant_is_ported_or_listed() {
+fn every_fixture_constant_is_a_crate_constant() {
     let plain: Vec<String> = cases()
         .iter()
         .map(|c| vectors::name(c).to_owned())
         .filter(|n| !FUNCTION_CASES.contains(&n.as_str()))
         .collect();
     for name in &plain {
-        let ported = PORTED.iter().any(|(p, _)| p == name);
-        let listed = NOT_PORTED.contains(&name.as_str());
         assert!(
-            ported != listed,
-            "{name}: must be ported xor listed as not ported"
+            CONSTANTS.iter().any(|(c, _)| c == name),
+            "{name}: the fixture holds a constant that the crate lacks"
         );
     }
-    for (name, _) in PORTED {
-        assert!(
-            plain.iter().any(|p| p == name),
-            "{name}: no fixture constant of that name"
-        );
-    }
-    for name in NOT_PORTED {
+    for (name, _) in CONSTANTS {
         assert!(
             plain.iter().any(|p| p == name),
             "{name}: no fixture constant of that name"
