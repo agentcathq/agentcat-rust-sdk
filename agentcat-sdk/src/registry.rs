@@ -1,7 +1,6 @@
-//! [`ToolRegistry`]: what the SDK learned from the tool listings of one handler type. TS keeps
-//! one registry per tracking-data object and replaces it on every listing page; this one merges
-//! per tool name across pages and instances (RD-12, C19), so a tool on page 2 keeps its entry
-//! when page 1 is listed again.
+//! [`ToolRegistry`]: what the SDK learned from the tool listings of one handler type. A listing
+//! page does not replace the registry: the registry merges per tool name across pages and
+//! instances, so a tool on page 2 keeps its entry when page 1 is listed again.
 
 use std::collections::HashMap;
 
@@ -20,8 +19,8 @@ pub(crate) struct ToolRegistry {
 
 impl ToolRegistry {
     /// Merges one injected page: the entry of each listed tool name replaces the one recorded
-    /// before, and the entries of tools the page does not list stay (RD-12, C19). A tool that
-    /// declares its own `session_id` joins the declared set, which only grows (B-040).
+    /// before, and the entries of tools the page does not list stay. A tool that declares its own
+    /// `session_id` joins the declared set, which only grows.
     pub(crate) fn record(&mut self, list: &InjectedList) {
         for (name, entry) in &list.entries {
             if entry.declares_session {

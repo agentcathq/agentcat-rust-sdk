@@ -13,10 +13,10 @@ use super::{
     new_event_id, new_session_id, resolve_handles, session_from_hook_value,
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, SESSION_START_SENTINEL};
-use crate::js;
 use crate::test_support::rules::{base62_bytes, check_cut};
 use crate::test_support::strategies::{js_char, js_string};
 use crate::test_support::{assert_js_eq, config, vectors};
+use crate::wire;
 
 /// The case name prefixes of `handles.json`.
 const KINDS: [&str; 9] = [
@@ -504,7 +504,7 @@ proptest! {
             args.as_ref()
                 .and_then(|args| args.get(param))
                 .and_then(Value::as_str)
-                .map(js::trim)
+                .map(wire::trim)
                 .filter(|text| !text.is_empty())
                 .map(str::to_owned)
         };

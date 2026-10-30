@@ -10,7 +10,7 @@ use super::{
     EVENT_HOOK_FIELD, PROTECTED_FIELDS, RESTORED_FIELDS, STRING_HOOK_FIELD, apply_event_redaction,
     redact_strings, visit_strings,
 };
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
 use crate::test_support::{assert_js_eq, config, markers, vectors};
@@ -19,11 +19,11 @@ use crate::test_support::{assert_js_eq, config, markers, vectors};
 const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 
 /// What [`redact`] gives: the event, or the number of the call that failed.
-type Redacted = Result<TsEvent, usize>;
+type Redacted = Result<EventObject, usize>;
 
 /// Runs [`redact_strings`] on `event` with the test redactor: the result and every string
 /// the redactor got, in order.
-fn redact(event: &TsEvent, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
+fn redact(event: &EventObject, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
     let mut calls = Vec::new();
     let result = redact_strings(event, |text| {
         calls.push(text.to_owned());
@@ -37,7 +37,7 @@ fn redact(event: &TsEvent, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
 }
 
 /// The event a walk case holds: `input`, or `input_text` parsed in insertion order.
-fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
+fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
     let value = match (case.get("input"), case.get("input_text")) {
         (Some(input), None) => input.clone(),
         (None, Some(Value::String(text))) => {
@@ -49,7 +49,7 @@ fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
 }
 
 /// `value` as an event.
-fn event_of(value: Value, context: &str) -> TsEvent {
+fn event_of(value: Value, context: &str) -> EventObject {
     match value {
         Value::Object(event) => event,
         other => panic!("{context}: not an event: {other}"),
@@ -190,7 +190,7 @@ fn expected_walk(object: &Map<String, Value>, is_event: bool) -> Map<String, Val
 /// The restore's result, from the rule: the hook's result without `eventRedactionFn`, where the
 /// string-hook field and each restored field take the original's value (in their place when the
 /// result has them, at the end in that order when not) or go when the original lacks them.
-fn expected_restore(original: &TsEvent, replacement: &TsEvent) -> Vec<(String, Value)> {
+fn expected_restore(original: &EventObject, replacement: &EventObject) -> Vec<(String, Value)> {
     let copied: Vec<&str> = std::iter::once(STRING_HOOK_FIELD)
         .chain(RESTORED_FIELDS)
         .collect();
@@ -243,7 +243,7 @@ fn walk_value() -> impl Strategy<Value = Value> + Clone {
 
 /// A [`ts_event`], sometimes with a `""` key (whose objects TS treats as the top level) and with
 /// [`walk_value`]s in `parameters` or in place of the `timestamp`.
-fn redact_input() -> impl Strategy<Value = TsEvent> {
+fn redact_input() -> impl Strategy<Value = EventObject> {
     (
         ts_event(js_string(20)),
         prop::option::weighted(0.3, walk_value()),
@@ -266,14 +266,14 @@ fn redact_input() -> impl Strategy<Value = TsEvent> {
 
 /// An event of up to 6 [`walk_key`]s with [`walk_value`]s: protected names, `timestamp` and `""`
 /// at the top level and below it, nested objects and arrays, and every JSON type.
-fn walk_event() -> impl Strategy<Value = TsEvent> {
+fn walk_event() -> impl Strategy<Value = EventObject> {
     prop::collection::vec((walk_key(), walk_value()), 0..=6)
         .prop_map(|entries| entries.into_iter().collect())
 }
 
 /// A map of up to 8 entries whose keys are mostly the event's keys (the restored ones, the
 /// hook fields, other fields) and whose values are [`json_value`]s or timestamps.
-fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
+fn restore_map() -> impl Strategy<Value = EventObject> + Clone {
     let key = prop_oneof![
         4 => prop::sample::select(RESTORED_FIELDS.map(str::to_owned).to_vec()),
         1 => prop::sample::select(HOOK_FIELDS.map(str::to_owned).to_vec()),

@@ -7,7 +7,7 @@ use proptest::prelude::*;
 use rmcp::model::Tool;
 use serde_json::{Map, Number, Value, json};
 
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 
 /// One part of a character mix: its weight, and the characters it draws from, evenly.
 type Part = (u32, &'static [RangeInclusive<char>]);
@@ -209,7 +209,7 @@ pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Valu
 /// event has a `toString` or `__proto__` key ([`RESERVED_KEYS`]); a test checks it.
 pub(crate) fn ts_event(
     text: impl Strategy<Value = String> + Clone + 'static,
-) -> impl Strategy<Value = TsEvent> + Clone {
+) -> impl Strategy<Value = EventObject> + Clone {
     let string = || text.clone().prop_map(Value::String).boxed();
     let present = |strategy: BoxedStrategy<Value>| strategy.prop_map(Some).boxed();
     let maybe = |strategy: BoxedStrategy<Value>| prop::option::of(strategy).boxed();

@@ -12,7 +12,7 @@ use crate::event::assemble::EventJob;
 /// A boxed `Send` future, as the lifecycle methods of a [`Sink`] return it.
 pub(crate) type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
-/// Receives the SDK's own log lines (the TS message texts), the records of tool calls and the
+/// Receives the SDK's own log lines (the message texts), the records of tool calls and the
 /// events assembled elsewhere (custom events), and answers `flush` and `shutdown`. Each method
 /// returns at once, except the blocking twins, which block the calling thread for at most their
 /// timeout and a little more.
@@ -28,8 +28,8 @@ pub(crate) trait Sink: Send + Sync {
 
     /// Takes one assembled event and then the log line `message`, in that order and with no line
     /// of another caller in between: the queue's own lines about the event (a drop) come before
-    /// `message`, the lines of the event's later stages after it, as in TS, where the line follows
-    /// the synchronous `add`.
+    /// `message`, the lines of the event's later stages after it: the line follows the queueing
+    /// of the event.
     fn event_then_log(&self, job: EventJob, message: String) {
         self.event(job);
         self.log(message);

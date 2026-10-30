@@ -6,7 +6,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 use super::Options;
-use crate::js;
+use crate::wire;
 
 /// The environment variable that holds the project ID when none is passed to the SDK.
 pub const AGENTCAT_PROJECT_ID: &str = "AGENTCAT_PROJECT_ID";
@@ -14,8 +14,8 @@ pub const AGENTCAT_PROJECT_ID: &str = "AGENTCAT_PROJECT_ID";
 /// The environment variable that holds the base URL of the `AgentCat` API.
 pub const AGENTCAT_API_URL: &str = "AGENTCAT_API_URL";
 
-/// The environment variable of the TypeScript SDK's former name for [`AGENTCAT_API_URL`], read
-/// when that one is unset or empty.
+/// The environment variable under the former name of [`AGENTCAT_API_URL`], read when that one is
+/// unset or empty.
 pub const MCPCAT_API_URL: &str = "MCPCAT_API_URL";
 
 /// The environment variable that turns the SDK off: `false`, `0`, `no` or `off` (any case,
@@ -92,9 +92,9 @@ impl Env for MapEnv {
     }
 }
 
-/// The base URL events go to (B-006): the first non-empty of the option, `AGENTCAT_API_URL`,
+/// The base URL events go to: the first non-empty of the option, `AGENTCAT_API_URL`,
 /// `MCPCAT_API_URL`, else the default. The value is used as given, with no trailing slash
-/// trimmed, as in TypeScript.
+/// trimmed.
 pub(crate) fn resolve_api_base_url(options: &Options, env: &dyn Env) -> String {
     options
         .api_base_url_option()
@@ -104,12 +104,12 @@ pub(crate) fn resolve_api_base_url(options: &Options, env: &dyn Env) -> String {
         .unwrap_or_else(|| DEFAULT_API_BASE_URL.to_owned())
 }
 
-/// Whether the SDK is on (D44, R10): off when `AGENTCAT_ENABLED`, trimmed and lower-cased, is
+/// Whether the SDK is on: off when `AGENTCAT_ENABLED`, trimmed ([`wire::trim`]) and lower-cased, is
 /// `false`, `0`, `no` or `off`; on otherwise, also when unset.
 pub(crate) fn sdk_enabled(env: &dyn Env) -> bool {
     let Some(value) = env.var(AGENTCAT_ENABLED) else {
         return true;
     };
-    let value = js::trim(&value).to_lowercase();
+    let value = wire::trim(&value).to_lowercase();
     !matches!(value.as_str(), "false" | "0" | "no" | "off")
 }

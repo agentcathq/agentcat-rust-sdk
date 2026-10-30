@@ -4,8 +4,8 @@ use std::sync::OnceLock;
 use serde_json::{Map, Value};
 
 use super::*;
-use crate::js;
 use crate::test_support::{assert_js_eq, vectors};
+use crate::wire;
 
 /// TS exports that stay out of the crate for now (exporters and diagnostics: second pass, R04,
 /// C05, RD-16).
@@ -202,7 +202,7 @@ fn report_missing_log_line_matches_ts() {
         "get_more_tools_result logs one line: {logs:?}"
     );
     assert_js_eq(
-        &Value::from(report_missing_log_line(js::utf16_len(context))),
+        &Value::from(report_missing_log_line(wire::utf16_len(context))),
         &logs[0],
         "get_more_tools_result log",
     );

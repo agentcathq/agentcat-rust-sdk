@@ -27,13 +27,13 @@ use crate::config::Options;
 use crate::constants::META_CLIENT_INFO_KEY;
 use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
-use crate::js;
 use crate::sink::Sink;
 use crate::test_support::rmcp::{
     CREDENTIAL_HEADERS, ContextEcho, RecordingSink, Sample, assert_credentials_hidden,
     bare_context, connect, connect_http, credential_parts, identity_json, serve_http,
 };
 use crate::test_support::vectors;
+use crate::wire;
 
 /// The case name prefixes of `event.json`.
 const KINDS: [&str; 3] = ["client-info", "protocol-version", "headers"];
@@ -706,14 +706,14 @@ fn event_round_trips_in_ts_key_order() {
         .iter()
         .map(|key| (key.clone(), sample_value(key)))
         .collect();
-    let event = super::Event::from_ts(&ts);
+    let event = super::Event::from_object(&ts);
     assert_eq!(
         event.timestamp,
-        js::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap()
+        wire::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap()
     );
     assert_eq!(event.duration, Some(Duration::from_millis(12)));
     assert_eq!(event.tags.as_ref().map(BTreeMap::len), Some(2));
-    let back = event.into_ts();
+    let back = event.into_object();
     assert_eq!(back, ts);
     assert_eq!(
         key_list(&back),
@@ -732,7 +732,7 @@ fn event_has_no_unknown_keys() {
     ts.insert("extra".to_owned(), json!(1));
     ts.insert("__proto__".to_owned(), json!({"polluted": true}));
     ts.insert("ipAddress".to_owned(), json!("10.0.0.1"));
-    let back = super::Event::from_ts(&ts).into_ts();
+    let back = super::Event::from_object(&ts).into_object();
     assert_eq!(
         key_list(&back),
         ["id", "sessionId", "projectId", "eventType", "timestamp"]
@@ -740,7 +740,7 @@ fn event_has_no_unknown_keys() {
     assert_eq!(back["sessionId"], json!(""));
 
     ts.insert("sessionId".to_owned(), json!(""));
-    assert_eq!(super::Event::from_ts(&ts).session_id, None);
+    assert_eq!(super::Event::from_object(&ts).session_id, None);
 }
 
 /// The event of a TS event that holds only `id`, `projectId`, `eventType` and `timestamp`, each
@@ -750,7 +750,7 @@ fn sample_system_event() -> super::Event {
         id: "evt_1".to_owned(),
         project_id: "proj_1".to_owned(),
         event_type: "mcp:tools/call".to_owned(),
-        timestamp: js::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap(),
+        timestamp: wire::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap(),
         ..super::Event::default()
     }
 }
@@ -861,14 +861,14 @@ fn from_ts_rejects_wrong_types() {
         .into_iter()
         .map(|key| (key.to_owned(), sample_value(key)))
         .collect();
-    assert_eq!(super::Event::from_ts(&system), base);
+    assert_eq!(super::Event::from_object(&system), base);
     let unchanged = unchanged_rows()
         .into_iter()
         .map(|(case, key, value)| (case, key, value, base.clone()));
     for (case, key, value, expected) in unchanged.chain(changed_rows(&base)) {
         let mut ts = system.clone();
         ts.insert(key.to_owned(), value);
-        assert_eq!(super::Event::from_ts(&ts), expected, "{case}");
+        assert_eq!(super::Event::from_object(&ts), expected, "{case}");
     }
 }
 

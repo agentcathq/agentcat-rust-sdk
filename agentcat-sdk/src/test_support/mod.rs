@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use proptest::test_runner::Config;
 use serde_json::Value;
 
-use crate::js;
+use crate::wire;
 
 /// A home directory for one test, `<temp dir>/agentcat-<name>-<process ID>`, empty when made and
 /// removed with its content on drop, so a test that writes `agentcat.log` never writes the
@@ -58,8 +58,8 @@ const SHOWN_BYTES: usize = 40;
 /// When the two texts differ, with `context`, the byte offset of the first difference and
 /// [`SHOWN_BYTES`] bytes of each text around it.
 pub(crate) fn assert_js_eq(actual: &Value, expected: &Value, context: &str) {
-    let actual = js::stringify(actual);
-    let expected = js::stringify(&markers::d09(expected.clone()));
+    let actual = wire::stringify(actual);
+    let expected = wire::stringify(&markers::d09(expected.clone()));
     if actual == expected {
         return;
     }

@@ -26,7 +26,7 @@ pub const PURE_FLOOR: u64 = 95;
 /// root (`dir/mod.rs` or `dir.rs`) and every file under `dir/`.
 pub const PURE_SET: &[&str] = &[
     "constants.rs",
-    "js.rs",
+    "wire.rs",
     "handles/",
     "tokens.rs",
     "inject.rs",
@@ -380,28 +380,28 @@ mod tests {
 
     #[test]
     fn pure_floor_fails_at_94_9() {
-        // The pure set: nine files at 100 of 100 and js.rs at 49 of 100, 949 of 1000 lines; the
+        // The pure set: nine files at 100 of 100 and wire.rs at 49 of 100, 949 of 1000 lines; the
         // crate is at 1949 of 2000 lines (97.4 %).
         let mut pure = pure_files(100);
-        js_lines(&mut pure, 49);
+        wire_lines(&mut pure, 49);
         let outcome = check_files(&pure, &[("agentcat-sdk/src/client.rs", 1000, 1000)]);
         assert_eq!(
             outcome.problems,
             [
-                "coverage: the pure set runs 94.9 % of its lines (949 of 1000), below its floor of 95 %; its files below 95 %: js.rs (49.0 %)"
+                "coverage: the pure set runs 94.9 % of its lines (949 of 1000), below its floor of 95 %; its files below 95 %: wire.rs (49.0 %)"
             ]
         );
-        // 950 of 1000 lines are 95.0 %: the floor passes, though js.rs alone is below it.
-        js_lines(&mut pure, 50);
+        // 950 of 1000 lines are 95.0 %: the floor passes, though wire.rs alone is below it.
+        wire_lines(&mut pure, 50);
         let outcome = check_files(&pure, &[("agentcat-sdk/src/client.rs", 1000, 1000)]);
         assert_eq!(outcome.problems, Vec::<String>::new());
     }
 
-    /// Sets the lines run of js.rs in `pure`.
-    fn js_lines(pure: &mut [(String, u64, u64)], covered: u64) {
+    /// Sets the lines run of wire.rs in `pure`.
+    fn wire_lines(pure: &mut [(String, u64, u64)], covered: u64) {
         for file in pure
             .iter_mut()
-            .filter(|(path, _, _)| path.ends_with("/js.rs"))
+            .filter(|(path, _, _)| path.ends_with("/wire.rs"))
         {
             file.1 = covered;
         }
@@ -413,7 +413,7 @@ mod tests {
         let outcome = check_files(
             &pure_files(100),
             &[
-                ("agentcat-sdk/src/js/tests.rs", 0, 1000),
+                ("agentcat-sdk/src/wire/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/ksuid/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/test_support/oracle.rs", 0, 1000),
@@ -477,13 +477,13 @@ client.rs                           2        3   66.6 %
 constants.rs (pure)               100      100  100.0 %
 handles/mod.rs (pure)             100      100  100.0 %
 inject.rs (pure)                  100      100  100.0 %
-js.rs (pure)                      100      100  100.0 %
 pipeline/normalize.rs (pure)      100      100  100.0 %
 pipeline/redact.rs (pure)         100      100  100.0 %
 pipeline/sanitize.rs (pure)       100      100  100.0 %
 pipeline/tags.rs (pure)           100      100  100.0 %
 pipeline/truncate.rs (pure)       100      100  100.0 %
 tokens.rs (pure)                  100      100  100.0 %
+wire.rs (pure)                    100      100  100.0 %
 crate                            1002     1003   99.9 %
 pure set                         1000     1000  100.0 %
 ";

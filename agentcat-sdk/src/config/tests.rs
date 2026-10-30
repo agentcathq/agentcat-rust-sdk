@@ -249,7 +249,7 @@ async fn redactors_are_set_and_debug_hides_them() {
     let cloned = options.clone();
     let string = cloned.string_redactor().unwrap();
     assert_eq!(string.call("abc".to_owned()).await.unwrap(), "ABC");
-    let event = Event::from_ts(&serde_json::Map::new());
+    let event = Event::from_object(&serde_json::Map::new());
     let kept = cloned
         .event_redactor()
         .unwrap()

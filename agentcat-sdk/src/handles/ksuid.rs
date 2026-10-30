@@ -1,7 +1,7 @@
-//! Prefixed KSUIDs (`ses_...`, `evt_...`), equal to `KSUID.withPrefix(prefix)` of the TS SDK
-//! (`src/thirdparty/ksuid`). A KSUID is 20 bytes, a 4-byte big-endian count of seconds since
-//! `EPOCH_MS` and a 16-byte payload, written as 27 base62 characters padded on the left with `0`.
-//! `tests/vectors/ksuid.json` pins the encoding; `ksuid/tests.rs` checks it.
+//! Prefixed KSUIDs (`ses_...`, `evt_...`): the prefix, `_` and a KSUID. A KSUID is 20 bytes, a
+//! 4-byte big-endian count of seconds since `EPOCH_MS` and a 16-byte payload, written as 27 base62
+//! characters padded on the left with `0`. `tests/vectors/ksuid.json` pins the encoding;
+//! `ksuid/tests.rs` checks it.
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[cfg(test)]
@@ -57,7 +57,7 @@ pub(crate) fn encode(prefix: &str, seconds: u64, payload: &[u8; 16]) -> String {
 }
 
 /// `<prefix>_` and the 27-character KSUID of `time_ms` and `payload`; `None` when `time_ms` is
-/// outside `EPOCH_MS..=MAX_TIME_MS`, where TS throws.
+/// outside `EPOCH_MS..=MAX_TIME_MS`, which a KSUID cannot hold.
 pub(crate) fn from_parts(prefix: &str, time_ms: u64, payload: &[u8; 16]) -> Option<String> {
     if !(EPOCH_MS..=MAX_TIME_MS).contains(&time_ms) {
         return None;
@@ -66,7 +66,7 @@ pub(crate) fn from_parts(prefix: &str, time_ms: u64, payload: &[u8; 16]) -> Opti
 }
 
 /// A new ID for the current time with 16 random bytes; `None` when the clock is outside the KSUID
-/// range or the system has no randomness, where TS throws.
+/// range or the system has no randomness.
 pub(crate) fn random(prefix: &str) -> Option<String> {
     let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)

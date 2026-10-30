@@ -3,8 +3,7 @@
 //!
 //! [AgentCat](https://agentcat.com) shows the maintainers of an MCP server what agents use the
 //! server for and where the agents get stuck. This crate records the tool calls of an `rmcp`
-//! server and sends them to your `AgentCat` project. It acts like the `AgentCat` TypeScript SDK:
-//! agents see the same tool lists and texts, and your project gets the same events.
+//! server and sends them to your `AgentCat` project.
 //!
 //! To start, wrap your server handler with [`track`] and serve the [`Tracked`] wrapper in its
 //! place. The wrapper forwards every `ServerHandler` method to your handler.
@@ -29,14 +28,19 @@
 //! code can also publish custom events of its own ([`CustomEvent`]).
 //!
 //! When a tool panics, the SDK records the panic as the error of the call and then lets the panic
-//! go on unchanged. The SDK never changes the result or the error of a tool, apart from the
-//! session data that [What agents see](#what-agents-see) describes.
+//! go on unchanged. When a call is cancelled before it completes (its future is dropped), the event
+//! gets the error type `cancelled`. The SDK never changes the result or the error of a tool, apart
+//! from the session data that [What agents see](#what-agents-see) describes.
 //!
 //! ## Errors and custom events
 //!
 //! `rmcp` turns an error that a tool returns into the text of an error result, so the event gets
 //! only that text. Call [`capture_error`] before the tool returns the error. The event then also
 //! gets the type of the error and the texts of its `source()` chain.
+//!
+//! A tool that returns `Err(ErrorData)` gives the client a JSON-RPC error, as `rmcp` sends it.
+//! The event gets the name of the JSON-RPC error code as `error.type`. The `error` of an event
+//! always has the platform `rust`, and it has no parsed stack frames.
 //!
 //! The SDK gives each tool call a [`CallContext`], which a tool reads as an
 //! `Extension<CallContext>` parameter. With it, a tool can read its session ID and publish a
@@ -239,11 +243,11 @@
 //! The SDK never uses the MCP session of the transport (the `mcp-session-id` header) to group
 //! calls. The `session_id` parameter groups them on every transport, so a stateless server loses
 //! no sessions. On a stateless server, an event names the client only when the request names it
-//! in its `_meta`. The TypeScript SDK does the same.
+//! in its `_meta`.
 //!
 //! # What agents see
 //!
-//! The SDK changes the tool list that `tools/list` returns, as the TypeScript SDK does:
+//! The SDK changes the tool list that `tools/list` returns:
 //!
 //! - Each tool gets a `context` parameter, in which the agent says why it calls the tool. The SDK
 //!   records this text as the intent of the call.
@@ -285,8 +289,8 @@
 //!
 //! # Options
 //!
-//! [`Options::default`] has the defaults of the TypeScript SDK. Each setter consumes the options
-//! and returns them changed:
+//! [`Options::default`] has the defaults in the table below. Each setter consumes the options and
+//! returns them changed:
 //!
 //! ```
 //! use agentcat_sdk::{HookError, Options, ToolCall, UserIdentity};
@@ -305,35 +309,34 @@
 //! # let _ = options;
 //! ```
 //!
-//! | Setter | TypeScript option | Default |
-//! |---|---|---|
-//! | [`enable_tool_call_context`](Options::enable_tool_call_context) | `enableToolCallContext` | `true`: tools get `context` |
-//! | [`custom_context_description`](Options::custom_context_description) | `customContextDescription` | empty: the default description of `context` |
-//! | [`enable_tracing`](Options::enable_tracing) | `enableTracing` | `true`: the SDK records calls, and tools get `session_id` |
-//! | [`enable_agent_tracking`](Options::enable_agent_tracking) | `enableAgentTracking` | `false`: tools get no `agent_id` |
-//! | [`enable_report_missing`](Options::enable_report_missing) | `enableReportMissing` | `true`: the list gets `get_more_tools` |
-//! | [`resolve_session_id`](Options::resolve_session_id) | `resolveSessionId` | none: the SDK issues the session IDs |
-//! | [`identify`](Options::identify) | `identify` | none: calls have no actor |
-//! | [`event_tags`](Options::event_tags) | `eventTags` | none |
-//! | [`event_properties`](Options::event_properties) | `eventProperties` | none |
-//! | [`redact_event`](Options::redact_event) | `redactEvent` | none |
-//! | [`redact_sensitive_information`](Options::redact_sensitive_information) | `redactSensitiveInformation` | none |
-//! | [`api_base_url`](Options::api_base_url) | `apiBaseUrl` | empty: [`AGENTCAT_API_URL`], then [`MCPCAT_API_URL`], then `https://api.agentcat.com` |
-//! | [`log_destination`](Options::log_destination) | none: the TypeScript SDK always writes `~/agentcat.log` | [`LogDestination::File`] |
+//! | Setter | Default |
+//! |---|---|
+//! | [`enable_tool_call_context`](Options::enable_tool_call_context) | `true`: tools get `context` |
+//! | [`custom_context_description`](Options::custom_context_description) | empty: the default description of `context` |
+//! | [`enable_tracing`](Options::enable_tracing) | `true`: the SDK records calls, and tools get `session_id` |
+//! | [`enable_agent_tracking`](Options::enable_agent_tracking) | `false`: tools get no `agent_id` |
+//! | [`enable_report_missing`](Options::enable_report_missing) | `true`: the list gets `get_more_tools` |
+//! | [`resolve_session_id`](Options::resolve_session_id) | none: the SDK issues the session IDs |
+//! | [`identify`](Options::identify) | none: calls have no actor |
+//! | [`event_tags`](Options::event_tags) | none |
+//! | [`event_properties`](Options::event_properties) | none |
+//! | [`redact_event`](Options::redact_event) | none |
+//! | [`redact_sensitive_information`](Options::redact_sensitive_information) | none |
+//! | [`api_base_url`](Options::api_base_url) | empty: [`AGENTCAT_API_URL`], then [`MCPCAT_API_URL`], then `https://api.agentcat.com` |
+//! | [`log_destination`](Options::log_destination) | [`LogDestination::File`]: `~/agentcat.log` |
 //!
-//! The TypeScript options `exporters` and `disableDiagnostics` have no setter: this release has
-//! no exporters and no SDK diagnostics.
+//! This release has no exporters (OpenTelemetry, Datadog, Sentry, `PostHog`) and no SDK
+//! diagnostics.
 //!
 //! The hooks are async closures. The [`identify`](Options::identify),
 //! [`event_tags`](Options::event_tags), [`event_properties`](Options::event_properties) and
-//! [`resolve_session_id`](Options::resolve_session_id) hooks get a [`ToolCall`]. It holds the
-//! tool name, the arguments, the `_meta` of the request, the HTTP headers, the client, and the
-//! `rmcp` request context. The SDK starts these hooks on the tokio runtime of the call. The call
-//! never waits for them, so a slow hook never delays a tool call. When the event is ready to go
-//! out, the SDK waits at
-//! most 30 s for each hook. It stops a hook that has not completed by then, and the event goes out
-//! without the value of that hook. A hook that returns an error gives no value, and the SDK logs
-//! the error.
+//! [`resolve_session_id`](Options::resolve_session_id) hooks get a [`ToolCall`]. It holds the tool
+//! name, the arguments, the `_meta` of the request, the HTTP headers, the client, and the `rmcp`
+//! request context. The SDK starts these hooks on the tokio runtime of the call. The call never
+//! waits for them, so a slow hook never delays a tool call. When the event is ready to go out, the
+//! SDK waits at most 30 s for each hook. It stops a hook that has not completed by then, and the
+//! event goes out without the value of that hook. A hook that returns an error gives no value, and
+//! the SDK logs the error.
 //!
 //! The redaction hooks run before an event leaves the process:
 //! [`redact_event`](Options::redact_event) on the whole [`Event`], then
@@ -378,10 +381,10 @@
 //!
 //! # Delivery and shutdown
 //!
-//! Each [`AgentCat`] handle delivers its events from its own thread, `agentcat-delivery`. The
-//! first event or log line of the handle starts the thread. A tool call only puts its event in
-//! the queue of the handle, so the call never waits for the network. The delivery follows the
-//! TypeScript SDK:
+//! Each [`AgentCat`] handle delivers its events from its own thread, `agentcat-delivery`, with its
+//! own queue and its own API URL. The first event or log line of the handle starts the thread. A
+//! tool call only puts its event in the queue of the handle, so the call never waits for the
+//! network. The delivery has these limits:
 //!
 //! - The queue holds at most 10 000 events. When it is full, the SDK drops the oldest event.
 //! - At most 5 events of a handle are in progress at a time.
@@ -396,6 +399,9 @@
 //!   later event.
 //! - [`AgentCat::flush_blocking`] and [`AgentCat::shutdown_blocking`] block the calling thread
 //!   instead. They need no tokio runtime.
+//!
+//! The SDK installs no signal or exit handler. These calls and the drain of the last drop (below)
+//! deliver the queued events.
 //!
 //! ```no_run
 //! # async fn run(agentcat: agentcat_sdk::AgentCat) {
@@ -421,9 +427,9 @@
 //!
 //! # Logging
 //!
-//! The SDK never writes to stdout or stderr. It writes its own log lines to the file
-//! `agentcat.log` in your home directory (`~/agentcat.log`), as the TypeScript SDK does. Each line
-//! holds the time, the versions of the SDK, of Rust and of `rmcp`, and the message:
+//! The SDK never writes to stdout or stderr. It writes its own log lines to the file `agentcat.log`
+//! in your home directory (`~/agentcat.log`). Each line holds the time, the versions of the SDK, of
+//! Rust and of `rmcp`, and the message:
 //!
 //! ```text
 //! [2026-10-28T09:15:02.137Z] [sdk=1.0.0 rust=1.88.0 rmcp=3.6.0] Successfully sent event ...
@@ -564,29 +570,6 @@
 //!
 //! [`Fake::events`] returns the recorded events, for checks of your own.
 //!
-//! # Differences from the TypeScript SDK
-//!
-//! The SDK acts like the TypeScript SDK at commit `9b56e9e`. Rust and `rmcp` force some
-//! differences. The [deviation
-//! register](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/docs/superpowers/specs/2026-10-20-rust-sdk-design.md#9-deviation-register)
-//! lists each one with its reason. The differences that you can see:
-//!
-//! - This release has no exporters (OpenTelemetry, Datadog, Sentry, `PostHog`) and no SDK
-//!   diagnostics.
-//! - A tool that returns `Err(ErrorData)` gives the client a JSON-RPC error, as `rmcp` sends it.
-//!   The event gets the name of the JSON-RPC error code as `error.type`.
-//! - The `error` of an event has the platform `rust` and no stack frames. [`capture_error`] adds
-//!   the type of an error and its cause chain.
-//! - A tool call that is cancelled (its future dropped) gives an event with the error type
-//!   `cancelled`.
-//! - The hooks get a [`ToolCall`], not the raw request and the handler context.
-//! - The SDK stops a call hook that has not completed within its 30 s. The TypeScript SDK lets it
-//!   run and ignores its result.
-//! - Each handle has its own queue and API URL.
-//! - [`AgentCat::flush`], [`AgentCat::shutdown`] and the drain of the last drop take the place of
-//!   the signal and `beforeExit` handlers of the TypeScript SDK.
-//! - [`AGENTCAT_ENABLED`] and [`testing::Fake`] have no TypeScript counterpart.
-//!
 //! # Minimum supported Rust version
 //!
 //! The minimum supported Rust version (MSRV) is 1.88, the MSRV of `rmcp` 3. The MSRV is never
@@ -609,10 +592,12 @@
 //!   the first key of a result. Cargo turns a feature on for the whole build, so every
 //!   `serde_json::Map` in your program keeps the order of insertion and does not sort its keys.
 //! - When another crate in your build turns on the `arbitrary_precision` or the `float_roundtrip`
-//!   feature of `serde_json`, Cargo turns it on for the SDK too. Then the text of some numbers in
-//!   the events, the token estimates and the size checks can differ from the TypeScript SDK.
-//!   RD-23 and RD-32 of the deviation register give the rules for numbers. The SDK logs a warning
-//!   that names the feature each time its delivery thread starts.
+//!   feature of `serde_json`, Cargo turns it on for the SDK too. These features change how
+//!   `serde_json` reads and writes numbers. Without them, `serde_json` can read a decimal of 16 or
+//!   17 significant digits as the neighboring `f64`, and the SDK counts each number as the
+//!   shortest text that reads back as the same `f64`. With either feature, the text of some
+//!   numbers in the events, the token estimates and the size checks can change. The SDK logs a
+//!   warning that names the feature each time its delivery thread starts.
 //! - `parameters.extra.requestInfo.url` of an event is the URL that the `rmcp` service sees.
 //!   `axum::Router::nest_service` removes the path prefix of the route before that, so the event
 //!   records the URL without the prefix. `route_service` keeps the full path.
@@ -626,9 +611,9 @@
 //!   never drops, so the drain of the last drop never runs. Let the hook capture only what it
 //!   needs, or call [`AgentCat::shutdown`] before the process ends. A tool reaches its handle
 //!   through [`CallContext::agentcat`] and needs no clone.
-//! - The SDK gives the redaction hooks no time limit, as the TypeScript SDK gives none. A
-//!   redaction hook that never completes holds one of the 5 delivery slots of its handle for good.
-//!   Five such hooks stop the delivery of the handle.
+//! - The SDK gives the redaction hooks no time limit. A redaction hook that never completes holds
+//!   one of the 5 delivery slots of its handle for good. Five such hooks stop the delivery of the
+//!   handle.
 //!
 //! # Examples
 //!
@@ -678,7 +663,6 @@ mod event;
 mod handles;
 mod hooks;
 mod inject;
-mod js;
 mod logging;
 mod pipeline;
 mod registry;
@@ -690,6 +674,7 @@ mod test_support;
 pub mod testing;
 mod tokens;
 mod tracked;
+mod wire;
 
 pub use capture::capture_error;
 pub use client::{AgentCat, track};
@@ -702,8 +687,8 @@ pub use event::Event;
 pub use hooks::ToolCall;
 pub use tracked::Tracked;
 
-/// The code blocks of `README.md`, compiled as doctests (C55, R30). In the repository the file is a
-/// symlink to the root README, which GitHub shows; in the package it is a copy, which crates.io shows.
+/// The code blocks of `README.md`, compiled as doctests. In the repository the file is a symlink
+/// to the root README, which GitHub shows; in the package it is a copy, which crates.io shows.
 /// Only `cargo test --doc` builds it.
 #[cfg(doctest)]
 #[doc = include_str!("../README.md")]

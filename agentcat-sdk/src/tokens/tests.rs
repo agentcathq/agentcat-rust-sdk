@@ -6,9 +6,9 @@ use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{estimate_input_tokens, estimate_output_tokens, estimate_tokens};
-use crate::js;
 use crate::test_support::strategies::{js_string, json_value, object_key};
 use crate::test_support::{config, vectors};
+use crate::wire;
 
 /// The case name prefixes of `tokens.json`, and `divisor` (a case without a prefix).
 const KINDS: [&str; 5] = ["bytes", "utf8", "input", "output", "divisor"];
@@ -92,7 +92,7 @@ fn estimates_match_tokens_cases() {
 
 /// The estimate of the byte length of the `stringify` text of `value`.
 fn stringify_tokens(value: &Value) -> i32 {
-    estimate_tokens(u64::try_from(js::stringify(value).len()).unwrap())
+    estimate_tokens(u64::try_from(wire::stringify(value).len()).unwrap())
 }
 
 /// The UTF-8 length of `text`.

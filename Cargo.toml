@@ -24,9 +24,10 @@ axum = { version = "0.8", default-features = false }
 thiserror = { version = "2.0.3", default-features = false }
 chrono = { version = "0.4.39", default-features = false }
 tracing = { version = "0.1.23", default-features = false, features = ["std"] }
-# R11: 0.0.x breaks on every bump. The TLS features of agentcat-sdk switch the matching features on.
+# An exact pin: a 0.0.x release can break on every bump. The TLS features of agentcat-sdk switch
+# the matching features on.
 agentcat-api = { version = "=0.0.3", default-features = false }
-# C44: only the client builder is used; agentcat-api brings the TLS stack through its own features.
+# Only the client builder is used; agentcat-api brings the TLS stack through its own features.
 reqwest = { version = "0.13.0", default-features = false }
 
 [workspace.lints.rust]

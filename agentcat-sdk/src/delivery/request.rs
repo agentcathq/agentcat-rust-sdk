@@ -1,40 +1,38 @@
-//! The request that publishes one event (C40): [`publish_request`] turns the event the pipeline
-//! finished into `agentcat-api`'s `PublishEventRequest`, as TS's `toPublishEventRequest` builds
-//! its request from the in-memory event.
+//! The request that publishes one event: [`publish_request`] turns the event the pipeline
+//! finished into `agentcat-api`'s `PublishEventRequest`.
 use agentcat_api::models::PublishEventRequest;
 use agentcat_api::models::publish_event_request::EventType;
 use chrono::DateTime;
 use serde_json::{Number, Value};
 
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
 
-/// The request TS's `toPublishEventRequest` builds from `event` (C40):
+/// The request that publishes `event`:
 ///
 /// - `id`, `project_id` (`""` without one), the string fields (`resource_name`,
 ///   `identify_actor_given_id`, `identify_actor_name`, `sdk_language`, `agentcat_version`, the
 ///   server's and the client's name and version) and `is_error`, as the event holds them.
-/// - `session_id` is `null` when the event has no session (`""` or no key), as TS's
-///   `sessionId || null`.
+/// - `session_id` is `null` when the event has no session (`""` or no key).
 /// - `timestamp` is the event's ISO-8601 text read as a date, its milliseconds kept (chrono writes
-///   it without a zero fraction, RD-04).
+///   it without a zero fraction).
 /// - `duration`, `input_tokens` and `output_tokens` are the event's numbers, saturated to `i32`.
 /// - `event_type` is the variant of `mcp:tools/call` or `agentcat:custom`; any other text has
 ///   none and is left out.
 /// - `parameters`, `response`, `error` and `identify_data` (the event's `identifyActorData`) are
-///   the event's values through [`js::to_js_value`], so the numbers and key orders are TS's;
-///   `properties` too, left out when `null` (TS's `properties ?? undefined`).
-/// - `user_intent` is a string `userIntent` as it is, any other value as its `JSON.stringify` text
-///   (RD-33), and TS's `null` as no value.
+///   the event's values through [`wire::round_trip`], so the numbers and key orders are those of
+///   [`wire::stringify`]; `properties` too, left out when it is `null` or absent.
+/// - `user_intent` is a string `userIntent` as it is, any other value as its [`wire::stringify`]
+///   text, and `null` as no value.
 /// - `tags` are the event's string tags, left out when the event's `tags` is not an object.
-/// - `actor_id` is `identify_actor_given_id`: TS sends `actorId || identifyActorGivenId`, and a
-///   Rust event has no `actorId`. `ip_address` and `event_id` are never set.
-pub(crate) fn publish_request(event: &TsEvent) -> PublishEventRequest {
+/// - `actor_id` is `identify_actor_given_id`: an event has no actor ID of its own. `ip_address`
+///   and `event_id` are never set.
+pub(crate) fn publish_request(event: &EventObject) -> PublishEventRequest {
     let text = |key: &str| event.get(key).and_then(Value::as_str).map(str::to_owned);
-    let json = |key: &str| event.get(key).map(js::to_js_value);
+    let json = |key: &str| event.get(key).map(wire::round_trip);
     let number = |key: &str| event.get(key).and_then(Value::as_number).map(saturate);
     let identify_actor_given_id = text("identifyActorGivenId");
     PublishEventRequest {
@@ -71,7 +69,7 @@ pub(crate) fn publish_request(event: &TsEvent) -> PublishEventRequest {
         properties: event
             .get("properties")
             .filter(|properties| !properties.is_null())
-            .map(js::to_js_value),
+            .map(wire::round_trip),
         ip_address: None,
         sdk_language: text("sdkLanguage"),
         agentcat_version: text("agentcatVersion"),
@@ -108,12 +106,12 @@ fn saturate(number: &Number) -> i32 {
     number.as_f64().map_or(0, |float| float as i32)
 }
 
-/// The `user_intent` of the event's `userIntent` (RD-33): a string as it is, `null` as none,
-/// another value as its `JSON.stringify` text.
+/// The `user_intent` of the event's `userIntent`: a string as it is, `null` as none, another
+/// value as its [`wire::stringify`] text.
 fn user_intent(intent: &Value) -> Option<String> {
     match intent {
         Value::Null => None,
         Value::String(text) => Some(text.clone()),
-        other => Some(js::stringify(other)),
+        other => Some(wire::stringify(other)),
     }
 }

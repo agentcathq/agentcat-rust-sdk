@@ -1,5 +1,5 @@
 //! [`Fake`]: a test double that records what a tracked server publishes, so a customer's test can
-//! assert on it (C43, D41). Enable the `test-util` feature of the crate to use it.
+//! assert on it. Enable the `test-util` feature of the crate to use it.
 
 use std::fmt;
 use std::sync::{Arc, Mutex, PoisonError};
@@ -9,7 +9,7 @@ use crate::AgentCat;
 use crate::config::Options;
 use crate::delivery::Observer;
 use crate::event::Event;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 
 /// The event type of a tool call.
 const TOOL_CALL: &str = "mcp:tools/call";
@@ -25,11 +25,11 @@ struct Recorder {
 }
 
 impl Observer for Recorder {
-    fn finished(&self, event: &TsEvent) {
+    fn finished(&self, event: &EventObject) {
         self.events
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
-            .push(Event::from_ts(event));
+            .push(Event::from_object(event));
     }
 }
 

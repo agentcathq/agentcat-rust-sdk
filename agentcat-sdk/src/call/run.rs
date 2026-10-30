@@ -1,9 +1,8 @@
-//! The tool-call pipeline of the TS SDK (`installCallWrap`, B-022) on [`Tracked<H>`]: the
-//! pass-through of a handle that is off (C45), the report-missing intercept, the tracing-off and
-//! degraded paths, the schema of the called tool (C03), the session handles (B-052 to B-069), the
-//! stripped call with its [`CallContext`], the mint-back and its mirror, the panics and captured
-//! errors of the call (C23), and the [`CallRecord`] handed to the [`Sink`], also for a call whose
-//! future is dropped (C41). `call/run/tests.rs` drives it over in-memory connections,
+//! The tool-call pipeline on [`Tracked<H>`]: the pass-through of a handle that is off, the
+//! report-missing intercept, the tracing-off and degraded paths, the schema of the called tool,
+//! the session handles, the stripped call with its [`CallContext`], the mint-back and its mirror,
+//! the panics and captured errors of the call, and the [`CallRecord`] handed to the [`Sink`], also
+//! for a call whose future is dropped. `call/run/tests.rs` drives it over in-memory connections,
 //! `capture/tests.rs` its panics and captured errors; `event/tests.rs` checks its records over
 //! HTTP.
 use std::collections::HashSet;
@@ -46,29 +45,29 @@ use crate::tracked::Tracked;
 #[cfg(test)]
 mod tests;
 
-/// How long a registry rebuild may take in total, all listing pages together (B-027, C03).
+/// How long a registry rebuild may take in total, all listing pages together.
 pub(crate) const REBUILD_TIMEOUT: Duration = Duration::from_secs(5);
 
-/// The resource name of a call whose tool name is empty (B-077).
+/// The resource name of a call whose tool name is empty.
 const UNKNOWN_TOOL: &str = "Unknown Tool";
 
-/// The log line of a registry rebuild that worked (B-027).
+/// The log line of a registry rebuild that worked.
 const REBUILT: &str =
     "Rebuilt injection registries on demand (tools/call before tools/list on this instance)";
 
-/// The `agentcat_mrtr` tag of a call that carries the client's input responses (B-025).
+/// The `agentcat_mrtr` tag of a call that carries the client's input responses.
 const MRTR_CONTINUATION: &str = "continuation";
 
-/// The `agentcat_mrtr` tag of a call that answers an `InputRequiredResult` (B-025).
+/// The `agentcat_mrtr` tag of a call that answers an `InputRequiredResult`.
 const MRTR_INPUT_REQUIRED: &str = "input_required";
 
-/// What the SDK learned about the called tool before the call (C03).
+/// What the SDK learned about the called tool before the call.
 struct Schema {
     /// The tool's entry: from `inner.get_tool`, else from the registry.
     entry: Option<ToolEntry>,
-    /// Whether the tool declares its own `session_id` (B-040, C19).
+    /// Whether the tool declares its own `session_id`.
     foreign: bool,
-    /// Whether a structured result gets the `mcp_session` mirror (B-058, B-069).
+    /// Whether a structured result gets the `mcp_session` mirror.
     mirror: bool,
 }
 
@@ -78,9 +77,8 @@ struct Schema {
 enum SchemaLogs {
     /// A traced call writes them to the sink.
     Written,
-    /// A call with tracing off writes none of them, as TS's tracing-off branch returns before
-    /// `ensureRegistries` and logs nothing (`callWrap.ts:159-165`, P16). So a tracing-off handle
-    /// starts no delivery thread and writes no log file on this path.
+    /// A call with tracing off writes none of them: the tracing-off path logs nothing. So a
+    /// tracing-off handle starts no delivery thread and writes no log file on this path.
     Silent,
 }
 
@@ -93,38 +91,36 @@ impl SchemaLogs {
     }
 }
 
-/// TS's `tools/call` wrapper (B-022) around the inner handler's `call_tool`, in TS's order:
+/// The `tools/call` pipeline around the inner handler's `call_tool`, in this order:
 ///
 /// 1. A handle that `AGENTCAT_ENABLED` turned off hands the call to the handler untouched, with a
-///    [`CallContext`] without a session or an agent (C45, C29).
+///    [`CallContext`] without a session or an agent.
 /// 2. `get_more_tools` is intercepted when report-missing is on.
 /// 3. With tracing off, the intercept is answered, and any other call learns the tool's schema as
-///    in step 5, without its log lines (P16), and goes to the handler with the injected arguments
-///    stripped as in step 8 (R27, RD-29) and a [`CallContext`] without a session; nothing is
-///    recorded (B-023).
+///    in step 5, without its log lines, and goes to the handler with the injected arguments
+///    stripped as in step 8 and a [`CallContext`] without a session; nothing is recorded.
 /// 4. The call starts (`started_at`).
 /// 5. The tool's schema ([`learn_schema`]).
 /// 6. The session handles. When minting fails, the call takes the degraded path: after a log
 ///    line, the intercept is answered, and any other call goes to the handler with its raw
-///    arguments (TS, K-05) and a [`CallContext`] without a session; nothing is recorded.
-/// 7. The record of the call (B-077, B-083, B-096), in a [`RecordGuard`] until it is sent: when
-///    the call future is dropped before that (C41, RD-34), the record goes to the sink as
-///    cancelled.
+///    arguments and a [`CallContext`] without a session; nothing is recorded.
+/// 7. The customer's hooks start ([`start_hooks`]), and the record of the call waits in a
+///    [`RecordGuard`] until it is sent: when the call future is dropped before that, the record
+///    goes to the sink as cancelled.
 /// 8. The intercept is answered with the `context` argument as the intent; any other call goes
-///    to the handler with the injected arguments stripped (B-050, B-051) and a [`CallContext`]
-///    in its request context. The handler's `call_tool` runs inside the call's
-///    [`scope`], so [`capture_error`](crate::capture_error) reaches this record, and under
-///    `catch_unwind`: a panic is recorded with `type: "panic"` (C23) and then resumed with its
-///    own payload, so the client gets no response, as without the SDK (design §6.4).
-/// 9. A result gets the mint-back text and its mirror and is recorded (B-056 to B-059, B-097);
-///    an `InputRequiredResult` is tagged, not decorated (B-025).
-/// 10. A JSON-RPC error is recorded and returned unchanged (RD-05, D16).
+///    to the handler with the injected arguments stripped and a [`CallContext`] in its request
+///    context. The handler's `call_tool` runs inside the call's [`scope`], so
+///    [`capture_error`](crate::capture_error) reaches this record, and under `catch_unwind`: a
+///    panic is recorded with `type: "panic"` and then resumed with its own payload, so the client
+///    gets no response, as without the SDK.
+/// 9. A result gets the mint-back text and its mirror and is recorded; an `InputRequiredResult`
+///    is tagged, not decorated.
+/// 10. A JSON-RPC error is recorded and returned unchanged.
 ///
-/// For a failed call, an error captured during the call replaces the error that the result
-/// (B-097) or the JSON-RPC code name (R09) would give (C23). The other customer calls this path
-/// makes (`get_tool`, the rebuild's `list_tools`, `get_info`) are contained when they panic: each
-/// panic is logged with its message (C30), and the call goes on without what they would have
-/// given.
+/// For a failed call, an error captured during the call replaces the error that the result or the
+/// JSON-RPC code name would give. The other customer calls this path makes (`get_tool`, the
+/// rebuild's `list_tools`, `get_info`) are contained when they panic: each panic is logged with
+/// its message, and the call goes on without what they would have given.
 pub(crate) async fn run_call<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
@@ -234,7 +230,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
     }
 }
 
-/// The record of a traced call from its creation until it goes to the sink (C41, RD-34). The
+/// The record of a traced call from its creation until it goes to the sink. The
 /// call's own outcomes send it with [`send`](Self::send) or drop it with
 /// [`discard`](Self::discard). When the call future is dropped before that (a customer timeout, a
 /// `select!`, a server that stops), the guard's drop sends the record as cancelled: no response,
@@ -287,7 +283,7 @@ impl Drop for RecordGuard<'_> {
     }
 }
 
-/// What a complete result gets before it reaches the client (B-056, B-058): the mint-back text,
+/// What a complete result gets before it reaches the client: the mint-back text,
 /// and the structured mirror when the gate of [`learn_schema`] is open. It is built from the
 /// handles before the handler runs, while the record waits in its [`RecordGuard`].
 struct MintBack {
@@ -307,7 +303,7 @@ impl MintBack {
     }
 }
 
-/// The SDK's tags for a call (B-025, B-096): the MRTR continuation, then the handle tags.
+/// The SDK's tags for a call: the MRTR continuation, then the handle tags.
 fn call_tags(
     request: &CallToolRequestParams,
     resolution: &HandleResolution,
@@ -324,10 +320,10 @@ fn call_tags(
     tags
 }
 
-/// B-022 step 7: starts the customer's hooks, before the tool runs, and never awaits them (B-026).
-/// The task yields once when a hook started, so that each hook has made its first poll before the
-/// tool runs, as TS calls them first. The hooks see the request as sent, before the
-/// [`CallContext`] joins the context; that snapshot is built only when a hook starts.
+/// Step 7 of [`run_call`]: starts the customer's hooks, before the tool runs, and never awaits
+/// them. The task yields once when a hook started, so that each hook has made its first poll before
+/// the tool runs. The hooks see the request as sent, before the [`CallContext`] joins the context;
+/// that snapshot is built only when a hook starts.
 async fn start_hooks(
     shared: &Inner,
     request: &CallToolRequestParams,
@@ -348,13 +344,13 @@ async fn start_hooks(
 /// not intercepted hands to the handler.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Unrecorded {
-    /// Tracing is off (B-022 step 2, R27, RD-29): the call learns the tool's schema as a traced
-    /// call does ([`learn_schema`]: `get_tool`, the registry, a rebuild, else TS's heuristic) and
-    /// goes without the injected arguments, so a tool's own `context` stays. Learning the schema
-    /// writes no log line ([`SchemaLogs::Silent`], P16).
+    /// Tracing is off (step 3 of [`run_call`]): the call learns the tool's schema as a traced call
+    /// does ([`learn_schema`]: `get_tool`, the registry, a rebuild, else the name-based strip of
+    /// [`strip_arguments`]) and goes without the injected arguments, so a tool's own `context`
+    /// stays. Learning the schema writes no log line ([`SchemaLogs::Silent`]).
     Untraced,
-    /// No session ID could be issued (B-022 step 9): the call goes with its raw arguments, as in
-    /// TS (K-05).
+    /// No session ID could be issued (step 6 of [`run_call`]): the call goes with its raw
+    /// arguments, the injected ones included.
     Degraded,
 }
 
@@ -383,7 +379,7 @@ async fn unrecorded<H: ServerHandler>(
 }
 
 /// Hands `request` to the handler as it is, with a [`CallContext`] without a session or an agent
-/// in its context, so a tool that reads one keeps working on a call the SDK does not trace (C29).
+/// in its context, so a tool that reads one keeps working on a call the SDK does not trace.
 async fn forward<H: ServerHandler>(
     tracked: &Tracked<H>,
     request: CallToolRequestParams,
@@ -395,7 +391,7 @@ async fn forward<H: ServerHandler>(
 }
 
 /// `request` without the arguments the SDK injected into its tool ([`strip_arguments`]), by the
-/// tool's registry `entry`, else by TS's heuristic.
+/// tool's registry `entry`, else by the parameter names alone.
 fn stripped(
     mut request: CallToolRequestParams,
     entry: Option<&ToolEntry>,
@@ -408,8 +404,8 @@ fn stripped(
     request
 }
 
-/// The answer to a `get_more_tools` call, after its log line goes to the sink (B-046). TS logs it
-/// inside the tool, so every answered call logs it, traced or not.
+/// The answer to a `get_more_tools` call, after its log line goes to the sink. The line belongs to
+/// the answer, so every answered call logs it, traced or not.
 fn answer_report_missing(shared: &Inner, request: &CallToolRequestParams) -> CallToolResult {
     let (result, line) = report_missing(context_argument(request));
     shared.sink.log(line);
@@ -421,7 +417,7 @@ fn context_argument(request: &CallToolRequestParams) -> Option<&Value> {
     request.arguments.as_ref()?.get(CONTEXT_PARAM)
 }
 
-/// The tool name as the record names it: `Unknown Tool` for an empty one (B-077).
+/// The tool name as the record names it: `Unknown Tool` for an empty one.
 fn resource_name(name: &str) -> String {
     if name.is_empty() {
         UNKNOWN_TOOL.to_owned()
@@ -430,8 +426,8 @@ fn resource_name(name: &str) -> String {
     }
 }
 
-/// The `server_info` of `inner` (B-086), or none when its `get_info` panics: the panic is
-/// contained, logged with its message (C30), and the record gets no server name or version.
+/// The `server_info` of `inner`, or none when its `get_info` panics: the panic is contained,
+/// logged with its message, and the record gets no server name or version.
 pub(crate) fn server_info<H: ServerHandler>(shared: &Inner, inner: &H) -> Option<Implementation> {
     match catch_unwind(AssertUnwindSafe(|| inner.get_info().server_info)) {
         Ok(server) => Some(server),
@@ -445,7 +441,7 @@ pub(crate) fn server_info<H: ServerHandler>(shared: &Inner, inner: &H) -> Option
     }
 }
 
-/// The intent of a call that is not intercepted (B-083, K-08): with the tool-call context on and
+/// The intent of a call that is not intercepted: with the tool-call context on and
 /// a tool other than `get_more_tools`, the `context` argument as sent, whoever owns the parameter
 /// and whatever its type.
 fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Value> {
@@ -455,20 +451,20 @@ fn user_intent(options: &Options, request: &CallToolRequestParams) -> Option<Val
     context_argument(request).cloned()
 }
 
-/// The schema of the tool `name` (C03): `inner.get_tool(name)` through the tool-list pipeline
+/// The schema of the tool `name`: `inner.get_tool(name)` through the tool-list pipeline
 /// ([`Tracked::lookup_tool`]), else the registry's entry, else, while the registry has never
-/// recorded a listing, the entry after a [`rebuild`]. Without an entry the call gets TS's
-/// heuristic strip (B-051). A tool that got no parameters (a composed input schema, for example)
-/// has an empty entry, as TS gives every listed tool one (`listWrap.ts`), so its arguments stay as
-/// sent.
+/// recorded a listing, the entry after a [`rebuild`]. Without an entry the call gets the
+/// name-based strip of [`strip_arguments`]. A tool that got no parameters (a composed input
+/// schema, for example) has an empty entry, as every listed tool gets one, so its arguments stay
+/// as sent.
 ///
-/// A `get_tool` that panics gives no schema: the panic is contained and logged with its message
-/// (C30), and the registry, the rebuild and the heuristic follow as for a tool `get_tool` does not
+/// A `get_tool` that panics gives no schema: the panic is contained and logged with its message,
+/// and the registry, the rebuild and the name-based strip follow as for a tool `get_tool` does not
 /// know. With [`SchemaLogs::Silent`] none of these steps writes a log line.
 ///
 /// The tool is foreign when the registry's set of tools that declared their own `session_id`
-/// holds it, or when its `get_tool` schema declares one (C19). The mirror gate is the entry's
-/// `output_injected`; without an entry it is open only while no listing was ever recorded (B-069).
+/// holds it, or when its `get_tool` schema declares one. The mirror gate is the entry's
+/// `output_injected`; without an entry it is open only while no listing was ever recorded.
 async fn learn_schema<H: ServerHandler>(
     tracked: &Tracked<H>,
     name: &str,
@@ -523,7 +519,7 @@ fn registry_view<H: 'static>(shared: &Inner, name: &str) -> RegistryView {
     })
 }
 
-/// TS's registry rebuild on demand (B-027), across all pages (C03, RD-12): the inner handler's
+/// The registry rebuild on demand, across all pages: the inner handler's
 /// listing, page by page through `next_cursor`, within [`REBUILD_TIMEOUT`] in total. Each page
 /// then goes through the tool-list pipeline and into the registry, as a listing would, and the
 /// pipeline's log lines go to the sink. A failure, a panic of the handler's `list_tools` (with
@@ -551,7 +547,7 @@ async fn rebuild<H: ServerHandler>(
 }
 
 /// The pages of a rebuild that worked, through the tool-list pipeline into the registry of the
-/// handler type `H` (B-027); the pipeline's lines, then the rebuild line, go to the sink when
+/// handler type `H`; the pipeline's lines, then the rebuild line, go to the sink when
 /// `logs` writes them.
 fn record_pages<H: 'static>(shared: &Inner, pages: Vec<Vec<Tool>>, logs: SchemaLogs) {
     let config = InjectConfig::from_options(&shared.options);
@@ -570,7 +566,7 @@ fn record_pages<H: 'static>(shared: &Inner, pages: Vec<Vec<Tool>>, logs: SchemaL
     logs.log(shared, || REBUILT.to_owned());
 }
 
-/// The tools of every listing page of `inner`, from the first page (TS's `params: {}`) through
+/// The tools of every listing page of `inner`, from the first page (no cursor) through
 /// `next_cursor`. A cursor seen before ends the listing, and the task yields before each further
 /// page, so a handler that pages forever cannot hold the runtime past the rebuild's timeout.
 async fn list_pages<H: ServerHandler>(
@@ -593,10 +589,10 @@ async fn list_pages<H: ServerHandler>(
     }
 }
 
-/// B-022 step 12 on the handler's `response`: the record gets the response as it came (B-059)
+/// Step 9 of [`run_call`] on the handler's `response`: the record gets the response as it came
 /// and its output tokens; a complete result gets the [`MintBack`] and, when it is an error result,
-/// the record gets its error: the `captured` one, else the result's (B-097, C23). An
-/// `InputRequiredResult` is tagged and not decorated (B-025); any other response is not decorated.
+/// the record gets its error: the `captured` one, else the result's. An `InputRequiredResult` is
+/// tagged and not decorated; any other response is not decorated.
 /// Then the guard sends the record. When the response cannot be written as JSON, it is returned
 /// untouched and the record is discarded, after a log line.
 fn finish(
@@ -652,7 +648,7 @@ fn finish(
 }
 
 /// Marks `record` as failed with the `captured` error and its backtrace, else the error of
-/// `fallback` (C23).
+/// `fallback`.
 fn set_error(
     record: &mut CallRecord,
     captured: Option<Captured>,

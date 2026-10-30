@@ -55,9 +55,9 @@ use crate::event::Event;
 use crate::event::assemble::EventJob;
 use crate::handles::is_valid_session_id;
 use crate::hooks::PendingHooks;
-use crate::js;
 use crate::pipeline::process::Redactors;
 use crate::sink::BoxFuture;
+use crate::wire;
 
 /// The cases of `queue.json`.
 pub(crate) fn cases() -> Vec<Map<String, Value>> {
@@ -205,9 +205,9 @@ pub(crate) fn options_of(case: &Map<String, Value>) -> Options {
             let result: Result<Option<Event>, HookError> = if spec.get("throws").is_some() {
                 Err(spec["throws"].as_str().expect("a message").into())
             } else if let Some(Value::Object(fields)) = spec.get("merge") {
-                let mut merged = event.into_ts();
+                let mut merged = event.into_object();
                 merged.extend(fields.clone());
-                Ok(Some(Event::from_ts(&merged)))
+                Ok(Some(Event::from_object(&merged)))
             } else {
                 Ok(None)
             };
@@ -471,8 +471,8 @@ pub(crate) fn to_ts_model(request: &PublishEventRequest) -> Value {
     }
 
     if let Some(Value::String(timestamp)) = model.get_mut("timestamp") {
-        let time = js::parse_iso_millis(timestamp).expect("an RFC 3339 timestamp");
-        *timestamp = js::iso_millis(time);
+        let time = wire::parse_iso_millis(timestamp).expect("an RFC 3339 timestamp");
+        *timestamp = wire::iso_millis(time);
     }
     sort_tags(&mut model);
     Value::Object(model)
@@ -493,7 +493,7 @@ pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
                     request.remove("userIntent");
                 }
                 Some(intent) if !intent.is_string() => {
-                    *intent = Value::String(js::stringify(intent));
+                    *intent = Value::String(wire::stringify(intent));
                 }
                 _ => {}
             }

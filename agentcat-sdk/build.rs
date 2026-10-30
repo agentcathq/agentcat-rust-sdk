@@ -1,4 +1,4 @@
-//! Records the rustc version for the log line prefix (C42). It never fails the build.
+//! Records the rustc version for the log line prefix. It never fails the build.
 #![expect(
     clippy::disallowed_methods,
     reason = "a build script reads RUSTC, which cargo sets for it"

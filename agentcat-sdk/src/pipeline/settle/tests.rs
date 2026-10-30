@@ -16,11 +16,11 @@ use super::{HookResults, apply, settle};
 use crate::config::{HookError, UserIdentity};
 use crate::handles::{derive_session_id, is_valid_session_id};
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::test_support::json::object;
 use crate::test_support::queue::{self, Task, returns, throws};
 use crate::test_support::{assert_js_eq, vectors};
+use crate::wire;
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
@@ -45,7 +45,7 @@ fn hangs_watched<T: Send + 'static>(dropped: &Arc<AtomicBool>) -> Task<T> {
 
 /// A tool-call event as `from_call` leaves it, in TS key order, with the session `session` (`""`
 /// in hook mode) and the SDK tags `tags`.
-fn call_event(session: &str, tags: Value) -> TsEvent {
+fn call_event(session: &str, tags: Value) -> EventObject {
     let mut event = object(json!({
         "id": "",
         "sessionId": session,
@@ -66,7 +66,7 @@ fn call_event(session: &str, tags: Value) -> TsEvent {
 }
 
 /// The keys of `event`, in order.
-fn keys(event: &TsEvent) -> Vec<&str> {
+fn keys(event: &EventObject) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 
@@ -111,8 +111,8 @@ async fn settled_hooks_apply_in_ts_order() {
         "properties": {"device": "mobile"},
     });
     assert_eq!(
-        js::stringify(&Value::Object(event)),
-        js::stringify(&expected)
+        wire::stringify(&Value::Object(event)),
+        wire::stringify(&expected)
     );
 }
 
@@ -207,8 +207,8 @@ async fn unset_and_null_hooks_change_nothing() {
     let before = event.clone();
     apply(&mut event, results, false).expect("no session step");
     assert_eq!(
-        js::stringify(&Value::Object(event)),
-        js::stringify(&Value::Object(before))
+        wire::stringify(&Value::Object(event)),
+        wire::stringify(&Value::Object(before))
     );
 }
 
@@ -271,7 +271,7 @@ fn sdk_tags_win_collisions() {
     };
     apply(&mut event, results, false).expect("no session step");
     assert_eq!(
-        js::stringify(&event["tags"]),
+        wire::stringify(&event["tags"]),
         r#"{"agentcat_session_id_source":"supplied","env":"test"}"#
     );
 }

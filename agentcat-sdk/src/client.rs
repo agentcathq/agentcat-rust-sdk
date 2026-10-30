@@ -96,15 +96,15 @@ impl fmt::Debug for AgentCat {
 
 /// What the clones of one [`AgentCat`] share.
 pub(crate) struct Inner {
-    /// The project that receives the events; `""` means telemetry only (B-003).
+    /// The project that receives the events; `""` means telemetry only.
     pub(crate) project_id: String,
     pub(crate) options: Options,
-    /// Whether the SDK is on for this handle (C45). `AGENTCAT_ENABLED` turns it off: then the
+    /// Whether the SDK is on for this handle. `AGENTCAT_ENABLED` turns it off: then the
     /// [`Tracked`] servers forward every method untouched and the sink drops everything.
     pub(crate) enabled: bool,
     /// Where the SDK hands its own log lines, its records and its events.
     pub(crate) sink: Arc<dyn Sink>,
-    /// What the listings taught the SDK, one registry per inner handler type (C19).
+    /// What the listings taught the SDK, one registry per inner handler type.
     registries: Mutex<HashMap<TypeId, ToolRegistry>>,
 }
 
@@ -135,7 +135,7 @@ impl Inner {
     }
 }
 
-/// The line TS writes when no project ID is given (B-003).
+/// The warning a handle logs when no project ID is given.
 const NO_PROJECT_WARNING: &str =
     "Warning: No projectId provided and no exporters configured. Events will not be sent anywhere.";
 
@@ -156,7 +156,7 @@ impl Transport {
     }
 
     /// The real transport: the process logger is set to the destination of `options` (the first
-    /// handle wins, D38) and events go to the API (C44), with the home directory and the API URL
+    /// handle wins) and events go to the API, with the home directory and the API URL
     /// of `env`. A unit test reaches it through `AgentCat::with_api_transport` only.
     fn api(options: &Options, env: &dyn Env) -> Self {
         logging::configure(options.log_to(), env.home_dir());
@@ -169,7 +169,7 @@ impl Transport {
         }
     }
 
-    /// The transport of a handle that [`AgentCat::new`] builds in a unit test (P15): events are
+    /// The transport of a handle that [`AgentCat::new`] builds in a unit test: events are
     /// accepted and dropped, nothing reaches a network, and the process logger stays as it is
     /// (unset, so the real home directory is not written to). A test that needs the real
     /// publisher builds it itself, or its handle with [`AgentCat::with_api_transport`], against a
@@ -185,7 +185,8 @@ impl Transport {
     }
 }
 
-/// A publisher that accepts every event and sends none (P15; also the test fake's, C43).
+/// A publisher that accepts every event and sends none: the one of unit-test handles and of the
+/// test fake.
 #[cfg(any(test, feature = "test-util"))]
 struct OfflinePublisher;
 
@@ -207,14 +208,14 @@ fn default_env() -> ProcessEnv {
 
 /// The environment that [`AgentCat::new`] and [`AgentCat::from_env`] read in unit tests: an empty
 /// one, so an `AGENTCAT_ENABLED` or `AGENTCAT_PROJECT_ID` in the developer's shell cannot change
-/// the handles of tests (P17), as [`Transport::process`] keeps them off the network and the log
+/// the handles of tests, as [`Transport::process`] keeps them off the network and the log
 /// file. A test that needs a variable builds its handle with [`AgentCat::with_env`].
 #[cfg(test)]
 fn default_env() -> MapEnv {
     MapEnv::new(&[])
 }
 
-/// The sink of a handle that `AGENTCAT_ENABLED` turned off (C45): it drops every line, record and
+/// The sink of a handle that `AGENTCAT_ENABLED` turned off: it drops every line, record and
 /// event, so nothing starts a thread, and it answers `flush` and `shutdown` with `true`.
 struct DisabledSink;
 
@@ -280,7 +281,7 @@ impl AgentCat {
         Self::from_env_in(options, &default_env())
     }
 
-    /// [`AgentCat::from_env`] in the environment `env` (D36).
+    /// [`AgentCat::from_env`] in the environment `env`.
     fn from_env_in(options: Options, env: &dyn Env) -> Self {
         let project_id = env.var(AGENTCAT_PROJECT_ID).unwrap_or_default();
         Self::build(project_id, options, env)
@@ -301,7 +302,7 @@ impl AgentCat {
     }
 
     /// [`AgentCat::new`] in the environment `env`: a handle that is off when `env` turns the SDK
-    /// off (C45, D44), else one that publishes through the process transport.
+    /// off, else one that publishes through the process transport.
     fn build(project_id: String, options: Options, env: &dyn Env) -> Self {
         Self::build_with(project_id, options, env, Transport::process)
     }
@@ -327,7 +328,7 @@ impl AgentCat {
     }
 
     /// A handle whose events go through a [`Delivery`] over `transport`. An empty `project_id`
-    /// queues TS's warning (B-003), then the transport's own lines; the first line starts the
+    /// queues [`NO_PROJECT_WARNING`], then the transport's own lines; the first line starts the
     /// worker, which writes it.
     fn assemble(
         project_id: String,
@@ -370,7 +371,7 @@ impl AgentCat {
         Self::with_sink(project_id, options, sink)
     }
 
-    /// A handle for the test fake (C43, P18): always enabled, whatever `AGENTCAT_ENABLED` says;
+    /// A handle for the test fake: always enabled, whatever `AGENTCAT_ENABLED` says;
     /// it never configures the process logger; its publisher never sends; `observer` is told
     /// about every event that finishes the pipeline. Built here, not through [`Transport`],
     /// because a customer's tests compile the library without `cfg(test)`.
@@ -408,7 +409,7 @@ impl AgentCat {
         })
     }
 
-    /// A handle that `AGENTCAT_ENABLED` turned off (C45), whose sink is `sink`, so a test sees
+    /// A handle that `AGENTCAT_ENABLED` turned off, whose sink is `sink`, so a test sees
     /// that nothing reaches it.
     #[cfg(test)]
     pub(crate) fn disabled_with_sink(
@@ -437,9 +438,8 @@ impl AgentCat {
         Tracked::new(handler, self.clone())
     }
 
-    /// Publishes a custom event to the project `project_id` for the session `session_id`, as
-    /// TypeScript's `publishCustomEvent(sessionId, projectId, eventData)` does (B-009, C11). It
-    /// only queues the event, so it returns at once.
+    /// Publishes a custom event to the project `project_id` for the session `session_id`. It only
+    /// queues the event, so it returns at once.
     ///
     /// The session is the event's own [`session_id`](CustomEvent::session_id) when it is not
     /// empty, else `session_id` verbatim (it may be empty for none). The event has no server or

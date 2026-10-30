@@ -1,4 +1,4 @@
-//! [`Options`]: what `AgentCat` adds to a server's tools and what it records (B-004).
+//! [`Options`]: what `AgentCat` adds to a server's tools and what it records.
 
 use std::fmt;
 use std::future::Future;
@@ -18,7 +18,7 @@ mod tests;
 /// The error a hook returns. The SDK logs it and goes on without what the hook would have given.
 pub type HookError = Box<dyn std::error::Error + Send + Sync + 'static>;
 
-/// Who calls the tools, as the `identify` hook reports it (D19).
+/// Who calls the tools, as the `identify` hook reports it.
 ///
 /// ```
 /// use agentcat_sdk::UserIdentity;
@@ -143,12 +143,12 @@ impl<A, T> fmt::Debug for Redactor<A, T> {
     }
 }
 
-/// Where the SDK writes its own log lines (B-117, D38). The destination is process-wide: the
+/// Where the SDK writes its own log lines. The destination is process-wide: the
 /// first handle built decides it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum LogDestination {
-    /// The file `agentcat.log` in the user's home directory, as the TypeScript SDK writes it.
+    /// The file `agentcat.log` in the user's home directory, one line per message.
     #[default]
     File,
     /// `tracing` events with the target `agentcat`.
@@ -160,8 +160,9 @@ pub enum LogDestination {
     Tracing,
 }
 
-/// Settings for an [`AgentCat`](crate::AgentCat) handle. [`Options::default`] has the defaults
-/// of the TypeScript SDK; each setter consumes the options and returns them changed.
+/// Settings for an [`AgentCat`](crate::AgentCat) handle. [`Options::default`] turns on the
+/// `context` parameter, tracing and the `get_more_tools` tool, and turns off agent tracking; each
+/// setter consumes the options and returns them changed.
 ///
 /// ```
 /// use agentcat_sdk::Options;
@@ -180,7 +181,7 @@ pub enum LogDestination {
 #[derive(Clone, Debug)]
 #[expect(
     clippy::struct_excessive_bools,
-    reason = "the four boolean switches of the TS options (B-004)"
+    reason = "the four boolean switches of the options"
 )]
 pub struct Options {
     report_missing: bool,
@@ -199,7 +200,7 @@ pub struct Options {
 }
 
 impl Default for Options {
-    /// The TypeScript SDK defaults: missing-tool reports on, tracing on, the `context` parameter
+    /// The defaults: missing-tool reports on, tracing on, the `context` parameter
     /// on, agent tracking off, and the default `context` description.
     fn default() -> Self {
         Self {
@@ -221,7 +222,7 @@ impl Default for Options {
 }
 
 impl Options {
-    /// Decides the session of each tool call (hook mode, B-064). With this hook set, tools get no
+    /// Decides the session of each tool call (hook mode). With this hook set, tools get no
     /// `session_id` parameter and the SDK mints nothing back to the agent. The hook returns the
     /// session id, or `None` to let the SDK mint one.
     #[must_use]
@@ -280,7 +281,7 @@ impl Options {
     /// at a time and returns the string to send. It runs on the tokio runtime that serves the
     /// call. When it fails, the SDK drops the event rather than send it unredacted.
     ///
-    /// The SDK gives the hook no time limit, as the TypeScript SDK gives none. An event holds one
+    /// The SDK gives the hook no time limit. An event holds one
     /// of the 5 delivery slots of its handle while the hook runs on it. A hook that never
     /// completes holds its slot for good, and five such hooks stop the delivery of the handle:
     /// later events wait in the queue until a shutdown abandons them.
@@ -299,7 +300,7 @@ impl Options {
     /// serves the call. When it fails, the SDK drops the event. To unit-test the hook, call it
     /// with an event from [`Event::default`].
     ///
-    /// The SDK gives the hook no time limit, as the TypeScript SDK gives none. An event holds one
+    /// The SDK gives the hook no time limit. An event holds one
     /// of the 5 delivery slots of its handle while the hook runs on it. A hook that never
     /// completes holds its slot for good, and five such hooks stop the delivery of the handle:
     /// later events wait in the queue until a shutdown abandons them.
@@ -313,8 +314,8 @@ impl Options {
         self
     }
 
-    /// Where the SDK writes its own log lines. The first handle built in the process decides
-    /// (D38). The default is [`LogDestination::File`].
+    /// Where the SDK writes its own log lines. The first handle built in the process decides. The
+    /// default is [`LogDestination::File`].
     #[must_use]
     pub fn log_destination(mut self, destination: LogDestination) -> Self {
         self.log_destination = destination;
@@ -385,7 +386,7 @@ impl Options {
     }
 
     /// The description of the `context` parameter: the custom text, or the default where it is
-    /// empty (TS treats a falsy description as none).
+    /// empty.
     pub(crate) fn context_description(&self) -> &str {
         if self.custom_context_description.is_empty() {
             DEFAULT_CONTEXT_PARAMETER_DESCRIPTION
@@ -394,7 +395,7 @@ impl Options {
         }
     }
 
-    /// Whether a `resolve_session_id` hook decides the session (B-064, "hook mode").
+    /// Whether a `resolve_session_id` hook decides the session ("hook mode").
     pub(crate) fn hook_mode(&self) -> bool {
         self.resolve_session_id.is_some()
     }

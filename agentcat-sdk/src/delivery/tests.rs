@@ -30,7 +30,7 @@ use crate::config::{HookError, LogDestination, Options, UserIdentity};
 use crate::event::assemble::EventJob;
 use crate::hooks::PendingHooks;
 use crate::logging;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::sink::{BoxFuture, Sink};
 use crate::test_support::json::object;
 use crate::test_support::queue::{
@@ -148,10 +148,10 @@ fn hanging<T: Send + 'static>(
 
 /// An observer that keeps every event it is told about.
 #[derive(Default)]
-struct RecordingObserver(Mutex<Vec<TsEvent>>);
+struct RecordingObserver(Mutex<Vec<EventObject>>);
 
 impl Observer for RecordingObserver {
-    fn finished(&self, event: &TsEvent) {
+    fn finished(&self, event: &EventObject) {
         self.0.lock().unwrap().push(event.clone());
     }
 }

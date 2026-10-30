@@ -1,13 +1,13 @@
-//! The tool-list pipeline of the TS SDK, `buildInjectedList` (B-031 to B-048), on rmcp tools: the
-//! `get_more_tools` tool, the `session_id` and `agent_id` parameters, the `mcp_session` property of
-//! output schemas and the `context` parameter, with TS's skips, log lines and per-tool fault
-//! isolation. Agents read the injected schemas, so they are TS's, key order included.
+//! The tool-list pipeline on rmcp tools: the `get_more_tools` tool, the `session_id` and
+//! `agent_id` parameters, the `mcp_session` property of output schemas and the `context`
+//! parameter, with their skips, log lines and per-tool fault isolation. Agents read the injected
+//! schemas, so they are fixed, key order included.
 //!
-//! TS reads the schemas with JavaScript semantics, and so does this module: a key is "declared"
-//! when its value is truthy (B-043), a composition key counts when its value is truthy, and
-//! setting a property on a `properties` value that is a string, number or boolean throws
-//! JavaScript's `TypeError`, which TS turns into a log line and an unmodified tool (B-044).
-//! `inject/tests.rs` checks the pipeline against `tests/vectors/inject.json` and the JS oracle.
+//! The pipeline reads the schemas by these rules: a key is "declared" when its value is truthy
+//! ([`wire::truthy`]), a composition key counts when its value is truthy, and setting a property
+//! on a `properties` value that is a string, number or boolean fails with a `TypeError` text,
+//! which the pipeline turns into a log line and an unmodified tool. `inject/tests.rs` checks the
+//! pipeline against `tests/vectors/inject.json` and `tests/vectors/inject_cases.json`.
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
@@ -22,7 +22,7 @@ use crate::constants::{
     MCP_SESSION_STATUS_DESCRIPTION, SESSION_ID_PARAM, SESSION_ID_PARAM_DESCRIPTION,
     SESSION_ID_PARAM_PATTERN, get_more_tools_descriptor,
 };
-use crate::js::{self, truthy};
+use crate::wire::{self, truthy};
 
 #[cfg(test)]
 mod tests;
@@ -30,21 +30,21 @@ mod tests;
 /// The name of the injected `context` parameter.
 pub(crate) const CONTEXT_PARAM: &str = "context";
 
-/// The registry name TS gives a tool whose name is empty (`name || "unknown"`).
+/// The registry name of a tool whose name is empty.
 const UNKNOWN_TOOL: &str = "unknown";
 
 /// The composition keywords that make a schema "complex" when their value is truthy.
 const COMPOSITION_KEYS: [&str; 3] = ["oneOf", "allOf", "anyOf"];
 
-/// The warning TS logs once per tracking-data object when the listing has its own
-/// `get_more_tools` while report-missing is on (B-028).
+/// The warning logged once per [`InjectState`] when the listing has its own `get_more_tools`
+/// while report-missing is on.
 const SHADOW_WARNING: &str = "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set enableReportMissing: false to keep yours reachable.";
 
-/// What the pipeline injects, from the [`Options`] (B-031).
+/// What the pipeline injects, from the [`Options`].
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[expect(
     clippy::struct_excessive_bools,
-    reason = "the four switches of the TS pipeline (B-031)"
+    reason = "the four switches of the pipeline"
 )]
 pub(crate) struct InjectConfig {
     /// Whether listings get `get_more_tools`.
@@ -60,7 +60,7 @@ pub(crate) struct InjectConfig {
 }
 
 impl InjectConfig {
-    /// The pipeline settings of `options` with hook mode `hook_mode` (B-031, B-064):
+    /// The pipeline settings of `options` with hook mode `hook_mode`:
     /// `session_id` with tracing and without hook mode, `agent_id` with tracing and agent
     /// tracking, `context` with the tool-call context.
     pub(crate) fn new(options: &Options, hook_mode: bool) -> Self {
@@ -79,28 +79,29 @@ impl InjectConfig {
         Self::new(options, options.hook_mode())
     }
 
-    /// Whether the handle step runs: it injects `session_id`, `agent_id` or both (B-031 step 3).
+    /// Whether the handle step runs: it injects `session_id`, `agent_id` or both.
     fn injects_handles(&self) -> bool {
         self.inject_session_id || self.inject_agent_id
     }
 }
 
-/// What the pipeline recorded for one tool name: TS's registry entry (the injected parameters),
-/// its output-registry membership and whether the tool declares its own `session_id`.
+/// What the pipeline recorded for one tool name: the injected parameters, whether the output
+/// schema got `mcp_session`, and whether the tool declares its own `session_id`.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct ToolEntry {
-    /// The parameters injected into the input schema, in the order TS records them: `session_id`,
-    /// `agent_id`, `context` (two tools of one name on one page share TS's record, in the order
-    /// their parameters were recorded).
+    /// The parameters injected into the input schema, in the order they are recorded:
+    /// `session_id`, `agent_id`, `context` (two tools of one name on one page share one record, in
+    /// the order their parameters were recorded).
     pub(crate) injected: Vec<&'static str>,
-    /// Whether the output schema got `mcp_session`, which gates the structured mirror (B-047).
+    /// Whether the output schema got `mcp_session`, which gates the structured mirror.
     pub(crate) output_injected: bool,
     /// Whether the input schema declares its own `session_id` while the SDK injects one, so a
-    /// call's `session_id` is the customer's (B-040).
+    /// call's `session_id` is the customer's.
     pub(crate) declares_session: bool,
 }
 
-/// The state TS keeps per tracking-data object across listings (B-028, B-040).
+/// The state the pipeline keeps across the listings of one registry (one per handle and handler
+/// type).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct InjectState {
     /// The tools whose input schema declared its own `session_id`; it only grows.
@@ -117,17 +118,17 @@ pub(crate) struct InjectedList {
     /// The tools to list, `get_more_tools` appended when report-missing adds it.
     pub(crate) tools: Vec<Tool>,
     /// One entry per tool name, by registry name, in name order. A tool named `""` is recorded as
-    /// `"unknown"`, as TS records it, and only when TS's registry has that name.
+    /// `"unknown"`, and only when the page's parameter registry has that name.
     pub(crate) entries: Vec<(String, ToolEntry)>,
-    /// The TS log lines of the listing, in TS's order.
+    /// The log lines of the listing, in the order the steps write them.
     pub(crate) logs: Vec<String>,
 }
 
-/// TS's `buildInjectedList` on one listing page (B-031 to B-048): appends `get_more_tools` (or
-/// logs the shadow warning once, B-028), runs the handle step over every tool, then the context
-/// step over every tool but `get_more_tools`, and gives every listed tool with a name an entry.
-/// The steps of each tool are those of [`inject_tool`]; the listing runs them step by step over
-/// all tools, as TS does, so its log lines come in TS's order and tools that share a name share
+/// The pipeline on one listing page: appends `get_more_tools` (or logs the shadow warning once),
+/// runs the handle step over every tool, then the context step over every tool but
+/// `get_more_tools`, and gives every listed tool with a name an entry. The steps of each tool are
+/// those of [`inject_tool`]; the listing runs them step by step over all tools, so the lines of
+/// the handle step come before those of the context step and tools that share a name share
 /// their record. Schemas are edited with `Arc::make_mut`, so a schema the caller still holds stays
 /// as it was.
 pub(crate) fn build_injected_list(
@@ -208,15 +209,16 @@ pub(crate) fn inject_tool(
     (tool, entry)
 }
 
-/// The `get_more_tools` tool, from `getReportMissingToolDescriptor()` (B-045).
+/// The `get_more_tools` tool, from [`get_more_tools_descriptor`].
 pub(crate) fn get_more_tools_tool() -> Tool {
-    // The descriptor is a valid tool (`inject::tests::get_more_tools_tool_is_the_ts_descriptor`),
-    // so the default never appears.
+    // The descriptor is a valid tool (a test in `inject/tests.rs` checks it), so the default never
+    // appears.
     serde_json::from_value(get_more_tools_descriptor()).unwrap_or_default()
 }
 
-/// TS's registries of one page: the injected parameters by name (`InjectedParamsRegistry`), the
-/// output registry, and the names whose tool declared its own `session_id` on this page.
+/// The registries of one page: the injected parameters by name, the output registry (the names
+/// whose output schema got `mcp_session`), and the names whose tool declared its own
+/// `session_id` on this page.
 #[derive(Default)]
 struct PageRegistry {
     params: BTreeMap<String, Vec<&'static str>>,
@@ -226,7 +228,7 @@ struct PageRegistry {
 
 impl PageRegistry {
     /// Records the handle step of the tool `key`: its parameters join the name's record, or, when
-    /// the step failed, the name's records are dropped, as TS deletes them (B-044).
+    /// the step failed, the name's records are dropped.
     fn handles(&mut self, key: String, step: HandleStep) {
         if step.entry.declares_session {
             self.declares_session.insert(key.clone());
@@ -250,7 +252,7 @@ impl PageRegistry {
     }
 
     /// Records the context step of the tool `key`: `context` joins the name's record, or leaves
-    /// it when the step failed (B-044).
+    /// it when the step failed.
     fn context(&mut self, key: String, step: ContextStep) {
         match step {
             ContextStep::Untouched => {}
@@ -268,7 +270,7 @@ impl PageRegistry {
         }
     }
 
-    /// One entry per name of the parameter registry. TS's output registry can hold `"unknown"`
+    /// One entry per name of the parameter registry. The output registry can hold `"unknown"`
     /// alone (a tool named `""` whose handle step injected no parameter but extended its output
     /// schema); no call reaches a tool by that name, so it gets no entry.
     fn into_entries(self) -> Vec<(String, ToolEntry)> {
@@ -296,7 +298,7 @@ struct HandleStep {
     /// The handle parameters it injected, whether it extended the output schema, and whether the
     /// tool declares its own `session_id`. After a failure only the last is kept.
     entry: ToolEntry,
-    /// Whether the step failed, so the tool is listed as it came (B-044).
+    /// Whether the step failed, so the tool is listed as it came.
     failed: bool,
 }
 
@@ -307,11 +309,11 @@ enum ContextStep {
     Untouched,
     /// The input schema got `context`.
     Injected,
-    /// The step failed, so the tool is listed as it came (B-044).
+    /// The step failed, so the tool is listed as it came.
     Failed,
 }
 
-/// The name TS keys a tool by in its registries and log lines: its name, or `"unknown"` when the
+/// The name a tool is keyed by in the registries and log lines: its name, or `"unknown"` when the
 /// name is empty.
 fn registry_name(tool: &Tool) -> &str {
     if tool.name.is_empty() {
@@ -321,10 +323,9 @@ fn registry_name(tool: &Tool) -> &str {
     }
 }
 
-/// The handle step of `addHandleParametersToTool` (B-032 to B-034, B-037 to B-041, B-043,
-/// B-044, B-047). A composed input schema is left alone, with a warning; it still declares its
+/// The handle step. A composed input schema is left alone, with a warning; it still declares its
 /// own `session_id` when its root `properties` has a truthy one. Otherwise the step works on a
-/// copy and gives the tool as it came when the copy throws.
+/// copy and gives the tool as it came when the step fails on the copy.
 fn inject_handles(
     config: &InjectConfig,
     tool: Tool,
@@ -349,8 +350,8 @@ fn inject_handles(
             },
         );
     }
-    // TS's `{ ...tool }`: the copy shares the schemas until `Arc::make_mut` copies one, and
-    // `tool` stays as it came for a failure.
+    // A shallow copy: it shares the schemas until `Arc::make_mut` copies one, and `tool` stays as
+    // it came for a failure.
     let mut injected = tool.clone();
     match add_handles(config, &mut injected, &key, &mut entry, state, logs) {
         Ok(()) => (
@@ -431,7 +432,7 @@ fn add_handles(
     Ok(())
 }
 
-/// The output-schema part of the handle step (`addMcpSessionToOutputSchema`, B-047): `Ok(true)`
+/// The output-schema part of the handle step: `Ok(true)`
 /// when `mcp_session` was added as the last property. A composed schema or one that declares
 /// `mcp_session` is left alone, with a warning.
 fn add_mcp_session(
@@ -446,7 +447,8 @@ fn add_mcp_session(
         ));
         return Ok(false);
     }
-    // TS gives its copy `properties: {}` before this check; a falsy `properties` declares nothing.
+    // `ensure_properties` below makes `properties` an object; a falsy one declares nothing, so the
+    // check gives the same answer before it.
     if declares(output, MCP_SESSION_KEY) {
         logs.push(format!(
             "WARN: Tool \"{key}\" already declares '{MCP_SESSION_KEY}' in outputSchema. Skipping injection."
@@ -490,7 +492,7 @@ fn add_mcp_session(
     Ok(true)
 }
 
-/// The context step of `addContextParameterToTool` (B-035, B-037, B-038, B-042 to B-044): a
+/// The context step: a
 /// tool that declares `context` is left alone, then one with a composed schema, each with a
 /// warning; otherwise `properties` is made an object when falsy, `additionalProperties: false`
 /// dropped, and `context` added last and to `required`.
@@ -531,22 +533,21 @@ fn inject_context(
     }
 }
 
-/// Whether `schema` has a truthy `oneOf`, `allOf` or `anyOf` (B-039).
+/// Whether `schema` has a truthy `oneOf`, `allOf` or `anyOf`.
 fn is_composed(schema: &JsonObject) -> bool {
     COMPOSITION_KEYS
         .iter()
         .any(|key| schema.get(*key).is_some_and(truthy))
 }
 
-/// Whether the `properties` of `schema` declare `name` as TS checks it: `properties[name]` is
-/// truthy (B-043). Only an object holds the name: JavaScript finds none of the injected names on a
-/// string, number, boolean or array.
+/// Whether the `properties` of `schema` declare `name`: `properties` is an object whose `name`
+/// value is truthy. A string, number, boolean or array declares no name.
 fn declares(schema: &JsonObject, name: &str) -> bool {
     matches!(schema.get("properties"), Some(Value::Object(properties)) if properties.get(name).is_some_and(truthy))
 }
 
-/// TS's `if (!schema.properties) schema.properties = {}`: a missing `properties` is appended, a
-/// falsy one replaced in its place. Gives the `properties` value.
+/// Makes `properties` an object when it is missing or falsy: a missing `properties` is appended,
+/// a falsy one replaced in its place. Gives the `properties` value.
 fn ensure_properties(schema: &mut JsonObject) -> &mut Value {
     let properties = schema
         .entry("properties")
@@ -557,18 +558,17 @@ fn ensure_properties(schema: &mut JsonObject) -> &mut Value {
     properties
 }
 
-/// TS's `delete schema.additionalProperties` when it is `false` (B-038); the other keys keep
-/// their order.
+/// Removes `additionalProperties` when it is `false`; the other keys keep their order.
 fn drop_additional_false(schema: &mut JsonObject) {
     if schema.get("additionalProperties") == Some(&Value::Bool(false)) {
         schema.shift_remove("additionalProperties");
     }
 }
 
-/// `properties[name] = value` in JavaScript's strict mode: an object takes the key (in its place
-/// when it has it already), an array takes it as a named property that JSON never shows, and a
-/// string, number or boolean throws the `TypeError` whose text is the `Err` (`ensure_properties`
-/// has replaced a falsy value, so no `null` gets here).
+/// Sets `name` to `value` in `properties`: an object takes the key (in its place when it has it
+/// already), an array stays as it is (no key of an array shows in JSON), and a string, number or
+/// boolean fails, with the `TypeError: Cannot create property ...` text as the `Err`
+/// (`ensure_properties` has replaced a falsy value, so no `null` gets here).
 fn set_property(properties: &mut Value, name: &str, value: Value) -> Result<(), String> {
     match properties {
         Value::Object(map) => {
@@ -578,13 +578,13 @@ fn set_property(properties: &mut Value, name: &str, value: Value) -> Result<(), 
         Value::Array(_) => Ok(()),
         other => Err(format!(
             "TypeError: Cannot create property '{name}' on {} '{}'",
-            js::type_of(Some(other)),
-            js::to_js_string(Some(other)),
+            wire::type_of(Some(other)),
+            wire::coerce_to_string(Some(other)),
         )),
     }
 }
 
-/// TS's `addToRequired`: `param` appended to a `required` list that lacks it; any other
+/// `param` appended to a `required` list that lacks it; any other
 /// `required` (absent or not a list) becomes `[param]`, in its place when present.
 fn add_to_required(schema: &mut JsonObject, param: &'static str) {
     if let Some(Value::Array(required)) = schema.get_mut("required") {

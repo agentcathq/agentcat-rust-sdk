@@ -13,7 +13,7 @@ use crate::event::{CallRecord, ClientIdentity, extra_value};
 use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
 use crate::pipeline::settle::{HookResults, apply};
-use crate::pipeline::{TOOL_CALL_KEYS, TsEvent};
+use crate::pipeline::{EventObject, TOOL_CALL_KEYS};
 use crate::test_support::json::object;
 use crate::test_support::rmcp::{assert_credentials_hidden, bare_context, credential_parts};
 use crate::test_support::vectors;
@@ -73,7 +73,7 @@ fn ts_event_keys() -> Vec<(String, bool)> {
 }
 
 /// The keys of `event`, in order.
-fn keys(event: &TsEvent) -> Vec<&str> {
+fn keys(event: &EventObject) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 

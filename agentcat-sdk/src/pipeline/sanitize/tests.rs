@@ -4,14 +4,14 @@ use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{BINARY_DATA_NOTE, sanitize_event};
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{js_string, ts_event};
 use crate::test_support::{assert_js_eq, config_capped, markers, vectors};
 
 /// The event a case holds: `input`, or `input_text` parsed in insertion order; `$repeat`
 /// macros expanded.
-fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
+fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
     let value = match (case.get("input"), case.get("input_text")) {
         (Some(input), None) => input.clone(),
         (None, Some(Value::String(text))) => {
@@ -179,7 +179,7 @@ fn odd_block() -> impl Strategy<Value = Value> {
 /// A [`ts_event`] with up to 3 more content blocks ([`odd_block`]) in its `response`; its
 /// `response` sometimes replaced by a string, a number or a boolean, and its `parameters` and
 /// `structuredContent` sometimes by a [`base64_run`] or an array holding one.
-fn sanitize_event_input() -> impl Strategy<Value = TsEvent> {
+fn sanitize_event_input() -> impl Strategy<Value = EventObject> {
     (
         ts_event(text()),
         prop::collection::vec(odd_block(), 0..=3),

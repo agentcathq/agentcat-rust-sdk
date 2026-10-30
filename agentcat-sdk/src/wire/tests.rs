@@ -8,8 +8,8 @@ use proptest::prelude::*;
 use serde_json::{Map, Number, Value, json};
 
 use super::{
-    cut_utf16, iso_millis, number_to_string, own_entries, parse_iso_millis, stringify,
-    to_js_string, to_js_value, trim, type_of, utf16_len, write_stringify,
+    coerce_to_string, cut_utf16, iso_millis, number_to_string, own_entries, parse_iso_millis,
+    round_trip, stringify, trim, type_of, utf16_len, write_stringify,
 };
 use crate::test_support::json::index_keys_first;
 use crate::test_support::rules::check_cut;
@@ -73,7 +73,11 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
             let len = u64::try_from(utf16_len(text(case, "input"))).unwrap();
             assert_eq!(Some(len), output.as_u64(), "{name}");
         }
-        "string" => assert_eq!(to_js_string(value_of(case)), text(case, "output"), "{name}"),
+        "string" => assert_eq!(
+            coerce_to_string(value_of(case)),
+            text(case, "output"),
+            "{name}"
+        ),
         "typeof" => assert_eq!(type_of(value_of(case)), text(case, "output"), "{name}"),
         _ => unreachable!("{name}: kind {kind:?} has no check"),
     }
@@ -100,7 +104,7 @@ fn at_millis(ms: i64) -> SystemTime {
 #[test]
 fn iso_millis_matches_to_iso_string() {
     let mut seen = 0;
-    for case in vectors::cases("js") {
+    for case in vectors::cases("wire") {
         let name = vectors::name(&case);
         if !name.starts_with("iso:") {
             continue;
@@ -143,7 +147,7 @@ fn iso_millis_out_of_range_does_not_panic() {
 #[test]
 fn parse_iso_millis_reads_both_forms() {
     let mut seen = 0;
-    for case in vectors::cases("js") {
+    for case in vectors::cases("wire") {
         let name = vectors::name(&case);
         if name.starts_with("parse-iso:") {
             let ms = case["output"].as_i64().unwrap();
@@ -170,7 +174,7 @@ fn parse_iso_millis_reads_both_forms() {
 
 #[test]
 fn vectors_match_ts() {
-    let seen: BTreeSet<&str> = vectors::cases("js")
+    let seen: BTreeSet<&str> = vectors::cases("wire")
         .iter()
         .filter(|case| !is_time_case(vectors::name(case)))
         .map(check_case)
@@ -200,7 +204,7 @@ fn to_js_value_writes_stringify_text() {
         "2": [-0.0, 9_007_199_254_740_993_u64, {"b": 2.0, "1": 0.5}],
         "text": "a\u{2028}b",
     });
-    let read_back = to_js_value(&value);
+    let read_back = round_trip(&value);
     assert_eq!(
         serde_json::to_string(&read_back).unwrap(),
         stringify(&value)
@@ -219,7 +223,7 @@ fn to_js_value_past_the_nesting_limit_is_a_copy() {
     for _ in 0..200 {
         value = json!([value]);
     }
-    assert_eq!(to_js_value(&value), value);
+    assert_eq!(round_trip(&value), value);
 }
 
 /// An object with a `toString` key, alone or at any depth inside an array, is written as any
@@ -234,7 +238,7 @@ fn objects_with_a_to_string_key_are_written_object_object() {
             "1,[object Object],,a",
         ),
     ] {
-        assert_eq!(to_js_string(Some(&value)), expected, "{value}");
+        assert_eq!(coerce_to_string(Some(&value)), expected, "{value}");
     }
 }
 
@@ -484,7 +488,7 @@ proptest! {
         value in proptest::option::of(json_value(3, 4)),
     ) {
         let expected = value.as_ref().map_or_else(|| "undefined".to_owned(), joined);
-        prop_assert_eq!(to_js_string(value.as_ref()), expected);
+        prop_assert_eq!(coerce_to_string(value.as_ref()), expected);
     }
 
     /// `type_of` is `undefined` for no value and `object` for `null`, arrays and objects.
@@ -508,7 +512,7 @@ proptest! {
 #[test]
 fn write_stringify_equals_stringify() {
     let mut seen = 0;
-    for case in vectors::cases("js") {
+    for case in vectors::cases("wire") {
         let name = vectors::name(&case);
         let value: Value = if name.starts_with("stringify-text:") {
             serde_json::from_str(text(&case, "input_text")).unwrap()

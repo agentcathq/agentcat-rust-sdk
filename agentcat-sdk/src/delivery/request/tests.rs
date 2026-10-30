@@ -5,11 +5,11 @@
 use serde_json::{Map, Value, json};
 
 use super::publish_request;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
+use crate::wire;
 
 /// A tool-call event with `fields` set over the base fields.
-fn event(fields: Value) -> TsEvent {
+fn event(fields: Value) -> EventObject {
     let Value::Object(mut event) = json!({
         "id": "evt_000000000000000000000000000",
         "sessionId": "ses_wire00000000000000000000000",
@@ -29,7 +29,7 @@ fn event(fields: Value) -> TsEvent {
 }
 
 /// The `serde_json` text of the request of `event`: the body `agentcat-api` posts.
-fn body(event: &TsEvent) -> String {
+fn body(event: &EventObject) -> String {
     serde_json::to_string(&publish_request(event)).unwrap()
 }
 
@@ -57,7 +57,7 @@ fn wire_values_follow_js_text() {
         values.insert(field.to_owned(), value.clone());
     }
     let sent = body(&event(Value::Object(values)));
-    let text = js::stringify(&value);
+    let text = wire::stringify(&value);
     assert_eq!(
         text,
         r#"{"2":0,"10":1,"big":9007199254740992,"list":[1,{"2":"b","10":"a"}]}"#
@@ -81,7 +81,7 @@ fn wire_values_follow_js_text() {
     // `1e21`.)
     let floats = json!({"small": 0.000_001, "large": 1e21});
     assert_eq!(
-        js::stringify(&floats),
+        wire::stringify(&floats),
         r#"{"small":0.000001,"large":1e+21}"#
     );
     let properties = publish_request(&event(json!({"properties": floats})))

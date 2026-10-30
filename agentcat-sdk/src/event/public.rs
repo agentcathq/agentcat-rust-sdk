@@ -1,19 +1,20 @@
 //! [`Event`]: the event a `redact_event` hook sees and returns, typed, and its conversion from and
-//! into the pipeline's [`TsEvent`] (C39).
+//! into the pipeline's [`EventObject`].
 use std::collections::BTreeMap;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::{Map, Value};
 
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
+use crate::wire;
 
 /// An event as `AgentCat` publishes it, as the hook of
 /// [`Options::redact_event`](crate::Options::redact_event) sees it. The hook may change any
 /// field. It cannot add a field that events do not have, and the SDK restores the system fields
 /// (`id`, `session_id`, `project_id`, `event_type` and `timestamp`) when the hook changes them.
 ///
-/// Field values are JSON values, as the TypeScript SDK holds them.
+/// The free-form fields (`parameters`, `response`, `user_intent`, `error`, `identify_actor_data`
+/// and `properties`) hold JSON values, as the published event carries them.
 ///
 /// To unit-test a `redact_event` hook, build an event with [`Event::default`], set the fields
 /// the hook reads, and call the hook with it.
@@ -119,7 +120,7 @@ impl Event {
     /// The typed event of `event`. Keys the type has no field for are left out; a field of the
     /// wrong type is `None`; a `timestamp` that does not parse is the Unix epoch, which the
     /// restore of `timestamp` after the hook makes harmless.
-    pub(crate) fn from_ts(event: &TsEvent) -> Event {
+    pub(crate) fn from_object(event: &EventObject) -> Event {
         let text = |key: &str| event.get(key).and_then(Value::as_str).map(str::to_owned);
         let object = |key: &str| event.get(key).and_then(Value::as_object).cloned();
         let value = |key: &str| event.get(key).cloned();
@@ -137,7 +138,7 @@ impl Event {
             timestamp: event
                 .get("timestamp")
                 .and_then(Value::as_str)
-                .and_then(js::parse_iso_millis)
+                .and_then(wire::parse_iso_millis)
                 .unwrap_or(UNIX_EPOCH),
             duration: event
                 .get("duration")
@@ -169,12 +170,12 @@ impl Event {
         }
     }
 
-    /// The pipeline's event, with the keys in the order of a TS tool-call event (`id`,
+    /// The pipeline's event, with the keys in the order of a tool-call event (`id`,
     /// `sessionId`, `projectId`, `eventType`, `timestamp`, `duration`, ...). A field that is
     /// `None` is absent, except `sessionId`, which is `""` without a session. Custom events with
     /// a session string skip the redaction hooks, so only this order is needed.
-    pub(crate) fn into_ts(self) -> TsEvent {
-        let mut out = TsEvent::new();
+    pub(crate) fn into_object(self) -> EventObject {
+        let mut out = EventObject::new();
         let mut put = |key: &str, value: Option<Value>| {
             if let Some(value) = value {
                 out.insert(key.to_owned(), value);
@@ -190,7 +191,7 @@ impl Event {
         put("eventType", Some(Value::String(self.event_type)));
         put(
             "timestamp",
-            Some(Value::String(js::iso_millis(self.timestamp))),
+            Some(Value::String(wire::iso_millis(self.timestamp))),
         );
         put(
             "duration",

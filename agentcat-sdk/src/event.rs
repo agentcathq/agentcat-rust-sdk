@@ -1,6 +1,6 @@
 //! The record of a tool call, [`CallRecord`], and the fields of it that come from the request:
-//! `parameters.request` (B-082), `parameters.extra` (D34, D06), the client identity (B-085, C22)
-//! and the protocol version of the handle tags (B-067, C28). `event/tests.rs` checks the client
+//! `parameters.request`, `parameters.extra`, the client identity and the protocol version of the
+//! handle tags. `event/tests.rs` checks the client
 //! identity and the protocol version against `tests/vectors/event.json`, and the shapes of
 //! `request` and `extra`.
 use std::backtrace::Backtrace;
@@ -20,7 +20,7 @@ use tokio::runtime::Handle;
 use crate::constants::{META_CLIENT_INFO_KEY, META_PROTOCOL_VERSION_KEY};
 use crate::handles::HandleResolution;
 use crate::hooks::PendingHooks;
-use crate::js;
+use crate::wire;
 
 pub(crate) mod assemble;
 mod public;
@@ -41,7 +41,7 @@ const META_KEY: &str = "_meta";
 /// The header of the transport session of streamable HTTP, as `http` names it (lower case).
 const SESSION_ID_HEADER: &str = "mcp-session-id";
 
-/// The headers that carry credentials. The data keeps them (D06); `Debug` output hides their
+/// The headers that carry credentials. The data keeps them; `Debug` output hides their
 /// values ([`redact_headers`]).
 const CREDENTIAL_HEADERS: [&str; 4] = [
     "authorization",
@@ -53,7 +53,7 @@ const CREDENTIAL_HEADERS: [&str; 4] = [
 /// What `Debug` output shows in place of a credential header's value.
 const REDACTED: &str = "<redacted>";
 
-/// The client a request names (B-085): its name and version, each when it is a string.
+/// The client a request names: its name and version, each when it is a string.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct ClientIdentity {
     /// The client's name.
@@ -71,15 +71,16 @@ impl From<&Implementation> for ClientIdentity {
     }
 }
 
-/// One tool call as the SDK records it (B-077). The call path builds it and hands it to the
-/// [`Sink`](crate::sink::Sink); plan 4 assembles the published event from it. Its `Debug` output
+/// One tool call as the SDK records it. The call path builds it and hands it to the
+/// [`Sink`](crate::sink::Sink); the delivery pipeline assembles the published event from it
+/// ([`assemble::from_call`]). Its `Debug` output
 /// hides the values of the credential headers in `extra` ([`redact_headers`]).
 pub(crate) struct CallRecord {
     /// When the call started: the event's `timestamp`.
     pub(crate) started_at: SystemTime,
     /// How long the call took, in milliseconds: the event's `duration`.
     pub(crate) duration_ms: u64,
-    /// The session handles of the call (B-052 to B-069).
+    /// The session handles of the call.
     pub(crate) resolution: HandleResolution,
     /// The tool name, or `Unknown Tool` for an empty one: the event's `resource_name`.
     pub(crate) resource_name: String,
@@ -87,30 +88,30 @@ pub(crate) struct CallRecord {
     pub(crate) request: Value,
     /// `parameters.extra`: [`extra_value`].
     pub(crate) extra: Value,
-    /// The token estimate of the raw arguments (B-070 to B-076).
+    /// The token estimate of the raw arguments.
     pub(crate) input_tokens: Option<i32>,
     /// The token estimate of the customer's result; none without a result.
     pub(crate) output_tokens: Option<i32>,
-    /// The SDK's own tags (B-025, B-096).
+    /// The SDK's own tags.
     pub(crate) tags: Map<String, Value>,
-    /// The `context` argument as sent (B-083, K-08).
+    /// The `context` argument as sent.
     pub(crate) user_intent: Option<Value>,
-    /// The customer's original result (B-059); none for a JSON-RPC error or a panic.
+    /// The customer's original result; none for a JSON-RPC error or a panic.
     pub(crate) response: Option<Value>,
-    /// Whether the call failed (B-097, RD-05).
+    /// Whether the call failed.
     pub(crate) is_error: bool,
-    /// The event's `error` (B-097, RD-06, C23).
+    /// The event's `error`.
     pub(crate) error: Option<Map<String, Value>>,
-    /// The name in the inner handler's `server_info` (B-086).
+    /// The name in the inner handler's `server_info`.
     pub(crate) server_name: Option<String>,
-    /// The version in the inner handler's `server_info` (B-086).
+    /// The version in the inner handler's `server_info`.
     pub(crate) server_version: Option<String>,
     /// The client of the call: [`client_identity`].
     pub(crate) client: Option<ClientIdentity>,
-    /// The customer hooks started for the call (B-022 step 7).
+    /// The customer hooks started for the call, before the tool ran.
     pub(crate) pending: PendingHooks,
     /// The runtime the call ran on (`Handle::try_current()` at its start), where the customer's
-    /// redaction hooks run (C38).
+    /// redaction hooks run.
     pub(crate) runtime: Option<Handle>,
     /// The backtrace of the error [`capture_error`](crate::capture_error) recorded, when that
     /// error is the record's and a backtrace was captured; the delivery pipeline renders it as
@@ -144,14 +145,14 @@ impl fmt::Debug for CallRecord {
     }
 }
 
-/// `parameters.request` of a `tools/call` request, the raw JSON-RPC request TS records (B-082):
+/// `parameters.request` of a `tools/call` request, the raw JSON-RPC request:
 /// `method`, `params`, `jsonrpc` and `id`, in that order. `params` is `params` as rmcp serializes
 /// it (`name`, `arguments`, ...), with the raw arguments (the injected parameters included), and
 /// the request's `_meta` last when it sent one. rmcp moves that `_meta` out of the params into
 /// `context.meta`, so a `_meta` key the params still hold is dropped.
 ///
-/// TS echoes the client's key order; Rust writes this fixed order, the order of TS's own v1
-/// client (`event_order.json`), whatever order the client sent (part of RD-07).
+/// The keys always come in this fixed order (`tests/vectors/event_order.json` pins it), whatever
+/// order the client sent.
 pub(crate) fn request_value(
     params: &CallToolRequestParams,
     context: &RequestContext<RoleServer>,
@@ -181,12 +182,12 @@ pub(crate) fn request_value(
     Value::Object(request)
 }
 
-/// `parameters.extra` of a request (D34), with the keys in the order of TS's v1 handler context
-/// (`event_order.json`): `sessionId`, the `mcp-session-id` header of a stateful HTTP request;
+/// `parameters.extra` of a request, with the keys in this order (`tests/vectors/event_order.json`
+/// pins it): `sessionId`, the `mcp-session-id` header of a stateful HTTP request;
 /// `_meta`, when the request sent one; `requestId`, the JSON-RPC id as sent; and `requestInfo`,
 /// when rmcp's streamable HTTP server put the HTTP request parts in the context
-/// ([`request_info`]). On stdio it has no `sessionId` and no `requestInfo`. TS's other keys hold
-/// functions, which JSON drops, or what RD-07 leaves out.
+/// ([`request_info`]). On stdio it has no `sessionId` and no `requestInfo`. It holds no other
+/// key.
 pub(crate) fn extra_value(context: &RequestContext<RoleServer>) -> Value {
     let parts = context.extensions.get::<Parts>();
     let mut extra = Map::new();
@@ -224,12 +225,11 @@ fn request_info(parts: &Parts) -> Map<String, Value> {
     info
 }
 
-/// The request headers as `extra` holds them (D06), as TS records them: `Object.fromEntries` over
-/// a WHATWG `Headers` of the request (B-081). Every header, `Authorization` and `Cookie` included,
+/// The request headers as `extra` holds them. Every header, `Authorization` and `Cookie` included,
 /// is under its lower-case name. Each value loses its leading and trailing HTTP whitespace; the
 /// values of a repeated name are joined in arrival order with `", "` (`"; "` for `cookie`), and a
 /// repeated `set-cookie` keeps its last value. The names are in byte order, except that names
-/// which are array indexes come first in numeric order (JavaScript's key order). A value that is
+/// which are array indexes come first in numeric order ([`wire::own_entries`]). A value that is
 /// not UTF-8 is read lossily.
 pub(crate) fn project_headers(headers: &HeaderMap) -> Map<String, Value> {
     let mut names: Vec<&HeaderName> = headers.keys().collect();
@@ -250,7 +250,7 @@ pub(crate) fn project_headers(headers: &HeaderMap) -> Map<String, Value> {
             (name.as_str().to_owned(), Value::String(value))
         })
         .collect();
-    js::own_entries(&sorted)
+    wire::own_entries(&sorted)
         .map(|(name, value)| (name.clone(), value.clone()))
         .collect()
 }
@@ -286,7 +286,7 @@ pub(crate) fn redact_extra(extra: &Value) -> Value {
 }
 
 /// `text` without its leading and trailing HTTP whitespace (tab, line feed, carriage return and
-/// space), as `Headers` normalizes a value.
+/// space).
 fn trim_http_whitespace(text: &str) -> &str {
     text.trim_matches(['\t', '\n', '\r', ' '])
 }
@@ -303,7 +303,7 @@ pub(crate) fn request_url(parts: &Parts) -> Option<String> {
     Some(format!("http://{}{path}", lossy(host.as_bytes())))
 }
 
-/// TS's `narrowClientInfo` (B-085): a JSON object with a string `name` or a string `version` names
+/// The client that `value` names: a JSON object with a string `name` or a string `version` names
 /// a client, and a field that is not a string becomes `None`. Anything else names none.
 pub(crate) fn narrow_client_info(value: Option<&Value>) -> Option<ClientIdentity> {
     let Some(Value::Object(client)) = value else {
@@ -314,10 +314,11 @@ pub(crate) fn narrow_client_info(value: Option<&Value>) -> Option<ClientIdentity
     (name.is_some() || version.is_some()).then_some(ClientIdentity { name, version })
 }
 
-/// The client of a request (B-085): the client the request's `_meta` names (rmcp keeps TS's v2
-/// envelope keys there), else the client of the peer's `initialize`. An HTTP request without an
-/// `mcp-session-id` header skips the second (C22): rmcp's stateless mode fabricates that peer info
-/// with its own name and version, and TS's per-request server never saw an `initialize` either.
+/// The client of a request: the client the request's `_meta` names (under
+/// `io.modelcontextprotocol/clientInfo`), else the client of the peer's `initialize`. An HTTP
+/// request without an `mcp-session-id` header skips the second: rmcp's stateless mode fabricates
+/// that peer info with its own name and version, as its per-request server never saw an
+/// `initialize`.
 pub(crate) fn client_identity(context: &RequestContext<RoleServer>) -> Option<ClientIdentity> {
     if let Some(client) = narrow_client_info(context.meta.get(META_CLIENT_INFO_KEY)) {
         return Some(client);
@@ -334,8 +335,8 @@ pub(crate) fn client_identity(context: &RequestContext<RoleServer>) -> Option<Cl
 }
 
 /// The protocol version a request names in its `_meta`, the value of the
-/// `agentcat_protocol_version` tag (B-067): a non-empty string under
-/// `io.modelcontextprotocol/protocolVersion`. Only the `_meta` counts (C28), never the version the
+/// `agentcat_protocol_version` tag: a non-empty string under
+/// `io.modelcontextprotocol/protocolVersion`. Only the `_meta` counts, never the version the
 /// session negotiated.
 pub(crate) fn protocol_version(meta: &JsonObject) -> Option<String> {
     match meta.get(META_PROTOCOL_VERSION_KEY) {

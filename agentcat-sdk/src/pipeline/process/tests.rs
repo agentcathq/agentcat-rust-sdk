@@ -21,26 +21,26 @@ use tokio::runtime::{Builder, Handle};
 use super::{Redactors, assign, process};
 use crate::client::AgentCat;
 use crate::config::{HookError, Options, UserIdentity};
-use crate::delivery::wire::publish_request;
+use crate::delivery::request::publish_request;
 use crate::delivery::{Delivery, DeliveryConfig};
 use crate::event::Event;
 use crate::event::assemble::{EventJob, from_call};
 use crate::handles::SessionIdFailure;
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::pipeline::truncate::MAX_EVENT_BYTES;
 use crate::sink::Sink;
 use crate::test_support::json::object;
 use crate::test_support::rmcp::{RecordingSink, Sample, connect};
 use crate::test_support::{assert_js_eq, queue, vectors};
+use crate::wire;
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
 
 /// A tool-call event as `from_call` builds it, whose strings hold `secret` outside the protected
 /// fields.
-fn call_event() -> TsEvent {
+fn call_event() -> EventObject {
     object(json!({
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -60,7 +60,7 @@ fn call_event() -> TsEvent {
 
 /// The job of `event` with no hooks, both redaction stages on and the redaction hooks' runtime
 /// `runtime`.
-fn job(event: TsEvent, runtime: Option<Handle>) -> EventJob {
+fn job(event: EventObject, runtime: Option<Handle>) -> EventJob {
     EventJob {
         event,
         hooks: PendingHooks::default(),
@@ -99,7 +99,7 @@ where
 }
 
 /// The value at `pointer` (RFC 6901) of `event`.
-fn at<'a>(event: &'a TsEvent, pointer: &str) -> &'a Value {
+fn at<'a>(event: &'a EventObject, pointer: &str) -> &'a Value {
     let (key, rest) = pointer[1..].split_once('/').unwrap_or((&pointer[1..], ""));
     let value = &event[key];
     if rest.is_empty() {
@@ -115,7 +115,7 @@ fn at<'a>(event: &'a TsEvent, pointer: &str) -> &'a Value {
 
 /// Whether the delivery worker posts `event`: TS's `sendEvent` posts only an event with a project
 /// (B-104).
-fn posted(event: &TsEvent) -> bool {
+fn posted(event: &EventObject) -> bool {
     event
         .get("projectId")
         .and_then(Value::as_str)
@@ -248,7 +248,7 @@ fn assign_keeps_keys_the_stage_dropped() {
         object(json!({"tags": {"a": "b"}, "response": {"text": "cut"}, "extra": true})),
     );
     assert_eq!(
-        js::stringify(&Value::Object(event)),
+        wire::stringify(&Value::Object(event)),
         r#"{"id":"","response":{"text":"cut"},"error":{"message":"failed"},"tags":{"a":"b"},"extra":true}"#
     );
 }
@@ -610,7 +610,7 @@ async fn publish_calls<S: ServerHandler>(
     server: S,
     options: Options,
     calls: Vec<(&str, Value)>,
-) -> (Vec<Option<TsEvent>>, Vec<String>) {
+) -> (Vec<Option<EventObject>>, Vec<String>) {
     let sink = Arc::new(RecordingSink::default());
     let agentcat = AgentCat::with_sink(E2E_PROJECT, options.clone(), sink.clone());
     let client = connect(agentcat.track(server), "e2e-client").await;
@@ -633,7 +633,7 @@ async fn publish_calls<S: ServerHandler>(
 }
 
 /// The events of `published`, each one there.
-fn all(published: Vec<Option<TsEvent>>) -> Vec<TsEvent> {
+fn all(published: Vec<Option<EventObject>>) -> Vec<EventObject> {
     published
         .into_iter()
         .map(|event| event.expect("an event"))
@@ -700,9 +700,9 @@ async fn tool_call_long_text_is_truncated() {
     let events = all(published);
     for event in &events[..2] {
         let text = at(event, "/response/content/0/text").as_str().unwrap();
-        assert!(js::utf16_len(text) <= 32_768 + 3, "{}", text.len());
+        assert!(wire::utf16_len(text) <= 32_768 + 3, "{}", text.len());
         assert!(text.ends_with("..."));
-        let bytes = js::stringify(&Value::Object(event.clone())).len();
+        let bytes = wire::stringify(&Value::Object(event.clone())).len();
         assert!(bytes <= MAX_EVENT_BYTES, "{bytes} bytes");
     }
     assert_eq!(
@@ -723,7 +723,7 @@ async fn tool_call_oversized_arguments_fit_the_size_guard() {
     let calls = vec![("bulk", arguments)];
     let (published, _log) = publish_calls(Payloads, Options::default(), calls).await;
     let events = all(published);
-    let bytes = js::stringify(&Value::Object(events[0].clone())).len();
+    let bytes = wire::stringify(&Value::Object(events[0].clone())).len();
     assert!(bytes <= MAX_EVENT_BYTES, "{bytes} bytes");
 }
 

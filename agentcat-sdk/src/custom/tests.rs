@@ -22,10 +22,10 @@ use crate::delivery::{Delivery, DeliveryConfig};
 use crate::error::Error;
 use crate::event::assemble::EventJob;
 use crate::event::{CallRecord, ClientIdentity, Event};
-use crate::js;
 use crate::sink::Sink;
 use crate::test_support::queue::{self, CapturedLines, RecordingPublisher};
 use crate::test_support::rmcp::{Sample, connect};
+use crate::wire;
 
 /// How long a test waits for a flush.
 const WAIT: Duration = Duration::from_secs(2);
@@ -266,9 +266,9 @@ fn server_form_applies_redact_event_only() {
     // K-03: the event hook runs on a custom event of the server form, the string hook never.
     let options = Options::default()
         .redact_event(|event: Event| {
-            let mut ts = event.into_ts();
+            let mut ts = event.into_object();
             ts.insert("response".to_owned(), json!({"scrubbed": true}));
-            ready(Ok::<_, HookError>(Some(Event::from_ts(&ts))))
+            ready(Ok::<_, HookError>(Some(Event::from_object(&ts))))
         })
         .redact_sensitive_information(|text: String| {
             ready(Ok::<_, HookError>(text.replace("SECRET", "[REDACTED]")))
@@ -377,7 +377,7 @@ async fn tracked_form_uses_initialize_identity() {
 #[test]
 fn server_form_duration_is_given_or_elapsed() {
     let (agentcat, publisher, _lines) = rig("proj_handle", Options::default());
-    let start = js::parse_iso_millis(FROZEN).expect("a time");
+    let start = wire::parse_iso_millis(FROZEN).expect("a time");
     let later = start + ms(250);
     let publish = |event: CustomEvent| {
         publish_server(&agentcat, "proj", event, None, None, start, later).expect("queued");
@@ -473,7 +473,7 @@ fn rust_identity(mut request: Value) -> Value {
 fn custom_vectors_match_ts() {
     let runtime = hooks_runtime();
     let _entered = runtime.enter();
-    let now: SystemTime = js::parse_iso_millis(FROZEN).expect("a time");
+    let now: SystemTime = wire::parse_iso_millis(FROZEN).expect("a time");
     let mut ran = 0;
     for case in queue::cases().into_iter().filter(|case| {
         case["name"]

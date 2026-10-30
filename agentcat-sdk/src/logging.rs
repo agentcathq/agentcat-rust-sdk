@@ -1,10 +1,10 @@
-//! The SDK's own log lines (C42, B-117, D38).
+//! The SDK's own log lines.
 //!
 //! The destination is process-wide and the first call of [`configure`] decides it. `File` appends
 //! `[<ISO time>] [sdk=… rust=… rmcp=…] <message>` lines to `<home>/agentcat.log`, one open per
 //! line, and ignores every error. `Tracing` emits `tracing` events with target `agentcat`.
 //!
-//! The delivery worker of each handle writes the lines (C42), so `Tracing` events come from the
+//! The delivery worker of each handle writes the lines, so `Tracing` events come from the
 //! worker's thread: a subscriber that `tracing::subscriber::with_default` sets on another thread
 //! does not see them. The one exception is the line about a delivery thread that cannot be
 //! spawned, which the caller's thread writes.
@@ -17,7 +17,7 @@ use std::time::SystemTime;
 use tracing::Level;
 
 use crate::config::LogDestination;
-use crate::js::iso_millis;
+use crate::wire::iso_millis;
 
 /// A log destination with its resolved file path.
 #[derive(Debug)]
@@ -51,7 +51,7 @@ impl Logger {
             prefix()
         );
         if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(path) {
-            // Like TS, a failed write is ignored.
+            // A failed write is ignored.
             let _ = file.write_all(line.as_bytes());
         }
     }
@@ -92,7 +92,7 @@ pub(crate) fn prefix() -> &'static str {
     })
 }
 
-/// The severity of a line (B-117): ERROR for `fail` or `error` in any case, checked first, then
+/// The severity of a line: ERROR for `fail` or `error` in any case, checked first, then
 /// WARN for `Warning:`, else INFO.
 pub(crate) fn level(message: &str) -> Level {
     let lower = message.to_lowercase();
