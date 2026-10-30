@@ -1,7 +1,8 @@
 //! The golden files: `golden/<scenario>/<transport>-<lane>.json`, the normalized document as
 //! pretty JSON with a final newline.
 //!
-//! With `UPDATE_GOLDEN=1`, [`assert_golden`] writes the file. Otherwise the document must equal
+//! With `UPDATE_GOLDEN=1`, [`assert_golden`] writes the file; with `CI=true` it refuses to.
+//! Otherwise the document must equal
 //! the parsed file, key order included; the panic names the first path that differs. Line ends
 //! do not matter: the file is compared as JSON, not as text.
 use std::path::PathBuf;
@@ -58,12 +59,35 @@ pub(crate) fn assert_matches(golden: &str, actual: &Value, origin: &str) {
 }
 
 /// Whether `UPDATE_GOLDEN=1` asks for the golden files to be written.
+///
+/// # Panics
+///
+/// When it does so in CI (`CI=true`), see [`update_decision`].
 #[expect(
     clippy::disallowed_methods,
-    reason = "the variable that asks for the golden files to be written"
+    reason = "the variables that ask for the golden files to be written"
 )]
 fn update_requested() -> bool {
-    std::env::var("UPDATE_GOLDEN").is_ok_and(|value| value == "1")
+    update_decision(
+        std::env::var("UPDATE_GOLDEN").ok().as_deref(),
+        std::env::var("CI").ok().as_deref(),
+    )
+}
+
+/// Whether the value `update` of `UPDATE_GOLDEN` is `1`, so the golden files are written.
+///
+/// # Panics
+///
+/// When it is `1` and the value `ci` of `CI` is `true`: a CI run only compares, so it can never
+/// turn the golden checks into writes.
+fn update_decision(update: Option<&str>, ci: Option<&str>) -> bool {
+    let update = update == Some("1");
+    assert!(
+        !(update && ci == Some("true")),
+        "UPDATE_GOLDEN=1 is refused in CI (CI=true): CI compares the golden files and never \
+         writes them; run the update on a developer machine and commit the diff"
+    );
+    update
 }
 
 /// The first place, in document order, where `actual` differs from `expected` (at `path`), as
@@ -158,5 +182,31 @@ pub(super) fn shown(value: &Value) -> String {
     match text.char_indices().nth(SHOWN_CHARS) {
         Some((cut, _)) => format!("{}... ({} characters)", &text[..cut], text.chars().count()),
         None => text,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::update_decision;
+
+    #[test]
+    fn only_one_asks_for_an_update() {
+        assert!(update_decision(Some("1"), None));
+        assert!(update_decision(Some("1"), Some("false")));
+        assert!(!update_decision(None, None));
+        assert!(!update_decision(Some("0"), None));
+        assert!(!update_decision(Some("true"), None));
+    }
+
+    #[test]
+    fn ci_only_compares() {
+        assert!(!update_decision(None, Some("true")));
+        assert!(!update_decision(Some("0"), Some("true")));
+    }
+
+    #[test]
+    #[should_panic(expected = "UPDATE_GOLDEN=1 is refused in CI")]
+    fn an_update_in_ci_is_refused() {
+        update_decision(Some("1"), Some("true"));
     }
 }
