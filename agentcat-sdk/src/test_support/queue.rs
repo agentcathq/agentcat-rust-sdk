@@ -32,7 +32,7 @@
 //! fixture's one: each `evt_` ID is `<evt>` and each minted session `<minted>` (as the generator
 //! masks them), the timestamp is compared to the millisecond, tags compare as a map (sorted keys:
 //! the Rust request holds them in a `HashMap`), a `null` `userIntent` is omitted, as the Rust wire
-//! omits it, and any other `userIntent` that is not a string is its `JSON.stringify` text.
+//! omits it, and any other `userIntent` that is not a string is its `wire::stringify` text.
 use std::collections::BTreeMap;
 use std::future::{pending, ready};
 use std::mem;
@@ -507,7 +507,7 @@ pub(crate) fn to_request_model(request: &PublishEventRequest) -> Value {
 }
 
 /// The `requests` of `case`, compared as the module docs say: the tags sorted, a `null`
-/// `userIntent` omitted, any other `userIntent` that is not a string as its `JSON.stringify` text.
+/// `userIntent` omitted, any other `userIntent` that is not a string as its `wire::stringify` text.
 pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
     case["requests"]
         .as_array()
@@ -785,7 +785,7 @@ mod tests {
     use super::{expected_requests, object};
 
     /// A `null` `userIntent` leaves the expected request, as the Rust wire omits it; any other
-    /// value that is not a string becomes its `JSON.stringify` text; a string stays as it is.
+    /// value that is not a string becomes its `wire::stringify` text; a string stays as it is.
     #[test]
     fn expected_user_intent_follows_the_wire() {
         let case = object(json!({

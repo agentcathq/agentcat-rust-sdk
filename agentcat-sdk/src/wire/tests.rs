@@ -24,7 +24,7 @@ const KINDS: [&str; 7] = [
     "trim",
     "utf16-len",
     "string",
-    "typeof",
+    "type_of",
 ];
 
 /// The `field` string of `case`.
@@ -34,7 +34,7 @@ fn text<'a>(case: &'a Map<String, Value>, field: &str) -> &'a str {
         .unwrap_or_else(|| panic!("{}: no string {field:?}", vectors::name(case)))
 }
 
-/// The `value` of a `{value?}` input: `None` when the key is absent (an `undefined` value).
+/// The `value` of a `{value?}` input: `None` when the key is absent (an absent value).
 fn value_of(case: &Map<String, Value>) -> Option<&Value> {
     case["input"]
         .as_object()
@@ -78,7 +78,7 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
             text(case, "output"),
             "{name}"
         ),
-        "typeof" => assert_eq!(type_of(value_of(case)), text(case, "output"), "{name}"),
+        "type_of" => assert_eq!(type_of(value_of(case)), text(case, "output"), "{name}"),
         _ => unreachable!("{name}: kind {kind:?} has no check"),
     }
     kind
@@ -194,8 +194,8 @@ fn negative_zero_is_written_0() {
     assert_eq!(number_to_string(&zero), "0");
 }
 
-/// `as_published` is the `JSON.stringify` text read back, so `serde_json` writes it like
-/// `JSON.stringify`: `1.0` as `1`, `-0.0` as `0`, an integer above 2^53 rounded to the nearest
+/// `as_published` is the `wire::stringify` text read back, so `serde_json` writes it like
+/// `wire::stringify`: `1.0` as `1`, `-0.0` as `0`, an integer above 2^53 rounded to the nearest
 /// `f64`, and index-like keys first in ascending order, at every depth.
 #[test]
 fn as_published_writes_stringify_text() {
@@ -280,7 +280,7 @@ fn plain_number_text() -> impl Strategy<Value = String> + Clone {
 
 /// A JSON text of `json_value`'s shape with [`plain_number_text`] numbers, whose objects list their
 /// keys in shuffled order and often repeat one (a repeated key keeps its first position and takes
-/// its last value, in `JSON.stringify` and in `serde_json`'s `preserve_order` map).
+/// its last value, in `wire::stringify` and in `serde_json`'s `preserve_order` map).
 fn json_text() -> impl Strategy<Value = String> + Clone {
     let leaf = prop_oneof![
         Just("null".to_owned()),
@@ -326,7 +326,7 @@ fn padded_string() -> impl Strategy<Value = String> + Clone {
 
 /// The cases of `wire_cases.json`: random values and JSON texts for `stringify`, random padded
 /// strings for `trim`, random strings and unit counts for `cut`, random strings for `utf16-len`,
-/// and random values (or none) for `string` and `typeof`.
+/// and random values (or none) for `string` and `type_of`.
 #[test]
 fn every_kind_matches_wire_cases() {
     let seen: BTreeSet<&str> = vectors::cases("wire_cases")

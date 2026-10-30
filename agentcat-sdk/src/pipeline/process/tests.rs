@@ -710,8 +710,8 @@ async fn tool_call_long_text_is_truncated() {
     );
 }
 
-/// End-to-end truncation of oversized arguments: the event's `JSON.stringify` text stays within 100
-/// KB.
+/// End-to-end truncation of oversized arguments: the event's `wire::stringify` text stays within
+/// 100 KB.
 #[tokio::test]
 async fn tool_call_oversized_arguments_fit_the_size_guard() {
     let arguments = json!({"dataset": "d".repeat(80_000), "metadata": "m".repeat(40_000)});

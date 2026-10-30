@@ -1,7 +1,7 @@
-//! The `PublishEventRequest` of an event: its JSON values in the `JSON.stringify` text, the session
-//! as `null` without one, `actor_id` from the identity, a `userIntent` that is not a string as
-//! text, and the timestamp's milliseconds. The queue vectors pin every field against the expected
-//! request (`pipeline::process::tests::queue_fixture_cases_hold`).
+//! The `PublishEventRequest` of an event: its JSON values in the `wire::stringify` text, the
+//! session as `null` without one, `actor_id` from the identity, a `userIntent` that is not a string
+//! as text, and the timestamp's milliseconds. The queue vectors pin every field against the
+//! expected request (`pipeline::process::tests::queue_fixture_cases_hold`).
 use serde_json::{Map, Value, json};
 
 use super::publish_request;
@@ -34,7 +34,7 @@ fn body(event: &EventObject) -> String {
 }
 
 /// Each JSON value of the request (`parameters`, `response`, `error`, `identify_data`,
-/// `properties`) is written as `JSON.stringify` writes the event's value: `1.0` as `1`, `-0.0` as
+/// `properties`) is written as `wire::stringify` writes the event's value: `1.0` as `1`, `-0.0` as
 /// `0`, 2^53 + 1 rounded to 2^53, index-like keys first in ascending order. A float is the one
 /// listed exception: `serde_json` may write it in another text of the same number.
 #[test]
@@ -75,9 +75,9 @@ fn wire_values_follow_the_stringify_text() {
         );
     }
 
-    // A number whose `JSON.stringify` text is not a 64-bit integer reads back as an `f64`, which
+    // A number whose `wire::stringify` text is not a 64-bit integer reads back as an `f64`, which
     // serde_json writes in its own text: the same number, here `1e-6` for `0.000001`. (serde_json
-    // 1.0.154 writes `1e+21` like `JSON.stringify`; older releases wrote `1e21`.)
+    // 1.0.154 writes `1e+21` like `wire::stringify`; older releases wrote `1e21`.)
     let floats = json!({"small": 0.000_001, "large": 1e21});
     assert_eq!(
         wire::stringify(&floats),
@@ -114,7 +114,7 @@ fn actor_id_follows_identity() {
 }
 
 /// `agentcat-api` types `user_intent` as a string, so a `userIntent` that is not a string goes as
-/// its `JSON.stringify` text; a string goes as it is, and a `null` as no value.
+/// its `wire::stringify` text; a string goes as it is, and a `null` as no value.
 #[test]
 fn non_string_user_intent_is_text() {
     let intent = |value: Value| publish_request(&event(json!({"userIntent": value}))).user_intent;

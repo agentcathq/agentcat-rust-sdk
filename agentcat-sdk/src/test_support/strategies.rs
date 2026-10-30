@@ -1,6 +1,6 @@
 //! The input generators the property tests share. They lean on the inputs that a naive port gets
 //! wrong: escapes, the white space `wire::trim` removes, characters outside the BMP (two UTF-16
-//! units), array-index-like object keys, and numbers that `JSON.stringify` writes in its own way.
+//! units), array-index-like object keys, and numbers that `wire::stringify` writes in its own way.
 use std::ops::{Range, RangeInclusive};
 
 use proptest::prelude::*;

@@ -29,7 +29,7 @@
         },
         {
           "key": "ipAddress",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "sdkLanguage"
@@ -72,11 +72,11 @@
         },
         {
           "key": "isError",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "error",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "tags"
@@ -156,19 +156,19 @@
         },
         {
           "key": "serverName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "serverVersion",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "clientName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "clientVersion",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "id"
@@ -198,15 +198,15 @@
         },
         {
           "key": "inputTokens",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "outputTokens",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "ipAddress",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "sdkLanguage"
@@ -228,11 +228,11 @@
         },
         {
           "key": "identifyActorGivenId",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "identifyActorName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "identifyActorData"
@@ -257,7 +257,7 @@
         },
         {
           "key": "pending",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "tags"

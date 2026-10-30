@@ -166,7 +166,7 @@ fn check_report_missing(case: &Map<String, Value>, name: &str) {
 }
 
 /// The wire order of the mirrored `structured_content` is the fixture's, also in the
-/// `JSON.stringify` text of each `structured:` case: `assert_same_json_text` sorts index keys
+/// `wire::stringify` text of each `structured:` case: `assert_same_json_text` sorts index keys
 /// itself and cannot see this.
 #[test]
 fn mirror_wire_order_keeps_the_index_keys_first() {

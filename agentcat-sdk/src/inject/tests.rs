@@ -139,7 +139,7 @@ fn expected_registry(page: &Value) -> BTreeMap<&str, Vec<&str>> {
     map
 }
 
-/// Checks one tool against the fixture's: the schemas as `JSON.stringify` writes them (key order
+/// Checks one tool against the fixture's: the schemas as `wire::stringify` writes them (key order
 /// counts) and the whole tool with key order ignored.
 fn check_tool(tool: &Tool, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(tool).unwrap();

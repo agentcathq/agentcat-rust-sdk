@@ -1055,7 +1055,7 @@
       "output": "0"
     },
     {
-      "name": "typeof:0",
+      "name": "type_of:0",
       "input": {
         "value": 0
       },
@@ -1067,7 +1067,7 @@
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined",
+      "name": "type_of:undefined",
       "input": {},
       "output": "undefined"
     },
@@ -1079,7 +1079,7 @@
       "output": "null"
     },
     {
-      "name": "typeof:null",
+      "name": "type_of:null",
       "input": {
         "value": null
       },
@@ -1093,7 +1093,7 @@
       "output": "true"
     },
     {
-      "name": "typeof:true",
+      "name": "type_of:true",
       "input": {
         "value": true
       },
@@ -1109,7 +1109,7 @@
       "output": "0"
     },
     {
-      "name": "typeof:-0",
+      "name": "type_of:-0",
       "input": {
         "value": {
           "$f64": "8000000000000000"
@@ -1125,7 +1125,7 @@
       "output": "1e+21"
     },
     {
-      "name": "typeof:1e21",
+      "name": "type_of:1e21",
       "input": {
         "value": 1e+21
       },
@@ -1139,7 +1139,7 @@
       "output": "1.5"
     },
     {
-      "name": "typeof:1.5",
+      "name": "type_of:1.5",
       "input": {
         "value": 1.5
       },
@@ -1153,7 +1153,7 @@
       "output": "s"
     },
     {
-      "name": "typeof:string",
+      "name": "type_of:string",
       "input": {
         "value": "s"
       },
@@ -1167,7 +1167,7 @@
       "output": ""
     },
     {
-      "name": "typeof:empty-array",
+      "name": "type_of:empty-array",
       "input": {
         "value": []
       },
@@ -1190,7 +1190,7 @@
       "output": "1,2,3,,a,[object Object]"
     },
     {
-      "name": "typeof:mixed-array",
+      "name": "type_of:mixed-array",
       "input": {
         "value": [
           1,
@@ -1213,7 +1213,7 @@
       "output": "[object Object]"
     },
     {
-      "name": "typeof:empty-object",
+      "name": "type_of:empty-object",
       "input": {
         "value": {}
       },

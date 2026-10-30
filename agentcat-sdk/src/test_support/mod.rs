@@ -49,7 +49,7 @@ impl Drop for TempHome {
 /// The bytes of each side [`assert_same_json_text`] shows around the first difference.
 const SHOWN_BYTES: usize = 40;
 
-/// Asserts that `actual` is `expected` as `JSON.stringify` writes it: [`wire::stringify`] of
+/// Asserts that `actual` is `expected` as `wire::stringify` writes it: [`wire::stringify`] of
 /// `actual` equals [`wire::stringify`] of `expected` after [`markers::decode_utf16`] (each `$utf16`
 /// marker, a string cut inside a surrogate pair, becomes that string without its half character).
 ///
@@ -69,7 +69,7 @@ pub(crate) fn assert_same_json_text(actual: &Value, expected: &Value, context: &
         .position(|(a, e)| a != e)
         .unwrap_or_else(|| actual.len().min(expected.len()));
     panic!(
-        "{context}: JSON.stringify texts differ at byte {at}\n  actual:   {}\n  expected: {}",
+        "{context}: JSON texts differ at byte {at}\n  actual:   {}\n  expected: {}",
         around(&actual, at),
         around(&expected, at),
     );
@@ -143,7 +143,7 @@ mod tests {
     fn assert_same_json_text_names_the_context_and_the_first_difference() {
         let message = panic_message(|| assert_same_json_text(&json!("abc"), &json!("abd"), "ctx"));
         let lines = [
-            "ctx: JSON.stringify texts differ at byte 3",
+            "ctx: JSON texts differ at byte 3",
             r#"  actual:   "\"abc\"" (bytes 0..5)"#,
             r#"  expected: "\"abd\"" (bytes 0..5)"#,
         ];
@@ -154,7 +154,7 @@ mod tests {
     fn assert_same_json_text_puts_a_missing_tail_at_the_end_of_the_shorter_text() {
         let message = panic_message(|| assert_same_json_text(&json!(1), &json!(12), "tail"));
         assert!(
-            message.starts_with("tail: JSON.stringify texts differ at byte 1\n"),
+            message.starts_with("tail: JSON texts differ at byte 1\n"),
             "{message}"
         );
     }

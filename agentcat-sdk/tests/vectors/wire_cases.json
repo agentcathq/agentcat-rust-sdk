@@ -11753,14 +11753,14 @@
       "output": "undefined"
     },
     {
-      "name": "typeof:array:0",
+      "name": "type_of:array:0",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:1",
+      "name": "type_of:object:1",
       "input": {
         "value": {
           "Kn\u001d世 񀅍t": null
@@ -11769,7 +11769,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:2",
+      "name": "type_of:object:2",
       "input": {
         "value": {
           "AF\"": 8977753624766618017,
@@ -11782,7 +11782,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:3",
+      "name": "type_of:array:3",
       "input": {
         "value": [
           [
@@ -11799,29 +11799,29 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:4",
+      "name": "type_of:undefined:4",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:number:5",
+      "name": "type_of:number:5",
       "input": {
         "value": 2973829461740667677
       },
       "output": "number"
     },
     {
-      "name": "typeof:undefined:6",
+      "name": "type_of:undefined:6",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:7",
+      "name": "type_of:undefined:7",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:8",
+      "name": "type_of:object:8",
       "input": {
         "value": {
           "type": 3309230831482841473
@@ -11830,7 +11830,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:9",
+      "name": "type_of:object:9",
       "input": {
         "value": {
           "-1": false
@@ -11839,22 +11839,22 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:10",
+      "name": "type_of:undefined:10",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:11",
+      "name": "type_of:undefined:11",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:12",
+      "name": "type_of:undefined:12",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:13",
+      "name": "type_of:array:13",
       "input": {
         "value": [
           {
@@ -11871,12 +11871,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:14",
+      "name": "type_of:undefined:14",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:15",
+      "name": "type_of:object:15",
       "input": {
         "value": {
           "7": [
@@ -11889,7 +11889,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:16",
+      "name": "type_of:object:16",
       "input": {
         "value": {
           "2": [
@@ -11907,17 +11907,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:17",
+      "name": "type_of:undefined:17",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:18",
+      "name": "type_of:undefined:18",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:19",
+      "name": "type_of:object:19",
       "input": {
         "value": {
           "type": null
@@ -11926,22 +11926,22 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:20",
+      "name": "type_of:undefined:20",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:21",
+      "name": "type_of:undefined:21",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:22",
+      "name": "type_of:undefined:22",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:23",
+      "name": "type_of:array:23",
       "input": {
         "value": [
           false
@@ -11950,19 +11950,19 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:24",
+      "name": "type_of:array:24",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:25",
+      "name": "type_of:undefined:25",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:26",
+      "name": "type_of:array:26",
       "input": {
         "value": [
           [
@@ -11977,17 +11977,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:27",
+      "name": "type_of:undefined:27",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:28",
+      "name": "type_of:undefined:28",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:29",
+      "name": "type_of:object:29",
       "input": {
         "value": {
           "value": true
@@ -11996,31 +11996,31 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:30",
+      "name": "type_of:undefined:30",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:31",
+      "name": "type_of:undefined:31",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:32",
+      "name": "type_of:array:32",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:33",
+      "name": "type_of:object:33",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:34",
+      "name": "type_of:object:34",
       "input": {
         "value": {
           "\"𝄞\u0012f": {
@@ -12036,41 +12036,41 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:35",
+      "name": "type_of:undefined:35",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:36",
+      "name": "type_of:undefined:36",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:37",
+      "name": "type_of:undefined:37",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:38",
+      "name": "type_of:object:38",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:null:39",
+      "name": "type_of:null:39",
       "input": {
         "value": null
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:40",
+      "name": "type_of:undefined:40",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:41",
+      "name": "type_of:array:41",
       "input": {
         "value": [
           [
@@ -12082,17 +12082,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:42",
+      "name": "type_of:undefined:42",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:43",
+      "name": "type_of:undefined:43",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:44",
+      "name": "type_of:array:44",
       "input": {
         "value": [
           [
@@ -12105,7 +12105,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:45",
+      "name": "type_of:object:45",
       "input": {
         "value": {
           "😀Zya": "",
@@ -12115,7 +12115,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:46",
+      "name": "type_of:array:46",
       "input": {
         "value": [
           null,
@@ -12130,7 +12130,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:47",
+      "name": "type_of:array:47",
       "input": {
         "value": [
           [
@@ -12142,24 +12142,24 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:48",
+      "name": "type_of:object:48",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:49",
+      "name": "type_of:undefined:49",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:50",
+      "name": "type_of:undefined:50",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:51",
+      "name": "type_of:object:51",
       "input": {
         "value": {
           "value": 7596030345640036463,
@@ -12170,7 +12170,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:52",
+      "name": "type_of:array:52",
       "input": {
         "value": [
           "   😀nkd世😀😀Q\\n",
@@ -12180,7 +12180,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:53",
+      "name": "type_of:array:53",
       "input": {
         "value": [
           null,
@@ -12191,22 +12191,22 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:54",
+      "name": "type_of:undefined:54",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:55",
+      "name": "type_of:undefined:55",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:56",
+      "name": "type_of:undefined:56",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:57",
+      "name": "type_of:array:57",
       "input": {
         "value": [
           9007199254740991
@@ -12215,12 +12215,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:58",
+      "name": "type_of:undefined:58",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:59",
+      "name": "type_of:object:59",
       "input": {
         "value": {
           "b": {
@@ -12231,51 +12231,51 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:60",
+      "name": "type_of:undefined:60",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:61",
+      "name": "type_of:object:61",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:62",
+      "name": "type_of:undefined:62",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:63",
+      "name": "type_of:undefined:63",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:64",
+      "name": "type_of:undefined:64",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:65",
+      "name": "type_of:undefined:65",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:66",
+      "name": "type_of:undefined:66",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:67",
+      "name": "type_of:array:67",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:68",
+      "name": "type_of:array:68",
       "input": {
         "value": [
           {
@@ -12286,84 +12286,84 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:69",
+      "name": "type_of:undefined:69",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:70",
+      "name": "type_of:undefined:70",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:71",
+      "name": "type_of:undefined:71",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:72",
+      "name": "type_of:undefined:72",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:73",
+      "name": "type_of:undefined:73",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:74",
+      "name": "type_of:array:74",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:75",
+      "name": "type_of:undefined:75",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:76",
+      "name": "type_of:undefined:76",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:77",
+      "name": "type_of:undefined:77",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:78",
+      "name": "type_of:undefined:78",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:79",
+      "name": "type_of:undefined:79",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:80",
+      "name": "type_of:undefined:80",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:81",
+      "name": "type_of:undefined:81",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:82",
+      "name": "type_of:undefined:82",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:83",
+      "name": "type_of:undefined:83",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:84",
+      "name": "type_of:object:84",
       "input": {
         "value": {
           "id": "Gé\"WzkYs\u0001",
@@ -12374,7 +12374,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:85",
+      "name": "type_of:array:85",
       "input": {
         "value": [
           5248714374198525126,
@@ -12384,12 +12384,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:86",
+      "name": "type_of:undefined:86",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:87",
+      "name": "type_of:array:87",
       "input": {
         "value": [
           {
@@ -12401,7 +12401,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:88",
+      "name": "type_of:object:88",
       "input": {
         "value": {
           "\"": {},
@@ -12414,7 +12414,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:89",
+      "name": "type_of:array:89",
       "input": {
         "value": [
           {
@@ -12429,12 +12429,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:90",
+      "name": "type_of:undefined:90",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:91",
+      "name": "type_of:array:91",
       "input": {
         "value": [
           "\"",
@@ -12448,7 +12448,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:92",
+      "name": "type_of:array:92",
       "input": {
         "value": [
           "\""
@@ -12457,7 +12457,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:93",
+      "name": "type_of:object:93",
       "input": {
         "value": {
           "b": [
@@ -12474,12 +12474,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:94",
+      "name": "type_of:undefined:94",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:95",
+      "name": "type_of:object:95",
       "input": {
         "value": {
           "10": {},
@@ -12494,19 +12494,19 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:96",
+      "name": "type_of:undefined:96",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:97",
+      "name": "type_of:object:97",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:98",
+      "name": "type_of:array:98",
       "input": {
         "value": [
           {
@@ -12521,17 +12521,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:99",
+      "name": "type_of:undefined:99",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:100",
+      "name": "type_of:undefined:100",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:101",
+      "name": "type_of:object:101",
       "input": {
         "value": {
           "...": true
@@ -12540,7 +12540,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:102",
+      "name": "type_of:array:102",
       "input": {
         "value": [
           [],
@@ -12550,12 +12550,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:103",
+      "name": "type_of:undefined:103",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:104",
+      "name": "type_of:object:104",
       "input": {
         "value": {
           "OI﻿  😀𝄞": {
@@ -12571,7 +12571,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:105",
+      "name": "type_of:object:105",
       "input": {
         "value": {
           "13": {
@@ -12589,29 +12589,29 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:106",
+      "name": "type_of:array:106",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:107",
+      "name": "type_of:undefined:107",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:108",
+      "name": "type_of:undefined:108",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:109",
+      "name": "type_of:undefined:109",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:110",
+      "name": "type_of:array:110",
       "input": {
         "value": [
           -1.1722935418928763e-308,
@@ -12623,7 +12623,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:111",
+      "name": "type_of:object:111",
       "input": {
         "value": {
           "0": {
@@ -12643,12 +12643,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:112",
+      "name": "type_of:undefined:112",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:113",
+      "name": "type_of:array:113",
       "input": {
         "value": [
           {
@@ -12659,35 +12659,35 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:114",
+      "name": "type_of:object:114",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:115",
+      "name": "type_of:array:115",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:116",
+      "name": "type_of:array:116",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:boolean:117",
+      "name": "type_of:boolean:117",
       "input": {
         "value": false
       },
       "output": "boolean"
     },
     {
-      "name": "typeof:array:118",
+      "name": "type_of:array:118",
       "input": {
         "value": [
           {
@@ -12698,12 +12698,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:119",
+      "name": "type_of:undefined:119",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:120",
+      "name": "type_of:array:120",
       "input": {
         "value": [
           null,
@@ -12713,12 +12713,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:121",
+      "name": "type_of:undefined:121",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:122",
+      "name": "type_of:object:122",
       "input": {
         "value": {
           "10": [
@@ -12729,12 +12729,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:123",
+      "name": "type_of:undefined:123",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:124",
+      "name": "type_of:array:124",
       "input": {
         "value": [
           {
@@ -12746,24 +12746,24 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:125",
+      "name": "type_of:undefined:125",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:126",
+      "name": "type_of:array:126",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:127",
+      "name": "type_of:undefined:127",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:128",
+      "name": "type_of:array:128",
       "input": {
         "value": [
           null,
@@ -12773,27 +12773,27 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:129",
+      "name": "type_of:undefined:129",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:130",
+      "name": "type_of:undefined:130",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:131",
+      "name": "type_of:undefined:131",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:132",
+      "name": "type_of:undefined:132",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:133",
+      "name": "type_of:array:133",
       "input": {
         "value": [
           {
@@ -12806,7 +12806,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:134",
+      "name": "type_of:array:134",
       "input": {
         "value": [
           {
@@ -12818,12 +12818,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:135",
+      "name": "type_of:undefined:135",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:136",
+      "name": "type_of:object:136",
       "input": {
         "value": {
           "14": {
@@ -12835,12 +12835,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:137",
+      "name": "type_of:undefined:137",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:138",
+      "name": "type_of:array:138",
       "input": {
         "value": [
           "K󐈭😀N=é\n"
@@ -12849,17 +12849,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:139",
+      "name": "type_of:undefined:139",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:140",
+      "name": "type_of:undefined:140",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:141",
+      "name": "type_of:array:141",
       "input": {
         "value": [
           {
@@ -12875,17 +12875,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:142",
+      "name": "type_of:undefined:142",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:143",
+      "name": "type_of:undefined:143",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:144",
+      "name": "type_of:array:144",
       "input": {
         "value": [
           {
@@ -12898,12 +12898,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:145",
+      "name": "type_of:undefined:145",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:146",
+      "name": "type_of:array:146",
       "input": {
         "value": [
           {
@@ -12916,24 +12916,24 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:147",
+      "name": "type_of:undefined:147",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:148",
+      "name": "type_of:array:148",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:149",
+      "name": "type_of:undefined:149",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:150",
+      "name": "type_of:array:150",
       "input": {
         "value": [
           true
@@ -12942,24 +12942,24 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:151",
+      "name": "type_of:undefined:151",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:152",
+      "name": "type_of:array:152",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:153",
+      "name": "type_of:undefined:153",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:154",
+      "name": "type_of:array:154",
       "input": {
         "value": [
           [
@@ -12975,12 +12975,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:155",
+      "name": "type_of:undefined:155",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:156",
+      "name": "type_of:object:156",
       "input": {
         "value": {
           "a": [
@@ -13001,17 +13001,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:157",
+      "name": "type_of:undefined:157",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:158",
+      "name": "type_of:undefined:158",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:159",
+      "name": "type_of:object:159",
       "input": {
         "value": {
           "a": [
@@ -13023,12 +13023,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:160",
+      "name": "type_of:undefined:160",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:161",
+      "name": "type_of:object:161",
       "input": {
         "value": {
           "1.5": {
@@ -13040,12 +13040,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:162",
+      "name": "type_of:undefined:162",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:163",
+      "name": "type_of:object:163",
       "input": {
         "value": {
           "id": [
@@ -13066,12 +13066,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:164",
+      "name": "type_of:undefined:164",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:165",
+      "name": "type_of:array:165",
       "input": {
         "value": [
           [],
@@ -13085,7 +13085,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:166",
+      "name": "type_of:object:166",
       "input": {
         "value": {
           "😀\u000b \\é󺁴y": "NrJ",
@@ -13095,22 +13095,22 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:167",
+      "name": "type_of:undefined:167",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:168",
+      "name": "type_of:undefined:168",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:169",
+      "name": "type_of:undefined:169",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:170",
+      "name": "type_of:object:170",
       "input": {
         "value": {
           "3": [],
@@ -13120,12 +13120,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:171",
+      "name": "type_of:undefined:171",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:172",
+      "name": "type_of:object:172",
       "input": {
         "value": {
           "20": [],
@@ -13136,19 +13136,19 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:173",
+      "name": "type_of:object:173",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:174",
+      "name": "type_of:undefined:174",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:175",
+      "name": "type_of:array:175",
       "input": {
         "value": [
           null,
@@ -13158,14 +13158,14 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:176",
+      "name": "type_of:object:176",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:177",
+      "name": "type_of:array:177",
       "input": {
         "value": [
           [
@@ -13178,14 +13178,14 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:178",
+      "name": "type_of:array:178",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:array:179",
+      "name": "type_of:array:179",
       "input": {
         "value": [
           "\"BRf\u001b世"
@@ -13194,29 +13194,29 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:180",
+      "name": "type_of:undefined:180",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:181",
+      "name": "type_of:undefined:181",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:182",
+      "name": "type_of:undefined:182",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:boolean:183",
+      "name": "type_of:boolean:183",
       "input": {
         "value": true
       },
       "output": "boolean"
     },
     {
-      "name": "typeof:array:184",
+      "name": "type_of:array:184",
       "input": {
         "value": [
           {
@@ -13227,12 +13227,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:185",
+      "name": "type_of:undefined:185",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:186",
+      "name": "type_of:array:186",
       "input": {
         "value": [
           {
@@ -13244,39 +13244,39 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:187",
+      "name": "type_of:undefined:187",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:188",
+      "name": "type_of:undefined:188",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:189",
+      "name": "type_of:array:189",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:190",
+      "name": "type_of:undefined:190",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:191",
+      "name": "type_of:undefined:191",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:192",
+      "name": "type_of:undefined:192",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:193",
+      "name": "type_of:array:193",
       "input": {
         "value": [
           {
@@ -13287,37 +13287,37 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:194",
+      "name": "type_of:undefined:194",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:195",
+      "name": "type_of:undefined:195",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:196",
+      "name": "type_of:undefined:196",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:197",
+      "name": "type_of:undefined:197",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:198",
+      "name": "type_of:undefined:198",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:199",
+      "name": "type_of:undefined:199",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:200",
+      "name": "type_of:object:200",
       "input": {
         "value": {
           "10": [
@@ -13329,12 +13329,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:201",
+      "name": "type_of:undefined:201",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:202",
+      "name": "type_of:array:202",
       "input": {
         "value": [
           -6174551904747597304,
@@ -13344,12 +13344,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:203",
+      "name": "type_of:undefined:203",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:204",
+      "name": "type_of:object:204",
       "input": {
         "value": {
           "type": [],
@@ -13364,12 +13364,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:205",
+      "name": "type_of:undefined:205",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:206",
+      "name": "type_of:array:206",
       "input": {
         "value": [
           true,
@@ -13382,7 +13382,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:207",
+      "name": "type_of:object:207",
       "input": {
         "value": {
           "OP😀😀mkD": {},
@@ -13392,7 +13392,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:208",
+      "name": "type_of:object:208",
       "input": {
         "value": {
           "b": {
@@ -13410,19 +13410,19 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:209",
+      "name": "type_of:undefined:209",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:210",
+      "name": "type_of:array:210",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:211",
+      "name": "type_of:object:211",
       "input": {
         "value": {
           "VW𝄞　": "😀S᠎é😀qy"
@@ -13431,7 +13431,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:212",
+      "name": "type_of:object:212",
       "input": {
         "value": {
           "5": -7458270801162442444,
@@ -13443,29 +13443,29 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:213",
+      "name": "type_of:object:213",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:214",
+      "name": "type_of:undefined:214",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:215",
+      "name": "type_of:undefined:215",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:216",
+      "name": "type_of:undefined:216",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:217",
+      "name": "type_of:array:217",
       "input": {
         "value": [
           {}
@@ -13474,12 +13474,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:218",
+      "name": "type_of:undefined:218",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:219",
+      "name": "type_of:array:219",
       "input": {
         "value": [
           {
@@ -13496,7 +13496,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:220",
+      "name": "type_of:object:220",
       "input": {
         "value": {
           "4": 0.0,
@@ -13506,14 +13506,14 @@
       "output": "object"
     },
     {
-      "name": "typeof:null:221",
+      "name": "type_of:null:221",
       "input": {
         "value": null
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:222",
+      "name": "type_of:object:222",
       "input": {
         "value": {
           "items": -5347247280247739837,
@@ -13528,7 +13528,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:number:223",
+      "name": "type_of:number:223",
       "input": {
         "value": {
           "$f64": "013f73b83d0bdf8d"
@@ -13537,12 +13537,12 @@
       "output": "number"
     },
     {
-      "name": "typeof:undefined:224",
+      "name": "type_of:undefined:224",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:225",
+      "name": "type_of:object:225",
       "input": {
         "value": {
           "😀\f\f​d2X𝄞w ": {},
@@ -13556,7 +13556,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:226",
+      "name": "type_of:object:226",
       "input": {
         "value": {
           "12": [
@@ -13568,31 +13568,31 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:227",
+      "name": "type_of:undefined:227",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:228",
+      "name": "type_of:object:228",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:229",
+      "name": "type_of:undefined:229",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:230",
+      "name": "type_of:array:230",
       "input": {
         "value": []
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:231",
+      "name": "type_of:object:231",
       "input": {
         "value": {
           "oU": [
@@ -13605,17 +13605,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:232",
+      "name": "type_of:undefined:232",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:233",
+      "name": "type_of:undefined:233",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:234",
+      "name": "type_of:object:234",
       "input": {
         "value": {
           "context": 4336577293180060700,
@@ -13626,19 +13626,19 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:235",
+      "name": "type_of:undefined:235",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:236",
+      "name": "type_of:object:236",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:237",
+      "name": "type_of:object:237",
       "input": {
         "value": {
           "name": false,
@@ -13650,17 +13650,17 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:238",
+      "name": "type_of:undefined:238",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:239",
+      "name": "type_of:undefined:239",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:240",
+      "name": "type_of:array:240",
       "input": {
         "value": [
           [
@@ -13673,12 +13673,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:241",
+      "name": "type_of:undefined:241",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:242",
+      "name": "type_of:array:242",
       "input": {
         "value": [
           "V é1S0",
@@ -13690,12 +13690,12 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:243",
+      "name": "type_of:undefined:243",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:244",
+      "name": "type_of:array:244",
       "input": {
         "value": [
           {}
@@ -13704,7 +13704,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:245",
+      "name": "type_of:object:245",
       "input": {
         "value": {
           "name": [
@@ -13718,26 +13718,26 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:246",
+      "name": "type_of:object:246",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:object:247",
+      "name": "type_of:object:247",
       "input": {
         "value": {}
       },
       "output": "object"
     },
     {
-      "name": "typeof:undefined:248",
+      "name": "type_of:undefined:248",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:object:249",
+      "name": "type_of:object:249",
       "input": {
         "value": {
           " \u0004e𝄞3": false,
@@ -13749,7 +13749,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:object:250",
+      "name": "type_of:object:250",
       "input": {
         "value": {
           "type": [
@@ -13766,22 +13766,22 @@
       "output": "object"
     },
     {
-      "name": "typeof:undefined:251",
+      "name": "type_of:undefined:251",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:252",
+      "name": "type_of:undefined:252",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:undefined:253",
+      "name": "type_of:undefined:253",
       "input": {},
       "output": "undefined"
     },
     {
-      "name": "typeof:array:254",
+      "name": "type_of:array:254",
       "input": {
         "value": [
           {}
@@ -13790,7 +13790,7 @@
       "output": "object"
     },
     {
-      "name": "typeof:array:255",
+      "name": "type_of:array:255",
       "input": {
         "value": [
           {

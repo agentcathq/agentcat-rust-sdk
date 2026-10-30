@@ -54,7 +54,7 @@ fn record() -> CallRecord {
 }
 
 /// The `tool_call` case of `event_order.json`: its event keys, each with whether its value is
-/// undefined (such a key is not in the JSON).
+/// absent (such a key is not in the JSON).
 fn expected_event_keys() -> Vec<(String, bool)> {
     let cases = vectors::cases("event_order");
     let case = cases
@@ -67,7 +67,14 @@ fn expected_event_keys() -> Vec<(String, bool)> {
         .iter()
         .map(|entry| {
             let key = entry["key"].as_str().expect("a key").to_owned();
-            (key, entry.get("undefined") == Some(&json!(true)))
+            let marks = entry.as_object().expect("an entry is an object");
+            for mark in marks.keys() {
+                assert!(
+                    ["key", "absent"].contains(&mark.as_str()),
+                    "event_order.json: the entry {key:?} has the unknown key {mark:?}"
+                );
+            }
+            (key, entry.get("absent") == Some(&json!(true)))
         })
         .collect()
 }
@@ -80,8 +87,8 @@ fn keys(event: &EventObject) -> Vec<&str> {
 /// The keys of the fixture's tool-call event, in its order (`event_order.json`). The probe ran a
 /// call that worked, with an intent and the identify, `event_tags` and `event_properties` hooks:
 /// after the hooks apply, Rust's event of such a call has the keys the fixture has, in its order
-/// (`ipAddress`, `isError` and `error` are undefined in the fixture, so JSON has none). A failed
-/// call has `isError` and `error` at the fixture's places.
+/// (`ipAddress`, `isError` and `error` are absent in the fixture, so JSON has none). A failed call
+/// has `isError` and `error` at the fixture's places.
 #[test]
 fn tool_call_event_follows_the_fixture_key_order() {
     let fixture = expected_event_keys();
@@ -89,7 +96,7 @@ fn tool_call_event_follows_the_fixture_key_order() {
     assert_eq!(TOOL_CALL_KEYS.as_slice(), all.as_slice());
     let defined: Vec<&str> = fixture
         .iter()
-        .filter(|(_, undefined)| !undefined)
+        .filter(|(_, absent)| !absent)
         .map(|(key, _)| key.as_str())
         .collect();
 
@@ -165,7 +172,7 @@ async fn event_takes_the_record_fields() {
     assert!(!job.hooks.any());
 }
 
-/// A field the record does not have is an absent key (an undefined value, which JSON drops); the
+/// A field the record does not have is an absent key (an absent value, which JSON drops); the
 /// client fields come from the client's name and version separately.
 #[test]
 fn absent_fields_are_absent_keys() {

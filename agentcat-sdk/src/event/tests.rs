@@ -60,7 +60,7 @@ fn meta_of(input: &Value) -> JsonObject {
 }
 
 /// The client of a fixture's client result as the event reads it: its `name` and `version`, or
-/// `null` for `undefined`. A handshake client is handed back whole, its other fields included.
+/// `null` for an absent client. A handshake client is handed back whole, its other fields included.
 fn expected_client(output: Option<&Value>) -> Value {
     let Some(output) = output else {
         return Value::Null;

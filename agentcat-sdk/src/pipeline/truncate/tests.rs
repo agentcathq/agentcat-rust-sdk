@@ -18,7 +18,7 @@ use crate::wire;
 /// bytes of the size guard that a cut character never meets it.
 const FIELD_TEST_MAX_BYTES: usize = 90_000;
 
-/// The UTF-8 size of `JSON.stringify(event)`.
+/// The UTF-8 size of `wire::stringify` of the event.
 fn size_of(event: &EventObject) -> usize {
     wire::stringify(&Value::Object(event.clone())).len()
 }
@@ -415,7 +415,7 @@ fn bulk() -> impl Strategy<Value = Vec<(u8, usize, String)>> {
 /// under a key of `parameters`, `response.structuredContent`, `identifyActorData`, `error` or
 /// `properties`; as a content text block; or as `error.message`, a tag, `userIntent` or
 /// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: the index keys come first in the
-/// text of `JSON.stringify`.
+/// text of `wire::stringify`.
 fn place(event: &mut EventObject, i: usize, spot: u8, depth: usize, text: String) {
     let key = if i.is_multiple_of(2) {
         (9 - i).to_string()
@@ -505,8 +505,8 @@ proptest! {
     #![proptest_config(config())]
 
     /// The size guard measures an event with `byte_size`, which counts the UTF-8 bytes of
-    /// `JSON.stringify(event)` without building the text: over random events, it is the length of
-    /// the text `wire::stringify` writes.
+    /// `wire::stringify` of the event without building the text: over random events, it is the
+    /// length of the text `wire::stringify` writes.
     #[test]
     fn byte_size_matches_stringify_len(event in tool_call_event(edge_string(40))) {
         prop_assert_eq!(super::byte_size(&event), size_of(&event));
