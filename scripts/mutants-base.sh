@@ -9,7 +9,7 @@
 # The `gh api` call needs GH_TOKEN and `actions: read`. With no such run, the parent commit (HEAD^) and a
 # message on stderr. A `gh` error stops the script (exit 1).
 #
-# Locally: the upstream of the current branch (`@{upstream}`, for example origin/rewrite), else origin/main,
+# Locally: the upstream of the current branch (`@{upstream}`, for example origin/my-branch), else origin/main,
 # else HEAD^ with a message on stderr.
 set -euo pipefail
 cd "$(dirname "$0")/.."

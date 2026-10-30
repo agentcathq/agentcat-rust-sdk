@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [rewrite, main]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 # A new push to a pull request cancels the older run of that pull request. Every other run (a push
-# to rewrite or main, a manual run) is in the group of its own commit, so a run for a later commit
+# to main, a manual run) is in the group of its own commit, so a run for a later commit
 # never cancels it or drops it from the queue: every pushed commit keeps a finished run.
 # (GitHub drops a waiting run when a newer run joins its group, whatever cancel-in-progress says.)
 concurrency:
