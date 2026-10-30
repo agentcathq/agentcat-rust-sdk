@@ -10,6 +10,7 @@ use super::{
 };
 use crate::js;
 use crate::pipeline::TsEvent;
+use crate::test_support::rules::check_cut;
 use crate::test_support::strategies::{bmp_string, js_string, number, ts_event};
 use crate::test_support::{assert_js_eq, config, config_capped, markers, vectors};
 
@@ -180,15 +181,12 @@ fn size_guard_cuts_at_the_minimum_reduction() {
 /// `to_js_string` text of its first `limit` items and `"..."`; any other value stays.
 fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), TestCaseError> {
     match input {
-        Value::String(text) if js::utf16_len(text) > limit => {
+        Value::String(text) if text.encode_utf16().count() > limit => {
             let kept = output
                 .as_str()
                 .and_then(|out| out.strip_suffix("..."))
                 .unwrap();
-            prop_assert!(text.starts_with(kept), "{:?} is not a prefix", kept);
-            prop_assert!(js::utf16_len(kept) <= limit);
-            let next = text[kept.len()..].chars().next().unwrap();
-            prop_assert!(js::utf16_len(kept) + next.len_utf16() > limit);
+            check_cut(text, kept, limit)?;
         }
         Value::Array(items) if items.len() > limit => {
             let joined = js::to_js_string(Some(&Value::Array(items[..limit].to_vec())));
@@ -199,9 +197,29 @@ fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), Test
     Ok(())
 }
 
+/// Checks that the object `output` has the keys of the object `input`, and the same value under
+/// each key but those of `checked`, which the caller checks.
+fn check_other_keys(input: &Value, output: &Value, checked: &[&str]) -> Result<(), TestCaseError> {
+    let (Value::Object(input), Value::Object(output)) = (input, output) else {
+        prop_assert_eq!(output, input);
+        return Ok(());
+    };
+    let mut keys: Vec<&String> = input.keys().collect();
+    let mut out_keys: Vec<&String> = output.keys().collect();
+    keys.sort();
+    out_keys.sort();
+    prop_assert_eq!(out_keys, keys);
+    for (key, value) in input {
+        if !checked.contains(&key.as_str()) {
+            prop_assert_eq!(&output[key], value, "{}", key);
+        }
+    }
+    Ok(())
+}
+
 /// Checks the field-limited `output` of `input`: each limited field and `error.message` within
 /// its limit, `error.frames` cut to its first and last 25, each content text within 32 768
-/// units, and every other field unchanged.
+/// units, and every other field unchanged, inside `error`, `response` and each block too.
 fn check_field_limits(input: &TsEvent, output: &TsEvent) -> Result<(), TestCaseError> {
     for (key, value) in input {
         let out = &output[key];
@@ -224,18 +242,21 @@ fn check_field_limits(input: &TsEvent, output: &TsEvent) -> Result<(), TestCaseE
                 let out: Vec<&Value> = out["frames"].as_array().unwrap().iter().collect();
                 prop_assert_eq!(out, expected);
             }
+            check_other_keys(value, out, &["message", "frames"])?;
         } else if key == "response"
             && let Some(Value::Array(blocks)) = value.get("content")
         {
-            let out = out["content"].as_array().unwrap();
-            prop_assert_eq!(blocks.len(), out.len());
-            for (block, out) in blocks.iter().zip(out) {
+            let out_blocks = out["content"].as_array().unwrap();
+            prop_assert_eq!(blocks.len(), out_blocks.len());
+            for (block, out_block) in blocks.iter().zip(out_blocks) {
                 if let Some(text @ Value::String(_)) = block.get("text") {
-                    check_limited(text, &out["text"], 32_768)?;
+                    check_limited(text, &out_block["text"], 32_768)?;
+                    check_other_keys(block, out_block, &["text"])?;
                 } else {
-                    prop_assert_eq!(out, block);
+                    prop_assert_eq!(out_block, block);
                 }
             }
+            check_other_keys(value, out, &["content"])?;
         } else {
             prop_assert_eq!(out, value, "{}", key);
         }

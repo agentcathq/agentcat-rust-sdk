@@ -75,41 +75,6 @@ fn estimate_tokens_never_overflows() {
     assert_eq!(estimate_tokens(0), 0);
 }
 
-/// A content block: text, resource, image, other JSON, or a block with a wrong-typed field.
-fn block() -> impl Strategy<Value = Value> + Clone {
-    prop_oneof![
-        js_string(40).prop_map(|t| json!({"type": "text", "text": t})),
-        js_string(40)
-            .prop_map(|t| json!({"type": "resource", "resource": {"uri": "u", "text": t}})),
-        Just(json!({"type": "image", "data": "QUJD", "mimeType": "image/png"})),
-        Just(json!({"type": "resource", "resource": {"uri": "u", "blob": "QUJD"}})),
-        json_value(1, 3),
-        (json_value(1, 2), json_value(1, 2))
-            .prop_map(|(t, r)| json!({"type": "text", "text": t, "resource": r})),
-        json_value(1, 2).prop_map(|r| json!({"type": "resource", "resource": r})),
-    ]
-}
-
-/// A tool result: `content` blocks (possibly none), an optional `structuredContent`, extra keys.
-fn tool_result() -> impl Strategy<Value = Value> + Clone {
-    (
-        proptest::collection::vec(block(), 0..6),
-        proptest::option::of(json_value(2, 3)),
-        proptest::collection::vec((object_key(), json_value(1, 2)), 0..3),
-    )
-        .prop_map(|(content, structured, extra)| {
-            let mut result = Map::new();
-            for (key, value) in extra {
-                result.insert(key, value);
-            }
-            result.insert("content".to_owned(), Value::Array(content));
-            if let Some(structured) = structured {
-                result.insert("structuredContent".to_owned(), structured);
-            }
-            Value::Object(result)
-        })
-}
-
 /// The cases of `tokens_cases.json`: random arguments (`input:`), random tool results and other
 /// responses (`output:`), and random byte counts (`bytes:`).
 #[test]
@@ -130,30 +95,80 @@ fn stringify_tokens(value: &Value) -> i32 {
     estimate_tokens(u64::try_from(js::stringify(value).len()).unwrap())
 }
 
-/// The UTF-8 bytes of the text a content block counts, from the rule: the `text` string of a
-/// `text` block and the `resource.text` string of a `resource` block; 0 for any other block.
-fn counted_bytes(block: &Value) -> u64 {
-    let text = match block["type"].as_str() {
-        Some("text") => &block["text"],
-        Some("resource") => &block["resource"]["text"],
-        _ => &Value::Null,
-    };
-    text.as_str()
-        .map_or(0, |text| u64::try_from(text.len()).unwrap())
+/// The UTF-8 length of `text`.
+fn utf8_len(text: &str) -> u64 {
+    u64::try_from(text.len()).unwrap()
 }
 
-/// The output estimate from the rule: a response without a `content` array counts its JSON; an
-/// empty `content` counts the JSON of `structuredContent`, or 0 without one; any other `content`
-/// counts the text of its blocks, rounded once.
-fn expected_output(response: &Value) -> i32 {
-    match response.get("content").and_then(Value::as_array) {
-        None => stringify_tokens(response),
-        Some(content) if content.is_empty() => match response.get("structuredContent") {
-            None | Some(Value::Null) => 0,
-            Some(structured) => stringify_tokens(structured),
-        },
-        Some(content) => estimate_tokens(content.iter().map(counted_bytes).sum()),
-    }
+/// Any [`json_value`] up to 2 levels deep that `keep` holds for.
+fn json_but(keep: fn(&Value) -> bool) -> impl Strategy<Value = Value> + Clone {
+    json_value(1, 2).prop_filter("a value of the wrong kind", keep)
+}
+
+/// A content block and the UTF-8 bytes it counts, known from how the block is built: the `text`
+/// string of a `text` block and the `resource.text` string of a `resource` block. A `text` key
+/// elsewhere in the block, a text that is not a string, a resource that is not an object, a block
+/// of another type or of a type that is not a string, a block without a type, and a block that is
+/// not an object count 0.
+fn counted_block() -> impl Strategy<Value = (Value, u64)> {
+    let not_string: fn(&Value) -> bool = |value| !value.is_string();
+    let not_object: fn(&Value) -> bool = |value| !value.is_object();
+    let other_type = prop::sample::select(vec!["image", "audio", "resource_link", "Text", ""]);
+    prop_oneof![
+        js_string(40).prop_map(|t| (json!({"type": "text", "text": t}), utf8_len(&t))),
+        (js_string(40), js_string(8)).prop_map(|(t, other)| {
+            let block = json!({"type": "text", "text": t, "resource": {"text": other}});
+            (block, utf8_len(&t))
+        }),
+        js_string(40).prop_map(|t| {
+            let block = json!({"type": "resource", "resource": {"uri": "u", "text": t}});
+            (block, utf8_len(&t))
+        }),
+        (js_string(40), js_string(8)).prop_map(|(t, other)| {
+            let block =
+                json!({"type": "resource", "text": other, "resource": {"uri": "u", "text": t}});
+            (block, utf8_len(&t))
+        }),
+        Just((
+            json!({"type": "image", "data": "QUJD", "mimeType": "image/png"}),
+            0
+        )),
+        Just((
+            json!({"type": "resource", "resource": {"uri": "u", "blob": "QUJD"}}),
+            0
+        )),
+        json_but(not_string).prop_map(|t| (json!({"type": "text", "text": t}), 0)),
+        json_but(not_string).prop_map(|t| (
+            json!({"type": "resource", "resource": {"uri": "u", "text": t}}),
+            0
+        )),
+        json_but(not_object).prop_map(|r| (json!({"type": "resource", "resource": r}), 0)),
+        (other_type, js_string(16)).prop_map(|(kind, t)| {
+            (json!({"type": kind, "text": t, "resource": {"text": t}}), 0)
+        }),
+        (json_but(not_string), js_string(16)).prop_map(|(kind, t)| {
+            (json!({"type": kind, "text": t, "resource": {"text": t}}), 0)
+        }),
+        js_string(16).prop_map(|t| (json!({"text": t, "resource": {"text": t}}), 0)),
+        json_but(not_object).prop_map(|block| (block, 0)),
+    ]
+}
+
+/// A tool result without blocks: an empty `content`, an optional `structuredContent` (maybe
+/// `null`), and other keys.
+fn blockless_result() -> impl Strategy<Value = Value> {
+    (
+        proptest::option::of(json_value(2, 3)),
+        proptest::collection::vec((object_key(), json_value(1, 2)), 0..3),
+    )
+        .prop_map(|(structured, extra)| {
+            let mut result: Map<String, Value> = extra.into_iter().collect();
+            result.insert("content".to_owned(), json!([]));
+            if let Some(structured) = structured {
+                result.insert("structuredContent".to_owned(), structured);
+            }
+            Value::Object(result)
+        })
 }
 
 proptest! {
@@ -175,7 +190,9 @@ proptest! {
         prop_assert!(estimate_tokens(bytes + more) >= tokens);
     }
 
-    /// The input estimate counts the bytes of the arguments' `stringify` text.
+    /// The input estimate is the estimate of the byte length of the arguments' `stringify` text.
+    /// This is only a composition check of `stringify` and [`estimate_tokens`]; the frozen cases
+    /// of `tokens.json` and `tokens_cases.json` pin the values.
     #[test]
     fn input_tokens_count_the_stringify_bytes(
         entries in proptest::collection::vec((object_key(), json_value(5, 6)), 0..6),
@@ -184,17 +201,42 @@ proptest! {
         prop_assert_eq!(estimate_input_tokens(Some(&value)), Some(stringify_tokens(&value)));
     }
 
-    /// The output estimate of a tool result counts the text of its text and resource blocks,
-    /// or its structured content when it has no block.
+    /// The output estimate of a tool result with blocks is `ceil(bytes / 3.5)` of the bytes its
+    /// blocks count (see [`counted_block`]), summed before the one rounding; `structuredContent`
+    /// and the other keys do not count.
     #[test]
-    fn output_tokens_count_the_block_texts(value in tool_result()) {
-        prop_assert_eq!(estimate_output_tokens(Some(&value)), Some(expected_output(&value)));
+    fn output_tokens_count_the_block_texts(
+        blocks in proptest::collection::vec(counted_block(), 1..6),
+        structured in proptest::option::of(json_value(2, 3)),
+        extra in proptest::collection::vec((object_key(), json_value(1, 2)), 0..3),
+    ) {
+        let bytes: u64 = blocks.iter().map(|(_, bytes)| bytes).sum();
+        let mut result: Map<String, Value> = extra.into_iter().collect();
+        let content = blocks.into_iter().map(|(block, _)| block).collect();
+        result.insert("content".to_owned(), Value::Array(content));
+        if let Some(structured) = structured {
+            result.insert("structuredContent".to_owned(), structured);
+        }
+        let tokens = i32::try_from((2 * bytes).div_ceil(7)).unwrap();
+        prop_assert_eq!(estimate_output_tokens(Some(&Value::Object(result))), Some(tokens));
     }
 
-    /// The output estimate of any other response counts its JSON when it has no `content` array.
+    /// The output estimate of a response without blocks: without a `content` array it counts the
+    /// `stringify` text of the response; with an empty one, that of `structuredContent`, or 0
+    /// without one; `null` has no estimate. This is only a composition check of `stringify` and
+    /// [`estimate_tokens`]; the frozen cases of `tokens_cases.json` pin the values.
     #[test]
-    fn output_tokens_of_any_response_follow_the_same_rule(value in json_value(4, 5)) {
-        let expected = (!value.is_null()).then(|| expected_output(&value));
+    fn output_tokens_without_blocks_count_the_stringify_bytes(
+        value in prop_oneof![blockless_result(), json_value(4, 5)],
+    ) {
+        let content = value.get("content").and_then(Value::as_array);
+        prop_assume!(content.is_none_or(Vec::is_empty));
+        let expected = match (content, value.get("structuredContent")) {
+            _ if value.is_null() => None,
+            (None, _) => Some(stringify_tokens(&value)),
+            (Some(_), None | Some(Value::Null)) => Some(0),
+            (Some(_), Some(structured)) => Some(stringify_tokens(structured)),
+        };
         prop_assert_eq!(estimate_output_tokens(Some(&value)), expected);
     }
 }

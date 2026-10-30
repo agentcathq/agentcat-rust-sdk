@@ -1,9 +1,10 @@
 //! Helpers shared by the crate's unit tests: the markers of the strict JSON encoding, the vector
-//! loader, the proptest strategies, JSON helpers and [`TempHome`].
+//! loader, the proptest strategies, JSON helpers, rules several tests check, and [`TempHome`].
 pub(crate) mod json;
 pub(crate) mod markers;
 pub(crate) mod queue;
 pub(crate) mod rmcp;
+pub(crate) mod rules;
 pub(crate) mod strategies;
 pub(crate) mod vectors;
 

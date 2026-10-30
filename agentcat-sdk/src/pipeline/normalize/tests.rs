@@ -4,8 +4,8 @@ use proptest::prelude::*;
 use serde_json::{Map, Value};
 
 use super::{MAX_BREADTH, MAX_DEPTH, MAX_STRING_LENGTH, normalize};
-use crate::js;
 use crate::test_support::json::index_keys_first;
+use crate::test_support::rules::check_cut;
 use crate::test_support::strategies::json_value;
 use crate::test_support::{assert_js_eq, config_capped, vectors};
 
@@ -71,17 +71,9 @@ fn check_normalized(
     max_string: usize,
 ) -> Result<(), TestCaseError> {
     match (input, output) {
-        (Value::String(text), Value::String(out)) if js::utf16_len(text) > max_string => {
+        (Value::String(text), Value::String(out)) if text.encode_utf16().count() > max_string => {
             let kept = out.strip_suffix("...").expect("a cut string ends with ...");
-            prop_assert!(
-                text.starts_with(kept),
-                "{:?} is not a prefix of {:?}",
-                kept,
-                text
-            );
-            prop_assert!(js::utf16_len(kept) <= max_string);
-            let next = text[kept.len()..].chars().next().unwrap();
-            prop_assert!(js::utf16_len(kept) + next.len_utf16() > max_string);
+            check_cut(text, kept, max_string)?;
         }
         (Value::Array(_), _) if depth == 0 => prop_assert_eq!(output, "[Array]"),
         (Value::Object(_), _) if depth == 0 => prop_assert_eq!(output, "[Object]"),

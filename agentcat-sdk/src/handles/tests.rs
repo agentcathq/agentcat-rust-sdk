@@ -5,14 +5,16 @@ use std::collections::BTreeSet;
 
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
+use sha2::{Digest, Sha256};
 
 use super::{
-    HandleResolution, SessionSource, build_handle_tags, build_mint_back_text,
-    build_structured_mint_back, derive_session_id, extract_handle, is_valid_session_id,
+    DERIVE_EPOCH_MS, HandleResolution, SessionSource, build_handle_tags, build_mint_back_text,
+    build_structured_mint_back, derive_session_id, extract_handle, is_valid_session_id, ksuid,
     new_event_id, new_session_id, resolve_handles, session_from_hook_value,
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, SESSION_START_SENTINEL};
 use crate::js;
+use crate::test_support::rules::{base62_bytes, check_cut};
 use crate::test_support::strategies::{js_char, js_string};
 use crate::test_support::{assert_js_eq, config, vectors};
 
@@ -455,21 +457,30 @@ fn every_kind_matches_handles_cases() {
 proptest! {
     #![proptest_config(config())]
 
-    /// A project ID is hashed with the ID as `"<id>:<project>"`; an empty project is no project.
-    /// The result is a session ID.
+    /// A derived session ID holds the SHA-256 hash of `"<id>:<project>"`, or of the ID alone
+    /// without a project or with an empty one: its seconds are those of 2024-01-01T00:00:00Z plus
+    /// the first 4 hash bytes (big-endian) in milliseconds, and its payload is hash bytes 4 to 19.
     #[test]
-    fn derive_hashes_the_id_and_the_project_together(
+    fn derive_holds_the_hash_of_the_id_and_the_project(
         id in js_string(40),
-        project in proptest::option::of(js_string(10)),
+        project in prop_oneof![
+            1 => Just(None),
+            1 => Just(Some(String::new())),
+            3 => js_string(10).prop_map(Some),
+        ],
     ) {
         let derived = derive_session_id(&id, project.as_deref());
         prop_assert!(has_session_shape(&derived), "{}", derived);
-        let expected = match project.as_deref() {
-            Some("") | None => derive_session_id(&id, None),
-            Some(project) => derive_session_id(&format!("{id}:{project}"), None),
+        let hashed = match project.as_deref() {
+            Some(project) if !project.is_empty() => format!("{id}:{project}"),
+            _ => id.clone(),
         };
-        prop_assert_eq!(&derived, &expected);
-        prop_assert_eq!(derive_session_id(&id, Some("")), derive_session_id(&id, None));
+        let hash = Sha256::digest(hashed.as_bytes());
+        let offset = u64::from(u32::from_be_bytes(hash[..4].try_into().unwrap()));
+        let seconds = u32::try_from((DERIVE_EPOCH_MS + offset - ksuid::EPOCH_MS) / 1_000).unwrap();
+        let bytes = base62_bytes(&derived["ses_".len()..]);
+        prop_assert_eq!(&bytes[..4], &seconds.to_be_bytes()[..]);
+        prop_assert_eq!(&bytes[4..], &hash[4..20]);
     }
 
     /// A value is valid exactly when it is `ses_` and 27 base62 digits.
@@ -545,24 +556,19 @@ proptest! {
             agent_id: agent_id.clone(),
         };
         let tags = build_handle_tags(&res, protocol_version.as_deref());
-        let mut expected = vec![("agentcat_session_id_source", json!(source.as_str()))];
+        prop_assert_eq!(&tags["agentcat_session_id_source"], source.as_str());
+        let mut keys = vec!["agentcat_session_id_source"];
         if let Some(agent) = agent_id.filter(|agent| !agent.is_empty()) {
             let flat: String = agent.chars().map(|c| if c == '\r' || c == '\n' { ' ' } else { c }).collect();
-            let mut units = 0;
-            let cut: String = flat
-                .chars()
-                .take_while(|c| {
-                    units += c.len_utf16();
-                    units <= 200
-                })
-                .collect();
-            expected.push(("agentcat_agent_id", json!(cut)));
-            expected.push(("agentcat_agent_id_source", json!("supplied")));
+            let tag = tags.get("agentcat_agent_id").and_then(Value::as_str);
+            check_cut(&flat, tag.unwrap_or_default(), 200)?;
+            prop_assert_eq!(tags.get("agentcat_agent_id_source"), Some(&json!("supplied")));
+            keys.extend(["agentcat_agent_id", "agentcat_agent_id_source"]);
         }
         if let Some(version) = protocol_version.filter(|version| !version.is_empty()) {
-            expected.push(("agentcat_protocol_version", json!(version)));
+            prop_assert_eq!(tags.get("agentcat_protocol_version"), Some(&json!(version)));
+            keys.push("agentcat_protocol_version");
         }
-        let actual: Vec<(&str, Value)> = tags.iter().map(|(key, value)| (key.as_str(), value.clone())).collect();
-        prop_assert_eq!(actual, expected);
+        prop_assert_eq!(tags.keys().map(String::as_str).collect::<Vec<_>>(), keys);
     }
 }

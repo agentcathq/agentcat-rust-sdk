@@ -72,17 +72,17 @@ fn vectors_match_ts() {
         cases.iter().partition(|case| case.contains_key("original"));
     assert!(restore.len() >= 40, "redact.json has its restore cases");
     for case in walk {
-        check_walk_case(case);
+        check_walk_case(case, "redact.json");
     }
     for case in restore {
-        check_restore_case(case);
+        check_restore_case(case, "redact.json");
     }
 }
 
 /// A walk case: the calls are TS's exactly, and the event (or the error after those calls).
-fn check_walk_case(case: &Map<String, Value>) {
+fn check_walk_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
-    let context = format!("redact.json {name}");
+    let context = format!("{file} {name}");
     let input = input_of(case, &context);
     let throw_at = case.get("throw_at").map(|n| {
         let n = n.as_u64().expect("throw_at is a count");
@@ -106,9 +106,9 @@ fn check_walk_case(case: &Map<String, Value>) {
 }
 
 /// A restore case: the event the hook's result becomes, or `None` for a drop.
-fn check_restore_case(case: &Map<String, Value>) {
+fn check_restore_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
-    let context = format!("redact.json {name}");
+    let context = format!("{file} {name}");
     let original = event_of(case["original"].clone(), &context);
     let replacement = match case.get("replacement") {
         None | Some(Value::Null) => None,
@@ -136,7 +136,7 @@ fn walks_and_restores_match_redact_cases() {
         "redact_cases.json has its restore cases"
     );
     for case in walk {
-        check_walk_case(case);
+        check_walk_case(case, "redact_cases.json");
         if let Some(error) = case.get("error") {
             assert_eq!(
                 error,
@@ -147,7 +147,7 @@ fn walks_and_restores_match_redact_cases() {
         }
     }
     for case in restore {
-        check_restore_case(case);
+        check_restore_case(case, "redact_cases.json");
     }
 }
 

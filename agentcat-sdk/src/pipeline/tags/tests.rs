@@ -98,9 +98,10 @@ fn tag_value() -> impl Strategy<Value = Value> + Clone {
 proptest! {
     #![proptest_config(config())]
 
-    /// The valid tags stay, in the key order of [`index_keys_first`], up to 50 of them; none
-    /// stay for no valid tag. Each invalid tag gives a log line that names its key, in that
-    /// order, and the valid tags past the 50th give one line that counts them.
+    /// The valid tags stay, in the key order of [`index_keys_first`], up to 50 of them; with no
+    /// valid tag the result is `None`, not an empty map. Each invalid tag gives a log line that
+    /// names its key, in that order, and the valid tags past the 50th give one line that counts
+    /// them.
     #[test]
     fn validate_tags_keeps_the_first_50_valid_tags_and_logs_each_drop(
         // Half the cases hold 48 to 69 entries, around the 50-tag cap.
@@ -116,12 +117,10 @@ proptest! {
         let (valid, invalid): (Vec<&str>, Vec<&str>) =
             order.into_iter().partition(|key| is_valid_tag(key, &tags[*key]));
         let kept: Vec<(&str, &Value)> = valid.iter().take(50).map(|key| (*key, &tags[*key])).collect();
-        match actual {
-            None => prop_assert!(kept.is_empty()),
-            Some(actual) => {
-                let actual: Vec<(&str, &Value)> = actual.iter().map(|(key, value)| (key.as_str(), value)).collect();
-                prop_assert_eq!(actual, kept);
-            }
+        prop_assert_eq!(actual.is_none(), kept.is_empty());
+        if let Some(actual) = actual {
+            let actual: Vec<(&str, &Value)> = actual.iter().map(|(key, value)| (key.as_str(), value)).collect();
+            prop_assert_eq!(actual, kept);
         }
         let extra = valid.len().saturating_sub(50);
         prop_assert_eq!(log.len(), invalid.len() + usize::from(extra > 0));

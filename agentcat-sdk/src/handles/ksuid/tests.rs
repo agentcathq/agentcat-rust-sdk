@@ -4,6 +4,7 @@ use proptest::prelude::*;
 use serde_json::{Map, Value};
 
 use super::{EPOCH_MS, MAX_TIME_MS, encode, from_parts, random, random_at};
+use crate::test_support::rules::base62_bytes;
 use crate::test_support::{config, vectors};
 
 /// The 16 payload bytes of a case's `payload_hex`.
@@ -95,29 +96,6 @@ fn from_parts_matches_ksuid_cases() {
     for case in &cases {
         check_from_parts(case);
     }
-}
-
-/// The 20 bytes that the 27 base62 characters `text` stand for, big-endian, read with the
-/// alphabet `0-9`, `A-Z`, `a-z`.
-fn base62_bytes(text: &str) -> [u8; 20] {
-    let mut bytes = [0_u8; 20];
-    for c in text.chars() {
-        let digit = match c {
-            '0'..='9' => u32::from(c) - u32::from('0'),
-            'A'..='Z' => u32::from(c) - u32::from('A') + 10,
-            'a'..='z' => u32::from(c) - u32::from('a') + 36,
-            _ => panic!("{c:?} is not a base62 digit"),
-        };
-        // bytes = bytes * 62 + digit, from the last byte up.
-        let mut carry = digit;
-        for byte in bytes.iter_mut().rev() {
-            let value = u32::from(*byte) * 62 + carry;
-            *byte = u8::try_from(value & 0xff).unwrap();
-            carry = value >> 8;
-        }
-        assert_eq!(carry, 0, "{text} is more than 20 bytes");
-    }
-    bytes
 }
 
 /// The seconds since [`EPOCH_MS`] of an in-range `time_ms`, as a KSUID holds them.

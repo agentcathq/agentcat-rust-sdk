@@ -12,6 +12,7 @@ use super::{
     to_js_string, to_js_value, trim, type_of, utf16_len, write_stringify,
 };
 use crate::test_support::json::index_keys_first;
+use crate::test_support::rules::check_cut;
 use crate::test_support::strategies::{js_string, json_value, number, object_key};
 use crate::test_support::{assert_js_eq, config, vectors};
 
@@ -335,14 +336,21 @@ fn every_kind_matches_wire_cases() {
     );
 }
 
-/// Whether the two numbers are the same `f64` up to 4 units in the last place: `serde_json`
-/// without `float_roundtrip` can read a shortest number text 1 unit off.
+/// The units in the last place that [`close`] lets two numbers differ by. `serde_json` without
+/// `float_roundtrip` reads some shortest number texts 2 units off: the text of
+/// 2.2988614746227942e-212 reads back as 2.2988614746227947e-212. With 1, the read-back
+/// properties fail on such numbers; with 2, they pass 100 000 cases each.
+const ULPS: u64 = 2;
+
+/// Whether the two numbers are the same `f64` up to [`ULPS`] units in the last place (`0` and
+/// `-0` are the same).
 fn close(a: &Number, b: &Number) -> bool {
     let (Some(a), Some(b)) = (a.as_f64(), b.as_f64()) else {
         return false;
     };
     (is_zero(a) && is_zero(b))
-        || (a.is_sign_negative() == b.is_sign_negative() && a.to_bits().abs_diff(b.to_bits()) <= 4)
+        || (a.is_sign_negative() == b.is_sign_negative()
+            && a.to_bits().abs_diff(b.to_bits()) <= ULPS)
 }
 
 /// Whether `f` is `0` or `-0`.
@@ -460,12 +468,7 @@ proptest! {
     /// `cut_utf16` gives the longest prefix of at most `units` UTF-16 units.
     #[test]
     fn cut_is_the_longest_prefix_within_the_units((text, units) in (js_string(30), 0..40usize)) {
-        let cut = cut_utf16(&text, units);
-        prop_assert!(text.starts_with(cut));
-        prop_assert!(cut.encode_utf16().count() <= units);
-        if let Some(next) = text[cut.len()..].chars().next() {
-            prop_assert!(cut.encode_utf16().count() + next.len_utf16() > units);
-        }
+        check_cut(&text, cut_utf16(&text, units), units)?;
     }
 
     /// `utf16_len` counts the UTF-16 units.
