@@ -17,12 +17,20 @@
 //! `cargo run -p xtask -- coverage <summary.json>` checks the line coverage floors of
 //! `agentcat-sdk` on an llvm-cov summary (see [`coverage`]).
 //!
+//! `cargo run -q -p xtask -- rmcp-versions` prints the JSON list of the rmcp versions that CI
+//! tests, from the crates.io API (see [`rmcp_versions`]).
+//!
+//! `cargo run -q -p xtask -- examples-check <stdio | streamable_http | hooks | stateless_http>`
+//! runs one customer example against a local mock API and checks it (see [`examples_check`]).
+//!
 //! [`sdk_manifest`] checks R07 in `agentcat-sdk/Cargo.toml` (its test runs with every
 //! `cargo nextest run --workspace`).
 pub mod coverage;
+pub mod examples_check;
 pub mod parity;
 pub mod public_api;
 pub mod rmcp_canary;
+pub mod rmcp_versions;
 pub mod sdk_manifest;
 
 use std::collections::BTreeSet;
@@ -31,7 +39,7 @@ use std::process::{Command, ExitCode};
 
 use parity::{Report, Status};
 
-const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json>";
+const USAGE: &str = "usage: cargo run -p xtask -- parity [--final | --print-missing] | rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json> | rmcp-versions | examples-check <example>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -67,6 +75,23 @@ fn main() -> ExitCode {
     }
     if args.first().map(String::as_str) == Some("package-list") {
         let (code, lines) = public_api::run_package_list(&args[1..], &workspace_root());
+        for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("rmcp-versions") {
+        let (code, json, problems) = rmcp_versions::run(&args[1..]);
+        if let Some(json) = json {
+            print_text(&format!("{json}\n"));
+        }
+        for line in &problems {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("examples-check") {
+        let (code, lines) = examples_check::run(&args[1..], &workspace_root());
         for line in &lines {
             report_error(line);
         }
