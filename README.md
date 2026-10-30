@@ -25,7 +25,7 @@
 </p>
 
 > [!NOTE]
-> AgentCat for Rust is compatible with the [MCP Protocol "Stateless" 2026-07-28 Update](https://blog.modelcontextprotocol.io/posts/2026-07-28/) as the official Rust MCP SDK puts it into effect: [`rmcp`](https://github.com/modelcontextprotocol/rust-sdk) 3.x, from 3.0.0, over stdio and streamable HTTP. The stateless transition has a massive impact on analytics, as sessions were a built-in concept tying related tool calls together. AgentCat has now migrated its session tracking under guidance of the MCP core team's recommendations of using [explicit handles (SEP-2567)](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2567).
+> AgentCat for Rust is compatible with the [MCP Protocol "Stateless" 2026-07-28 Update](https://blog.modelcontextprotocol.io/posts/2026-07-28/) as the official Rust MCP SDK puts it into effect: [`rmcp`](https://github.com/modelcontextprotocol/rust-sdk) 3.x, from 3.0.0, over stateless HTTP, streamable HTTP and stdio. The stateless transition has a massive impact on analytics, as sessions were a built-in concept tying related tool calls together. AgentCat has now migrated its session tracking under guidance of the MCP core team's recommendations of using [explicit handles (SEP-2567)](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2567).
 >
 > As a result AgentCat now injects a `session_id` on every MCP tool call to associate them under the same task umbrella. Our evals show much higher tool correlation accuracy at the cost of < 1% additional context pollution.
 
@@ -76,6 +76,58 @@ AgentCat works with the `rmcp` 3.x and the tokio runtime that your server alread
 
 Then track your server as shown below; the [examples](https://github.com/agentcathq/agentcat-rust-sdk/tree/main/agentcat-sdk/examples) are complete servers for each setup. AgentCat stays on while your tests run: `AGENTCAT_ENABLED=false` turns it off, and [`testing::Fake`](https://docs.rs/agentcat-sdk/latest/agentcat_sdk/testing/struct.Fake.html) (the `test-util` feature) records the events of a test for your assertions.
 
+### Stateless HTTP
+
+Stateless HTTP is the default MCP transport from the 2026-07-28 update on. In stateless mode, `rmcp` builds a new server handler for each request. Build one `AgentCat` handle for the process, and wrap each new handler with `AgentCat::track` in the closure that builds it. Tracking each instance is cheap — the clones of one handle share its event queue and its delivery thread. After your server stops, call `AgentCat::shutdown`:
+
+```rust,no_run
+use std::sync::Arc;
+use std::time::Duration;
+
+use agentcat_sdk::{AgentCat, Options};
+use rmcp::ServerHandler;
+use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
+use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
+
+// `my_server` is your existing rmcp server handler
+async fn serve_http(my_server: impl ServerHandler + Clone) {
+    // One AgentCat handle for the whole process
+    let agentcat = AgentCat::new("proj_0000000", Options::default());
+
+    // rmcp calls this closure for each request: track each new server
+    let handle = agentcat.clone();
+    let service = StreamableHttpService::new(
+        move || Ok(handle.track(my_server.clone())),
+        Arc::new(LocalSessionManager::default()),
+        // No MCP sessions, and JSON responses instead of server-sent events
+        StreamableHttpServerConfig::default()
+            .with_legacy_session_mode(false)
+            .with_json_response(true),
+    );
+
+    // ... mount `service` in your axum router, for example with `.route_service("/mcp", service)`,
+    // and serve the router as you do today, until the server stops ...
+
+    // Deliver the queued events before the process ends
+    agentcat.shutdown(Duration::from_secs(5)).await;
+}
+```
+
+AgentCat never uses the MCP session of the transport (the `mcp-session-id` header) to group calls. The `session_id` parameter groups them on every transport, so a stateless server loses no sessions. An HTTP server does not end when a client goes away, and AgentCat installs no signal handler, so call `AgentCat::shutdown` after your server stops. Containers and process managers stop a server with SIGTERM: the [`stateless_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/stateless_http.rs) example is a complete stateless server that stops on SIGTERM (Unix) or Ctrl-C, then calls `shutdown`.
+
+### Streamable HTTP with sessions
+
+A server that still uses MCP sessions builds a new server handler for each MCP session. The setup is the same as above; only the configuration of the service changes:
+
+```rust,no_run
+use rmcp::transport::streamable_http_server::StreamableHttpServerConfig;
+
+// MCP sessions and server-sent events, the defaults of rmcp
+let config = StreamableHttpServerConfig::default();
+```
+
+The [`streamable_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/streamable_http.rs) example is a complete server with sessions.
+
 ### stdio
 
 Wrap your server handler with `agentcat_sdk::track`, and serve the wrapper where you serve your handler today:
@@ -95,57 +147,6 @@ async fn serve_stdio(my_server: impl ServerHandler) -> Result<(), Box<dyn std::e
 ```
 
 To read the project ID from `AGENTCAT_PROJECT_ID` instead, wrap the server with `AgentCat::from_env(Options::default()).track(my_server)`. A stdio server talks JSON-RPC on stdout: AgentCat writes nothing to stdout or stderr, and its own log lines go to `~/agentcat.log`. Send your own logs to stderr. The server ends when the client closes stdin; the drop of the last AgentCat handle then delivers the queued events, for up to 5 s, so a stdio server needs no `shutdown` call.
-
-### Streamable HTTP
-
-A streamable HTTP server builds a new server handler for each MCP session. Build one `AgentCat` handle for the process, and wrap each new handler with `AgentCat::track` in the closure that builds it. Tracking each instance is cheap — the clones of one handle share its event queue and its delivery thread. After your server stops, call `AgentCat::shutdown`:
-
-```rust,no_run
-use std::sync::Arc;
-use std::time::Duration;
-
-use agentcat_sdk::{AgentCat, Options};
-use rmcp::ServerHandler;
-use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
-use rmcp::transport::streamable_http_server::{StreamableHttpServerConfig, StreamableHttpService};
-
-// `my_server` is your existing rmcp server handler
-async fn serve_http(my_server: impl ServerHandler + Clone) {
-    // One AgentCat handle for the whole process
-    let agentcat = AgentCat::new("proj_0000000", Options::default());
-
-    // rmcp calls this closure for each new MCP session: track each new server
-    let handle = agentcat.clone();
-    let service = StreamableHttpService::new(
-        move || Ok(handle.track(my_server.clone())),
-        Arc::new(LocalSessionManager::default()),
-        StreamableHttpServerConfig::default(),
-    );
-
-    // ... mount `service` in your axum router, for example with `.route_service("/mcp", service)`,
-    // and serve the router as you do today, until the server stops ...
-
-    // Deliver the queued events before the process ends
-    agentcat.shutdown(Duration::from_secs(5)).await;
-}
-```
-
-An HTTP server does not end when a client goes away, and AgentCat installs no signal handler, so call `AgentCat::shutdown` after your server stops. Containers and process managers stop a server with SIGTERM: the [`streamable_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/streamable_http.rs) example is a complete server that stops on SIGTERM (Unix) or Ctrl-C, then calls `shutdown`.
-
-### Stateless HTTP
-
-In stateless mode, `rmcp` builds a new server handler for each request. The setup is the same as above; only the configuration of the service changes:
-
-```rust,no_run
-use rmcp::transport::streamable_http_server::StreamableHttpServerConfig;
-
-// No MCP sessions, and JSON responses instead of server-sent events
-let config = StreamableHttpServerConfig::default()
-    .with_legacy_session_mode(false)
-    .with_json_response(true);
-```
-
-AgentCat never uses the MCP session of the transport (the `mcp-session-id` header) to group calls. The `session_id` parameter groups them on every transport, so a stateless server loses no sessions. The [`stateless_http.rs`](https://github.com/agentcathq/agentcat-rust-sdk/blob/main/agentcat-sdk/examples/stateless_http.rs) example is a complete stateless server.
 
 ### Identifying users
 
@@ -278,7 +279,7 @@ SDK diagnostics come in a later release of the Rust SDK; this release sends Agen
 - **tokio**: a tracked server needs a tokio runtime with the time driver. `#[tokio::main]`, `#[tokio::test]` and `tokio::runtime::Runtime::new` turn it on; a runtime from `tokio::runtime::Builder` needs `enable_time` or `enable_all`. AgentCat runs the hooks as `Send` tasks on the runtime of the call, so it does not support the `local` feature of `rmcp`.
 - **Delivery**: each `AgentCat` handle sends its events from its own thread, `agentcat-delivery`, so a tool call never waits for the network. The queue holds at most 10 000 events, and a failed send gets 3 more attempts, after 1, 2 and 4 s.
 - **stdio**: AgentCat writes nothing to stdout or stderr, so stdout stays JSON-RPC. The `fmt` subscriber of `tracing-subscriber` writes to stdout unless you give it another writer, such as `.with_writer(std::io::stderr)`. When the client closes stdin, the drop of the last handle delivers the queued events, for up to 5 s.
-- **HTTP servers and containers**: AgentCat installs no signal handler. Call `AgentCat::shutdown` after your server stops, and stop on SIGTERM as well as Ctrl-C, as the `streamable_http.rs` example does.
+- **HTTP servers and containers**: AgentCat installs no signal handler. Call `AgentCat::shutdown` after your server stops, and stop on SIGTERM as well as Ctrl-C, as the `stateless_http.rs` example does.
 - **Current-thread runtimes**: a drop of the last handle on the runtime's only thread blocks that thread, so no hook can run during the wait; call `shutdown` before the runtime ends.
 - **Process exit**: the drain of the last drop does not run after `std::process::exit`, or after a panic with `panic = "abort"`. Call `shutdown`, or `shutdown_blocking`, which needs no tokio runtime, first.
 - **TLS**: the default `rustls` feature connects to the AgentCat API with rustls. For the TLS library of the platform, turn off the default features and turn on `native-tls`. Without a TLS feature, AgentCat can send events only to an `http:` URL.
