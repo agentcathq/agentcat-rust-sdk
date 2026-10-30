@@ -28,6 +28,7 @@ Install these tools:
 - The cargo tools of the public API, coverage and mutation checks:
   `cargo install cargo-public-api@0.52.0 cargo-llvm-cov@0.9.1 cargo-mutants@27.1.0 --locked`
 - The coverage component: `rustup component add llvm-tools-preview`
+- `jq`, which the tests of the mutation base check use: `apt-get install jq` (or the package manager of your system)
 
 If a tool is missing, `scripts/check.sh` stops and prints the install command.
 

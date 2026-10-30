@@ -146,7 +146,8 @@ fn check_environment() {
         !backtraces,
         "backtraces are on (RUST_LIB_BACKTRACE, else RUST_BACKTRACE), so a captured error carries \
          a stack that the golden files do not hold: run the end-to-end suite with \
-         RUST_LIB_BACKTRACE=0 (panics keep their backtraces)"
+         RUST_LIB_BACKTRACE=0 (cargo sets it through .cargo/config.toml; panics keep their \
+         backtraces)"
     );
 }
 

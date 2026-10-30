@@ -29,6 +29,7 @@ need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 # cargo-public-api reads the rustdoc JSON of this dated nightly (TOOLCHAIN in xtask/src/public_api.rs)
 need "rustup toolchain install nightly-2026-10-18" has_toolchain 'nightly-2026-10-18'
+need "install jq with your package manager (for example apt-get install jq)" jq --version
 if [ "$missing" -ne 0 ]; then
   exit 1
 fi
@@ -57,7 +58,7 @@ cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(
 cargo run -q -p xtask -- coverage target/coverage.json
 
 # mutants: no surviving mutant in the lines that differ from the upstream of the current branch (for
-# example origin/rewrite), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
+# example origin/my-branch), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
 # compares the working tree with the merge base, so uncommitted changes to tracked files and to files staged
 # with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
 # (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source, finds no
