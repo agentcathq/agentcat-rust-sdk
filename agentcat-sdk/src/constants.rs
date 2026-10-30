@@ -1,9 +1,8 @@
-//! The agent-facing strings and tag names of the TS SDK, equal to it character for character:
-//! agents read the parameter descriptions and the mint-back text, and the dashboard keys on the
-//! tag names; also the report-missing log line. `constants/tests.rs` checks each one against
+//! The agent-facing strings and tag names, fixed character for character: agents read the
+//! parameter descriptions and the mint-back text, and the dashboard keys on the tag names; also
+//! the report-missing log line. `constants/tests.rs` checks each one against
 //! `tests/vectors/constants.json`.
-//! Not ported (exporters and diagnostics: second pass, R04, C05, RD-16): `AGENTCAT_SOURCE`,
-//! `DIAGNOSTICS_SCOPE_NAME`, `DEFAULT_DIAGNOSTICS_ENDPOINT`, `DEFAULT_DIAGNOSTICS_TOKEN`.
+//! The SDK has no exporters and no SDK diagnostics, so it has none of their constants.
 use serde_json::{Value, json};
 
 #[cfg(test)]
@@ -15,7 +14,7 @@ pub(crate) const DEFAULT_CONTEXT_PARAMETER_DESCRIPTION: &str = "Explain why you 
 /// Event type of custom events; the dashboard keys on it.
 #[cfg_attr(
     not(test),
-    expect(dead_code, reason = "read by the delivery pipeline (plan 4)")
+    expect(dead_code, reason = "only the constants tests read it")
 )]
 pub(crate) const AGENTCAT_CUSTOM_EVENT_TYPE: &str = "agentcat:custom";
 
@@ -94,7 +93,7 @@ pub(crate) const SESSION_ID_PARAM: &str = "session_id";
 /// Name of the `agent_id` tool parameter; agents send it in tool arguments.
 pub(crate) const AGENT_ID_PARAM: &str = "agent_id";
 
-/// The text of the report-missing tool's result (B-046); agents read it.
+/// The text of the report-missing tool's result; agents read it.
 pub(crate) const GET_MORE_TOOLS_RESULT_TEXT: &str = "Unfortunately, we have shown you the full tool list. We have noted your feedback and will work to improve the tool list in the future.";
 
 /// The text line that carries an issued `session_id` in a tool result.
@@ -102,14 +101,14 @@ pub(crate) fn mint_back_session_line(session_id: &str) -> String {
     format!("session_id: {session_id}")
 }
 
-/// The log line of a call to the report-missing tool (B-046), as `handleReportMissing` writes it:
-/// `context_length` is the length TS reads off the `context` argument.
+/// The log line of a call to the report-missing tool: `context_length` is the length of the
+/// `context` argument that [`report_missing`](crate::call::report_missing) reads.
 pub(crate) fn report_missing_log_line(context_length: usize) -> String {
     format!("Missing tool reported (context length: {context_length})")
 }
 
-/// The descriptor of the injected report-missing tool, as `getReportMissingToolDescriptor()`
-/// returns it (keys in TS order); agents read it in the tool list.
+/// The descriptor of the injected report-missing tool, its keys in the order written here; agents
+/// read it in the tool list.
 pub(crate) fn get_more_tools_descriptor() -> Value {
     json!({
         "name": GET_MORE_TOOLS_NAME,
@@ -134,12 +133,12 @@ pub(crate) fn get_more_tools_descriptor() -> Value {
     })
 }
 
-/// The result of the report-missing tool, as `handleReportMissing` returns it; agents read it.
+/// The result of the report-missing tool as JSON; agents read it.
 #[cfg_attr(
     not(test),
     expect(
         dead_code,
-        reason = "the call path answers through call::report_missing; only the TS vector test reads this"
+        reason = "the call path answers through call::report_missing; only the constants tests read this"
     )
 )]
 pub(crate) fn get_more_tools_result() -> Value {

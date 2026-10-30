@@ -1,5 +1,4 @@
-//! The markers of the strict JSON encoding of vector files and oracle replies
-//! (`oracle/src/strict-json.mjs`):
+//! The markers of the strict JSON encoding of the vector files:
 //!
 //! - `{"$utf16": [<UTF-16 code units>]}`: a string that is not well-formed UTF-16, which a Rust
 //!   `String` cannot hold.
@@ -24,14 +23,14 @@ pub(crate) fn decode_f64(value: Value) -> Value {
     try_decode_f64(value).unwrap_or_else(|e| panic!("{e}"))
 }
 
-/// `value` with every `$utf16` marker replaced by its string, every unpaired surrogate dropped
-/// (RD-22: a Rust cut drops the whole character where TS keeps half of it), at any depth.
+/// `value` with every `$utf16` marker replaced by its string, every unpaired surrogate dropped (a
+/// Rust cut drops the whole character where a UTF-16 cut keeps half of it), at any depth.
 ///
 /// # Panics
 ///
 /// On a malformed `$utf16` marker.
-pub(crate) fn d09(value: Value) -> Value {
-    try_d09(value).unwrap_or_else(|e| panic!("{e}"))
+pub(crate) fn decode_utf16(value: Value) -> Value {
+    try_decode_utf16(value).unwrap_or_else(|e| panic!("{e}"))
 }
 
 /// `value` with every `$repeat` macro replaced by its string, at any depth.
@@ -59,8 +58,8 @@ pub(super) fn try_decode_f64(value: Value) -> Result<Value, String> {
     })
 }
 
-/// [`d09`], with an error for a malformed marker.
-pub(super) fn try_d09(value: Value) -> Result<Value, String> {
+/// [`decode_utf16`], with an error for a malformed marker.
+fn try_decode_utf16(value: Value) -> Result<Value, String> {
     rewrite(value, UTF16, &|marker| {
         let units = marker
             .as_array()
@@ -134,7 +133,7 @@ fn malformed(marker: &str, map: &Map<String, Value>, why: &str) -> String {
 mod tests {
     use serde_json::{Value, json};
 
-    use super::{d09, decode_f64, expand};
+    use super::{decode_f64, decode_utf16, expand};
 
     fn f64_of(value: &Value) -> f64 {
         value.as_f64().unwrap()
@@ -170,25 +169,28 @@ mod tests {
     }
 
     #[test]
-    fn d09_drops_an_unpaired_surrogate() {
-        assert_eq!(d09(json!({"$utf16": [97, 55357]})), json!("a"));
+    fn decode_utf16_drops_an_unpaired_surrogate() {
+        assert_eq!(decode_utf16(json!({"$utf16": [97, 55357]})), json!("a"));
     }
 
     #[test]
-    fn d09_keeps_a_surrogate_pair() {
-        assert_eq!(d09(json!({"$utf16": [55357, 56832, 98]})), json!("😀b"));
+    fn decode_utf16_keeps_a_surrogate_pair() {
+        assert_eq!(
+            decode_utf16(json!({"$utf16": [55357, 56832, 98]})),
+            json!("😀b")
+        );
     }
 
     #[test]
-    fn d09_drops_every_unpaired_surrogate_whatever_its_position() {
+    fn decode_utf16_drops_every_unpaired_surrogate_whatever_its_position() {
         // A low surrogate first, a high one before a non-surrogate, and a high one last.
         let units = [56832, 97, 55357, 98, 55357, 56832, 55357];
-        assert_eq!(d09(json!({"$utf16": units})), json!("ab😀"));
+        assert_eq!(decode_utf16(json!({"$utf16": units})), json!("ab😀"));
     }
 
     #[test]
-    fn d09_recurses_and_leaves_other_values_alone() {
-        let out = d09(json!({
+    fn decode_utf16_recurses_and_leaves_other_values_alone() {
+        let out = decode_utf16(json!({
             "a": [{"$utf16": [97, 55357]}, 2],
             "b": {"c": {"$utf16": [56832]}},
             "f": {"$f64": "8000000000000000"},
@@ -225,7 +227,11 @@ mod tests {
     fn decoding_keeps_the_key_order() {
         let input = json!({"z": {"$f64": "8000000000000000"}, "a": {"$utf16": [97]}, "m": {"$repeat": ["q", 1]}});
         let keys = |v: &Value| v.as_object().unwrap().keys().cloned().collect::<Vec<_>>();
-        for out in [decode_f64(input.clone()), d09(input.clone()), expand(input)] {
+        for out in [
+            decode_f64(input.clone()),
+            decode_utf16(input.clone()),
+            expand(input),
+        ] {
             assert_eq!(keys(&out), ["z", "a", "m"]);
         }
     }
@@ -239,7 +245,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "$utf16")]
     fn a_malformed_utf16_marker_panics() {
-        let _ = d09(json!({"$utf16": [65536]}));
+        let _ = decode_utf16(json!({"$utf16": [65536]}));
     }
 
     #[test]

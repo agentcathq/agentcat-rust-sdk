@@ -1,12 +1,9 @@
-//! The depth, breadth and string-length limiter of the TS SDK (`normalize`, B-092), for JSON
-//! values. The TS cases for values JSON cannot hold (`undefined`, `NaN`, `Infinity`, `BigInt`,
-//! symbols, functions, `Date`, circular references) have no Rust input (RD-20).
+//! The depth, breadth and string-length limiter for JSON values.
 //!
-//! A `__proto__` key is an ordinary key here and keeps its normalized value (RD-24); TS assigns
-//! it into a fresh object, where it sets the prototype and vanishes from the output.
+//! A `__proto__` key is an ordinary key here and keeps its normalized value.
 use serde_json::{Map, Value};
 
-use crate::js;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
@@ -23,13 +20,13 @@ const MAX_PROPERTIES: &str = "[MaxProperties ~]";
 /// The suffix of a cut string.
 const TRUNCATION_SUFFIX: &str = "...";
 
-/// Limits the depth, breadth and string length of `value`, as TS's `normalize` does.
+/// Limits the depth, breadth and string length of `value`.
 ///
 /// `depth` is the number of container levels left: an array or object with
 /// none left becomes `"[Array]"` or `"[Object]"`. A container keeps `max_breadth` items; an
 /// array then gets the item `"[MaxProperties ~]"`, an object the key `"..."` with that value
 /// (an existing `"..."` key keeps its position and takes the value). A string longer than
-/// `max_string_length` UTF-16 units is cut there (RD-22) and gets `"..."`.
+/// `max_string_length` UTF-16 units is cut there ([`wire::cut_utf16`]) and gets `"..."`.
 pub(crate) fn normalize(
     value: &Value,
     depth: usize,
@@ -38,8 +35,8 @@ pub(crate) fn normalize(
 ) -> Value {
     match value {
         Value::String(text) => {
-            if js::utf16_len(text) > max_string_length {
-                let mut cut = js::cut_utf16(text, max_string_length).to_owned();
+            if wire::utf16_len(text) > max_string_length {
+                let mut cut = wire::cut_utf16(text, max_string_length).to_owned();
                 cut.push_str(TRUNCATION_SUFFIX);
                 Value::String(cut)
             } else {
@@ -65,7 +62,7 @@ pub(crate) fn normalize(
                 return Value::String("[Object]".to_owned());
             }
             let mut result = Map::new();
-            for (count, (key, item)) in js::own_entries(map).enumerate() {
+            for (count, (key, item)) in wire::own_entries(map).enumerate() {
                 if count >= max_breadth {
                     result.insert("...".to_owned(), Value::String(MAX_PROPERTIES.to_owned()));
                     break;

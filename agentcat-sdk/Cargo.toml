@@ -37,10 +37,10 @@ reqwest = { workspace = true }
 
 [features]
 default = ["rustls"]
-# C44: exactly one TLS stack is the usual choice; both together pull both.
+# Exactly one TLS stack is the usual choice; both together pull both.
 rustls = ["agentcat-api/rustls"]
 native-tls = ["agentcat-api/native-tls"]
-# `agentcat_sdk::testing::Fake`: handles whose events stay in the process, for a customer's tests (C43).
+# `agentcat_sdk::testing::Fake`: handles whose events stay in the process, for a customer's tests.
 test-util = []
 
 [[test]]

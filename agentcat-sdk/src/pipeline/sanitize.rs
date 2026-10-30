@@ -1,4 +1,4 @@
-//! The sanitization of the TS SDK (`sanitizeEvent`, B-090): content blocks of the response that
+//! The sanitization: content blocks of the response that
 //! the dashboard cannot show, and large base64 strings, are replaced by a short note.
 //!
 //! The step makes a new event. Of `response` (when not `null`), an object keeps its keys, with
@@ -7,23 +7,17 @@
 //! `parameters` (when not `null`), every string of at least [`SIZE_GATE`] UTF-16 units that matches
 //! `^[A-Za-z0-9+/\n\r]+=*$` becomes [`BINARY_DATA_NOTE`]; arrays and objects are walked.
 //!
-//! Rust departs from TS in these recorded places:
+//! Further rules:
 //!
-//! - The walk keeps a `__proto__` key (RD-24). TS assigns each key to a new object, and assigning
-//!   `__proto__` sets that object's prototype instead of making a key, so the key does not
-//!   survive. The key stays elsewhere in TS too (the spread of the event and of the `response`,
-//!   and a block returned as it is), and here.
-//! - An array `response` stays an array (RD-25). TS spreads it into an object with index keys.
-//! - A block `type` that is an object with an own `toString` key (or an array holding one) is
-//!   written as `[object Object]` in the message of an unsupported type (RD-27). The template
-//!   string of TS throws for it.
-//!
-//! TS assigns no `undefined` anywhere in this step, so it has no phantom property of the kind
-//! RD-28 records.
+//! - A `__proto__` key is an ordinary key: the walk keeps it, and so do the copies of the event,
+//!   of the `response` and of a block returned as it is.
+//! - An array `response` stays an array.
+//! - A block `type` that is an object with a `toString` key (or an array holding one) is written
+//!   as `[object Object]`, as any object is, in the message of an unsupported type.
 use serde_json::{Map, Value};
 
-use super::TsEvent;
-use crate::js;
+use super::EventObject;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
@@ -37,9 +31,9 @@ const BINARY_DATA_NOTE: &str = "[binary data redacted - not supported by AgentCa
 /// The note that replaces an embedded resource with a `blob`.
 const BINARY_RESOURCE_NOTE: &str = "[binary resource content redacted - not supported by AgentCat]";
 
-/// Sanitizes `event`, as the `sanitizeEvent` of TS does (module docs).
-pub(crate) fn sanitize_event(event: &TsEvent) -> TsEvent {
-    js::own_entries(event)
+/// Sanitizes `event` (module docs).
+pub(crate) fn sanitize_event(event: &EventObject) -> EventObject {
+    wire::own_entries(event)
         .map(|(key, value)| {
             let value = match key.as_str() {
                 "response" if !value.is_null() => sanitize_response(value),
@@ -52,13 +46,13 @@ pub(crate) fn sanitize_event(event: &TsEvent) -> TsEvent {
 }
 
 /// An object `response` with its `content` blocks and `structuredContent` sanitized; any other
-/// `response` as it is (RD-25 for an array).
+/// `response` as it is (an array too).
 fn sanitize_response(response: &Value) -> Value {
     let Value::Object(map) = response else {
         return response.clone();
     };
     Value::Object(
-        js::own_entries(map)
+        wire::own_entries(map)
             .map(|(key, value)| {
                 let value = match (key.as_str(), value) {
                     ("content", Value::Array(blocks)) => {
@@ -84,7 +78,7 @@ fn text_block(text: &str) -> Value {
 }
 
 /// One block of `response.content`. A block that is neither an object nor an array stays; an
-/// array has no `type` in JavaScript, so it is an unsupported type, as `undefined`.
+/// array has no `type`, so it is an unsupported type, written as `undefined`.
 fn sanitize_block(block: &Value) -> Value {
     let kind = match block {
         Value::Object(map) => map.get("type"),
@@ -98,7 +92,7 @@ fn sanitize_block(block: &Value) -> Value {
         Some("resource") => sanitize_resource(block),
         _ => text_block(&format!(
             "[unsupported content type \"{}\" redacted - not supported by AgentCat]",
-            js::to_js_string(kind)
+            wire::coerce_to_string(kind)
         )),
     }
 }
@@ -115,13 +109,13 @@ fn sanitize_resource(block: &Value) -> Value {
 }
 
 /// `value` (the `parameters`, or the `structuredContent` of a response) with every large base64
-/// string replaced; objects in [`js::own_entries`] order, a `__proto__` key kept (RD-24).
+/// string replaced; objects in [`wire::own_entries`] order, a `__proto__` key kept.
 fn sanitize_tool_values(value: &Value) -> Value {
     match value {
         Value::String(text) if is_binary(text) => Value::String(BINARY_DATA_NOTE.to_owned()),
         Value::Array(items) => Value::Array(items.iter().map(sanitize_tool_values).collect()),
         Value::Object(map) => Value::Object(
-            js::own_entries(map)
+            wire::own_entries(map)
                 .map(|(key, item)| (key.clone(), sanitize_tool_values(item)))
                 .collect(),
         ),
@@ -130,10 +124,9 @@ fn sanitize_tool_values(value: &Value) -> Value {
 }
 
 /// `true` for a string of at least [`SIZE_GATE`] units that matches `^[A-Za-z0-9+/\n\r]+=*$`.
-/// The JavaScript pattern has no `m` flag, so `$` is the end of the string only: a final `\n`
-/// after the padding does not match.
+/// `$` is the end of the string only: a final `\n` after the padding does not match.
 fn is_binary(text: &str) -> bool {
-    if js::utf16_len(text) < SIZE_GATE {
+    if wire::utf16_len(text) < SIZE_GATE {
         return false;
     }
     let body = text.trim_end_matches('=');

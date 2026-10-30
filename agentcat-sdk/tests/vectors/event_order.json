@@ -1,6 +1,4 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/event_order.mjs",
   "cases": [
     {
       "name": "tool_call",
@@ -31,7 +29,7 @@
         },
         {
           "key": "ipAddress",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "sdkLanguage"
@@ -74,11 +72,11 @@
         },
         {
           "key": "isError",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "error",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "tags"
@@ -158,19 +156,19 @@
         },
         {
           "key": "serverName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "serverVersion",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "clientName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "clientVersion",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "id"
@@ -200,15 +198,15 @@
         },
         {
           "key": "inputTokens",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "outputTokens",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "ipAddress",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "sdkLanguage"
@@ -230,11 +228,11 @@
         },
         {
           "key": "identifyActorGivenId",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "identifyActorName",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "identifyActorData"
@@ -259,7 +257,7 @@
         },
         {
           "key": "pending",
-          "undefined": true
+          "absent": true
         },
         {
           "key": "tags"

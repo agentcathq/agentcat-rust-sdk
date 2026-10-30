@@ -1,0 +1,19 @@
+{
+  "projectId": "proj_E2E000000000000000000000000",
+  "options": {
+    "redact_event": { "returns": null }
+  },
+  "expectPublishes": 1,
+  "sessions": [
+    {
+      "client": { "name": "e2e-client", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "dropped" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "boom", "args": { "session_id": "${S1}" } },
+        { "op": "callTool", "name": "emit_custom", "args": { "session": "${S1}", "resource": "kept", "message": "a session-string custom event", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "emit_custom_server", "args": { "session": "${S1}", "resource": "dropped", "message": "a server custom event", "session_id": "${S1}" } }
+      ]
+    }
+  ]
+}

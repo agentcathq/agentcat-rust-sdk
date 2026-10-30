@@ -32,9 +32,9 @@ pub struct CallContext {
     /// The agent the call names.
     agent_id: Option<String>,
     agentcat: AgentCat,
-    /// The client of the call (B-085), for the events the tool publishes.
+    /// The client of the call, for the events the tool publishes.
     client: Option<ClientIdentity>,
-    /// The server info of the handler at the start of the call (B-086).
+    /// The server info of the handler at the start of the call.
     server: Option<Implementation>,
 }
 
@@ -86,17 +86,16 @@ impl CallContext {
 }
 
 impl CallContext {
-    /// Publishes a custom event with this call's client and server identity, as TypeScript's
-    /// `publishCustomEvent(server, projectId, eventData)` does for a tracked server (B-009, C16).
-    /// It only queues the event, so it returns at once.
+    /// Publishes a custom event with this call's client and server identity, as a tracked server
+    /// publishes it. It only queues the event, so it returns at once.
     ///
     /// The event goes to the project of the handle ([`AgentCat::new`](crate::AgentCat::new)), not
-    /// to `project_id`, which only has to be non-empty (K-03). Nothing is queued while tracing is
-    /// off, or by a handle that `AGENTCAT_ENABLED` turned off. The `redact_event` hook of the
-    /// options runs on the event, on the runtime of the caller; the string hook does not. The
-    /// event has no session unless the [`CustomEvent`] names one, and TypeScript takes none from
-    /// the call either (C47): pass [`session_id()`](Self::session_id) in the [`CustomEvent`] to
-    /// attribute the event to the call's session. A `duration` of zero or none is the time since
+    /// to `project_id`, which only has to be non-empty. Nothing is queued while tracing is off, or
+    /// by a handle that `AGENTCAT_ENABLED` turned off. The `redact_event` hook of the options runs
+    /// on the event, on the runtime of the caller; the string hook does not. The event has no
+    /// session unless the [`CustomEvent`] names one: it takes none from the call. Pass
+    /// [`session_id()`](Self::session_id) in the [`CustomEvent`] to attribute the event to the
+    /// call's session. A `duration` of zero or none is the time since
     /// the event was built.
     ///
     /// ```no_run

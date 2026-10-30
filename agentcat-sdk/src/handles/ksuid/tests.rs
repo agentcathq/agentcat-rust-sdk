@@ -1,10 +1,11 @@
-//! `ksuid` against the TS KSUID library: the vectors of `tests/vectors/ksuid.json`, a property
-//! test that runs the same inputs through the JS oracle, and Rust-only tests of `random`.
+//! `ksuid`: the cases of `tests/vectors/ksuid.json` and `tests/vectors/ksuid_cases.json`,
+//! property tests of the encoding (it reads back, and it keeps the order), and tests of `random`.
 use proptest::prelude::*;
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value};
 
 use super::{EPOCH_MS, MAX_TIME_MS, encode, from_parts, random, random_at};
-use crate::test_support::{config, oracle, vectors};
+use crate::test_support::rules::base62_bytes;
+use crate::test_support::{config, vectors};
 
 /// The 16 payload bytes of a case's `payload_hex`.
 fn payload_of(hex_text: &str) -> [u8; 16] {
@@ -23,7 +24,7 @@ fn is_base62(text: &str) -> bool {
     text.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 
-/// Checks one `from-parts:*` case: the ID, or `None` where TS throws.
+/// Checks one `from-parts:*` case: the ID, or `None` where the case expects an error.
 fn check_from_parts(case: &Map<String, Value>) {
     let name = vectors::name(case);
     let input = &case["input"];
@@ -37,13 +38,13 @@ fn check_from_parts(case: &Map<String, Value>) {
     let actual = from_parts(prefix, time_ms, &payload_of(payload_hex));
     match (case.get("output"), case.get("error")) {
         (Some(output), None) => assert_eq!(actual.as_deref(), output.as_str(), "{name}"),
-        (None, Some(_)) => assert_eq!(actual, None, "{name}: TS throws"),
+        (None, Some(_)) => assert_eq!(actual, None, "{name}: the case expects an error"),
         _ => panic!("{name}: a case has exactly one of output and error"),
     }
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("ksuid");
     let mut from_parts_cases = 0;
     for case in cases
@@ -60,7 +61,7 @@ fn vectors_match_ts() {
 }
 
 #[test]
-fn min_and_max_match_ts() {
+fn min_and_max_ids_read_back() {
     let cases = vectors::cases("ksuid");
     let output_of = |name: &str| {
         cases
@@ -86,22 +87,66 @@ fn times() -> impl Strategy<Value = u64> {
     ]
 }
 
+/// The cases of `ksuid_cases.json`: random times around the edges of the range and inside it,
+/// with random payloads.
+#[test]
+fn from_parts_matches_ksuid_cases() {
+    let cases = vectors::cases("ksuid_cases");
+    assert!(cases.len() >= 100, "ksuid_cases.json has its cases");
+    for case in &cases {
+        check_from_parts(case);
+    }
+}
+
+/// The seconds since [`EPOCH_MS`] of an in-range `time_ms`, as a KSUID holds them.
+fn seconds_of(time_ms: u64) -> u32 {
+    u32::try_from((time_ms - EPOCH_MS) / 1_000).unwrap()
+}
+
+/// Times inside `EPOCH_MS..=MAX_TIME_MS`: a third from the whole range, a third in its first 2 s
+/// and a third in its last 2 s.
+fn in_range_times() -> impl Strategy<Value = u64> {
+    prop_oneof![
+        EPOCH_MS..=MAX_TIME_MS,
+        EPOCH_MS..=(EPOCH_MS + 2_000),
+        (MAX_TIME_MS - 2_000)..=MAX_TIME_MS,
+    ]
+}
+
 proptest! {
     #![proptest_config(config())]
 
+    /// An in-range time gives `evt_` and 27 base62 characters that read back to the whole
+    /// seconds since the epoch (4 bytes, big-endian) and the payload; any other time gives
+    /// `None`.
     #[test]
-    fn from_parts_matches_ts(
+    fn from_parts_reads_back_to_its_seconds_and_payload(
         time_ms in times(),
         payload in prop::array::uniform16(any::<u8>()),
     ) {
-        let args = [json!("evt"), json!(time_ms), json!(hex::encode(payload))];
         let actual = from_parts("evt", time_ms, &payload);
-        // An oracle error is TS throwing, and nothing else may fail.
-        let js = oracle::call("ksuid.fromParts", &args).unwrap_or_else(|e| {
-            assert!(e.message.starts_with("Valid KSUID timestamps"), "{}", e.message);
-            None
-        });
-        prop_assert_eq!(actual.map(Value::from), js);
+        if !(EPOCH_MS..=MAX_TIME_MS).contains(&time_ms) {
+            prop_assert_eq!(actual, None);
+            return Ok(());
+        }
+        let id = actual.expect("an in-range time gives an ID");
+        let text = id.strip_prefix("evt_").expect("the prefix and `_`");
+        prop_assert_eq!(text.len(), 27);
+        prop_assert!(is_base62(text), "{}", id);
+        let bytes = base62_bytes(text);
+        prop_assert_eq!(&bytes[..4], &seconds_of(time_ms).to_be_bytes()[..]);
+        prop_assert_eq!(&bytes[4..], &payload[..]);
+    }
+
+    /// Two IDs with the same prefix sort as their seconds, then their payloads, sort.
+    #[test]
+    fn from_parts_keeps_the_order_of_seconds_then_payload(
+        first in (in_range_times(), prop::array::uniform16(any::<u8>())),
+        second in (in_range_times(), prop::array::uniform16(any::<u8>())),
+    ) {
+        let ids = [&first, &second].map(|(time_ms, payload)| from_parts("evt", *time_ms, payload).unwrap());
+        let parts = [&first, &second].map(|(time_ms, payload)| (seconds_of(*time_ms), *payload));
+        prop_assert_eq!(ids[0].cmp(&ids[1]), parts[0].cmp(&parts[1]));
     }
 }
 
@@ -120,7 +165,7 @@ fn encode_equals_from_parts_in_range() {
 
 #[test]
 fn random_has_the_shape_and_differs() {
-    // The prefixes of ksuid.test.ts "should handle different prefixes", and the two this SDK uses.
+    // Different prefixes, and the two this SDK uses.
     for prefix in ["event", "user", "task", "session", "req", "ses", "evt"] {
         let first = random(prefix).unwrap();
         let second = random(prefix).unwrap();
@@ -135,7 +180,7 @@ fn random_has_the_shape_and_differs() {
     assert_eq!(ids.len(), 100);
 }
 
-/// ksuid.test.ts "should create unique prefixed KSUIDs": 10 `event_` IDs, all distinct.
+/// Unique prefixed KSUIDs: 10 `event_` IDs, all distinct.
 #[test]
 fn ten_event_ids_are_distinct() {
     let ids: Vec<String> = (0..10).map(|_| random("event").unwrap()).collect();

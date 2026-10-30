@@ -1,7 +1,7 @@
 //! The customer hooks of [`Options`]: the [`ToolCall`] snapshot they receive and [`fire`], which
-//! starts them for one tool call (B-022 step 7, B-026). The hooks run as `Send` tasks on the
-//! tokio runtime the call runs on (C14, C26), and the call never waits for them: plan 4 settles
-//! the [`PendingHooks`] when it assembles the event. `rmcp/local` is not supported (C27).
+//! starts them for one tool call, before the tool runs. The hooks run as `Send` tasks on the
+//! tokio runtime the call runs on, and the call never waits for them: the delivery pipeline
+//! settles the [`PendingHooks`] when it finishes the event. `rmcp/local` is not supported.
 use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
@@ -38,7 +38,7 @@ pub(crate) fn snapshots_built() -> usize {
     SNAPSHOTS.get()
 }
 
-/// One tool call as a hook sees it (D35): the request as the client sent it, with the injected
+/// One tool call as a hook sees it: the request as the client sent it, with the injected
 /// arguments (`session_id`, `agent_id`, `context`) still in it, and what the SDK knows about the
 /// client and the transport. Clones are independent copies.
 ///
@@ -112,8 +112,8 @@ impl ToolCall {
         &self.meta
     }
 
-    /// The HTTP headers of the request, every header included, `authorization` and `cookie` too
-    /// (D06), as TS's WHATWG `Headers` gives them: names in lower case, in byte order, after the
+    /// The HTTP headers of the request, every header included, `authorization` and `cookie` too:
+    /// names in lower case, in byte order, after the
     /// names that are array indexes in numeric order; values trimmed of leading and trailing HTTP
     /// whitespace; the values of a repeated name joined in arrival order with `", "` (`"; "` for
     /// `cookie`), except `set-cookie`, which keeps only its last value; a value that is not UTF-8
@@ -135,7 +135,7 @@ impl ToolCall {
         self.client.as_ref()?.version.as_deref()
     }
 
-    /// The protocol version the request names in its `_meta`, when it does (C28).
+    /// The protocol version the request names in its `_meta`, when it does.
     #[must_use]
     pub fn protocol_version(&self) -> Option<&str> {
         self.protocol_version.as_deref()
@@ -188,8 +188,8 @@ impl fmt::Debug for ContextSummary<'_> {
 type Settled<T> = Result<Option<T>, HookError>;
 
 /// The tasks of the hooks started for one call, `None` for a hook that is not set or did not
-/// start. Dropping it aborts every task that has not finished (RD-35's reason: a detached task
-/// would leak), as when the queue drops the event (overflow, a shutdown deadline). Take a handle
+/// start. Dropping it aborts every task that has not finished (a detached task would leak), as
+/// when the queue drops the event (overflow, a shutdown deadline). Take a handle
 /// out with `Option::take` to keep its task.
 #[derive(Debug, Default)]
 pub(crate) struct PendingHooks {
@@ -232,8 +232,8 @@ impl Drop for PendingHooks {
 }
 
 /// A task handle that aborts its task when it is dropped, so a customer hook whose event is
-/// dropped (a cancelled pipeline, a shutdown deadline) does not keep running detached (RD-35's
-/// reason). Awaiting it awaits the task.
+/// dropped (a cancelled pipeline, a shutdown deadline) does not keep running detached. Awaiting it
+/// awaits the task.
 #[derive(Debug)]
 pub(crate) struct AbortOnDrop<T>(JoinHandle<T>);
 
@@ -259,9 +259,9 @@ impl<T> Drop for AbortOnDrop<T> {
     }
 }
 
-/// Starts the hooks of `options` for one call, in TS's order: `resolve_session_id` (in hook mode
-/// only), `identify`, `event_tags`, `event_properties` (B-022 step 7). Each hook runs as a task on
-/// the current tokio runtime (C14), and none is awaited (B-026). A panic in a hook stays in its
+/// Starts the hooks of `options` for one call, in this order: `resolve_session_id` (in hook mode
+/// only), `identify`, `event_tags`, `event_properties`. Each hook runs as a task on the current
+/// tokio runtime, and none is awaited. A panic in a hook stays in its
 /// task. Without a runtime no hook starts, and `sink` gets one log line for each hook that would
 /// have.
 ///
@@ -278,10 +278,10 @@ pub(crate) fn fire(
     let event_tags = options.event_tags_hook();
     let event_properties = options.event_properties_hook();
     let set = [
-        ("resolveSessionId", resolve_session_id.is_some()),
+        ("resolve_session_id", resolve_session_id.is_some()),
         ("identify", identify.is_some()),
-        ("eventTags", event_tags.is_some()),
-        ("eventProperties", event_properties.is_some()),
+        ("event_tags", event_tags.is_some()),
+        ("event_properties", event_properties.is_some()),
     ];
     if !set.iter().any(|&(_, is_set)| is_set) {
         return PendingHooks::default();

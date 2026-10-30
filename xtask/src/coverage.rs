@@ -1,4 +1,4 @@
-//! The line coverage floors (decision C52).
+//! The line coverage floors.
 //!
 //! `cargo run -p xtask -- coverage <summary.json>` reads the `--json --summary-only` output of
 //! `cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex
@@ -21,12 +21,12 @@ pub const CRATE_FLOOR: u64 = 90;
 /// The lowest share of the pure set's lines ([`PURE_SET`]), in percent, that the tests must run.
 pub const PURE_FLOOR: u64 = 95;
 
-/// The pure set of C52: the modules whose work is mostly value in, value out, so tests reach
+/// The pure set: the modules whose work is mostly value in, value out, so tests reach
 /// nearly all of it. Paths under `agentcat-sdk/src/`; an entry `dir/` is the module `dir`: its
 /// root (`dir/mod.rs` or `dir.rs`) and every file under `dir/`.
 pub const PURE_SET: &[&str] = &[
     "constants.rs",
-    "js.rs",
+    "wire.rs",
     "handles/",
     "tokens.rs",
     "inject.rs",
@@ -109,7 +109,7 @@ pub struct Outcome {
 }
 
 /// The path of `filename` under [`CRATE_SRC`], or `None` for a file outside the crate or a test
-/// file (`tests.rs`, `test_support/`, `tests/`: the files the regex of C52 names).
+/// file (`tests.rs`, `test_support/`, `tests/`: the files the `--ignore-filename-regex` names).
 fn crate_path(filename: &str) -> Option<String> {
     let name = filename.replace('\\', "/");
     let at = name.rfind(CRATE_SRC)?;
@@ -380,28 +380,28 @@ mod tests {
 
     #[test]
     fn pure_floor_fails_at_94_9() {
-        // The pure set: nine files at 100 of 100 and js.rs at 49 of 100, 949 of 1000 lines; the
+        // The pure set: nine files at 100 of 100 and wire.rs at 49 of 100, 949 of 1000 lines; the
         // crate is at 1949 of 2000 lines (97.4 %).
         let mut pure = pure_files(100);
-        js_lines(&mut pure, 49);
+        wire_lines(&mut pure, 49);
         let outcome = check_files(&pure, &[("agentcat-sdk/src/client.rs", 1000, 1000)]);
         assert_eq!(
             outcome.problems,
             [
-                "coverage: the pure set runs 94.9 % of its lines (949 of 1000), below its floor of 95 %; its files below 95 %: js.rs (49.0 %)"
+                "coverage: the pure set runs 94.9 % of its lines (949 of 1000), below its floor of 95 %; its files below 95 %: wire.rs (49.0 %)"
             ]
         );
-        // 950 of 1000 lines are 95.0 %: the floor passes, though js.rs alone is below it.
-        js_lines(&mut pure, 50);
+        // 950 of 1000 lines are 95.0 %: the floor passes, though wire.rs alone is below it.
+        wire_lines(&mut pure, 50);
         let outcome = check_files(&pure, &[("agentcat-sdk/src/client.rs", 1000, 1000)]);
         assert_eq!(outcome.problems, Vec::<String>::new());
     }
 
-    /// Sets the lines run of js.rs in `pure`.
-    fn js_lines(pure: &mut [(String, u64, u64)], covered: u64) {
+    /// Sets the lines run of wire.rs in `pure`.
+    fn wire_lines(pure: &mut [(String, u64, u64)], covered: u64) {
         for file in pure
             .iter_mut()
-            .filter(|(path, _, _)| path.ends_with("/js.rs"))
+            .filter(|(path, _, _)| path.ends_with("/wire.rs"))
         {
             file.1 = covered;
         }
@@ -413,10 +413,10 @@ mod tests {
         let outcome = check_files(
             &pure_files(100),
             &[
-                ("agentcat-sdk/src/js/tests.rs", 0, 1000),
+                ("agentcat-sdk/src/wire/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/ksuid/tests.rs", 0, 1000),
-                ("agentcat-sdk/src/test_support/oracle.rs", 0, 1000),
+                ("agentcat-sdk/src/test_support/vectors.rs", 0, 1000),
                 ("agentcat-sdk/src/pipeline/truncate/tests/cut.rs", 0, 1000),
                 ("agentcat-sdk/tests/fake.rs", 0, 1000),
             ],
@@ -449,13 +449,14 @@ mod tests {
             &pure_files(100),
             &[
                 ("xtask/src/main.rs", 0, 1000),
-                ("harness/rust-server/src/main.rs", 0, 1000),
+                ("xtask/src/examples_check/mock.rs", 0, 1000),
                 (".cargo/registry/src/index/rmcp-3.1.0/src/lib.rs", 0, 1000),
                 ("my-agentcat-sdk/src/lib.rs", 0, 1000),
             ],
         );
         assert_eq!(outcome.problems, Vec::<String>::new());
         assert!(!outcome.table.contains("main.rs"), "{}", outcome.table);
+        assert!(!outcome.table.contains("mock.rs"), "{}", outcome.table);
         assert_eq!(row(&outcome.table, "crate"), ["1000", "1000", "100.0", "%"]);
     }
 
@@ -477,13 +478,13 @@ client.rs                           2        3   66.6 %
 constants.rs (pure)               100      100  100.0 %
 handles/mod.rs (pure)             100      100  100.0 %
 inject.rs (pure)                  100      100  100.0 %
-js.rs (pure)                      100      100  100.0 %
 pipeline/normalize.rs (pure)      100      100  100.0 %
 pipeline/redact.rs (pure)         100      100  100.0 %
 pipeline/sanitize.rs (pure)       100      100  100.0 %
 pipeline/tags.rs (pure)           100      100  100.0 %
 pipeline/truncate.rs (pure)       100      100  100.0 %
 tokens.rs (pure)                  100      100  100.0 %
+wire.rs (pure)                    100      100  100.0 %
 crate                            1002     1003   99.9 %
 pure set                         1000     1000  100.0 %
 ";

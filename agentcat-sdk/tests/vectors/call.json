@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/call.mjs",
   "cases": [
     {
-      "name": "strip:ts:exact",
+      "name": "strip:exact",
       "input": {
         "name": "add_todo",
         "arguments": {
@@ -32,13 +30,10 @@
       },
       "output": {
         "text": "x"
-      },
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > strips exactly what was injected"
-      ]
+      }
     },
     {
-      "name": "strip:ts:owns-session",
+      "name": "strip:owns-session",
       "input": {
         "name": "deploy",
         "arguments": {
@@ -66,13 +61,10 @@
       },
       "output": {
         "session_id": "prod-42"
-      },
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > preserves the customer's own session_id param"
-      ]
+      }
     },
     {
-      "name": "strip:ts:fallback-absent-tool",
+      "name": "strip:fallback-absent-tool",
       "input": {
         "name": "unlisted_tool",
         "arguments": {
@@ -101,13 +93,10 @@
       },
       "output": {
         "text": "x"
-      },
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
-      ]
+      }
     },
     {
-      "name": "strip:ts:fallback-no-registry",
+      "name": "strip:fallback-no-registry",
       "input": {
         "name": "any",
         "arguments": {
@@ -118,13 +107,10 @@
       },
       "output": {
         "text": "x"
-      },
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > falls back to stripping all three when no registry entry exists"
-      ]
+      }
     },
     {
-      "name": "strip:ts:get-more-tools",
+      "name": "strip:get-more-tools",
       "input": {
         "name": "get_more_tools",
         "arguments": {
@@ -136,10 +122,7 @@
       },
       "output": {
         "context": "need a tool"
-      },
-      "ts_test": [
-        "v1|src/tests/handle-injection.test.ts|stripInjectedArguments > fallback never strips get_more_tools' own context"
-      ]
+      }
     },
     {
       "name": "strip:entry:none-present",
@@ -804,7 +787,7 @@
       }
     },
     {
-      "name": "mint-back:ts:prepends-first",
+      "name": "mint-back:prepends-first",
       "input": {
         "result": {
           "content": [
@@ -827,13 +810,10 @@
             "text": "hi"
           }
         ]
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|appendMintBack > prepends a text block as the first content element"
-      ]
+      }
     },
     {
-      "name": "mint-back:ts:is-error",
+      "name": "mint-back:is-error",
       "input": {
         "result": {
           "isError": true,
@@ -858,10 +838,7 @@
             "text": "boom"
           }
         ]
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|appendMintBack > prepends on isError results too"
-      ]
+      }
     },
     {
       "name": "mint-back:text:plain-block",
@@ -1672,7 +1649,7 @@
       }
     },
     {
-      "name": "structured:ts:first-key",
+      "name": "structured:first-key",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1692,13 +1669,10 @@
           "a": 1
         }
       },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > adds the field as the FIRST key of structuredContent without mutating"
-      ],
       "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"a\":1}"
     },
     {
-      "name": "structured:ts:absent",
+      "name": "structured:absent",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1707,13 +1681,10 @@
       },
       "output": {
         "content": []
-      },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
-      ]
+      }
     },
     {
-      "name": "structured:ts:array",
+      "name": "structured:array",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1731,13 +1702,10 @@
           2
         ]
       },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
-      ],
       "output_text": "[1,2]"
     },
     {
-      "name": "structured:ts:string",
+      "name": "structured:string",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1749,13 +1717,10 @@
         "content": [],
         "structuredContent": "nope"
       },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > returns the input untouched when structuredContent is absent or not a plain object"
-      ],
       "output_text": "\"nope\""
     },
     {
-      "name": "structured:ts:own-mcp-session",
+      "name": "structured:own-mcp-session",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1771,13 +1736,10 @@
           "mcp_session": "customer-owned"
         }
       },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > never clobbers an existing key (customer data wins)"
-      ],
       "output_text": "{\"mcp_session\":\"customer-owned\"}"
     },
     {
-      "name": "structured:ts:is-error",
+      "name": "structured:is-error",
       "input": {
         "mint": {
           "session_id": "ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1",
@@ -1797,9 +1759,6 @@
           "msg": "boom"
         }
       },
-      "ts_test": [
-        "v1|src/tests/handles.test.ts|mirrorStructuredMintBack > applies to isError results that carry structuredContent"
-      ],
       "output_text": "{\"mcp_session\":{\"session_id\":\"ses_2xF9kQm3rTvB8nLpYw7ZcHd4Ke1\",\"status\":\"issued\"},\"msg\":\"boom\"}"
     },
     {
@@ -2532,7 +2491,7 @@
       },
       "output": {
         "message": "tool failed",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2552,7 +2511,7 @@
       },
       "output": {
         "message": "first second",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2576,7 +2535,7 @@
       },
       "output": {
         "message": "a b c",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2592,7 +2551,7 @@
       },
       "output": {
         "message": "padded",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2612,7 +2571,7 @@
       },
       "output": {
         "message": "a\n \tb",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2632,7 +2591,7 @@
       },
       "output": {
         "message": "later",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2652,7 +2611,7 @@
       },
       "output": {
         "message": "early",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2668,7 +2627,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2684,7 +2643,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2700,11 +2659,11 @@
       },
       "output": {
         "message": "fail 😀 — é",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
-      "name": "result-error:text-js-whitespace",
+      "name": "result-error:text-unicode-whitespace",
       "input": {
         "isError": true,
         "content": [
@@ -2716,7 +2675,7 @@
       },
       "output": {
         "message": "x",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2741,7 +2700,7 @@
       },
       "output": {
         "message": "a b",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2764,7 +2723,7 @@
       },
       "output": {
         "message": "shown",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2790,7 +2749,7 @@
       },
       "output": {
         "message": "z",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2807,7 +2766,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2826,7 +2785,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2837,7 +2796,7 @@
       },
       "output": {
         "message": "Unknown error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2856,7 +2815,7 @@
       },
       "output": {
         "message": "with data",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2875,7 +2834,7 @@
       },
       "output": {
         "message": "with meta",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
@@ -2891,11 +2850,11 @@
       },
       "output": {
         "message": "not an error",
-        "platform": "javascript"
+        "platform": "rust"
       }
     },
     {
-      "name": "report-missing:ts:only-context",
+      "name": "report-missing:only-context",
       "input": {
         "context": "Need a database query tool for SQL operations"
       },
@@ -2914,7 +2873,7 @@
       }
     },
     {
-      "name": "report-missing:ts:description-and-context",
+      "name": "report-missing:description-and-context",
       "input": {
         "context": "User wants to fetch data from external REST APIs"
       },
@@ -2933,7 +2892,7 @@
       }
     },
     {
-      "name": "report-missing:ts:missing-description",
+      "name": "report-missing:missing-description",
       "input": {
         "context": "Some context without description"
       },
@@ -2949,10 +2908,7 @@
         "logs": [
           "Missing tool reported (context length: 32)"
         ]
-      },
-      "ts_test": [
-        "v1|src/tests/report-missing.test.ts|Report Missing Tool > 2. Tool Execution Tests > should handle missing description parameter gracefully"
-      ]
+      }
     },
     {
       "name": "report-missing:string",
@@ -3283,10 +3239,9 @@
           ]
         },
         "logs": [
-          "Missing tool reported (context length: 7)"
+          "Missing tool reported (context length: 0)"
         ]
-      },
-      "deviation": "RD-26"
+      }
     },
     {
       "name": "report-missing:object-length-string",
@@ -3305,10 +3260,9 @@
           ]
         },
         "logs": [
-          "Missing tool reported (context length: ab)"
+          "Missing tool reported (context length: 0)"
         ]
-      },
-      "deviation": "RD-26"
+      }
     },
     {
       "name": "report-missing:object-length-null",

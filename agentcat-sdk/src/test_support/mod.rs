@@ -1,21 +1,19 @@
-//! Helpers shared by the crate's unit tests: the JS oracle, the markers of the strict JSON
-//! encoding, the vector loader, the proptest strategies, JSON helpers and [`TempHome`].
+//! Helpers shared by the crate's unit tests: the markers of the strict JSON encoding, the vector
+//! loader, the proptest strategies, JSON helpers, rules several tests check, and [`TempHome`].
 pub(crate) mod json;
 pub(crate) mod markers;
-pub(crate) mod oracle;
 pub(crate) mod queue;
 pub(crate) mod rmcp;
+pub(crate) mod rules;
 pub(crate) mod strategies;
 pub(crate) mod vectors;
-
-mod smoke;
 
 use std::path::{Path, PathBuf};
 
 use proptest::test_runner::Config;
 use serde_json::Value;
 
-use crate::js;
+use crate::wire;
 
 /// A home directory for one test, `<temp dir>/agentcat-<name>-<process ID>`, empty when made and
 /// removed with its content on drop, so a test that writes `agentcat.log` never writes the
@@ -48,20 +46,20 @@ impl Drop for TempHome {
     }
 }
 
-/// The bytes of each side [`assert_js_eq`] shows around the first difference.
+/// The bytes of each side [`assert_same_json_text`] shows around the first difference.
 const SHOWN_BYTES: usize = 40;
 
-/// Asserts that `actual` is `expected` as JavaScript writes it: [`js::stringify`] of `actual`
-/// equals [`js::stringify`] of `expected` after [`markers::d09`] (each `$utf16` marker, a string
-/// TS cut inside a surrogate pair, becomes that string without its half character: RD-22).
+/// Asserts that `actual` is `expected` as `wire::stringify` writes it: [`wire::stringify`] of
+/// `actual` equals [`wire::stringify`] of `expected` after [`markers::decode_utf16`] (each `$utf16`
+/// marker, a string cut inside a surrogate pair, becomes that string without its half character).
 ///
 /// # Panics
 ///
 /// When the two texts differ, with `context`, the byte offset of the first difference and
 /// [`SHOWN_BYTES`] bytes of each text around it.
-pub(crate) fn assert_js_eq(actual: &Value, expected: &Value, context: &str) {
-    let actual = js::stringify(actual);
-    let expected = js::stringify(&markers::d09(expected.clone()));
+pub(crate) fn assert_same_json_text(actual: &Value, expected: &Value, context: &str) {
+    let actual = wire::stringify(actual);
+    let expected = wire::stringify(&markers::decode_utf16(expected.clone()));
     if actual == expected {
         return;
     }
@@ -71,7 +69,7 @@ pub(crate) fn assert_js_eq(actual: &Value, expected: &Value, context: &str) {
         .position(|(a, e)| a != e)
         .unwrap_or_else(|| actual.len().min(expected.len()));
     panic!(
-        "{context}: JSON.stringify texts differ at byte {at}\n  actual:   {}\n  expected: {}",
+        "{context}: JSON texts differ at byte {at}\n  actual:   {}\n  expected: {}",
         around(&actual, at),
         around(&expected, at),
     );
@@ -97,8 +95,8 @@ pub(crate) fn config() -> Config {
     Config::default()
 }
 
-/// The most shrink steps of a [`config_capped`] test: each step reruns the test, oracle call
-/// included, on an input that can be several hundred kilobytes.
+/// The most shrink steps of a [`config_capped`] test: each step reruns the test on an input that
+/// can be several hundred kilobytes.
 const SHRINK_ITERS: u32 = 64;
 
 /// The most time, in milliseconds, a [`config_capped`] test spends shrinking.
@@ -122,7 +120,7 @@ mod tests {
     use proptest::test_runner::Config;
     use serde_json::json;
 
-    use super::{around, assert_js_eq, config, config_capped};
+    use super::{around, assert_same_json_text, config, config_capped};
 
     /// The message of the panic of `f`.
     fn panic_message(f: impl FnOnce() + std::panic::UnwindSafe) -> String {
@@ -131,21 +129,21 @@ mod tests {
     }
 
     #[test]
-    fn assert_js_eq_passes_equal_values() {
+    fn assert_same_json_text_passes_equal_values() {
         let value = json!({"a": [1, "x", null], "b": {"c": true}});
-        assert_js_eq(&value, &value, "same");
+        assert_same_json_text(&value, &value, "same");
     }
 
     #[test]
-    fn assert_js_eq_drops_the_half_character_of_a_utf16_marker() {
-        assert_js_eq(&json!(["a"]), &json!([{"$utf16": [97, 55357]}]), "cut");
+    fn assert_same_json_text_drops_the_half_character_of_a_utf16_marker() {
+        assert_same_json_text(&json!(["a"]), &json!([{"$utf16": [97, 55357]}]), "cut");
     }
 
     #[test]
-    fn assert_js_eq_names_the_context_and_the_first_difference() {
-        let message = panic_message(|| assert_js_eq(&json!("abc"), &json!("abd"), "ctx"));
+    fn assert_same_json_text_names_the_context_and_the_first_difference() {
+        let message = panic_message(|| assert_same_json_text(&json!("abc"), &json!("abd"), "ctx"));
         let lines = [
-            "ctx: JSON.stringify texts differ at byte 3",
+            "ctx: JSON texts differ at byte 3",
             r#"  actual:   "\"abc\"" (bytes 0..5)"#,
             r#"  expected: "\"abd\"" (bytes 0..5)"#,
         ];
@@ -153,10 +151,10 @@ mod tests {
     }
 
     #[test]
-    fn assert_js_eq_puts_a_missing_tail_at_the_end_of_the_shorter_text() {
-        let message = panic_message(|| assert_js_eq(&json!(1), &json!(12), "tail"));
+    fn assert_same_json_text_puts_a_missing_tail_at_the_end_of_the_shorter_text() {
+        let message = panic_message(|| assert_same_json_text(&json!(1), &json!(12), "tail"));
         assert!(
-            message.starts_with("tail: JSON.stringify texts differ at byte 1\n"),
+            message.starts_with("tail: JSON texts differ at byte 1\n"),
             "{message}"
         );
     }

@@ -1,11 +1,11 @@
-//! The public API gate (decision C51) and the package file list check.
+//! The public API gate and the package file list check.
 //!
 //! `cargo run -p xtask -- public-api [--bless]` runs
 //! `cargo +nightly-<date> public-api -p agentcat-sdk --all-features -ss` on the dated nightly
 //! [`TOOLCHAIN`] and compares the output with `agentcat-sdk/public-api.txt`. With `--bless` it
 //! writes the file instead. Either way, every
 //! crate path in the output must start with an allowed crate ([`ALLOWED_CRATES`]), so a type of
-//! `reqwest`, `tokio`, `chrono` or `agentcat-api` never appears in a public signature (C08).
+//! `reqwest`, `tokio`, `chrono` or `agentcat-api` never appears in a public signature.
 //! It exits 1 on a difference or a disallowed path.
 //!
 //! `cargo run -p xtask -- package-list` runs `cargo package -p agentcat-sdk --list` and exits 1
@@ -15,7 +15,7 @@ use std::fmt::Write as _;
 use std::path::Path;
 use std::process::Command;
 
-/// The crates that may appear in a public signature (C51). `http` is not here: the current API
+/// The crates that may appear in a public signature. `http` is not here: the current API
 /// does not use it, so a signature that starts to use it is a finding.
 pub const ALLOWED_CRATES: &[&str] = &["std", "core", "alloc", "agentcat_sdk", "rmcp", "serde_json"];
 
@@ -345,7 +345,7 @@ mod tests {
     fn package_list_rejects_a_missing_required_file() {
         let list = FULL_LIST
             .replace("README.md\n", "")
-            .replace("src/lib.rs\n", "src/js.rs\n");
+            .replace("src/lib.rs\n", "src/other.rs\n");
         assert_eq!(
             check_package_list(&list),
             [

@@ -1,9 +1,8 @@
 //! The errors of the current tool call that the result cannot show: a panic of the tool, and an
-//! error the tool records with [`capture_error`] (R09, RD-06, RD-17). The call path runs the
-//! inner handler inside [`scope`] with a fresh [`CaptureSlot`], so `capture_error` reaches the
-//! record of that call only. The `error` they give follows C23: a panic gives
-//! [`panic_error`]; otherwise a captured error replaces the error that the result or the
-//! JSON-RPC error would give.
+//! error the tool records with [`capture_error`]. The call path runs the inner handler inside
+//! [`scope`] with a fresh [`CaptureSlot`], so `capture_error` reaches the record of that call only.
+//! The `error` they give: a panic gives [`panic_error`]; otherwise a captured error replaces the
+//! error that the result or the JSON-RPC error would give.
 use std::any::{Any, type_name};
 use std::backtrace::{Backtrace, BacktraceStatus};
 use std::error::Error;
@@ -21,13 +20,13 @@ tokio::task_local! {
     static SLOT: CaptureSlot;
 }
 
-/// The `type` of the `error` of a panic (C23).
+/// The `type` of the `error` of a panic.
 const PANIC_TYPE: &str = "panic";
 
 /// The message of a panic whose payload is not text: the name Rust's panic hook gives it.
 const OPAQUE_PAYLOAD: &str = "Box<dyn Any>";
 
-/// The most `chained_errors` entries an `error` holds (B-097).
+/// The most `chained_errors` entries an `error` holds.
 const MAX_CHAINED_ERRORS: usize = 10;
 
 /// Records `error` as the error of the tool call that is running, for `AgentCat` to report with
@@ -105,7 +104,7 @@ pub(crate) async fn scope<F: Future>(slot: CaptureSlot, future: F) -> F::Output 
     SLOT.scope(slot, future).await
 }
 
-/// The `error` of a panic with `payload` (C23): `{message, type: "panic", platform: "rust"}`.
+/// The `error` of a panic with `payload`: `{message, type: "panic", platform: "rust"}`.
 /// Pass the payload itself (`&*payload`), not the `Box` that holds it.
 pub(crate) fn panic_error(payload: &(dyn Any + Send)) -> Map<String, Value> {
     let mut error = Map::new();
@@ -127,7 +126,7 @@ pub(crate) fn panic_message(payload: &(dyn Any + Send)) -> String {
     }
 }
 
-/// The `error` that [`capture_error`] records for `error` (R09, RD-06): `{message, type,
+/// The `error` that [`capture_error`] records for `error`: `{message, type,
 /// platform: "rust", chained_errors?}`. `chained_errors` has one `{message}` entry per error of
 /// the `source()` chain, at most [`MAX_CHAINED_ERRORS`], and is absent for an error without a
 /// source. The `stack` of a captured backtrace joins it in the delivery pipeline, after

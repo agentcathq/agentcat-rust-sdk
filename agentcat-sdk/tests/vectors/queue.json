@@ -1,6 +1,4 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/queue.mjs",
   "cases": [
     {
       "name": "call:plain",
@@ -13,7 +11,7 @@
         "duration": 750,
         "inputTokens": 24,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -91,7 +89,7 @@
           },
           "userIntent": "say hello",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -118,7 +116,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 5,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -155,7 +153,7 @@
         "isError": true,
         "error": {
           "message": "the lookup failed",
-          "platform": "javascript"
+          "platform": "rust"
         },
         "tags": {
           "agentcat_session_id_source": "supplied"
@@ -201,10 +199,10 @@
           "isError": true,
           "error": {
             "message": "the lookup failed",
-            "platform": "javascript"
+            "platform": "rust"
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -231,7 +229,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -312,7 +310,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -340,7 +338,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -383,9 +381,6 @@
     },
     {
       "name": "call:no-session",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should publish an absent sessionId as empty string and send it as null"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -393,7 +388,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2026-10-23T11:59:59.250Z",
         "duration": 750,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -412,7 +407,7 @@
           "eventType": "mcp:tools/call",
           "resourceName": "do_thing",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -427,9 +422,6 @@
     },
     {
       "name": "call:tokens",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should send inputTokens and outputTokens on the wire request"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -439,7 +431,7 @@
         "duration": 750,
         "inputTokens": 6,
         "outputTokens": 4,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -460,7 +452,7 @@
           "eventType": "mcp:tools/call",
           "resourceName": "do_thing",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -475,9 +467,6 @@
     },
     {
       "name": "call:no-tokens",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > publishEvent > should leave the token fields undefined when the event has none"
-      ],
       "event": {
         "id": "",
         "sessionId": "",
@@ -485,7 +474,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2026-10-23T11:59:59.250Z",
         "duration": 750,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -504,7 +493,7 @@
           "eventType": "mcp:tools/call",
           "resourceName": "do_thing",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -519,9 +508,6 @@
     },
     {
       "name": "call:log-metadata-only",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > Integration tests > logs only event metadata on successful send, never the payload"
-      ],
       "event": {
         "id": "",
         "sessionId": "test-session",
@@ -529,7 +515,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2026-10-23T11:59:59.250Z",
         "duration": 750,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -584,7 +570,7 @@
           },
           "userIntent": "TOP_SECRET_PAYLOAD_abc123",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -608,7 +594,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -648,9 +634,9 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-42",
+            "user_name": "Ada",
+            "user_data": {
               "plan": "pro",
               "seats": 3
             }
@@ -699,7 +685,7 @@
             "plan": "pro",
             "seats": 3
           },
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -727,7 +713,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -767,7 +753,7 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-7"
+            "user_id": "user-7"
           }
         }
       },
@@ -809,7 +795,7 @@
           },
           "identifyActorGivenId": "user-7",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -837,7 +823,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -916,7 +902,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -943,7 +929,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1022,7 +1008,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1035,7 +1021,7 @@
       ],
       "delays": [],
       "logs": [
-        "Error: identify callback threw - Error: Failed to identify user",
+        "Error: identify hook returned an error - Error: Failed to identify user",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -1050,7 +1036,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1129,7 +1115,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1157,7 +1143,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1195,7 +1181,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "bad/key": "x",
             "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": "x",
@@ -1243,7 +1229,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1276,7 +1262,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1314,7 +1300,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "k00": "v0",
             "k01": "v1",
@@ -1407,7 +1393,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1485,7 +1471,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1523,7 +1509,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "a b!": "x",
             "empty": 1
@@ -1567,7 +1553,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1586,10 +1572,7 @@
       ]
     },
     {
-      "name": "hooks:tags-invalid:ts-bang-key",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should validate tags from callback"
-      ],
+      "name": "hooks:tags-invalid:bang-key",
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -1599,7 +1582,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1637,7 +1620,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "valid": "value",
             "invalid!": "value"
@@ -1681,7 +1664,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1701,9 +1684,6 @@
     },
     {
       "name": "hooks:tags-collide",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > eventTags callback > should overwrite a customer tag that collides with an SDK tag name"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -1713,7 +1693,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1751,7 +1731,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "agentcat_session_id_source": "customer-value",
             "env": "test"
@@ -1795,7 +1775,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1823,7 +1803,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1861,7 +1841,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "throws": "Tags callback failed"
         }
       },
@@ -1902,7 +1882,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -1915,7 +1895,7 @@
       ],
       "delays": [],
       "logs": [
-        "eventTags callback error: Error: Tags callback failed",
+        "event_tags callback error: Error: Tags callback failed",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -1930,7 +1910,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -1968,7 +1948,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "returns": {
             "device": "desktop",
             "flags": [
@@ -2017,7 +1997,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2053,7 +2033,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2091,7 +2071,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "returns": {}
         }
       },
@@ -2132,7 +2112,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2160,7 +2140,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2198,7 +2178,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "throws": "Properties callback failed"
         }
       },
@@ -2239,7 +2219,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2252,7 +2232,7 @@
       ],
       "delays": [],
       "logs": [
-        "eventProperties callback error: Error: Properties callback failed",
+        "event_properties callback error: Error: Properties callback failed",
         "Successfully sent event <evt> | mcp:tools/call | session ses_queue0000000000000000000000 | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2268,7 +2248,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2305,7 +2285,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         }
       },
@@ -2345,7 +2325,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2373,7 +2353,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2410,7 +2390,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         }
       },
@@ -2430,7 +2410,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2467,7 +2447,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": null
         }
       },
@@ -2507,7 +2487,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2535,7 +2515,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2572,7 +2552,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "throws": "no session here"
         }
       },
@@ -2612,7 +2592,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2625,7 +2605,7 @@
       ],
       "delays": [],
       "logs": [
-        "resolveSessionId hook error: Error: no session here",
+        "resolve_session_id hook error: Error: no session here",
         "Successfully sent event <evt> | mcp:tools/call | session <minted> | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2641,7 +2621,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2678,16 +2658,16 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "hangs": true
         },
         "identify": {
           "hangs": true
         },
-        "eventTags": {
+        "event_tags": {
           "hangs": true
         },
-        "eventProperties": {
+        "event_properties": {
           "hangs": true
         }
       },
@@ -2727,7 +2707,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2740,10 +2720,10 @@
       ],
       "delays": [],
       "logs": [
-        "Warning: resolveSessionId hook did not settle within 30000ms; publishing event without it",
+        "Warning: resolve_session_id hook did not settle within 30000ms; publishing event without it",
         "Warning: identify hook did not settle within 30000ms; publishing event without it",
-        "Warning: eventTags hook did not settle within 30000ms; publishing event without it",
-        "Warning: eventProperties hook did not settle within 30000ms; publishing event without it",
+        "Warning: event_tags hook did not settle within 30000ms; publishing event without it",
+        "Warning: event_properties hook did not settle within 30000ms; publishing event without it",
         "Successfully sent event <evt> | mcp:tools/call | session <minted> | proj_queue | 750 ms | anonymous"
       ]
     },
@@ -2759,7 +2739,7 @@
         "duration": 750,
         "inputTokens": 5,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2796,26 +2776,26 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         },
         "identify": {
           "returns": {
-            "userId": "user-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-42",
+            "user_name": "Ada",
+            "user_data": {
               "plan": "pro",
               "seats": 3
             }
           }
         },
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "env": "test",
             "agentcat_session_id_source": "customer-value"
           }
         },
-        "eventProperties": {
+        "event_properties": {
           "returns": {
             "device": "mobile"
           }
@@ -2862,7 +2842,7 @@
             "plan": "pro",
             "seats": 3
           },
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -2885,9 +2865,6 @@
     },
     {
       "name": "redact-event:drop",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook returns null"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -2897,7 +2874,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -2940,14 +2917,11 @@
       "requests": [],
       "delays": [],
       "logs": [
-        "Event dropped by redactEvent hook"
+        "Event dropped by redact_event hook"
       ]
     },
     {
       "name": "redact-event:throws",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should drop the event when the hook throws"
-      ],
       "event": {
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -2957,7 +2931,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3014,7 +2988,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3098,7 +3072,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3116,9 +3090,6 @@
     },
     {
       "name": "redact-event:merge-parameters",
-      "ts_test": [
-        "v1|src/tests/eventQueue.test.ts|EventQueue > event-level redaction hook (redactEvent) > should apply the redactEvent option from tracking data to published events"
-      ],
       "event": {
         "id": "",
         "sessionId": "test-session",
@@ -3126,7 +3097,7 @@
         "eventType": "mcp:tools/call",
         "timestamp": "2026-10-23T11:59:59.250Z",
         "duration": 750,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3158,7 +3129,7 @@
             "text": "[EVENT-REDACTED]"
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3182,7 +3153,7 @@
         "duration": 750,
         "inputTokens": 25,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3268,7 +3239,7 @@
           },
           "userIntent": "raw [REDACTED] (reviewed)",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3295,7 +3266,7 @@
         "duration": 750,
         "inputTokens": 36,
         "outputTokens": 6,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3335,7 +3306,7 @@
         "isError": true,
         "error": {
           "message": "found SECRET-VALUE-42",
-          "platform": "javascript"
+          "platform": "rust"
         },
         "tags": {
           "agentcat_session_id_source": "supplied"
@@ -3344,14 +3315,14 @@
       "hooks": {
         "identify": {
           "returns": {
-            "userId": "user-SECRET-VALUE-42",
-            "userName": "Ada",
-            "userData": {
+            "user_id": "user-SECRET-VALUE-42",
+            "user_name": "Ada",
+            "user_data": {
               "token": "SECRET-VALUE-42"
             }
           }
         },
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "note": "has SECRET-VALUE-42"
           }
@@ -3403,14 +3374,14 @@
           "isError": true,
           "error": {
             "message": "found [REDACTED]",
-            "platform": "javascript"
+            "platform": "rust"
           },
           "identifyActorGivenId": "user-SECRET-VALUE-42",
           "identifyActorName": "Ada",
           "identifyData": {
             "token": "[REDACTED]"
           },
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3439,7 +3410,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3496,7 +3467,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 5,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3579,7 +3550,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3606,7 +3577,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 34286,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3680,7 +3651,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3707,7 +3678,7 @@
         "duration": 750,
         "inputTokens": 22,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3749,7 +3720,7 @@
       "requests": [],
       "delays": [],
       "logs": [
-        "Failed to truncate event: TypeError: str.slice is not a function"
+        "Failed to truncate event: a length-limited field is a number, a boolean or an object"
       ]
     },
     {
@@ -3763,7 +3734,7 @@
         "duration": 750,
         "inputTokens": 25,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3853,7 +3824,7 @@
             "act"
           ],
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -3880,7 +3851,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -3955,7 +3926,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4001,7 +3972,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4047,7 +4018,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4079,7 +4050,7 @@
         "duration": 750,
         "inputTokens": 18,
         "outputTokens": 2,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -4154,7 +4125,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4200,7 +4171,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4246,7 +4217,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4292,7 +4263,7 @@
             ]
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4318,9 +4289,6 @@
     },
     {
       "name": "custom:string-form",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should use the session ID string verbatim as the session ID"
-      ],
       "custom": {
         "form": "string",
         "session": "user-session-12345",
@@ -4363,9 +4331,6 @@
     },
     {
       "name": "custom:string-form-session-precedence",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should let eventData.sessionId take precedence over the string"
-      ],
       "custom": {
         "form": "string",
         "session": "ignored-string",
@@ -4397,9 +4362,6 @@
     },
     {
       "name": "custom:string-form-all-fields",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with session ID string > should handle all event data fields"
-      ],
       "custom": {
         "form": "string",
         "session": "user-session-12345",
@@ -4463,9 +4425,6 @@
     },
     {
       "name": "custom:string-form-empty",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > event structure > should handle empty event data object"
-      ],
       "custom": {
         "form": "string",
         "session": "test-session",
@@ -4672,9 +4631,6 @@
     },
     {
       "name": "custom:server-form",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish custom event with tracked server"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4703,7 +4659,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -4730,7 +4686,7 @@
           },
           "userIntent": "Testing custom event",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4746,9 +4702,6 @@
     },
     {
       "name": "custom:server-form-no-session",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should publish with an empty session id and warn when no sessionId is provided"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4772,7 +4725,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -4791,7 +4744,7 @@
           "eventType": "agentcat:custom",
           "resourceName": "custom-action",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4801,16 +4754,13 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
     },
     {
       "name": "custom:server-form-error",
-      "ts_test": [
-        "v1|src/tests/publishCustomEvent.test.ts|publishCustomEvent > with tracked server > should handle error data correctly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "proj_test123",
@@ -4838,7 +4788,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -4865,7 +4815,7 @@
             "code": "ERR_001"
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4875,7 +4825,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -4907,7 +4857,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 1500,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -4926,7 +4876,7 @@
           "eventType": "agentcat:custom",
           "resourceName": "timed-action",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -4942,9 +4892,6 @@
     },
     {
       "name": "custom:server-form-tags-properties",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should include tags and properties passed directly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -4978,7 +4925,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5007,7 +4954,7 @@
           "eventType": "agentcat:custom",
           "resourceName": "custom-action",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -5027,16 +4974,13 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
     },
     {
       "name": "custom:server-form-invalid-tags",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should validate tags passed directly"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5064,7 +5008,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5086,7 +5030,7 @@
           "eventType": "agentcat:custom",
           "resourceName": "custom-action",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -5099,7 +5043,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Dropping invalid tag: \"bad!key\" — key contains invalid characters or is empty",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
@@ -5107,9 +5051,6 @@
     },
     {
       "name": "custom:server-form-properties-empty",
-      "ts_test": [
-        "v1|src/tests/event-tags-properties.test.ts|Event Tags & Properties > publishCustomEvent > should normalize empty properties to omission"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5134,7 +5075,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5153,7 +5094,7 @@
           "eventType": "agentcat:custom",
           "resourceName": "custom-action",
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -5163,7 +5104,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -5194,7 +5135,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5210,14 +5151,11 @@
       "delays": [],
       "logs": [
         "Published custom event for session ses_drop00000000000000000000000 with type 'agentcat:custom'",
-        "Event dropped by redactEvent hook"
+        "Event dropped by redact_event hook"
       ]
     },
     {
       "name": "custom:server-form-redact-merge",
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent hook integration tests > should apply the hook to custom events published on a tracked server"
-      ],
       "custom": {
         "form": "server",
         "project_id": "test-project",
@@ -5244,7 +5182,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5276,7 +5214,7 @@
             "scrubbed": true
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",
@@ -5286,7 +5224,7 @@
       ],
       "delays": [],
       "logs": [
-        "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.",
+        "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.",
         "Published custom event without a session with type 'agentcat:custom'",
         "Successfully sent event <evt> | agentcat:custom | session  | proj_queue | 0 ms | anonymous"
       ]
@@ -5320,7 +5258,7 @@
         "eventType": "agentcat:custom",
         "timestamp": "2026-10-23T12:00:00.000Z",
         "duration": 0,
-        "sdkLanguage": "TypeScript",
+        "sdkLanguage": "Rust",
         "agentcatVersion": "2.1.1",
         "serverName": "queue-server",
         "serverVersion": "1.0.0",
@@ -5348,7 +5286,7 @@
             "key": "SECRET-VALUE-42"
           },
           "identifyData": {},
-          "sdkLanguage": "TypeScript",
+          "sdkLanguage": "Rust",
           "agentcatVersion": "2.1.1",
           "serverName": "queue-server",
           "serverVersion": "1.0.0",

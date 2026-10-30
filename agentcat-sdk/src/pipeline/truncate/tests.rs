@@ -1,46 +1,38 @@
-//! `truncate_event` against TS: the vectors of `tests/vectors/truncate.json` and
-//! `tests/vectors/truncate_size.json` and `tests/vectors/truncate_cut.json`, and property tests that run the same events through the JS
-//! oracle.
+//! `truncate_event`: the cases of `tests/vectors/truncate.json`, `truncate_size.json`,
+//! `truncate_cut.json` and `truncate_cases.json`, and property tests of the field limits and of
+//! the size guard.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::{TruncateError, truncate_event};
-use crate::js;
-use crate::pipeline::TsEvent;
-use crate::test_support::strategies::{bmp_string, js_string, number, ts_event};
-use crate::test_support::{assert_js_eq, config, config_capped, markers, oracle, vectors};
-
-/// The vector sets and the fewest cases each holds: the field limits and the TS tests, the size guard, then a last-resort cut
-/// through an emoji.
-const SETS: [(&str, usize); 3] = [("truncate", 10), ("truncate_size", 10), ("truncate_cut", 1)];
-
-/// Each RD-26 and RD-27 case and its twin, where Rust gives the twin's TS result. RD-26: the same
-/// field with an object that has no `length` key. RD-27: the same array with `{"a": 1}` in place
-/// of the object with an own `toString` key.
-const TWINS: [(&str, &str); 3] = [
-    ("intent:length-object", "intent:object"),
-    ("frames:object-length-10", "frames:object"),
-    ("intent:array-with-tostring-key", "intent:array-with-object"),
-];
-
-/// The marker `normalize` writes at the `"..."` key of an object over its breadth.
-const MAX_PROPERTIES: &str = "[MaxProperties ~]";
+use super::{
+    LIMITED_FIELDS, MAX_ERROR_MESSAGE_LENGTH, MAX_EVENT_BYTES, MAX_STACK_FRAMES, TruncateError,
+    truncate_event,
+};
+use crate::pipeline::EventObject;
+use crate::test_support::rules::check_cut;
+use crate::test_support::strategies::{bmp_string, edge_string, number, tool_call_event};
+use crate::test_support::{assert_same_json_text, config, config_capped, markers, vectors};
+use crate::wire;
 
 /// The largest event, in bytes, of the field-limit property test: far enough under the 102 400
-/// bytes of the size guard that a cut character (RD-22) never meets it.
+/// bytes of the size guard that a cut character never meets it.
 const FIELD_TEST_MAX_BYTES: usize = 90_000;
 
-/// The UTF-8 size of `JSON.stringify(event)`.
-fn size_of(event: &TsEvent) -> usize {
-    js::stringify(&Value::Object(event.clone())).len()
+/// The UTF-8 size of `wire::stringify` of the event.
+fn size_of(event: &EventObject) -> usize {
+    wire::stringify(&Value::Object(event.clone())).len()
 }
 
-/// Asserts that `actual` is TS's `expected` reply of `oracle.truncateEvent`: `{"value": event}`,
-/// or `{"error": text}` for the text of the error TS throws.
-fn assert_matches_ts(actual: &Result<TsEvent, TruncateError>, expected: &Value, context: &str) {
+/// Asserts that `actual` is the `expected` result of a case: `{"value": event}`, or
+/// `{"error": text}` for the text of the error.
+fn assert_reply_matches(
+    actual: &Result<EventObject, TruncateError>,
+    expected: &Value,
+    context: &str,
+) {
     match (actual, expected.get("value"), expected.get("error")) {
         (Ok(event), Some(value), None) => {
-            assert_js_eq(&Value::Object(event.clone()), value, context);
+            assert_same_json_text(&Value::Object(event.clone()), value, context);
         }
         (Err(error), None, Some(Value::String(message))) => {
             assert_eq!(error.to_string(), *message, "{context}");
@@ -50,17 +42,17 @@ fn assert_matches_ts(actual: &Result<TsEvent, TruncateError>, expected: &Value, 
                 Ok(event) => format!("an event of {} bytes", size_of(event)),
                 Err(error) => format!("the error {error}"),
             };
-            let ts = expected
+            let expected_text = expected
                 .get("error")
                 .map_or_else(|| "an event".to_owned(), Value::to_string);
-            panic!("{context}: Rust gives {rust}, TS gives {ts}");
+            panic!("{context}: Rust gives {rust}, the fixture gives {expected_text}");
         }
     }
 }
 
 /// The event a case holds: `input`, or `input_text` parsed in insertion order; `$repeat`
 /// macros expanded.
-fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
+fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
     let value = match (case.get("input"), case.get("input_text")) {
         (Some(input), None) => input.clone(),
         (None, Some(Value::String(text))) => {
@@ -74,8 +66,8 @@ fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
     }
 }
 
-/// The TS result a case holds, in the shape of an `oracle.truncateEvent` reply: `{"value":
-/// output}`, or `{"error": error}` when TS throws.
+/// The Rust result a case holds: `{"value": output}` for the truncated event, or `{"error":
+/// error}` with the error's text when `truncate_event` returns an error.
 fn reply_of(case: &Map<String, Value>, context: &str) -> Value {
     match (case.get("output"), case.get("error")) {
         (Some(output), None) => json!({ "value": output }),
@@ -84,296 +76,197 @@ fn reply_of(case: &Map<String, Value>, context: &str) -> Value {
     }
 }
 
+/// Every case of the three fixture files: the field limits and the other rules (`truncate`), the
+/// size guard (`truncate_size`) and a last-resort cut through an emoji (`truncate_cut`). Cases
+/// that pin a rule by name: the `proto:` cases, that a `__proto__` key is an ordinary key and
+/// stays (each `-twin` case spells it `_proto_`); `response:array`, that an array `response`
+/// stays an array; `intent:length-object` and `frames:object-length-10`, that an object with a
+/// `length` key is an error like any other object; `intent:array-with-tostring-key`, that an
+/// object with a `toString` key is joined as `[object Object]`; and `error:100-keys-no-message`,
+/// `error:array-100` and `error:99-keys-plus-dots`, that an `error` without `message` gets no
+/// `message` key, so only its own keys count toward the breadth.
 #[test]
 fn truncate_event_by_value_matches_vectors() {
-    for (set, fewest) in SETS {
-        let cases = vectors::cases(set);
+    let sets = [
+        ("truncate", vectors::cases("truncate"), 10),
+        ("truncate_size", vectors::cases("truncate_size"), 10),
+        ("truncate_cut", vectors::cases("truncate_cut"), 1),
+    ];
+    for (set, cases, fewest) in sets {
         assert!(cases.len() >= fewest, "{set}.json has its cases");
         for case in &cases {
             let name = vectors::name(case);
             let context = format!("{set}.json {name}");
-            let input = &input_of(case, &context);
-            let actual = truncate_event(input.clone());
-            let expected = &reply_of(case, &context);
-            match case.get("deviation").and_then(Value::as_str) {
-                None => assert_matches_ts(&actual, expected, &context),
-                Some("RD-24") => check_rd24(&cases, name, &actual, &context),
-                Some("RD-25") => check_rd25(&actual, expected, &context),
-                Some("RD-26") => check_rd26(&cases, name, &actual, expected, &context),
-                Some("RD-27") => check_rd27(&cases, name, input, &actual, expected, &context),
-                Some("RD-28") => check_rd28(name, input, &actual, expected, &context),
-                Some(other) => panic!("{context}: unknown deviation {other}"),
-            }
+            let actual = truncate_event(input_of(case, &context));
+            assert_reply_matches(&actual, &reply_of(case, &context), &context);
         }
     }
 }
 
-/// RD-24: Rust keeps a `__proto__` key that TS drops. The twin case, `<name>-twin`, has the key
-/// renamed `_proto_`, which TS keeps; Rust gives the twin's TS output with the key renamed back.
-fn check_rd24(
-    cases: &[Map<String, Value>],
-    name: &str,
-    actual: &Result<TsEvent, TruncateError>,
-    context: &str,
-) {
-    let twin_name = format!("{name}-twin");
-    let twin = cases
-        .iter()
-        .find(|case| vectors::name(case) == twin_name)
-        .unwrap_or_else(|| panic!("{context}: no twin case {twin_name}"));
-    let event = actual
-        .as_ref()
-        .unwrap_or_else(|e| panic!("{context}: RD-24: Rust truncates the event: {e}"));
-    assert_js_eq(
-        &Value::Object(event.clone()),
-        &proto_renamed(&reply_of(twin, &twin_name)["value"]),
-        &format!("{context}: RD-24, against the TS output of {twin_name}"),
-    );
-}
-
-/// `value` with each `_proto_` key renamed `__proto__`, in place, at any depth.
-fn proto_renamed(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .map(|(key, item)| {
-                    let key = if key == "_proto_" {
-                        "__proto__"
-                    } else {
-                        key.as_str()
-                    };
-                    (key.to_owned(), proto_renamed(item))
-                })
-                .collect(),
-        ),
-        Value::Array(items) => Value::Array(items.iter().map(proto_renamed).collect()),
-        other => other.clone(),
-    }
-}
-
-/// RD-25: Rust keeps an array `response` an array; TS spreads it into an object with index keys.
-/// The array holds TS's values in index order, and every other field is TS's.
-fn check_rd25(actual: &Result<TsEvent, TruncateError>, expected: &Value, context: &str) {
-    let mut event = actual.clone().expect("RD-25: an event");
-    let Some(Value::Array(items)) = event.remove("response") else {
-        panic!("{context}: RD-25: the response stays an array");
-    };
-    let mut ts = expected["value"].as_object().expect("TS's event").clone();
-    let Some(Value::Object(spread)) = ts.remove("response") else {
-        panic!("{context}: TS spreads the response into an object");
-    };
-    let keys: Vec<String> = (0..items.len()).map(|i| i.to_string()).collect();
-    assert_eq!(
-        spread.keys().cloned().collect::<Vec<_>>(),
-        keys,
-        "{context}"
-    );
-    let values = Value::Array(spread.into_iter().map(|(_, value)| value).collect());
-    assert_js_eq(&Value::Array(items), &values, context);
-    assert_js_eq(&Value::Object(event), &Value::Object(ts), context);
-}
-
-/// RD-26: TS keeps an object whose `length` is at most the limit; Rust gives the error TS gives
-/// for an object without `length` (the twin case's).
-fn check_rd26(
-    cases: &[Map<String, Value>],
-    name: &str,
-    actual: &Result<TsEvent, TruncateError>,
-    expected: &Value,
-    context: &str,
-) {
-    assert!(
-        expected.get("value").is_some(),
-        "{context}: TS keeps the object"
-    );
-    let (twin_name, twin) = twin_of(cases, name);
-    let twin_error = twin
-        .get("error")
-        .and_then(Value::as_str)
-        .unwrap_or_else(|| panic!("{context}: the twin {twin_name} has TS's error"));
-    let error = actual.as_ref().expect_err("RD-26: Rust gives the error");
-    assert_eq!(
-        error.to_string(),
-        twin_error,
-        "{context}: RD-26, against the TS error of {twin_name}"
-    );
-}
-
-/// RD-27: TS throws on the object with an own `toString` key in the joined `userIntent` array.
-/// Rust joins it as `[object Object]`: it gives TS's output for the twin, whose array has
-/// `{"a": 1}` at that index and is the same elsewhere.
-fn check_rd27(
-    cases: &[Map<String, Value>],
-    name: &str,
-    input: &TsEvent,
-    actual: &Result<TsEvent, TruncateError>,
-    expected: &Value,
-    context: &str,
-) {
-    assert!(expected.get("error").is_some(), "{context}: TS throws");
-    let items = input["userIntent"]
-        .as_array()
-        .unwrap_or_else(|| panic!("{context}: RD-27: userIntent is not an array"));
-    let at = items
-        .iter()
-        .position(|item| item.get("toString").is_some())
-        .unwrap_or_else(|| panic!("{context}: RD-27: no item with a toString key"));
-    assert_eq!(
-        items.iter().filter(|item| item.is_object()).count(),
-        1,
-        "{context}: the object with the toString key is the only object of the array"
-    );
-    let (twin_name, twin) = twin_of(cases, name);
-    let mut swapped = input.clone();
-    swapped["userIntent"][at] = json!({ "a": 1 });
-    assert_eq!(
-        Value::Object(swapped),
-        Value::Object(input_of(twin, twin_name)),
-        "{context}: the twin {twin_name} differs only at index {at}"
-    );
-    let event = actual
-        .as_ref()
-        .unwrap_or_else(|e| panic!("{context}: RD-27: Rust truncates the event: {e}"));
-    assert_js_eq(
-        &Value::Object(event.clone()),
-        &reply_of(twin, twin_name)["value"],
-        &format!("{context}: RD-27, against the TS output of {twin_name}"),
-    );
-}
-
-/// RD-28: TS gives an `error` without `message` an own `message: undefined` property, and
-/// `normalize` counts it toward the 100-key breadth before it skips it. With 100 entries, TS adds
-/// the `"..."` marker; with 99 keys and a `"..."` key, TS writes the marker into that key. Rust
-/// gives TS's event with the marker undone: the `"..."` key removed, or given back its value.
-fn check_rd28(
-    name: &str,
-    input: &TsEvent,
-    actual: &Result<TsEvent, TruncateError>,
-    expected: &Value,
-    context: &str,
-) {
-    let mut ts = expected["value"].as_object().expect("TS's event").clone();
-    let Some(Value::Object(error)) = ts.get_mut("error") else {
-        panic!("{context}: TS's error is an object");
-    };
-    assert_eq!(
-        error.get("..."),
-        Some(&json!(MAX_PROPERTIES)),
-        "{context}: TS writes the marker"
-    );
-    match name {
-        "error:100-keys-no-message" | "error:array-100" => {
-            // A filter, not `Map::remove`: with `preserve_order`, `remove` can move the last key.
-            *error = error
-                .iter()
-                .filter(|(key, _)| key.as_str() != "...")
-                .map(|(key, value)| (key.clone(), value.clone()))
-                .collect();
-        }
-        "error:99-keys-plus-dots" => {
-            let original = input["error"]["..."].clone();
-            assert!(
-                original.is_string(),
-                "{context}: the input has a \"...\" key"
-            );
-            error.insert("...".to_owned(), original);
-        }
-        other => panic!("{context}: no RD-28 rule for {other}"),
-    }
-    let event = actual.as_ref().expect("RD-28: Rust truncates the event");
-    assert_js_eq(
-        &Value::Object(event.clone()),
-        &Value::Object(ts),
-        &format!("{context}: RD-28, against TS's event with the marker undone"),
-    );
-}
-
-/// The twin of the case `name` in [`TWINS`]: its name and the case.
-fn twin_of<'a>(
-    cases: &'a [Map<String, Value>],
-    name: &str,
-) -> (&'static str, &'a Map<String, Value>) {
-    let (_, twin_name) = TWINS
-        .iter()
-        .find(|(case, _)| *case == name)
-        .unwrap_or_else(|| panic!("{name} has a twin in TWINS"));
-    let twin = cases
-        .iter()
-        .find(|case| vectors::name(case) == *twin_name)
-        .unwrap_or_else(|| panic!("the twin {twin_name} of {name} is in the file"));
-    (twin_name, twin)
-}
-
-/// Runs `event` through Rust and through TS (the oracle) and compares the results.
-fn compare(event: &TsEvent) {
-    let actual = truncate_event(event.clone());
-    let ts = oracle::call("oracle.truncateEvent", &[Value::Object(event.clone())])
-        .unwrap()
-        .expect("a reply");
-    assert_matches_ts(&actual, &ts, "truncateEvent");
-}
-
-/// The last resort cuts strings inside an array as TS does. `properties` is not normalized, so a
-/// list of long strings there is still whole when the size guard runs: the budget reaches all
-/// three strings, each ends in `"..."`, and the event fits.
+/// The cases of `truncate_cases.json`: events with fields near their limits (`field-limits:`,
+/// some of which fail) and large events for the size guard (`size-guard:`). The two
+/// `size-guard:regression:` cases are the events of the seeds in
+/// `proptest-regressions/pipeline/truncate/tests.txt`.
 #[test]
-fn size_guard_cuts_long_strings_inside_an_array() {
-    let list: Vec<String> = ["a", "b", "c"].iter().map(|c| c.repeat(60_000)).collect();
-    let event = json!({
+fn truncate_matches_truncate_cases() {
+    let cases = vectors::cases("truncate_cases");
+    assert!(cases.len() >= 20, "truncate_cases.json has its cases");
+    for case in &cases {
+        let name = vectors::name(case);
+        let context = format!("truncate_cases.json {name}");
+        let actual = truncate_event(input_of(case, &context));
+        assert_reply_matches(&actual, &reply_of(case, &context), &context);
+    }
+}
+
+/// The event of the two size-guard tests: the four fields every event has, then `properties`.
+fn guard_event(properties: Value) -> EventObject {
+    let mut event = json!({
         "id": "evt_1",
         "sessionId": "ses_1",
         "eventType": "mcp:tools/call",
         "timestamp": "2025-01-15T12:00:00.000Z",
-        "properties": {"list": list},
-    });
-    let event = event.as_object().cloned().unwrap();
-    compare(&event);
-    let truncated = truncate_event(event).unwrap();
-    let items = truncated["properties"]["list"].as_array().unwrap();
-    assert_eq!(items.len(), 3);
-    for item in items {
-        let text = item.as_str().unwrap();
-        assert!(
-            text.len() < 60_000 && text.ends_with("..."),
-            "{}",
-            text.len()
-        );
-    }
+    })
+    .as_object()
+    .cloned()
+    .unwrap();
+    event.insert("properties".to_owned(), properties);
+    event
+}
+
+/// The last resort cuts strings inside an array. `properties` is not normalized, so a list of
+/// long strings there is still whole when the size guard runs: the budget reaches all three
+/// strings, each ends in `"..."`, and the event fits.
+#[test]
+fn size_guard_cuts_long_strings_inside_an_array() {
+    let list: Vec<String> = ["a", "b", "c"].iter().map(|c| c.repeat(60_000)).collect();
+    let truncated = truncate_event(guard_event(json!({"list": list}))).unwrap();
+    let cut = |c: &str, units: usize| format!("{}...", c.repeat(units));
+    let expected =
+        guard_event(json!({"list": [cut("a", 30_000), cut("b", 30_000), cut("c", 42_065)]}));
+    assert_eq!(
+        serde_json::to_string(&truncated).unwrap(),
+        serde_json::to_string(&expected).unwrap()
+    );
     assert!(
-        size_of(&truncated) <= super::MAX_EVENT_BYTES,
+        size_of(&truncated) <= MAX_EVENT_BYTES,
         "{}",
         size_of(&truncated)
     );
 }
 
 /// The last resort cuts a string whose reduction is exactly [`MIN_REDUCTION`](super::MIN_REDUCTION)
-/// units, as TS does: the cut of the long string leaves a budget of that many bytes, which the
+/// units: the cut of the long string to its half leaves a budget of that many bytes, which the
 /// short string spends, and the event fits.
 #[test]
 fn size_guard_cuts_at_the_minimum_reduction() {
     let event_with = |long: usize, short: usize| {
-        let event = json!({
-            "id": "evt_1",
-            "sessionId": "ses_1",
-            "eventType": "mcp:tools/call",
-            "timestamp": "2025-01-15T12:00:00.000Z",
-            "properties": {"long": "a".repeat(long), "short": "b".repeat(short)},
-        });
-        event.as_object().cloned().unwrap()
+        guard_event(json!({"long": "a".repeat(long), "short": "b".repeat(short)}))
     };
     let short = 200;
     let base = size_of(&event_with(0, 0));
     // The excess plus the buffer is half the long string plus the minimum reduction.
-    let long =
-        2 * (super::MAX_EVENT_BYTES - super::BUFFER_BYTES + super::MIN_REDUCTION - base - short);
-    let event = event_with(long, short);
-    compare(&event);
-    let truncated = truncate_event(event).unwrap();
+    let long = 2 * (MAX_EVENT_BYTES - super::BUFFER_BYTES + super::MIN_REDUCTION - base - short);
+    assert_eq!(long, 203_744, "the event of the frozen result");
+    let truncated = truncate_event(event_with(long, short)).unwrap();
+    assert_eq!(
+        truncated["properties"]["long"],
+        format!("{}...", "a".repeat(long / 2))
+    );
     assert_eq!(
         truncated["properties"]["short"],
         format!("{}...", "b".repeat(short - super::MIN_REDUCTION))
     );
-    assert!(size_of(&truncated) <= super::MAX_EVENT_BYTES);
+    assert!(size_of(&truncated) <= MAX_EVENT_BYTES);
+}
+
+/// Checks a field with a length limit: a string over `limit` UTF-16 units keeps its longest prefix
+/// within the limit and gets `"..."`; an array of more than `limit` items becomes the
+/// `coerce_to_string` text of its first `limit` items and `"..."`; any other value stays.
+fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), TestCaseError> {
+    match input {
+        Value::String(text) if text.encode_utf16().count() > limit => {
+            let kept = output
+                .as_str()
+                .and_then(|out| out.strip_suffix("..."))
+                .unwrap();
+            check_cut(text, kept, limit)?;
+        }
+        Value::Array(items) if items.len() > limit => {
+            let joined = wire::coerce_to_string(Some(&Value::Array(items[..limit].to_vec())));
+            prop_assert_eq!(output, &Value::String(joined + "..."));
+        }
+        _ => prop_assert_eq!(output, input),
+    }
+    Ok(())
+}
+
+/// Checks that the object `output` has the keys of the object `input`, and the same value under
+/// each key but those of `checked`, which the caller checks.
+fn check_other_keys(input: &Value, output: &Value, checked: &[&str]) -> Result<(), TestCaseError> {
+    let (Value::Object(input), Value::Object(output)) = (input, output) else {
+        prop_assert_eq!(output, input);
+        return Ok(());
+    };
+    let mut keys: Vec<&String> = input.keys().collect();
+    let mut out_keys: Vec<&String> = output.keys().collect();
+    keys.sort();
+    out_keys.sort();
+    prop_assert_eq!(out_keys, keys);
+    for (key, value) in input {
+        if !checked.contains(&key.as_str()) {
+            prop_assert_eq!(&output[key], value, "{}", key);
+        }
+    }
+    Ok(())
+}
+
+/// Checks the field-limited `output` of `input`: each limited field and `error.message` within
+/// its limit, `error.frames` cut to its first and last 25, each content text within 32 768
+/// units, and every other field unchanged, inside `error`, `response` and each block too.
+fn check_field_limits(input: &EventObject, output: &EventObject) -> Result<(), TestCaseError> {
+    for (key, value) in input {
+        let out = &output[key];
+        if let Some((_, limit)) = LIMITED_FIELDS.iter().find(|(field, _)| field == key) {
+            check_limited(value, out, *limit)?;
+        } else if key == "error" && value.is_object() {
+            if let Some(message) = value.get("message") {
+                check_limited(message, &out["message"], MAX_ERROR_MESSAGE_LENGTH)?;
+            }
+            if let Some(Value::Array(frames)) = value.get("frames") {
+                let half = MAX_STACK_FRAMES / 2;
+                let expected: Vec<&Value> = if frames.len() > MAX_STACK_FRAMES {
+                    frames[..half]
+                        .iter()
+                        .chain(&frames[frames.len() - half..])
+                        .collect()
+                } else {
+                    frames.iter().collect()
+                };
+                let out: Vec<&Value> = out["frames"].as_array().unwrap().iter().collect();
+                prop_assert_eq!(out, expected);
+            }
+            check_other_keys(value, out, &["message", "frames"])?;
+        } else if key == "response"
+            && let Some(Value::Array(blocks)) = value.get("content")
+        {
+            let out_blocks = out["content"].as_array().unwrap();
+            prop_assert_eq!(blocks.len(), out_blocks.len());
+            for (block, out_block) in blocks.iter().zip(out_blocks) {
+                if let Some(text @ Value::String(_)) = block.get("text") {
+                    check_limited(text, &out_block["text"], 32_768)?;
+                    check_other_keys(block, out_block, &["text"])?;
+                } else {
+                    prop_assert_eq!(out_block, block);
+                }
+            }
+            check_other_keys(value, out, &["content"])?;
+        } else {
+            prop_assert_eq!(out, value, "{}", key);
+        }
+    }
+    prop_assert_eq!(output.len(), input.len());
+    Ok(())
 }
 
 /// The object at `key` of `map`, made an empty object first when it is absent or not an object.
@@ -386,7 +279,7 @@ fn object_at<'a>(map: &'a mut Map<String, Value>, key: &str) -> &'a mut Map<Stri
 }
 
 /// `block` appended to `response.content` of `event` (both made when absent).
-fn push_content(event: &mut TsEvent, block: Value) {
+fn push_content(event: &mut EventObject, block: Value) {
     let content = object_at(event, "response")
         .entry("content")
         .or_insert_with(|| json!([]));
@@ -397,20 +290,20 @@ fn push_content(event: &mut TsEvent, block: Value) {
 }
 
 /// A string of `limit - 4` to `limit + 4` UTF-16 units: `x`s, then up to 6 characters of
-/// [`js_string`], so that a character outside the BMP can straddle the limit.
+/// [`edge_string`], so that a character outside the BMP can straddle the limit.
 fn near(limit: usize) -> impl Strategy<Value = String> + Clone {
-    (limit - 4..=limit + 4, js_string(6)).prop_map(|(units, tail)| {
-        let mut text = "x".repeat(units - js::utf16_len(&tail));
+    (limit - 4..=limit + 4, edge_string(6)).prop_map(|(units, tail)| {
+        let mut text = "x".repeat(units - wire::utf16_len(&tail));
         text.push_str(&tail);
         text
     })
 }
 
-/// An item of a joined `userIntent` array: a string, a number, `null`, a boolean, a nested
-/// array, or `{"a": 1}` (no `toString` key: RD-27).
+/// An item of a joined `userIntent` array: a string, a number, `null`, a boolean, a nested array,
+/// or `{"a": 1}` (no `toString` key).
 fn intent_item() -> impl Strategy<Value = Value> + Clone {
     prop_oneof![
-        js_string(4).prop_map(Value::String),
+        edge_string(4).prop_map(Value::String),
         number().prop_map(Value::Number),
         Just(Value::Null),
         any::<bool>().prop_map(Value::Bool),
@@ -433,7 +326,7 @@ enum Near {
 }
 
 impl Near {
-    fn apply(self, event: &mut TsEvent) {
+    fn apply(self, event: &mut EventObject) {
         match self {
             Self::Field(key, value) => {
                 event.insert(key.to_owned(), value);
@@ -477,10 +370,10 @@ fn near_limit() -> impl Strategy<Value = Near> {
     ]
 }
 
-/// A [`ts_event`] with up to 3 fields near their limits, under [`FIELD_TEST_MAX_BYTES`].
-fn near_limit_event() -> impl Strategy<Value = TsEvent> {
+/// A [`tool_call_event`] with up to 3 fields near their limits, under [`FIELD_TEST_MAX_BYTES`].
+fn near_limit_event() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(js_string(40)),
+        tool_call_event(edge_string(40)),
         prop::collection::vec(near_limit(), 0..=3),
     )
         .prop_map(|(mut event, changes)| {
@@ -521,9 +414,9 @@ fn bulk() -> impl Strategy<Value = Vec<(u8, usize, String)>> {
 /// Puts the `i`th bulk string `text` into `event` at `spot`: inside `depth` objects `{"n": ...}`
 /// under a key of `parameters`, `response.structuredContent`, `identifyActorData`, `error` or
 /// `properties`; as a content text block; or as `error.message`, a tag, `userIntent` or
-/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: JavaScript puts the index keys
-/// first.
-fn place(event: &mut TsEvent, i: usize, spot: u8, depth: usize, text: String) {
+/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: the index keys come first in the
+/// text of `wire::stringify`.
+fn place(event: &mut EventObject, i: usize, spot: u8, depth: usize, text: String) {
     let key = if i.is_multiple_of(2) {
         (9 - i).to_string()
     } else {
@@ -551,9 +444,9 @@ fn place(event: &mut TsEvent, i: usize, spot: u8, depth: usize, text: String) {
     };
 }
 
-/// A [`ts_event`] of BMP strings with [`bulk`] strings placed in it, 90 to 400 KB.
-fn large_event() -> impl Strategy<Value = TsEvent> {
-    (ts_event(bmp_string(0..24)), bulk())
+/// A [`tool_call_event`] of BMP strings with [`bulk`] strings placed in it, 90 to 400 KB.
+fn large_event() -> impl Strategy<Value = EventObject> {
+    (tool_call_event(bmp_string(0..24)), bulk())
         .prop_map(|(mut event, pieces)| {
             for (i, (spot, depth, text)) in pieces.into_iter().enumerate() {
                 place(&mut event, i, spot, depth, text);
@@ -568,18 +461,43 @@ fn large_event() -> impl Strategy<Value = TsEvent> {
 proptest! {
     #![proptest_config(config())]
 
+    /// An event fails exactly when a limited field holds a number, a boolean or an object.
+    /// Otherwise each limited field is within its limit (see [`check_field_limits`]), and the
+    /// event, well under the size limit, is not cut further.
     #[test]
-    fn truncate_matches_ts_field_limits(event in near_limit_event()) {
-        compare(&event);
+    fn field_limits_cut_each_field_to_its_limit(event in near_limit_event()) {
+        let fails = LIMITED_FIELDS.iter().any(|(field, _)| {
+            matches!(event.get(*field), Some(Value::Number(_) | Value::Bool(_) | Value::Object(_)))
+        });
+        match truncate_event(event.clone()) {
+            Err(error) => {
+                prop_assert!(fails, "{}", error);
+                prop_assert_eq!(error.to_string(), "a length-limited field is a number, a boolean or an object");
+            }
+            Ok(truncated) => {
+                prop_assert!(!fails);
+                check_field_limits(&event, &truncated)?;
+            }
+        }
     }
 }
 
+// The size-guard test takes the argument of the seeds in
+// `proptest-regressions/pipeline/truncate/tests.txt`, so they give it the same events.
 proptest! {
-    #![proptest_config(config_capped(1_000))]
+    #![proptest_config(config_capped(64))]
 
+    /// The size guard brings each large event within [`MAX_EVENT_BYTES`] and keeps its fields
+    /// and the four fields every event has.
     #[test]
-    fn truncate_matches_ts_size_guard(event in large_event()) {
-        compare(&event);
+    fn size_guard_brings_large_events_within_the_limit(event in large_event()) {
+        let truncated = truncate_event(event.clone()).unwrap();
+        prop_assert!(size_of(&truncated) <= MAX_EVENT_BYTES, "{} bytes", size_of(&truncated));
+        let keys: Vec<&String> = truncated.keys().collect();
+        prop_assert_eq!(keys, event.keys().collect::<Vec<_>>());
+        for key in ["id", "sessionId", "eventType", "timestamp"] {
+            prop_assert_eq!(&truncated[key], &event[key]);
+        }
     }
 }
 
@@ -587,10 +505,10 @@ proptest! {
     #![proptest_config(config())]
 
     /// The size guard measures an event with `byte_size`, which counts the UTF-8 bytes of
-    /// `JSON.stringify(event)` (TS's `jsonByteSize`) without building the text: over random
-    /// events, it is the length of the text `js::stringify` writes.
+    /// `wire::stringify` of the event without building the text: over random events, it is the
+    /// length of the text `wire::stringify` writes.
     #[test]
-    fn byte_size_matches_stringify_len(event in ts_event(js_string(40))) {
+    fn byte_size_matches_stringify_len(event in tool_call_event(edge_string(40))) {
         prop_assert_eq!(super::byte_size(&event), size_of(&event));
     }
 }

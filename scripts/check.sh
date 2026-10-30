@@ -29,9 +29,7 @@ need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 # cargo-public-api reads the rustdoc JSON of this dated nightly (TOOLCHAIN in xtask/src/public_api.rs)
 need "rustup toolchain install nightly-2026-10-18" has_toolchain 'nightly-2026-10-18'
-node_hint='Node.js 22 or later. Node 22 to 24 include corepack; on Node 25 and later, run `npm install -g corepack`.'
-need "$node_hint" command -v node
-need "$node_hint" command -v corepack
+need "install jq with your package manager (for example apt-get install jq)" jq --version
 if [ "$missing" -ne 0 ]; then
   exit 1
 fi
@@ -41,68 +39,26 @@ cargo fmt --all --check
 cargo clippy --workspace --all-targets --all-features -- -D warnings
 cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
-# oracle-harness (the parity check runs after the tests below)
-corepack pnpm install --frozen-lockfile
-# the harness tests run the Rust reference server
-cargo build -p harness-ref-server
-corepack pnpm -r --workspace-concurrency=1 test
-node oracle/src/vectors/run.mjs --check
-node oracle/src/parity/list-tests.mjs --check
-node harness/src/dump-contract.mjs --check
-# scripts/ tests never contact the network (rmcp-versions.mjs fetches only when run as a script)
-node --test "scripts/*.test.mjs"
-# the customer examples (C54) run against the local mock API; stdout carries only JSON-RPC, the last event
+# the customer examples, each against a local mock API: stdout carries only JSON-RPC, the last event
 # arrives, and the process exits 0 within 5 s of the client close
-cargo build -p agentcat-sdk --examples --all-features
-for example in stdio streamable_http hooks; do
-  node harness/src/examples-check.mjs "$example"
-done
-# the dashboard demo (C58) against the local mock API: both servers publish the same events (never --prod)
-node harness/demo/run.mjs --mock
+cargo run -q -p xtask -- examples-check --all
 
-# harness-l3 (the Rust reference server is built above): the MCP-wire delta and the published events
-# against TS v2 on every scenario, transport and lane (every tracked Rust server must drain); an A/A run
-# of the Rust server, which must show no delta or event difference at all, ruled or not; and three canary
-# runs, whose perturbed second server must be caught in every combination: the context canary
-# (HARNESS_CANARY=1) and the call canary (HARNESS_CANARY=call) in the delta and nowhere in the events, the
-# event canary (HARNESS_CANARY=event) in the events and nowhere in the delta. harness/src/l3-expect.mjs
-# checks harness/out/matrix.json after each of the last four.
-node harness/src/matrix.mjs
-node harness/src/matrix.mjs --servers rust,rust --scenarios basic
-node harness/src/l3-expect.mjs none
-canary=0
-node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 HARNESS_CANARY=1 || canary=$?
-if [ "$canary" -ne 1 ]; then
-  echo "L3 canary failed: the matrix exited $canary, expected 1"
-  exit 1
-fi
-node harness/src/l3-expect.mjs caught
-for canary in call event; do
-  status=0
-  node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 "HARNESS_CANARY=$canary" || status=$?
-  if [ "$status" -ne 1 ]; then
-    echo "L3 $canary canary failed: the matrix exited $status, expected 1"
-    exit 1
-  fi
-  node harness/src/l3-expect.mjs "caught-$canary"
-done
-
-# test (R07 in a build of the SDK alone: another workspace member could turn the feature on)
+# test; the key-order test runs again in a build of the SDK alone, where no other workspace member can
+# turn serde_json's preserve_order on
 cargo nextest run --workspace --all-features
-# the tests that compile only without a TLS feature (C44's warning for an https: URL)
+# the tests that compile only without a TLS feature (the warning for an https: URL)
 cargo nextest run -p agentcat-sdk --no-default-features
 cargo test -p agentcat-sdk --all-features --test json_key_order
 cargo test --workspace --doc
-cargo run -q -p xtask -- parity --final
 cargo run -q -p xtask -- rmcp-canary
 
-# coverage (C52): at least 90 % of the crate's lines and 95 % of the pure modules' lines, test files left out
+# coverage: at least 90 % of the crate's lines and 95 % of the pure modules' lines, test files left out
 cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)' \
   --json --summary-only --output-path target/coverage.json
 cargo run -q -p xtask -- coverage target/coverage.json
 
-# mutants (C53): no surviving mutant in the lines that differ from the upstream of the current branch (for
-# example origin/rewrite), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
+# mutants: no surviving mutant in the lines that differ from the upstream of the current branch (for
+# example origin/my-branch), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
 # compares the working tree with the merge base, so uncommitted changes to tracked files and to files staged
 # with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
 # (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source, finds no
@@ -122,7 +78,7 @@ RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-fea
 # a second run checks the doc links of the crate-private items, which the first run skips
 RUSTDOCFLAGS="--cfg docsrs -D warnings" cargo +nightly doc --workspace --all-features --no-deps --document-private-items
 
-# api (C51): the public API against agentcat-sdk/public-api.txt and the crate allowlist, on the pinned
+# api: the public API against agentcat-sdk/public-api.txt and the crate allowlist, on the pinned
 # nightly-2026-10-18; the package holds only the expected files; the publish dry run contacts crates.io but
 # uploads nothing
 cargo run -q -p xtask -- public-api
@@ -134,7 +90,7 @@ cargo deny --all-features check
 
 # minimal-versions
 cargo +nightly minimal-versions check --direct --workspace
-# The serde_json floor (R22): the feature self-check finds no feature in a build of the SDK alone on
+# The serde_json floor: the feature self-check finds no feature in a build of the SDK alone on
 # serde_json 1.0.127, the workspace's floor. serde_with 3.15 and later need a newer serde_json, so
 # serde_with goes down to 3.14.1 first. The pins go on Cargo.lock, which is restored after.
 lock_copy="$(mktemp)"
@@ -148,7 +104,7 @@ rm -f "$lock_copy"
 trap - EXIT
 
 # rmcp-versions: the current rmcp is the one in Cargo.lock; CI repeats the tests for every 3.x minor
-# (job `rmcp`, R25). Run `node scripts/rmcp-versions.mjs` (network) to see the list.
+# (job `rmcp`). Run `cargo run -q -p xtask -- rmcp-versions` (network) to see the list.
 cargo build -p agentcat-sdk --examples --all-features
 cargo test -p agentcat-sdk --doc --all-features
 RMCP_EXPECTED_VERSION="$(sed -n '/^name = "rmcp"$/{n;s/^version = "\(.*\)"$/\1/p;q}' Cargo.lock)"

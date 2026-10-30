@@ -59,9 +59,9 @@ fn file_logger_appends_prefixed_lines() {
     assert!(prefix().contains(" rmcp=3."));
 }
 
-/// TS writes nothing when there is no home directory: the file logger names no file, and its
-/// line reaches no `agentcat.log` in the temp root or in the working directory (where a relative
-/// path would put it), each the same size as before, or still absent.
+/// Nothing is written when there is no home directory: the file logger names no file, and its line
+/// reaches no `agentcat.log` in the temp root or in the working directory (where a relative path
+/// would put it), each the same size as before, or still absent.
 #[test]
 fn no_home_is_silent() {
     let logger = Logger::new(LogDestination::File, None);
@@ -97,7 +97,7 @@ fn temp_home_is_removed_on_drop() {
 }
 
 /// Checks that `text` is the entries of `messages` in order, each `[<ISO time>] <prefix>
-/// <message>\n` as TS's `writeToLog` writes it, line breaks inside a message included.
+/// <message>\n`, line breaks inside a message included.
 fn assert_entries(text: &str, messages: &[&str]) {
     let mut rest = text;
     for message in messages {
@@ -115,10 +115,9 @@ fn assert_entries(text: &str, messages: &[&str]) {
     assert!(rest.is_empty(), "nothing after the entries: {rest:?}");
 }
 
-/// TS's edge-runtime "should not throw when called" (C42): writing `Test message`, an empty
-/// message and `Special chars: \n\t\r` returns normally, and the file gets each entry whole, in
-/// TS's `[<ISO time>] <prefix> <message>` form, the empty message and the control characters
-/// included.
+/// Writing `Test message`, an empty message and `Special chars: \n\t\r` returns normally, and the
+/// file gets each entry whole, in the `[<ISO time>] <prefix> <message>` form, the empty message and
+/// the control characters included.
 #[test]
 fn write_returns_normally_and_keeps_each_message_whole() {
     let messages = ["Test message", "", "Special chars: \n\t\r"];
@@ -131,8 +130,7 @@ fn write_returns_normally_and_keeps_each_message_whole() {
     assert_entries(&text, &messages);
 }
 
-/// TS's edge-runtime "should handle rapid successive calls" (C42): 100 writes in a row, `Message
-/// 0` to `Message 99`, each land as one entry, in order.
+/// 100 writes in a row, `Message 0` to `Message 99`, each land as one entry, in order.
 #[test]
 fn rapid_successive_writes_all_land_in_order() {
     let messages: Vec<String> = (0..100).map(|i| format!("Message {i}")).collect();
@@ -146,8 +144,8 @@ fn rapid_successive_writes_all_land_in_order() {
     assert_entries(&text, &messages);
 }
 
-/// TS's "caches the prefix so repeated logging stays consistent": the prefix is built once, so
-/// each call gives the same text at the same address, and two lines in a row carry that prefix.
+/// The prefix is cached so repeated logging stays consistent: the prefix is built once, so each
+/// call gives the same text at the same address, and two lines in a row carry that prefix.
 #[test]
 fn prefix_is_computed_once() {
     let first = prefix();
@@ -169,7 +167,7 @@ fn prefix_is_computed_once() {
 }
 
 #[test]
-fn level_follows_ts_severity() {
+fn level_follows_the_severity_order() {
     assert_eq!(level("Failed to send"), Level::ERROR);
     assert_eq!(level("an ERROR"), Level::ERROR);
     assert_eq!(level("Warning: x"), Level::WARN);
@@ -241,8 +239,7 @@ fn tracing_destination_emits_events() {
 
 #[test]
 fn global_logger_is_silent_until_configured_and_first_call_wins() {
-    // Relies on nextest running one process per test (controller ruling P4): `configure` is
-    // process-global and sets once.
+    // Relies on nextest running one process per test: `configure` is process-global and sets once.
     let home = temp_home("global");
     write("before configure");
     assert!(!home.path().join("agentcat.log").exists());

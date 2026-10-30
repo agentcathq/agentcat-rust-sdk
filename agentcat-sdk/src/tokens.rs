@@ -1,9 +1,9 @@
-//! Token estimates for tool-call events: `ceil(utf8 bytes / 3.5)` of the `JSON.stringify` output
-//! of the arguments, or of the text blocks of the result.
+//! Token estimates for tool-call events: `ceil(utf8 bytes / 3.5)` of the JSON text
+//! ([`wire::stringify`]) of the arguments, or of the text blocks of the result.
 
 use serde_json::Value;
 
-use crate::js;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
@@ -17,9 +17,9 @@ pub(crate) fn estimate_tokens(bytes: u64) -> i32 {
     i32::try_from(tokens).unwrap_or(i32::MAX)
 }
 
-/// The estimate for the byte length of `JSON.stringify(value)`.
+/// The estimate for the byte length of the JSON text of `value` ([`wire::stringify`]).
 fn json_tokens(value: &Value) -> i32 {
-    estimate_tokens(byte_count(js::stringify(value).len()))
+    estimate_tokens(byte_count(wire::stringify(value).len()))
 }
 
 /// A `usize` byte count as `u64` (saturating, though `usize` is never wider than 64 bits here).
@@ -27,8 +27,8 @@ fn byte_count(len: usize) -> u64 {
     u64::try_from(len).unwrap_or(u64::MAX)
 }
 
-/// The estimate for the raw arguments of a call: the bytes of their `JSON.stringify` output.
-/// `None` where there are no arguments (absent or `null`), as TS omits the field.
+/// The estimate for the raw arguments of a call: the bytes of their JSON text. `None` where there
+/// are no arguments (absent or `null`), so the event has no `inputTokens` field.
 pub(crate) fn estimate_input_tokens(arguments: Option<&Value>) -> Option<i32> {
     match arguments {
         None | Some(Value::Null) => None,

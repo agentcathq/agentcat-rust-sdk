@@ -1,6 +1,5 @@
-//! Stage 0 of TS's queue (`src/modules/pendingEvent.ts`): [`settle`] awaits the customer hooks a
-//! tool call started (B-022 step 7, B-026), each within its budget (C37), and [`apply`] puts what
-//! they gave into the event, as TS's `applyPendingEventFields` does (B-084, B-093, B-095, B-096).
+//! Stage 0 of the delivery pipeline: [`settle`] awaits the customer hooks a tool call started,
+//! each within its budget, and [`apply`] puts what they gave into the event.
 use std::fmt;
 use std::sync::{Mutex, PoisonError};
 use std::time::Duration;
@@ -10,7 +9,7 @@ use serde_json::{Map, Value};
 use tokio::task::JoinError;
 
 use super::tags::validate_tags;
-use super::{TsEvent, set_field};
+use super::{EventObject, set_field};
 use crate::capture::panic_message;
 use crate::config::{HookError, UserIdentity};
 use crate::constants::AGENTCAT_TAG_SESSION_SOURCE;
@@ -20,41 +19,41 @@ use crate::hooks::{AbortOnDrop, PendingHooks};
 #[cfg(test)]
 mod tests;
 
-/// How long one call hook may take to settle once its event is processed (TS's
-/// `PENDING_HOOK_TIMEOUT_MS`). The log line of a hook that takes longer always names this budget.
+/// How long one call hook may take to settle once its event is processed. The log line of a hook
+/// that takes longer always names this budget.
 pub(crate) const HOOK_BUDGET: Duration = Duration::from_secs(30);
 
-/// One of the four call hooks: its TS label, and the text TS writes before the hook's own error
-/// (the TS resolver's `catch`).
+/// One of the four call hooks: its label in the log lines, and the text written before the hook's
+/// own error.
 struct Label {
-    /// The label of the hook in TS's log lines.
+    /// The label of the hook in the log lines.
     name: &'static str,
     /// The text before the error's `Display` when the hook returns an error.
     error_prefix: &'static str,
 }
 
-/// The `resolve_session_id` hook (`invokeSessionHook`).
+/// The `resolve_session_id` hook.
 const RESOLVE_SESSION_ID: Label = Label {
-    name: "resolveSessionId",
-    error_prefix: "resolveSessionId hook error: ",
+    name: "resolve_session_id",
+    error_prefix: "resolve_session_id hook error: ",
 };
 
-/// The `identify` hook (`resolveIdentity`).
+/// The `identify` hook.
 const IDENTIFY: Label = Label {
     name: "identify",
-    error_prefix: "Error: identify callback threw - ",
+    error_prefix: "Error: identify hook returned an error - ",
 };
 
-/// The `event_tags` hook (`resolveEventTags`).
+/// The `event_tags` hook.
 const EVENT_TAGS: Label = Label {
-    name: "eventTags",
-    error_prefix: "eventTags callback error: ",
+    name: "event_tags",
+    error_prefix: "event_tags callback error: ",
 };
 
-/// The `event_properties` hook (`resolveEventProperties`).
+/// The `event_properties` hook.
 const EVENT_PROPERTIES: Label = Label {
-    name: "eventProperties",
-    error_prefix: "eventProperties callback error: ",
+    name: "event_properties",
+    error_prefix: "event_properties callback error: ",
 };
 
 /// What the hooks of one call gave once they settled; `None` for a hook that is not set, gave
@@ -67,12 +66,11 @@ pub(crate) struct HookResults {
     pub(crate) identity: Option<UserIdentity>,
     /// The tags of `event_tags` that passed [`validate_tags`]; `None` when none did.
     pub(crate) tags: Option<Map<String, Value>>,
-    /// The properties `event_properties` gave, an empty object included (B-095).
+    /// The properties `event_properties` gave, an empty object included.
     pub(crate) properties: Option<Map<String, Value>>,
 }
 
-/// [`apply`] could not give a hook-mode event its session: minting a session ID failed, where TS
-/// throws.
+/// [`apply`] could not give a hook-mode event its session: minting a session ID failed.
 #[derive(Debug)]
 pub(crate) struct SessionMintFailed;
 
@@ -82,8 +80,8 @@ impl fmt::Display for SessionMintFailed {
     }
 }
 
-/// Awaits the hook tasks of `hooks` together, each for at most `budget` (C37, RD-35), and pushes
-/// TS's log lines to `log`:
+/// Awaits the hook tasks of `hooks` together, each for at most `budget`, and pushes the log lines
+/// to `log`:
 ///
 /// - A hook that has not settled within `budget` is aborted, after `Warning: <label> hook did not
 ///   settle within 30000ms; publishing event without it`; the text names [`HOOK_BUDGET`] whatever
@@ -91,16 +89,16 @@ impl fmt::Display for SessionMintFailed {
 /// - A hook whose task panicked or was cancelled (its runtime shut down) gives `Warning: <label>
 ///   hook failed in background - <message>`, the panic's message or the cancellation. The process
 ///   panic hook has already printed the panic, as for any task.
-/// - A hook's own error gives TS's text for that hook followed by the error's `Display`:
-///   `resolveSessionId hook error: `, `Error: identify callback threw - `, `eventTags callback
-///   error: ` or `eventProperties callback error: `.
-/// - The `event_tags` result goes through [`validate_tags`] when it settles, with TS's line for
-///   each tag it drops.
+/// - A hook's own error gives the text of that hook followed by the error's `Display`:
+///   `resolve_session_id hook error: `, `Error: identify hook returned an error - `,
+///   `event_tags callback error: ` or `event_properties callback error: `.
+/// - The `event_tags` result goes through [`validate_tags`] when it settles, with a line for each
+///   tag it drops.
 ///
 /// The lines are in the order `settle` sees the hooks settle. Hooks that settled before `settle`
-/// first polls them, or between two of its polls, log in TS's label order (`resolveSessionId`,
-/// `identify`, `eventTags`, `eventProperties`), whatever order they finished in. TS logs each
-/// failure when it happens, even for an event its queue never takes. Runs on a runtime with the
+/// first polls them, or between two of its polls, log in the label order (`resolve_session_id`,
+/// `identify`, `event_tags`, `event_properties`), whatever order they finished in. The hooks of an
+/// event that the queue drops before `settle` runs log nothing. Runs on a runtime with the
 /// time driver; the hook tasks may run on another runtime. Dropping the future aborts the hook
 /// tasks it has not settled.
 pub(crate) async fn settle(
@@ -190,21 +188,22 @@ fn push(lines: &Mutex<Vec<String>>, new: impl IntoIterator<Item = String>) {
         .extend(new);
 }
 
-/// Puts `results` into `event`, in place, as TS's `applyPendingEventFields` does:
+/// Puts `results` into `event`, in place:
 ///
 /// 1. In hook mode, the session from the hook's value (`session_from_hook_value`, salted with the
 ///    event's `projectId` when it is not empty) becomes `sessionId`, and its source the
 ///    `agentcat_session_id_source` tag. When minting fails, nothing more is applied and the
-///    error comes back, as TS's throw at that point leaves the later fields unset.
+///    error comes back, so the later fields stay unset.
 /// 2. An identity sets `identifyActorGivenId`, `identifyActorName` (absent without a name) and
-///    `identifyActorData` (`{}` without data) (B-084).
-/// 3. The customer tags merge under the SDK tags, `{...customer, ...sdk}`: an SDK tag wins a name
-///    collision at the customer tag's place (B-096).
-/// 4. The properties replace `properties`, an empty object included (B-095).
+///    `identifyActorData` (`{}` without data).
+/// 3. The customer tags merge under the SDK tags: the customer tags first, then each SDK tag, so
+///    an SDK tag wins a name collision at the customer tag's place.
+/// 4. The properties replace `properties`, an empty object included.
 ///
-/// A key the event lacks goes to its place in TS's key order ([`set_field`]).
+/// A key the event lacks goes to its place in the order of
+/// [`TOOL_CALL_KEYS`](super::TOOL_CALL_KEYS) ([`set_field`]).
 pub(crate) fn apply(
-    event: &mut TsEvent,
+    event: &mut EventObject,
     results: HookResults,
     hook_mode: bool,
 ) -> Result<(), SessionMintFailed> {
@@ -254,8 +253,8 @@ pub(crate) fn apply(
     Ok(())
 }
 
-/// A copy of the event's `tags`, or no tags when it has none (`event.tags ?? {}`).
-fn event_tags(event: &TsEvent) -> Map<String, Value> {
+/// A copy of the event's `tags`, or no tags when it has none or its `tags` is not an object.
+fn event_tags(event: &EventObject) -> Map<String, Value> {
     match event.get("tags") {
         Some(Value::Object(tags)) => tags.clone(),
         _ => Map::new(),

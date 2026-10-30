@@ -1,5 +1,5 @@
-//! The event of a tool call as TS holds it in memory when its queue takes it (B-077):
-//! [`from_call`] builds it from a [`CallRecord`], in TS's key order
+//! The event of a tool call as the delivery queue takes it: [`from_call`] builds it from a
+//! [`CallRecord`], in the key order of a tool-call event
 //! ([`TOOL_CALL_KEYS`](crate::pipeline::TOOL_CALL_KEYS)), as the [`EventJob`] the delivery
 //! pipeline processes. [`render_backtrace`] adds the backtrace of a captured error to it.
 use std::backtrace::{Backtrace, BacktraceStatus};
@@ -10,16 +10,16 @@ use tokio::runtime::Handle;
 
 use super::{CallRecord, redact_extra};
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
 
-/// The event type of a tool call (B-078).
+/// The event type of a tool call.
 const TOOL_CALL_EVENT_TYPE: &str = "mcp:tools/call";
 
-/// The `sdkLanguage` of every event (D01, RD-14).
+/// The `sdkLanguage` of every event.
 pub(crate) const SDK_LANGUAGE: &str = "Rust";
 
 /// The key rmcp gives a tool result for its result type.
@@ -32,15 +32,15 @@ const RESULT_TYPE_COMPLETE: &str = "complete";
 /// the runtime and the redaction stages of the customer's hooks. Its `Debug` output hides the
 /// values of the credential headers in `parameters.extra`, as the record's does.
 pub(crate) struct EventJob {
-    /// The event, in TS's key order.
-    pub(crate) event: TsEvent,
+    /// The event, in the key order of its kind.
+    pub(crate) event: EventObject,
     /// The customer hooks of the call, settled at stage 0.
     pub(crate) hooks: PendingHooks,
     /// Whether the session comes from the `resolve_session_id` hook.
     pub(crate) hook_mode: bool,
-    /// The runtime of the customer's redaction hooks (C38).
+    /// The runtime of the customer's redaction hooks.
     pub(crate) runtime: Option<Handle>,
-    /// Whether the string-redaction hook runs on the event (tool calls only, K-03).
+    /// Whether the string-redaction hook runs on the event (tool calls only).
     pub(crate) string_redaction: bool,
     /// Whether the event-level redaction hook runs on the event.
     pub(crate) event_redaction: bool,
@@ -63,7 +63,7 @@ impl fmt::Debug for EventJob {
 }
 
 /// `event` for `Debug` output: its `parameters.extra` through [`redact_extra`].
-fn debug_redacted(event: &TsEvent) -> TsEvent {
+fn debug_redacted(event: &EventObject) -> EventObject {
     let mut event = event.clone();
     if let Some(extra) = event.get_mut("parameters").and_then(|p| p.get_mut("extra")) {
         *extra = redact_extra(extra);
@@ -71,19 +71,18 @@ fn debug_redacted(event: &TsEvent) -> TsEvent {
     event
 }
 
-/// The TS in-memory event of the tool call `record` (B-077) for the project `project_id`, as
-/// `publishEvent` builds it, with the keys in TS's order and a key absent where TS's value is
-/// undefined:
+/// The event of the tool call `record` for the project `project_id`, with the keys in this order
+/// and a key absent where the record has no value:
 ///
 /// `id` (`""` until the queue gives the event its ID), `sessionId` (`""` without a session),
 /// `projectId`, `eventType` (`mcp:tools/call`), `timestamp` (the start of the call as
-/// `toISOString` writes it), `duration`, `inputTokens`, `outputTokens`, `sdkLanguage` (`Rust`),
-/// `agentcatVersion` (the crate version), `serverName`, `serverVersion`, `clientName`,
-/// `clientVersion`, `identifyActorData` (`{}` until the `identify` hook settles),
-/// `resourceName`, `parameters` (`{request, extra}`), `response` (the customer's result, without
-/// the `resultType: "complete"` rmcp writes into it), `userIntent`, `isError` (only `true`),
-/// `error` and `tags` (the SDK's tags). `identifyActorGivenId`, `identifyActorName` and
-/// `properties` come from the hooks ([`apply`](crate::pipeline::settle::apply)).
+/// [`wire::iso_millis`] writes it), `duration`, `inputTokens`, `outputTokens`, `sdkLanguage`
+/// (`Rust`), `agentcatVersion` (the crate version), `serverName`, `serverVersion`, `clientName`,
+/// `clientVersion`, `identifyActorData` (`{}` until the `identify` hook settles), `resourceName`,
+/// `parameters` (`{request, extra}`), `response` (the customer's result, without the `resultType:
+/// "complete"` rmcp writes into it), `userIntent`, `isError` (only `true`), `error` and `tags` (the
+/// SDK's tags). `identifyActorGivenId`, `identifyActorName` and `properties` come from the hooks
+/// ([`apply`](crate::pipeline::settle::apply)).
 ///
 /// The job takes the record's hooks, runtime and backtrace, and the hook mode of its resolution
 /// (the one source of the hook mode), with both redaction stages on.
@@ -113,7 +112,7 @@ pub(crate) fn from_call(record: CallRecord, project_id: &str) -> EventJob {
         client.map_or((None, None), |client| (client.name, client.version));
     let text = |value: &str| Value::String(value.to_owned());
 
-    let mut event = TsEvent::new();
+    let mut event = EventObject::new();
     let mut put = |key: &str, value: Option<Value>| {
         if let Some(value) = value {
             event.insert(key.to_owned(), value);
@@ -123,7 +122,10 @@ pub(crate) fn from_call(record: CallRecord, project_id: &str) -> EventJob {
     put("sessionId", Some(Value::String(resolution.session_id)));
     put("projectId", Some(text(project_id)));
     put("eventType", Some(text(TOOL_CALL_EVENT_TYPE)));
-    put("timestamp", Some(Value::String(js::iso_millis(started_at))));
+    put(
+        "timestamp",
+        Some(Value::String(wire::iso_millis(started_at))),
+    );
     put("duration", Some(Value::from(duration_ms)));
     put("inputTokens", input_tokens.map(Value::from));
     put("outputTokens", output_tokens.map(Value::from));
@@ -157,8 +159,8 @@ pub(crate) fn from_call(record: CallRecord, project_id: &str) -> EventJob {
 }
 
 /// `response` without the `resultType: "complete"` rmcp writes into a complete tool result: the
-/// customer's result in a TS event has none. Another result type, such as `input_required`,
-/// stays, as the customer's result in TS carries it (B-025).
+/// customer's result in an event has none. Another result type, such as `input_required`, stays,
+/// as the customer's result carries it.
 fn without_complete_type(response: Value) -> Value {
     match response {
         Value::Object(mut fields) => {
@@ -171,11 +173,11 @@ fn without_complete_type(response: Value) -> Value {
     }
 }
 
-/// Sets `error.stack` of `event` to the text of `backtrace` when it was captured (RD-06): after
+/// Sets `error.stack` of `event` to the text of `backtrace` when it was captured: after
 /// `platform` and before `chained_errors`, the place `capture_error` gives it. An event without
 /// an `error` object is left as it is. Rendering resolves symbols, so the delivery worker calls
 /// this, never the call path.
-pub(crate) fn render_backtrace(event: &mut TsEvent, backtrace: &Backtrace) {
+pub(crate) fn render_backtrace(event: &mut EventObject, backtrace: &Backtrace) {
     if backtrace.status() != BacktraceStatus::Captured {
         return;
     }

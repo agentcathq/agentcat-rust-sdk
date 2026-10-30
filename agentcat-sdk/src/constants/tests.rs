@@ -1,30 +1,22 @@
-//! The constants of `constants` against `tests/vectors/constants.json`, which the TS SDK wrote.
+//! The constants of `constants` against `tests/vectors/constants.json`.
 use std::sync::OnceLock;
 
 use serde_json::{Map, Value};
 
 use super::*;
-use crate::js;
-use crate::test_support::{assert_js_eq, vectors};
+use crate::test_support::{assert_same_json_text, vectors};
+use crate::wire;
 
-/// TS exports that stay out of the crate for now (exporters and diagnostics: second pass, R04,
-/// C05, RD-16).
-const NOT_PORTED: [&str; 4] = [
-    "AGENTCAT_SOURCE",
-    "DIAGNOSTICS_SCOPE_NAME",
-    "DEFAULT_DIAGNOSTICS_ENDPOINT",
-    "DEFAULT_DIAGNOSTICS_TOKEN",
-];
-
-/// The TS function cases; every other case is a plain constant.
+/// The cases of functions, each named after the function it pins; every other case is a
+/// constant, named after the constant.
 const FUNCTION_CASES: [&str; 3] = [
-    "mintBackSessionLine",
-    "getReportMissingToolDescriptor",
-    "handleReportMissing",
+    "mint_back_session_line",
+    "get_more_tools_descriptor",
+    "get_more_tools_result",
 ];
 
-/// Every ported constant, by its TS export name.
-const PORTED: [(&str, &str); 26] = [
+/// Every constant of the crate, by its fixture name.
+const CONSTANTS: [(&str, &str); 26] = [
     (
         "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION",
         DEFAULT_CONTEXT_PARAMETER_DESCRIPTION,
@@ -98,106 +90,103 @@ fn expected(name: &str) -> Value {
 }
 
 #[test]
-fn every_ported_constant_equals_ts() {
-    for (name, actual) in PORTED {
-        assert_js_eq(&Value::from(actual), &expected(name), name);
+fn every_constant_equals_its_fixture_value() {
+    for (name, actual) in CONSTANTS {
+        assert_same_json_text(&Value::from(actual), &expected(name), name);
     }
 }
 
 #[test]
-fn every_ts_constant_is_ported_or_listed() {
+fn every_fixture_constant_is_a_crate_constant() {
     let plain: Vec<String> = cases()
         .iter()
         .map(|c| vectors::name(c).to_owned())
         .filter(|n| !FUNCTION_CASES.contains(&n.as_str()))
         .collect();
     for name in &plain {
-        let ported = PORTED.iter().any(|(p, _)| p == name);
-        let listed = NOT_PORTED.contains(&name.as_str());
         assert!(
-            ported != listed,
-            "{name}: must be ported xor listed as not ported"
+            CONSTANTS.iter().any(|(c, _)| c == name),
+            "{name}: the fixture holds a constant that the crate lacks"
         );
     }
-    for (name, _) in PORTED {
+    for (name, _) in CONSTANTS {
         assert!(
             plain.iter().any(|p| p == name),
-            "{name}: no TS constant of that name"
-        );
-    }
-    for name in NOT_PORTED {
-        assert!(
-            plain.iter().any(|p| p == name),
-            "{name}: no TS constant of that name"
+            "{name}: no fixture constant of that name"
         );
     }
 }
 
 #[test]
-fn mint_back_session_line_matches_ts() {
-    let case = case("mintBackSessionLine");
+fn mint_back_session_line_is_pinned() {
+    let case = case("mint_back_session_line");
     let input = case["input"].as_str().unwrap_or_else(|| {
         panic!(
-            "mintBackSessionLine: input is not a string: {:?}",
+            "mint_back_session_line: input is not a string: {:?}",
             case["input"]
         )
     });
-    assert_js_eq(
+    assert_same_json_text(
         &Value::from(mint_back_session_line(input)),
         &case["value"],
-        "mintBackSessionLine",
+        "mint_back_session_line",
     );
 }
 
 #[test]
-fn get_more_tools_descriptor_matches_ts() {
-    assert_js_eq(
+fn get_more_tools_descriptor_is_pinned() {
+    assert_same_json_text(
         &get_more_tools_descriptor(),
-        &expected("getReportMissingToolDescriptor"),
-        "getReportMissingToolDescriptor",
+        &expected("get_more_tools_descriptor"),
+        "get_more_tools_descriptor",
     );
 }
 
 #[test]
-fn get_more_tools_result_matches_ts() {
-    assert_js_eq(
+fn get_more_tools_result_is_pinned() {
+    assert_same_json_text(
         &get_more_tools_result(),
-        &expected("handleReportMissing"),
-        "handleReportMissing",
+        &expected("get_more_tools_result"),
+        "get_more_tools_result",
     );
 }
 
 #[test]
-fn get_more_tools_result_text_matches_ts() {
-    let value = expected("handleReportMissing");
-    assert_js_eq(
+fn get_more_tools_result_text_is_pinned() {
+    let value = expected("get_more_tools_result");
+    assert_same_json_text(
         &Value::from(GET_MORE_TOOLS_RESULT_TEXT),
         &value["content"][0]["text"],
-        "handleReportMissing text",
+        "get_more_tools_result text",
     );
 }
 
-/// The case's `logs` are the lines `handleReportMissing` wrote for its input; the length TS
-/// reads off the `context` string is its length in UTF-16 units.
+/// The `logs` of the `get_more_tools_result` case hold the one line that
+/// [`report_missing_log_line`] writes for the case's `context` string, whose length counts
+/// UTF-16 units.
 #[test]
-fn report_missing_log_line_matches_ts() {
-    let case = case("handleReportMissing");
+fn report_missing_log_line_is_pinned() {
+    let case = case("get_more_tools_result");
     let context = case["input"]["context"].as_str().unwrap_or_else(|| {
         panic!(
-            "handleReportMissing: input.context is not a string: {:?}",
+            "get_more_tools_result: input.context is not a string: {:?}",
             case["input"]
         )
     });
     let logs = case["logs"].as_array().unwrap_or_else(|| {
         panic!(
-            "handleReportMissing: logs is not an array: {:?}",
+            "get_more_tools_result: logs is not an array: {:?}",
             case.get("logs")
         )
     });
-    assert_eq!(logs.len(), 1, "handleReportMissing logs one line: {logs:?}");
-    assert_js_eq(
-        &Value::from(report_missing_log_line(js::utf16_len(context))),
+    assert_eq!(
+        logs.len(),
+        1,
+        "get_more_tools_result logs one line: {logs:?}"
+    );
+    assert_same_json_text(
+        &Value::from(report_missing_log_line(wire::utf16_len(context))),
         &logs[0],
-        "handleReportMissing log",
+        "get_more_tools_result log",
     );
 }

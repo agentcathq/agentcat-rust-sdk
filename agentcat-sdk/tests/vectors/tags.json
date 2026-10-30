@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/tags.mjs",
   "cases": [
     {
-      "name": "test:pass-through",
+      "name": "pass-through",
       "input": {
         "env": "production",
         "trace_id": "abc-123",
@@ -14,22 +12,16 @@
         "trace_id": "abc-123",
         "region": "us-east-1"
       },
-      "logs": [],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should pass through valid tags unchanged"
-      ]
+      "logs": []
     },
     {
-      "name": "test:empty",
+      "name": "empty",
       "input": {},
       "output": null,
-      "logs": [],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should return null for empty object"
-      ]
+      "logs": []
     },
     {
-      "name": "test:invalid-key-chars",
+      "name": "invalid-key-chars",
       "input": {
         "valid_key": "value",
         "invalid!key": "value",
@@ -41,13 +33,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"invalid!key\" — key contains invalid characters or is empty"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop keys with invalid characters"
       ]
     },
     {
-      "name": "test:long-key",
+      "name": "long-key",
       "input": {
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "value",
         "short": "value"
@@ -57,13 +46,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" — key exceeds max length of 32"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop keys longer than 32 characters"
       ]
     },
     {
-      "name": "test:long-value",
+      "name": "long-value",
       "input": {
         "key1": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         "key2": "short"
@@ -73,13 +59,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"key1\" — value exceeds max length of 200"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop values longer than 200 characters"
       ]
     },
     {
-      "name": "test:newline",
+      "name": "newline",
       "input": {
         "key1": "has\nnewline",
         "key2": "clean"
@@ -89,13 +72,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"key1\" — value contains newline character"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop values containing newlines"
       ]
     },
     {
-      "name": "test:non-string",
+      "name": "non-string",
       "input": {
         "key1": 123,
         "key2": "valid"
@@ -105,13 +85,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"key1\" — non-string value (got number)"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop non-string values at runtime"
       ]
     },
     {
-      "name": "test:empty-key",
+      "name": "empty-key",
       "input": {
         "": "empty-key-value",
         "valid": "value"
@@ -121,13 +98,10 @@
       },
       "logs": [
         "Dropping invalid tag: \"\" — key contains invalid characters or is empty"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should drop empty string keys"
       ]
     },
     {
-      "name": "test:sixty-entries",
+      "name": "sixty-entries",
       "input": {
         "key000": "value0",
         "key001": "value1",
@@ -244,13 +218,10 @@
       },
       "logs": [
         "Dropping 10 tag(s) — exceeds maximum of 50 entries per event"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should keep only first 50 entries when exceeding limit"
       ]
     },
     {
-      "name": "test:all-invalid",
+      "name": "all-invalid",
       "input": {
         "!!!": "value",
         "###": "value"
@@ -259,13 +230,10 @@
       "logs": [
         "Dropping invalid tag: \"!!!\" — key contains invalid characters or is empty",
         "Dropping invalid tag: \"###\" — key contains invalid characters or is empty"
-      ],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should return null when all entries are invalid"
       ]
     },
     {
-      "name": "test:special-chars",
+      "name": "special-chars",
       "input": {
         "my.tag": "value",
         "my:tag": "value",
@@ -282,13 +250,10 @@
         "$ai_trace_id": "trace-1",
         "my$key": "value"
       },
-      "logs": [],
-      "ts_test": [
-        "v1|src/tests/validation.test.ts|validateTags > should allow keys with periods, colons, dashes, spaces, and dollar signs"
-      ]
+      "logs": []
     },
     {
-      "name": "appendix-c",
+      "name": "mixed-valid-and-invalid-keys",
       "input_text": "{\"ok\":\"v\",\"\":\"e\",\"a/b\":\"x\",\"kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk\":\"v\",\"n\":5,\"nl\":\"a\\nb\",\"cr\":\"a\\rb\",\"123\":\"first?\"}",
       "output": {
         "123": "first?",

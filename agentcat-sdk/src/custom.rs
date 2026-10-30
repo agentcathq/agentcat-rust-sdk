@@ -1,5 +1,5 @@
-//! [`CustomEvent`]: an event the server publishes by itself, apart from tool calls (B-009), and
-//! the two forms that publish it (C11, C16, C47): [`publish_string`] for the session-string form
+//! [`CustomEvent`]: an event the server publishes by itself, apart from tool calls, and the two
+//! forms that publish it: [`publish_string`] for the session-string form
 //! on an [`AgentCat`] handle and [`publish_server`] for the server form on a
 //! [`CallContext`](crate::CallContext) or a [`Tracked`](crate::Tracked). Both only queue the event.
 use std::time::{Duration, SystemTime};
@@ -13,15 +13,15 @@ use crate::error::Error;
 use crate::event::ClientIdentity;
 use crate::event::assemble::{EventJob, SDK_LANGUAGE};
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::pipeline::tags::validate_tags;
+use crate::wire;
 
 #[cfg(test)]
 mod tests;
 
-/// The data of a custom event, as TypeScript's `CustomEventData`. Every field is optional; each
-/// setter consumes the event and returns it changed.
+/// The data of a custom event. Every field is optional; each setter consumes the event and
+/// returns it changed.
 ///
 /// ```
 /// use std::time::Duration;
@@ -125,25 +125,26 @@ impl CustomEvent {
     }
 }
 
-/// The event type of every custom event (B-009).
+/// The event type of every custom event.
 const CUSTOM_EVENT_TYPE: &str = "agentcat:custom";
 
-/// TS's text for a server-form event without a session.
-const NO_SESSION_WARNING: &str = "publishCustomEvent: no sessionId provided; event will be published without a session. Pass eventData.sessionId to attribute it to a task.";
+/// The warning that a server-form event without a session logs.
+const NO_SESSION_WARNING: &str = "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.";
 
-/// Sets `key` of `event` when there is a value: TS's `undefined` leaves no key.
-fn put(event: &mut TsEvent, key: &str, value: Option<Value>) {
+/// Sets `key` of `event` when there is a value; `None` leaves no key.
+fn put(event: &mut EventObject, key: &str, value: Option<Value>) {
     if let Some(value) = value {
         event.insert(key.to_owned(), value);
     }
 }
 
-/// A duration as TS holds it: whole milliseconds.
+/// A duration as an event holds it: whole milliseconds, at most `u64::MAX`.
 fn millis(duration: Duration) -> Value {
     Value::from(u64::try_from(duration.as_millis()).unwrap_or(u64::MAX))
 }
 
-/// The data fields that both forms write after the session, in TS's order up to `userIntent`.
+/// The data fields that both forms write after the session, in the event's key order up to
+/// `userIntent`.
 struct Payload {
     resource_name: Option<String>,
     parameters: Option<Value>,
@@ -151,8 +152,9 @@ struct Payload {
     message: Option<String>,
 }
 
-/// Writes `payload` into `event`, in TS's order up to `userIntent`.
-fn put_payload(event: &mut TsEvent, payload: Payload) {
+/// Writes `payload` into `event`, in this key order: `resourceName`, `parameters`, `response`,
+/// `userIntent`.
+fn put_payload(event: &mut EventObject, payload: Payload) {
     let Payload {
         resource_name,
         parameters,
@@ -178,7 +180,7 @@ struct Accepted {
 }
 
 /// The checks both forms make before they build anything: `Ok(None)` on a handle that
-/// `AGENTCAT_ENABLED` turned off (C45), else `event` taken apart.
+/// `AGENTCAT_ENABLED` turned off, else `event` taken apart.
 ///
 /// # Errors
 ///
@@ -223,10 +225,10 @@ fn accept(
 }
 
 /// The customer's `tags` and `properties`, last in the event: `tags` is the key with the valid
-/// tags, or `null` when none is valid, whenever the customer gave any (TS's `if (eventData.tags)`);
+/// tags, or `null` when none is valid, whenever the customer set tags (an empty map too);
 /// `properties` only with at least one key. The log lines of dropped tags go to `log`.
 fn put_metadata(
-    event: &mut TsEvent,
+    event: &mut EventObject,
     tags: Option<Map<String, Value>>,
     properties: Option<Map<String, Value>>,
     log: &mut Vec<String>,
@@ -240,7 +242,7 @@ fn put_metadata(
     }
 }
 
-/// Hands the log lines, then (when there is one) the event followed by TS's `Published custom
+/// Hands the log lines, then (when there is one) the event followed by the `Published custom
 /// event` line, to the handle's sink.
 fn hand_over(agentcat: &AgentCat, log: Vec<String>, job: Option<EventJob>, session_id: &str) {
     let sink = &agentcat.inner().sink;
@@ -259,10 +261,10 @@ fn hand_over(agentcat: &AgentCat, log: Vec<String>, job: Option<EventJob>, sessi
     }
 }
 
-/// The session-string form (B-009, C11): the event goes to the handle's queue with the project
+/// The session-string form: the event goes to the handle's queue with the project
 /// `project_id` as given, the session of the event's own `session_id` or else `session_id`
 /// verbatim, no redaction hook and no server or client fields. `now` is the event's timestamp.
-/// A handle that `AGENTCAT_ENABLED` turned off returns `Ok(())` at once and builds nothing (C45).
+/// A handle that `AGENTCAT_ENABLED` turned off returns `Ok(())` at once and builds nothing.
 ///
 /// # Errors
 ///
@@ -280,19 +282,19 @@ pub(crate) fn publish_string(
     let session = event.session_id.unwrap_or_else(|| session_id.to_owned());
 
     let mut log = Vec::new();
-    let mut ts = TsEvent::new();
-    ts.insert("sessionId".to_owned(), Value::String(session.clone()));
-    ts.insert("projectId".to_owned(), Value::String(project_id.to_owned()));
-    ts.insert("eventType".to_owned(), Value::from(CUSTOM_EVENT_TYPE));
-    ts.insert("timestamp".to_owned(), Value::String(js::iso_millis(now)));
-    put_payload(&mut ts, event.payload);
-    put(&mut ts, "duration", event.duration.map(millis));
-    put(&mut ts, "isError", event.is_error.map(Value::Bool));
-    put(&mut ts, "error", event.error);
-    put_metadata(&mut ts, event.tags, event.properties, &mut log);
+    let mut object = EventObject::new();
+    object.insert("sessionId".to_owned(), Value::String(session.clone()));
+    object.insert("projectId".to_owned(), Value::String(project_id.to_owned()));
+    object.insert("eventType".to_owned(), Value::from(CUSTOM_EVENT_TYPE));
+    object.insert("timestamp".to_owned(), Value::String(wire::iso_millis(now)));
+    put_payload(&mut object, event.payload);
+    put(&mut object, "duration", event.duration.map(millis));
+    put(&mut object, "isError", event.is_error.map(Value::Bool));
+    put(&mut object, "error", event.error);
+    put_metadata(&mut object, event.tags, event.properties, &mut log);
 
     let job = EventJob {
-        event: ts,
+        event: object,
         hooks: PendingHooks::default(),
         hook_mode: false,
         runtime: None,
@@ -304,13 +306,12 @@ pub(crate) fn publish_string(
     Ok(())
 }
 
-/// The server form (B-009, C16, C47, K-03): as TS's `publishEvent` builds it, with the handle's
-/// project (`project_id` only has to be non-empty), the event's own session or none, the given
-/// client and server, the event hook of the options (never the string hook) on the runtime of the
-/// caller, and nothing queued while tracing is off. `created` is the event's timestamp and
-/// `published` the moment of `publishEvent`: a missing or zero `duration` becomes the
-/// milliseconds between them (TS's `duration || elapsed`). A handle that `AGENTCAT_ENABLED`
-/// turned off returns `Ok(())` at once and builds nothing (C45).
+/// The server form: the event with the handle's project (`project_id` only has to be non-empty),
+/// the event's own session or none, the given client and server, the event hook of the options
+/// (never the string hook) on the runtime of the caller, and nothing queued while tracing is off.
+/// `created` is the event's timestamp and `published` the moment the event is published: a
+/// missing or zero `duration` becomes the milliseconds between them. A handle that
+/// `AGENTCAT_ENABLED` turned off returns `Ok(())` at once and builds nothing.
 ///
 /// # Errors
 ///
@@ -332,7 +333,7 @@ pub(crate) fn publish_server(
         log.push(NO_SESSION_WARNING.to_owned());
         String::new()
     });
-    let mut custom = TsEvent::new();
+    let mut custom = EventObject::new();
     put_metadata(&mut custom, event.tags, event.properties, &mut log);
 
     let shared = agentcat.inner();
@@ -346,47 +347,51 @@ pub(crate) fn publish_server(
         .filter(|given| !given.is_zero())
         .unwrap_or_else(|| published.duration_since(created).unwrap_or_default());
     let text = |value: &str| Value::String(value.to_owned());
-    let mut ts = TsEvent::new();
-    ts.insert("id".to_owned(), text(""));
-    ts.insert("sessionId".to_owned(), Value::String(session.clone()));
-    ts.insert("projectId".to_owned(), text(&shared.project_id));
-    ts.insert("eventType".to_owned(), text(CUSTOM_EVENT_TYPE));
-    ts.insert(
+    let mut object = EventObject::new();
+    object.insert("id".to_owned(), text(""));
+    object.insert("sessionId".to_owned(), Value::String(session.clone()));
+    object.insert("projectId".to_owned(), text(&shared.project_id));
+    object.insert("eventType".to_owned(), text(CUSTOM_EVENT_TYPE));
+    object.insert(
         "timestamp".to_owned(),
-        Value::String(js::iso_millis(created)),
+        Value::String(wire::iso_millis(created)),
     );
-    ts.insert("duration".to_owned(), millis(duration));
-    ts.insert("sdkLanguage".to_owned(), text(SDK_LANGUAGE));
-    ts.insert(
+    object.insert("duration".to_owned(), millis(duration));
+    object.insert("sdkLanguage".to_owned(), text(SDK_LANGUAGE));
+    object.insert(
         "agentcatVersion".to_owned(),
         text(env!("CARGO_PKG_VERSION")),
     );
-    put(&mut ts, "serverName", server.map(|info| text(&info.name)));
     put(
-        &mut ts,
+        &mut object,
+        "serverName",
+        server.map(|info| text(&info.name)),
+    );
+    put(
+        &mut object,
         "serverVersion",
         server.map(|info| text(&info.version)),
     );
     put(
-        &mut ts,
+        &mut object,
         "clientName",
         client.and_then(|client| client.name.as_deref()).map(text),
     );
     put(
-        &mut ts,
+        &mut object,
         "clientVersion",
         client
             .and_then(|client| client.version.as_deref())
             .map(text),
     );
-    ts.insert("identifyActorData".to_owned(), Value::Object(Map::new()));
-    put_payload(&mut ts, event.payload);
-    put(&mut ts, "isError", event.is_error.map(Value::Bool));
-    put(&mut ts, "error", event.error);
-    ts.extend(custom);
+    object.insert("identifyActorData".to_owned(), Value::Object(Map::new()));
+    put_payload(&mut object, event.payload);
+    put(&mut object, "isError", event.is_error.map(Value::Bool));
+    put(&mut object, "error", event.error);
+    object.extend(custom);
 
     let job = EventJob {
-        event: ts,
+        event: object,
         hooks: PendingHooks::default(),
         hook_mode: false,
         runtime: Handle::try_current().ok(),

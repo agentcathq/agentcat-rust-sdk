@@ -1,6 +1,6 @@
-//! The TS in-memory tool-call event that [`from_call`] builds from a [`CallRecord`] (B-077): its
-//! key order against TS's (`tests/vectors/event_order.json`, case `tool_call`), its fields, and
-//! the backtrace of a captured error that [`render_backtrace`] puts in `error.stack`.
+//! The in-memory tool-call event that [`from_call`] builds from a [`CallRecord`]: its key order
+//! against the fixture (`tests/vectors/event_order.json`, case `tool_call`), its fields, and the
+//! backtrace of a captured error that [`render_backtrace`] puts in `error.stack`.
 use std::backtrace::Backtrace;
 use std::time::{Duration, UNIX_EPOCH};
 
@@ -13,7 +13,7 @@ use crate::event::{CallRecord, ClientIdentity, extra_value};
 use crate::handles::{HandleResolution, SessionSource};
 use crate::hooks::PendingHooks;
 use crate::pipeline::settle::{HookResults, apply};
-use crate::pipeline::{TOOL_CALL_KEYS, TsEvent};
+use crate::pipeline::{EventObject, TOOL_CALL_KEYS};
 use crate::test_support::json::object;
 use crate::test_support::rmcp::{assert_credentials_hidden, bare_context, credential_parts};
 use crate::test_support::vectors;
@@ -53,9 +53,9 @@ fn record() -> CallRecord {
     }
 }
 
-/// The `tool_call` case of `event_order.json`: its event keys, each with whether TS left its
-/// value undefined.
-fn ts_event_keys() -> Vec<(String, bool)> {
+/// The `tool_call` case of `event_order.json`: its event keys, each with whether its value is
+/// absent (such a key is not in the JSON).
+fn expected_event_keys() -> Vec<(String, bool)> {
     let cases = vectors::cases("event_order");
     let case = cases
         .iter()
@@ -67,29 +67,36 @@ fn ts_event_keys() -> Vec<(String, bool)> {
         .iter()
         .map(|entry| {
             let key = entry["key"].as_str().expect("a key").to_owned();
-            (key, entry.get("undefined") == Some(&json!(true)))
+            let marks = entry.as_object().expect("an entry is an object");
+            for mark in marks.keys() {
+                assert!(
+                    ["key", "absent"].contains(&mark.as_str()),
+                    "event_order.json: the entry {key:?} has the unknown key {mark:?}"
+                );
+            }
+            (key, entry.get("absent") == Some(&json!(true)))
         })
         .collect()
 }
 
 /// The keys of `event`, in order.
-fn keys(event: &TsEvent) -> Vec<&str> {
+fn keys(event: &EventObject) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 
-/// The keys of TS's tool-call event, in TS's order (`event_order.json`). TS's probe ran a call
-/// that worked, with an intent and the identify, eventTags and eventProperties hooks: after the
-/// hooks apply, Rust's event of such a call has the keys TS's has, in TS's order (`ipAddress`,
-/// `isError` and `error` are undefined in TS, so JSON has none). A failed call has `isError` and
-/// `error` at TS's places.
+/// The keys of the fixture's tool-call event, in its order (`event_order.json`). The probe ran a
+/// call that worked, with an intent and the identify, `event_tags` and `event_properties` hooks:
+/// after the hooks apply, Rust's event of such a call has the keys the fixture has, in its order
+/// (`ipAddress`, `isError` and `error` are absent in the fixture, so JSON has none). A failed call
+/// has `isError` and `error` at the fixture's places.
 #[test]
-fn tool_call_event_follows_ts_key_order() {
-    let ts = ts_event_keys();
-    let all: Vec<&str> = ts.iter().map(|(key, _)| key.as_str()).collect();
+fn tool_call_event_follows_the_fixture_key_order() {
+    let fixture = expected_event_keys();
+    let all: Vec<&str> = fixture.iter().map(|(key, _)| key.as_str()).collect();
     assert_eq!(TOOL_CALL_KEYS.as_slice(), all.as_slice());
-    let defined: Vec<&str> = ts
+    let defined: Vec<&str> = fixture
         .iter()
-        .filter(|(_, undefined)| !undefined)
+        .filter(|(_, absent)| !absent)
         .map(|(key, _)| key.as_str())
         .collect();
 
@@ -121,10 +128,10 @@ fn tool_call_event_follows_ts_key_order() {
     assert!(job.event.contains_key("error"));
 }
 
-/// B-077: the fields of the event, taken from the record, with the SDK's own values: an empty
-/// `id`, the `mcp:tools/call` type, `sdkLanguage` `Rust` and the crate version (D01, RD-14), and
-/// an empty `identifyActorData`. Both redaction stages are on, and the job takes the hook mode of
-/// the record's resolution (the one source of it), the hooks, the runtime and the backtrace.
+/// The fields of the event, taken from the record, with the SDK's own values: an empty `id`, the
+/// `mcp:tools/call` type, `sdkLanguage` `Rust` and the crate version, and an empty
+/// `identifyActorData`. Both redaction stages are on, and the job takes the hook mode of the
+/// record's resolution (the one source of it), the hooks, the runtime and the backtrace.
 #[tokio::test]
 async fn event_takes_the_record_fields() {
     let mut record = record();
@@ -165,7 +172,7 @@ async fn event_takes_the_record_fields() {
     assert!(!job.hooks.any());
 }
 
-/// A field the record does not have is an absent key (TS's `undefined`, which JSON drops); the
+/// A field the record does not have is an absent key (an absent value, which JSON drops); the
 /// client fields come from the client's name and version separately.
 #[test]
 fn absent_fields_are_absent_keys() {
@@ -201,8 +208,8 @@ fn absent_fields_are_absent_keys() {
     assert_eq!(job.event["projectId"], json!(""));
 }
 
-/// B-077: `timestamp` is the start of the call as `toISOString` writes it, three millisecond
-/// digits included when they are zero.
+/// `timestamp` is the start of the call in ISO 8601 text, three millisecond digits included when
+/// they are zero.
 #[test]
 fn event_timestamp_is_iso_millis() {
     let mut record = record();
@@ -211,9 +218,9 @@ fn event_timestamp_is_iso_millis() {
     assert_eq!(job.event["timestamp"], json!("2023-11-14T22:13:20.000Z"));
 }
 
-/// rmcp writes `resultType: "complete"` into a tool's result; the customer's result in a TS event
-/// has none, so the event drops it. An `InputRequiredResult` keeps its `input_required` type, as
-/// the customer's result in TS carries it (B-025).
+/// rmcp writes `resultType: "complete"` into a tool's result; the event drops that key, so the
+/// response holds only what the customer's result held. An `InputRequiredResult` keeps its
+/// `input_required` type.
 #[test]
 fn response_has_no_result_type() {
     let job = from_call(record(), "proj_1");
@@ -228,8 +235,8 @@ fn response_has_no_result_type() {
     assert_eq!(job.event["response"]["resultType"], json!("input_required"));
 }
 
-/// B-077: a call without a session (an invalid or foreign value, or hook mode before the hook
-/// settles) has the session `""`, which the wire sends as `null`.
+/// A call without a session (an invalid or foreign value, or hook mode before the hook settles) has
+/// the session `""`, which the wire sends as `null`.
 #[test]
 fn sessionless_call_has_empty_session() {
     let mut record = record();
@@ -239,7 +246,7 @@ fn sessionless_call_has_empty_session() {
     assert_eq!(job.event["sessionId"], json!(""));
 }
 
-/// RD-06: the backtrace of a captured error becomes `error.stack`, after `platform` and before
+/// The backtrace of a captured error becomes `error.stack`, after `platform` and before
 /// `chained_errors`, as `capture_error` used to write it; a backtrace that was not captured adds
 /// nothing.
 #[test]

@@ -1,0 +1,36 @@
+{
+  "projectId": "proj_E2E000000000000000000000000",
+  "options": {
+    "enable_agent_tracking": true,
+    "custom_context_description": "Say why you are calling this tool, in one sentence, for the test suite"
+  },
+  "httpHeaders": { "x-test-header": "e2e" },
+  "expectPublishes": 14,
+  "sessions": [
+    {
+      "client": { "name": "e2e-client-agent", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "minted with an agent", "agent_id": "agent-1" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "supplied without an agent", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "supplied with an agent", "session_id": "${S1}", "agent_id": "agent-1", "context": "Checking the agent handle" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "minted", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "minted without an agent" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "supplied", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "two lines", "session_id": "${S1}", "agent_id": "line one\nline two" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "invalid", "session_id": "ses_bogus", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "not a string agent", "session_id": "${S1}", "agent_id": 42 } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "blank agent", "session_id": "${S1}", "agent_id": "   " } },
+        { "op": "callTool", "name": "structured_own", "args": { "msg": "declares mcp_session", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "customer-1", "agent_id": "agent-1" } },
+        { "op": "callTool", "name": "get_more_tools", "args": { "context": "Need a calendar tool", "session_id": "${S1}", "agent_id": "agent-1" } }
+      ]
+    },
+    {
+      "client": { "name": "e2e-client-agent-b", "version": "1.0.0" },
+      "steps": [
+        { "op": "callTool", "name": "structured", "args": { "msg": "before any listing", "agent_id": "agent-2" } }
+      ]
+    }
+  ]
+}

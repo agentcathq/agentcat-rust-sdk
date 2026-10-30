@@ -1,9 +1,9 @@
-//! The per-event pipeline (B-087) against TS: every `queue.json` case but the `retry:*` ones
-//! with each case's hooks as finished or hanging tasks under a 50 ms budget, and the `retry:*`
-//! ones through the delivery worker; the Rust-only paths of the customer's redaction hooks (C38: the
-//! runtime they run on, RD-36 without one, a panic); [`assign`]; and tool calls served by rmcp,
-//! whose records go through `from_call` and `process` as TS's e2e redaction, sanitization,
-//! truncation and error-capture tests publish them.
+//! The per-event pipeline against the fixtures: every `queue.json` case but the `retry:*` ones with
+//! each case's hooks as finished or hanging tasks under a 50 ms budget, and the `retry:*` ones
+//! through the delivery worker; the Rust-only paths of the customer's redaction hooks (a panic, and
+//! a call with no runtime to run them on); [`assign`]; and tool calls served by rmcp, whose records
+//! go through `from_call` and `process` as the end-to-end redaction, sanitization, truncation and
+//! error-capture tests publish them.
 use std::future::{Future, ready};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex};
@@ -21,26 +21,26 @@ use tokio::runtime::{Builder, Handle};
 use super::{Redactors, assign, process};
 use crate::client::AgentCat;
 use crate::config::{HookError, Options, UserIdentity};
-use crate::delivery::wire::publish_request;
+use crate::delivery::request::publish_request;
 use crate::delivery::{Delivery, DeliveryConfig};
 use crate::event::Event;
 use crate::event::assemble::{EventJob, from_call};
 use crate::handles::SessionIdFailure;
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::pipeline::truncate::MAX_EVENT_BYTES;
 use crate::sink::Sink;
 use crate::test_support::json::object;
 use crate::test_support::rmcp::{RecordingSink, Sample, connect};
-use crate::test_support::{assert_js_eq, queue, vectors};
+use crate::test_support::{assert_same_json_text, queue, vectors};
+use crate::wire;
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
 
 /// A tool-call event as `from_call` builds it, whose strings hold `secret` outside the protected
 /// fields.
-fn call_event() -> TsEvent {
+fn call_event() -> EventObject {
     object(json!({
         "id": "",
         "sessionId": "ses_queue0000000000000000000000",
@@ -60,7 +60,7 @@ fn call_event() -> TsEvent {
 
 /// The job of `event` with no hooks, both redaction stages on and the redaction hooks' runtime
 /// `runtime`.
-fn job(event: TsEvent, runtime: Option<Handle>) -> EventJob {
+fn job(event: EventObject, runtime: Option<Handle>) -> EventJob {
     EventJob {
         event,
         hooks: PendingHooks::default(),
@@ -99,7 +99,7 @@ where
 }
 
 /// The value at `pointer` (RFC 6901) of `event`.
-fn at<'a>(event: &'a TsEvent, pointer: &str) -> &'a Value {
+fn at<'a>(event: &'a EventObject, pointer: &str) -> &'a Value {
     let (key, rest) = pointer[1..].split_once('/').unwrap_or((&pointer[1..], ""));
     let value = &event[key];
     if rest.is_empty() {
@@ -113,9 +113,8 @@ fn at<'a>(event: &'a TsEvent, pointer: &str) -> &'a Value {
 
 // ------------------------------------------------------------------------------- queue.json
 
-/// Whether the delivery worker posts `event`: TS's `sendEvent` posts only an event with a project
-/// (B-104).
-fn posted(event: &TsEvent) -> bool {
+/// Whether the delivery worker posts `event`: it posts only an event with a project ID.
+fn posted(event: &EventObject) -> bool {
     event
         .get("projectId")
         .and_then(Value::as_str)
@@ -124,11 +123,11 @@ fn posted(event: &TsEvent) -> bool {
 
 /// Each `queue.json` case but `retry:*`: the event the queue takes goes through `process` with the
 /// case's hooks (tasks that return, throw or hang under [`BUDGET`]) and redaction hooks, on the
-/// test runtime; the lines `process` writes and the request of what it gives must be TS's, as
-/// `test_support::queue` compares them (the delivery lines and a custom event's builder lines
-/// left out, TS's `Error: M` as `M`, `<evt>` and `<minted>` masks, RD-33).
+/// test runtime; the lines `process` writes and the request of what it gives must be the fixture's,
+/// as `test_support::queue` compares them (the delivery lines and a custom event's builder lines
+/// left out, `Error: M` as `M`, `<evt>` and `<minted>` masks).
 #[tokio::test]
-async fn queue_vectors_match_ts() {
+async fn queue_fixture_cases_hold() {
     let mut ran = Vec::new();
     for case in queue::cases() {
         let name = vectors::name(&case).to_owned();
@@ -143,34 +142,34 @@ async fn queue_vectors_match_ts() {
         let requests: Vec<Value> = published
             .iter()
             .filter(|event| posted(event))
-            .map(|event| queue::to_ts_model(&publish_request(event)))
+            .map(|event| queue::to_request_model(&publish_request(event)))
             .collect();
         let expected = queue::expected_requests(&case);
         assert_eq!(requests.len(), expected.len(), "{name}: {requests:?}");
         for (actual, expected) in requests.iter().zip(&expected) {
-            assert_js_eq(actual, expected, &name);
+            assert_same_json_text(actual, expected, &name);
         }
         ran.push(name);
     }
     assert_eq!(ran.len(), 57, "every non-retry case ran: {ran:?}");
 }
 
-/// The shrunk retry delays of [`queue_retry_vectors_match_ts`]: the real 1, 2 and 4 s would break
-/// the 3 s limit of a test (ruling P1).
+/// The shrunk retry delays of [`queue_retry_fixture_cases_hold`]: the real 1, 2 and 4 s would break
+/// the 3 s limit of a test.
 const SHRUNK_RETRY_DELAYS: [Duration; 3] = [
     Duration::from_millis(1),
     Duration::from_millis(2),
     Duration::from_millis(4),
 ];
 
-/// The `retry:*` cases of `queue.json` through the delivery worker (ruling P1): a publisher fails
-/// the case's first `fail_attempts` attempts with `mock failure`. Every attempt's request must be
-/// TS's (`<evt>` masks), so the attempt count is TS's; the worker's lines must be TS's after
-/// [`queue::worker_logs`] (TS's JS error rendering as the message, ruling P7) and with each
-/// `evt_` ID as `<evt>`. The delays TS waited before each retry must be the default
-/// `retry_delays`; the worker runs with [`SHRUNK_RETRY_DELAYS`].
+/// The `retry:*` cases of `queue.json` through the delivery worker: a publisher fails the case's
+/// first `fail_attempts` attempts with `mock failure`. Every attempt's request must be the
+/// fixture's (`<evt>` masks), so the attempt count is the fixture's; the worker's lines must be the
+/// fixture's after [`queue::worker_logs`] (an error renders as its message) and with each `evt_` ID
+/// as `<evt>`. The delays before each retry must be the default `retry_delays`; the worker runs
+/// with [`SHRUNK_RETRY_DELAYS`].
 #[test]
-fn queue_retry_vectors_match_ts() {
+fn queue_retry_fixture_cases_hold() {
     let defaults: Vec<u128> = DeliveryConfig::default()
         .retry_delays
         .iter()
@@ -212,12 +211,12 @@ fn queue_retry_vectors_match_ts() {
         let requests: Vec<Value> = publisher
             .requests()
             .iter()
-            .map(queue::to_ts_model)
+            .map(queue::to_request_model)
             .collect();
         let expected = queue::expected_requests(&case);
         assert_eq!(requests.len(), expected.len(), "{name}: attempts");
         for (actual, expected) in requests.iter().zip(&expected) {
-            assert_js_eq(actual, expected, &name);
+            assert_same_json_text(actual, expected, &name);
         }
         let logs: Vec<String> = lines
             .lines()
@@ -232,9 +231,8 @@ fn queue_retry_vectors_match_ts() {
 
 // ---------------------------------------------------------------------------------- assign
 
-/// Carry-forward (plan 2 final review): TS merges each stage's result into the event with
-/// `Object.assign`, so a key the stage's result lacks stays, a key it has keeps its place, and a
-/// new key goes last.
+/// `assign`: each stage's result merges into the event, so a key the stage's result lacks stays, a
+/// key it has keeps its place, and a new key goes last.
 #[test]
 fn assign_keeps_keys_the_stage_dropped() {
     let mut event = object(json!({
@@ -248,15 +246,15 @@ fn assign_keeps_keys_the_stage_dropped() {
         object(json!({"tags": {"a": "b"}, "response": {"text": "cut"}, "extra": true})),
     );
     assert_eq!(
-        js::stringify(&Value::Object(event)),
+        wire::stringify(&Value::Object(event)),
         r#"{"id":"","response":{"text":"cut"},"error":{"message":"failed"},"tags":{"a":"b"},"extra":true}"#
     );
 }
 
 // ------------------------------------------------------------------------ redaction hooks
 
-/// RD-36, C38: without a runtime for the customer's hooks, an event with a redaction hook is
-/// dropped with TS's stage line and the text `no tokio runtime`; the hook never runs.
+/// Without a runtime for the customer's hooks, an event with a redaction hook is dropped with the
+/// stage line and the text `no tokio runtime`; the hook never runs.
 #[tokio::test]
 async fn redaction_without_runtime_drops_event() {
     let calls = Arc::new(AtomicUsize::new(0));
@@ -286,8 +284,8 @@ async fn redaction_without_runtime_drops_event() {
     assert_eq!(calls.load(Ordering::SeqCst), 0);
 }
 
-/// C38: when the task of a redaction hook panics, the event is dropped with TS's stage line and
-/// the panic's message (the process panic hook prints the panic, as for any task).
+/// When the task of a redaction hook panics, the event is dropped with the stage line and the
+/// panic's message (the process panic hook prints the panic, as for any task).
 #[tokio::test]
 async fn string_redactor_panic_drops_event() {
     let string_hooks = string_hook(|text: String| async move {
@@ -314,9 +312,9 @@ async fn string_redactor_panic_drops_event() {
     );
 }
 
-/// C38: both redaction hooks run on the job's runtime (the customer's), not on the runtime that
-/// runs `process` (the delivery worker's); the string hook runs once per string, in walk order.
-/// Each hook records the name of its thread: only the customer runtime's threads have the name
+/// Both redaction hooks run on the job's runtime (the customer's), not on the runtime that runs
+/// `process` (the delivery worker's); the string hook runs once per string, in walk order. Each
+/// hook records the name of its thread: only the customer runtime's threads have the name
 /// `customer-runtime`, and the worker runtime runs on the test's own thread.
 #[test]
 fn string_redactor_runs_on_customer_runtime() {
@@ -376,9 +374,9 @@ fn string_redactor_runs_on_customer_runtime() {
     }
 }
 
-/// Ruling P14 (RD-35's reason): a `process` future dropped while the string hook runs, as the
-/// delivery worker drops a job it abandons at a shutdown deadline, aborts the hook's task on the
-/// customer's runtime instead of leaving it running detached.
+/// A `process` future dropped while the string hook runs, as the delivery worker drops a job it
+/// abandons at a shutdown deadline, aborts the hook's task on the customer's runtime instead of
+/// leaving it running detached.
 #[test]
 fn dropped_process_aborts_redaction_task() {
     let customer = Builder::new_multi_thread()
@@ -414,9 +412,8 @@ fn dropped_process_aborts_redaction_task() {
         .expect("dropping process aborts the redaction task");
 }
 
-/// B-088, C39: the event-level hook cannot change the system fields: the ID, the session, the
-/// project, the event type and the timestamp come back from the event it was given; its other
-/// changes stay.
+/// The event-level hook cannot change the system fields: the ID, the session, the project, the
+/// event type and the timestamp come back from the event it was given; its other changes stay.
 #[tokio::test]
 async fn event_hook_cannot_change_restored_fields() {
     let mut original = call_event();
@@ -449,9 +446,8 @@ async fn event_hook_cannot_change_restored_fields() {
     assert_eq!(published["resourceName"], json!("renamed"));
 }
 
-/// K-03: an event without the string stage (a custom event) keeps its strings, and the
-/// string-redaction hook never runs on it; without the event stage, the event hook does not run
-/// either.
+/// An event without the string stage (a custom event) keeps its strings, and the string-redaction
+/// hook never runs on it; without the event stage, the event hook does not run either.
 #[tokio::test]
 async fn custom_events_skip_string_redaction() {
     let calls = Arc::new(AtomicUsize::new(0));
@@ -486,8 +482,8 @@ async fn custom_events_skip_string_redaction() {
     assert_eq!(calls.load(Ordering::SeqCst), 0);
 }
 
-/// TS's `catch` around `applyPendingEventFields`: when a hook-mode event cannot get a minted
-/// session, the line says why and the event goes on without a session.
+/// When a hook-mode event cannot get a minted session, the line says why and the event goes on
+/// without a session.
 #[tokio::test]
 async fn session_mint_failure_logs_and_continues() {
     let _failure = SessionIdFailure::start();
@@ -507,10 +503,10 @@ async fn session_mint_failure_logs_and_continues() {
     assert!(published["id"].as_str().unwrap().starts_with("evt_"));
 }
 
-/// TS's outer `catch` in `processEvent`: when no event ID can be made (the clock outside the KSUID
-/// range, or no randomness), the event is dropped with TS's final failure line and Rust's reason.
-/// The source of IDs is asked only for an event without one. Rust-only: the test makes the source
-/// fail through the crate-private `process_with_ids`.
+/// When no event ID can be made (the clock outside the KSUID range, or no randomness), the event is
+/// dropped with the final failure line and Rust's reason. The source of IDs is asked only for an
+/// event without one. Rust-only: the test makes the source fail through the crate-private
+/// `process_with_ids`.
 #[tokio::test]
 async fn event_id_failure_drops_with_line() {
     let mut log = Vec::new();
@@ -552,13 +548,13 @@ const E2E_PROJECT: &str = "proj_e2e";
 /// A PNG image as base64.
 const PNG: &str = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ";
 
-/// What `get_attachment` of TS's e2e tests answers.
+/// What `get_attachment` answers.
 const IMAGE_NOTE: &str = "[image content redacted - not supported by AgentCat]";
 
-/// A server with the tools of TS's e2e sanitization and truncation tests: `attachment` (a text and
-/// an image), `audio_clip` (an audio block), `report` (a text over 50 000 characters),
-/// `screenshot` (a text over 50 000 characters and an image) and `add_todo {text}`
-/// (`Added todo: <text>`); any other tool answers `done`.
+/// A server with the tools of the end-to-end sanitization and truncation tests: `attachment` (a
+/// text and an image), `audio_clip` (an audio block), `report` (a text over 50 000 characters),
+/// `screenshot` (a text over 50 000 characters and an image) and `add_todo {text}` (`Added todo:
+/// <text>`); any other tool answers `done`.
 #[derive(Debug, Clone, Copy)]
 struct Payloads;
 
@@ -610,7 +606,7 @@ async fn publish_calls<S: ServerHandler>(
     server: S,
     options: Options,
     calls: Vec<(&str, Value)>,
-) -> (Vec<Option<TsEvent>>, Vec<String>) {
+) -> (Vec<Option<EventObject>>, Vec<String>) {
     let sink = Arc::new(RecordingSink::default());
     let agentcat = AgentCat::with_sink(E2E_PROJECT, options.clone(), sink.clone());
     let client = connect(agentcat.track(server), "e2e-client").await;
@@ -633,16 +629,15 @@ async fn publish_calls<S: ServerHandler>(
 }
 
 /// The events of `published`, each one there.
-fn all(published: Vec<Option<TsEvent>>) -> Vec<TsEvent> {
+fn all(published: Vec<Option<EventObject>>) -> Vec<EventObject> {
     published
         .into_iter()
         .map(|event| event.expect("an event"))
         .collect()
 }
 
-/// TS's e2e sanitization tests (`e2e-sanitization.test.ts`, `v2/pipeline.test.ts`): an image and
-/// an audio block of a tool's response become TS's notes, a text block stays, and a call without
-/// such blocks keeps its response.
+/// End-to-end sanitization: an image and an audio block of a tool's response become notes, a text
+/// block stays, and a call without such blocks keeps its response.
 #[tokio::test]
 async fn tool_call_media_blocks_are_sanitized() {
     let calls = vec![
@@ -670,8 +665,8 @@ async fn tool_call_media_blocks_are_sanitized() {
     );
 }
 
-/// TS's e2e sanitization test of a large base64 argument: it becomes TS's note, and the other
-/// arguments stay.
+/// End-to-end sanitization of a large base64 argument: it becomes a note, and the other arguments
+/// stay.
 #[tokio::test]
 async fn tool_call_base64_argument_is_sanitized() {
     let data = format!("{}=", "A".repeat(12_000));
@@ -686,9 +681,9 @@ async fn tool_call_base64_argument_is_sanitized() {
     assert_eq!(arguments["filename"], json!("photo.png"));
 }
 
-/// TS's e2e truncation tests (`e2e-truncation.test.ts`): a response text over 32 768 units is cut
-/// to at most 32 768 units and `...`, an image of the same response is sanitized, the event fits
-/// in 100 KB, and a small response stays whole.
+/// End-to-end truncation: a response text over 32 768 units is cut to at most 32 768 units and
+/// `...`, an image of the same response is sanitized, the event fits in 100 KB, and a small
+/// response stays whole.
 #[tokio::test]
 async fn tool_call_long_text_is_truncated() {
     let calls = vec![
@@ -700,9 +695,9 @@ async fn tool_call_long_text_is_truncated() {
     let events = all(published);
     for event in &events[..2] {
         let text = at(event, "/response/content/0/text").as_str().unwrap();
-        assert!(js::utf16_len(text) <= 32_768 + 3, "{}", text.len());
+        assert!(wire::utf16_len(text) <= 32_768 + 3, "{}", text.len());
         assert!(text.ends_with("..."));
-        let bytes = js::stringify(&Value::Object(event.clone())).len();
+        let bytes = wire::stringify(&Value::Object(event.clone())).len();
         assert!(bytes <= MAX_EVENT_BYTES, "{bytes} bytes");
     }
     assert_eq!(
@@ -715,7 +710,7 @@ async fn tool_call_long_text_is_truncated() {
     );
 }
 
-/// TS's e2e truncation test of oversized arguments: the event's `JSON.stringify` text stays within
+/// End-to-end truncation of oversized arguments: the event's `wire::stringify` text stays within
 /// 100 KB.
 #[tokio::test]
 async fn tool_call_oversized_arguments_fit_the_size_guard() {
@@ -723,12 +718,11 @@ async fn tool_call_oversized_arguments_fit_the_size_guard() {
     let calls = vec![("bulk", arguments)];
     let (published, _log) = publish_calls(Payloads, Options::default(), calls).await;
     let events = all(published);
-    let bytes = js::stringify(&Value::Object(events[0].clone())).len();
+    let bytes = wire::stringify(&Value::Object(events[0].clone())).len();
     assert!(bytes <= MAX_EVENT_BYTES, "{bytes} bytes");
 }
 
-/// The string redactor of TS's redaction integration tests: an e-mail address and an `id` become
-/// marks.
+/// The string redactor of the redaction tests: an e-mail address and an `id` become marks.
 fn mark_sensitive(text: String) -> std::future::Ready<Result<String, HookError>> {
     let text = if text.contains('@') {
         "[REDACTED-EMAIL]".to_owned()
@@ -740,10 +734,9 @@ fn mark_sensitive(text: String) -> std::future::Ready<Result<String, HookError>>
     ready(Ok(text))
 }
 
-/// TS's string-redaction integration tests (`redaction.test.ts` `redactEvent integration tests`,
-/// `v2/pipeline.test.ts`): the hook redacts the arguments, the response and the actor's data, and
-/// leaves the protected fields (session, project, tool, event type, actor ID and name) as they are,
-/// even when they hold what it redacts.
+/// String redaction: the hook redacts the arguments, the response and the actor's data, and leaves
+/// the protected fields (session, project, tool, event type, actor ID and name) as they are, even
+/// when they hold what it redacts.
 #[tokio::test]
 async fn tool_call_strings_are_redacted_except_protected_fields() {
     let options = Options::default()
@@ -781,9 +774,8 @@ async fn tool_call_strings_are_redacted_except_protected_fields() {
     assert_eq!(request.identify_actor_name.as_deref(), Some("David Smith"));
 }
 
-/// TS's event-hook integration tests (`redaction.test.ts` `redactEvent hook integration tests`):
-/// the hook sees each event's tool, a rejected event is dropped while the others publish, and the
-/// fields it replaces stay replaced except the system ones.
+/// Event hook: the hook sees each event's tool, a rejected event is dropped while the others
+/// publish, and the fields it replaces stay replaced except the system ones.
 #[tokio::test]
 async fn event_hook_replaces_fields_and_drops_rejected_events() {
     let seen: Arc<Mutex<Vec<Option<String>>>> = Arc::default();
@@ -806,7 +798,7 @@ async fn event_hook_replaces_fields_and_drops_rejected_events() {
         ("list_todos", json!({"context": "Listing todos"})),
     ];
     let (published, log) = publish_calls(Payloads, options, calls).await;
-    assert_eq!(log, ["Event dropped by redactEvent hook"]);
+    assert_eq!(log, ["Event dropped by redact_event hook"]);
     assert_eq!(
         *seen.lock().unwrap(),
         [Some("add_todo".to_owned()), Some("list_todos".to_owned())]
@@ -819,8 +811,8 @@ async fn event_hook_replaces_fields_and_drops_rejected_events() {
     assert_eq!(event["eventType"], json!("mcp:tools/call"));
 }
 
-/// TS's `should run the event hook on raw values before string redaction`: the event hook sees
-/// the raw argument, and the string hook still redacts the published event.
+/// The event hook runs on raw values before string redaction: the event hook sees the raw argument,
+/// and the string hook still redacts the published event.
 #[tokio::test]
 async fn event_hook_sees_raw_values_before_string_redaction() {
     let raw: Arc<Mutex<Vec<Value>>> = Arc::default();
@@ -859,10 +851,10 @@ async fn event_hook_sees_raw_values_before_string_redaction() {
     );
 }
 
-/// TS's error-capture integration tests (`error-capture.test.ts`): each call publishes exactly one
-/// event; a call that works has no `isError` and no `error`; an unknown tool and arguments the
-/// tool refuses (a missing field, an unknown one: rmcp's validation, not zod's, RD-13) publish
-/// `isError` with the error's text (rmcp's JSON-RPC error for the unknown tool, RD-05).
+/// Error capture: each call publishes exactly one event; a call that works has no `isError` and no
+/// `error`; an unknown tool and arguments the tool refuses (a missing field, an unknown one: rmcp's
+/// validation) publish `isError` with the error's text (rmcp's JSON-RPC error for the unknown
+/// tool).
 #[tokio::test]
 async fn call_outcomes_publish_one_event_each() {
     let calls = vec![
@@ -893,8 +885,8 @@ async fn call_outcomes_publish_one_event_each() {
     assert!(message(3).contains("operation"), "{}", message(3));
 }
 
-/// TS's `should NOT publish identify events when identify function throws`: the identify error is
-/// a log line, the call still publishes, without an actor, and no other event exists.
+/// When the identify hook throws, the identify error is a log line, the call still publishes,
+/// without an actor, and no other event exists.
 #[tokio::test]
 async fn identify_error_still_publishes_the_call() {
     let options = Options::default().identify(|_call| ready(Err("Identify error".into())));
@@ -903,7 +895,10 @@ async fn identify_error_still_publishes_the_call() {
         json!({"msg": "hi", "context": "Testing identify error"}),
     )];
     let (published, log) = publish_calls(Sample, options, calls).await;
-    assert_eq!(log, ["Error: identify callback threw - Identify error"]);
+    assert_eq!(
+        log,
+        ["Error: identify hook returned an error - Identify error"]
+    );
     let events = all(published);
     assert_eq!(events.len(), 1);
     assert_eq!(events[0]["eventType"], json!("mcp:tools/call"));

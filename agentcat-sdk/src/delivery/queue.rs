@@ -1,4 +1,4 @@
-//! The queue between the call path and the worker (B-100, C12, C36): the pending jobs, the log
+//! The queue between the call path and the worker: the pending jobs, the log
 //! lines, the `flush` and `shutdown` requests and the worker's state, behind one `Mutex` that the
 //! call path holds only to append. Nothing here blocks or waits.
 use std::collections::VecDeque;
@@ -12,10 +12,10 @@ use tokio::sync::oneshot;
 use crate::event::CallRecord;
 use crate::event::assemble::EventJob;
 
-/// TS's line when a push finds `max_pending` jobs pending (B-100).
+/// The line when a push finds `max_pending` jobs pending.
 const QUEUE_FULL: &str = "Event queue full, dropping oldest event";
 
-/// TS's line for a push after `shutdown` (C12).
+/// The line for a push after `shutdown`.
 const SHUTTING_DOWN: &str = "Queue is shutting down, event dropped";
 
 /// How far ahead a deadline goes when the timeout is past what [`Instant`] can hold: about a
@@ -43,7 +43,7 @@ impl From<EventJob> for Job {
 pub(super) enum Kind {
     /// Answer once the queue and the in-flight events are empty.
     Flush,
-    /// The same, then stop for good (C12).
+    /// The same, then stop for good.
     Shutdown,
 }
 
@@ -126,7 +126,7 @@ pub(super) struct Queue {
     pub(super) requests: Vec<Request>,
     /// The jobs the worker runs now.
     pub(super) in_flight: usize,
-    /// Set by `shutdown` and by the last drop: later jobs are dropped (C12).
+    /// Set by `shutdown` and by the last drop: later jobs are dropped.
     pub(super) shutting_down: bool,
     /// Set by the last drop ([`Queue::close`]): the worker exits once it stopped.
     pub(super) closed: bool,
@@ -168,11 +168,11 @@ impl Queue {
     /// Queues `job` and gives back the job it drops, which the caller drops after it lets go of
     /// the lock:
     ///
-    /// - After `shutdown`, `job` itself, with TS's `Queue is shutting down, event dropped` (C12).
+    /// - After `shutdown`, `job` itself, with the line `Queue is shutting down, event dropped`.
     /// - With no worker left, `job` itself.
-    /// - Onto `max_pending` pending jobs, the oldest pending one, with TS's `Event queue full,
-    ///   dropping oldest event` (B-100). As in TS, the line comes whenever the pending count is at
-    ///   the limit, so a limit of 0 keeps one job.
+    /// - Onto `max_pending` pending jobs, the oldest pending one, with the line `Event queue full,
+    ///   dropping oldest event`. The line comes whenever the pending count is at the limit, so a
+    ///   limit of 0 keeps one job.
     pub(super) fn push_job(&mut self, job: Job, max_pending: usize) -> Option<Job> {
         if self.shutting_down {
             self.push_line(SHUTTING_DOWN.to_owned());
@@ -203,7 +203,7 @@ impl Queue {
 
     /// Hands `request` to the worker, or gives its answer now: `true` when the worker never
     /// started (nothing was taken), `false` when it is gone. A shutdown first marks the queue
-    /// shutting down, so later jobs are dropped (C12).
+    /// shutting down, so later jobs are dropped.
     pub(super) fn push_request(&mut self, request: Request) -> Option<bool> {
         if request.kind == Kind::Shutdown {
             self.shutting_down = true;
@@ -218,7 +218,7 @@ impl Queue {
         }
     }
 
-    /// Closes the queue for the last drop of its handle (C36): later jobs are dropped (C12), and
+    /// Closes the queue for the last drop of its handle: later jobs are dropped, and
     /// the worker exits once it stopped. A worker that runs gets a shutdown with `drain` as its
     /// timeout. Its answer goes to `answer`, except when the caller is the worker thread itself,
     /// which cannot wait for its own answer: then nobody gets it. `true` when the caller must wait

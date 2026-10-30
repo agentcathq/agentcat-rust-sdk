@@ -1,9 +1,7 @@
 {
-  "ts_sha": "9b56e9e920f35f7c37fc2a63ce6520a9ec97edea",
-  "generator": "oracle/src/vectors/gen/redact.mjs",
   "cases": [
     {
-      "name": "test:basic",
+      "name": "basic",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "userIntent": "sensitive user intent",
@@ -16,13 +14,10 @@
       },
       "calls": [
         "sensitive user intent"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should redact basic string fields"
       ]
     },
     {
-      "name": "test:protected-fields",
+      "name": "protected-fields",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "id": "evt_456",
@@ -53,13 +48,10 @@
         "eventType": "mcp:tools/call",
         "actorId": "actor_456"
       },
-      "calls": [],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should not redact protected fields"
-      ]
+      "calls": []
     },
     {
-      "name": "test:nested-strings",
+      "name": "nested-strings",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -97,13 +89,10 @@
         "secret-key-123",
         "sensitive response data",
         "sensitive source"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should redact nested string fields"
       ]
     },
     {
-      "name": "test:arrays-of-strings",
+      "name": "arrays-of-strings",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -138,13 +127,10 @@
         "sensitive1",
         "sensitive2",
         "sensitive3"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle arrays of strings"
       ]
     },
     {
-      "name": "test:mixed-nested",
+      "name": "mixed-nested",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -184,13 +170,10 @@
         "john@example.com",
         "Jane",
         "jane@example.com"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle mixed nested structures"
       ]
     },
     {
-      "name": "test:identify-data",
+      "name": "identify-data",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "identifyData": {
@@ -219,20 +202,17 @@
           }
         }
       },
-      "calls": [],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle complex identifyData object without redacting it"
-      ]
+      "calls": []
     },
     {
-      "name": "test:error-object",
+      "name": "error-object",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "isError": true,
         "error": {
           "message": "Sensitive error message",
           "code": "ERR_001",
-          "stack": "Error: Sensitive error message\n    at functionName (file.js:10:5)"
+          "stack": "Error: Sensitive error message\n    at functionName (file.rs:10:5)"
         }
       },
       "output": {
@@ -241,20 +221,17 @@
         "error": {
           "message": "[R:Sensitive error message]",
           "code": "[R:ERR_001]",
-          "stack": "[R:Error: Sensitive error message\n    at functionName (file.js:10:5)]"
+          "stack": "[R:Error: Sensitive error message\n    at functionName (file.rs:10:5)]"
         }
       },
       "calls": [
         "Sensitive error message",
         "ERR_001",
-        "Error: Sensitive error message\n    at functionName (file.js:10:5)"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle error objects"
+        "Error: Sensitive error message\n    at functionName (file.rs:10:5)"
       ]
     },
     {
-      "name": "test:deeply-nested-protected-name",
+      "name": "deeply-nested-protected-name",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "parameters": {
@@ -280,13 +257,10 @@
       "calls": [
         "This should be redacted",
         "sensitive data"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle deeply nested protected fields correctly"
       ]
     },
     {
-      "name": "test:redactor-throws",
+      "name": "redactor-throws",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "userIntent": "sensitive data"
@@ -295,13 +269,10 @@
       "error": "Error: redactor failed",
       "calls": [
         "sensitive data"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle custom redaction function errors gracefully"
       ]
     },
     {
-      "name": "test:nested-in-protected",
+      "name": "nested-in-protected",
       "input": {
         "sessionId": "ses_123000000000000000000000000",
         "identifyData": {
@@ -348,13 +319,10 @@
       },
       "calls": [
         "this SHOULD be redacted"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should not redact nested fields within any protected field"
       ]
     },
     {
-      "name": "test:all-fields",
+      "name": "all-fields",
       "input": {
         "id": "evt_123",
         "projectId": "proj_123",
@@ -417,9 +385,6 @@
         "user intent text",
         "value1",
         "success"
-      ],
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|redactEvent > should handle events with all possible fields"
       ]
     },
     {
@@ -2726,6 +2691,12 @@
         "sessionId": "s",
         "parameters": {
           "a": "[R:1]",
+          "__proto__": {
+            "x": "[R:y]",
+            "z": [
+              "[R:w]"
+            ]
+          },
           "b": "[R:2]"
         }
       },
@@ -2734,41 +2705,46 @@
         "y",
         "w",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:string-value",
       "input_text": "{\"parameters\":{\"__proto__\":\"text\",\"b\":\"2\"}}",
       "output": {
         "parameters": {
+          "__proto__": "[R:text]",
           "b": "[R:2]"
         }
       },
       "calls": [
         "text",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:null-value",
       "input_text": "{\"parameters\":{\"b\":\"2\",\"__proto__\":null}}",
       "output": {
         "parameters": {
-          "b": "[R:2]"
+          "b": "[R:2]",
+          "__proto__": null
         }
       },
       "calls": [
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:array-value",
       "input_text": "{\"parameters\":{\"__proto__\":[\"x\",{\"c\":\"d\"}],\"b\":\"2\"}}",
       "output": {
         "parameters": {
+          "__proto__": [
+            "[R:x]",
+            {
+              "c": "[R:d]"
+            }
+          ],
           "b": "[R:2]"
         }
       },
@@ -2776,36 +2752,39 @@
         "x",
         "d",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:top-level",
       "input_text": "{\"userIntent\":\"u\",\"__proto__\":{\"x\":\"y\"},\"b\":\"2\"}",
       "output": {
         "userIntent": "[R:u]",
+        "__proto__": {
+          "x": "[R:y]"
+        },
         "b": "[R:2]"
       },
       "calls": [
         "u",
         "y",
         "2"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:in-protected",
       "input_text": "{\"tags\":{\"__proto__\":{\"x\":\"y\"},\"k\":\"v\"},\"userIntent\":\"u\"}",
       "output": {
         "tags": {
+          "__proto__": {
+            "x": "y"
+          },
           "k": "v"
         },
         "userIntent": "[R:u]"
       },
       "calls": [
         "u"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
       "name": "proto:nested-twice",
@@ -2813,6 +2792,11 @@
       "output": {
         "parameters": [
           {
+            "__proto__": {
+              "deep": {
+                "__proto__": "[R:x]"
+              }
+            },
             "k": "[R:v]"
           }
         ]
@@ -2820,11 +2804,10 @@
       "calls": [
         "x",
         "v"
-      ],
-      "deviation": "RD-24"
+      ]
     },
     {
-      "name": "apply:test-sync-hook",
+      "name": "apply:sync-hook",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2869,13 +2852,10 @@
           "content": "sensitive response"
         },
         "userIntent": "sensitive intent"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply a synchronous hook in place"
-      ]
+      }
     },
     {
-      "name": "apply:test-async-hook",
+      "name": "apply:async-hook",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2920,13 +2900,10 @@
           "content": "sensitive response"
         },
         "userIntent": "[SCRUBBED]"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should apply an asynchronous hook in place"
-      ]
+      }
     },
     {
-      "name": "apply:test-drop-null",
+      "name": "apply:drop-null",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2943,13 +2920,10 @@
         "userIntent": "sensitive intent"
       },
       "replacement": null,
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop and leave the event untouched when the hook returns null"
-      ]
+      "output": null
     },
     {
-      "name": "apply:test-drop-undefined",
+      "name": "apply:drop-undefined",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -2965,13 +2939,10 @@
         },
         "userIntent": "sensitive intent"
       },
-      "output": null,
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should report a drop when the hook returns undefined"
-      ]
+      "output": null
     },
     {
-      "name": "apply:test-deletions",
+      "name": "apply:deletions",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -3008,13 +2979,10 @@
         "parameters": {
           "text": "sensitive text"
         }
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should honor field deletions instead of resurrecting them"
-      ]
+      }
     },
     {
-      "name": "apply:test-restore",
+      "name": "apply:restore",
       "original": {
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
@@ -3058,10 +3026,7 @@
         },
         "userIntent": "sensitive intent",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "ts_test": [
-        "v1|src/tests/redaction.test.ts|applyEventRedaction > should restore system-managed fields if the hook changes or removes them"
-      ]
+      }
     },
     {
       "name": "apply:change-id",
@@ -4678,13 +4643,15 @@
       },
       "output": {
         "a": 1,
+        "__proto__": {
+          "x": "y"
+        },
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
         "projectId": "proj_789",
         "eventType": "mcp:tools/call",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "apply:proto-top-level-string",
@@ -4708,14 +4675,14 @@
         "b": 2
       },
       "output": {
+        "__proto__": "s",
         "b": 2,
         "id": "evt_original",
         "sessionId": "ses_123000000000000000000000000",
         "projectId": "proj_789",
         "eventType": "mcp:tools/call",
         "timestamp": "2024-01-01T00:00:00.000Z"
-      },
-      "deviation": "RD-24"
+      }
     },
     {
       "name": "apply:proto-nested-kept",

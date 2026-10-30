@@ -1,8 +1,8 @@
-//! Session handles, equal to `src/modules/handles.ts` of the TS SDK: the SDK puts a `session_id`
-//! parameter (and, with agent tracking, an `agent_id` parameter) on each tool, resolves which
-//! session a call belongs to, tells the agent its session ID in a text block and in a structured
-//! `mcp_session` object, and tags the event. Agents read the text, so it is TS's text byte for
-//! byte, and the handle values are read with JavaScript's `trim` and case rules.
+//! Session handles: the SDK puts a `session_id` parameter (and, with agent tracking, an
+//! `agent_id` parameter) on each tool, resolves which session a call belongs to, tells the agent
+//! its session ID in a text block and in a structured `mcp_session` object, and tags the event.
+//! Agents read the text, so it is fixed byte for byte, and the handle values are trimmed with
+//! [`wire::trim`] and compared with ASCII case rules.
 //! `handles/tests.rs` checks each function against `tests/vectors/handles.json`.
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
@@ -13,7 +13,7 @@ use crate::constants::{
     MINT_BACK_HEADER_UNRECOGNIZED, MINT_BACK_ISSUED_BODY, MINT_BACK_UNRECOGNIZED_BODY,
     SESSION_ID_PARAM, SESSION_START_SENTINEL, mint_back_session_line,
 };
-use crate::js;
+use crate::wire;
 
 pub(crate) mod ksuid;
 #[cfg(test)]
@@ -27,7 +27,7 @@ const SESSION_PREFIX: &str = "ses";
     not(test),
     allow(
         dead_code,
-        reason = "read by the delivery pipeline (plan 4); rustc 1.88 counts a use inside another dead item as a use"
+        reason = "read by the delivery pipeline; rustc 1.88 counts a use inside another dead item as a use"
     ),
     expect(
         clippy::allow_attributes,
@@ -42,8 +42,8 @@ const SESSION_BODY_LEN: usize = 27;
 /// 2024-01-01T00:00:00Z in milliseconds since the Unix epoch, the base time of a derived ID.
 const DERIVE_EPOCH_MS: u64 = 1_704_067_200_000;
 
-// Every derived time is inside the KSUID range, so `ksuid::encode` gets seconds that fit in a `u32`. The
-// largest offset is the largest `u32` (0xFFFF_FFFF), in milliseconds (about 49.7 days).
+// Every derived time is inside the KSUID range, so `ksuid::encode` gets seconds that fit in a
+// `u32`. The largest offset is the largest `u32` (0xFFFF_FFFF), in milliseconds (about 49.7 days).
 const _: () = assert!(
     DERIVE_EPOCH_MS >= ksuid::EPOCH_MS && DERIVE_EPOCH_MS + 0xFFFF_FFFF <= ksuid::MAX_TIME_MS
 );
@@ -51,11 +51,11 @@ const _: () = assert!(
 /// The most UTF-16 code units of the `agentcat_agent_id` tag.
 const AGENT_ID_TAG_MAX_UNITS: usize = 200;
 
-/// The source of an `agent_id`: the agent always supplies it (TS's `AgentSource`).
+/// The source of an `agent_id`: the agent always supplies it.
 const AGENT_SOURCE_SUPPLIED: &str = "supplied";
 
 /// A new random session ID (`ses_` and a KSUID of the current time); `None` when the clock is
-/// outside the KSUID range or the system has no randomness, where TS throws.
+/// outside the KSUID range or the system has no randomness.
 pub(crate) fn new_session_id() -> Option<String> {
     if minting_fails() {
         return None;
@@ -110,17 +110,16 @@ pub(crate) fn new_event_id() -> Option<String> {
     ksuid::random(EVENT_PREFIX)
 }
 
-/// The session ID TS's `deriveSessionId(id, projectId)` gives: the same `id` and project always
-/// give the same ID. The SHA-256 hash of `"<id>:<project_id>"` (of `id` alone when the project
-/// ID is `None` or empty, as TS's `projectId ? .. : id`), as UTF-8, gives the KSUID: its time is
-/// [`DERIVE_EPOCH_MS`] plus the first 4 hash bytes as a big-endian `u32` in milliseconds, and its
-/// payload is hash bytes 4 to 19. TS takes that `u32` modulo the milliseconds of 365 days, which
-/// is more than any `u32`, so the modulo changes nothing. `id` is hashed as it is, untrimmed.
+/// The session ID derived from `id` and the project: the same `id` and project always give the
+/// same ID. The SHA-256 hash of `"<id>:<project_id>"` (of `id` alone when the project ID is `None`
+/// or empty), as UTF-8, gives the KSUID: its time is [`DERIVE_EPOCH_MS`] plus the first 4 hash
+/// bytes as a big-endian `u32` in milliseconds (at most about 49.7 days), and its payload is hash
+/// bytes 4 to 19. `id` is hashed as it is, untrimmed.
 #[cfg_attr(
     not(test),
     allow(
         dead_code,
-        reason = "read by the delivery pipeline (plan 4); rustc 1.88 counts a use inside another dead item as a use"
+        reason = "read by the delivery pipeline; rustc 1.88 counts a use inside another dead item as a use"
     ),
     expect(
         clippy::allow_attributes,
@@ -146,10 +145,9 @@ pub(crate) fn derive_session_id(id: &str, project_id: Option<&str>) -> String {
     )
 }
 
-/// Whether `value` is a session ID this SDK issues, TS's `/^ses_[0-9A-Za-z]{27}$/`: `ses_` and
-/// exactly 27 ASCII letters and digits, nothing before or after (a JavaScript `$` without the `m`
-/// flag does not match before a trailing newline). No KSUID decoding, so any well-formed value
-/// passes.
+/// Whether `value` is a session ID this SDK issues (`^ses_[0-9A-Za-z]{27}$`): `ses_` and exactly
+/// 27 ASCII letters and digits, nothing before or after, not even a trailing newline. No KSUID
+/// decoding, so any well-formed value passes.
 pub(crate) fn is_valid_session_id(value: &str) -> bool {
     // The body is all ASCII when it passes, so its length in bytes is its length in characters.
     value.strip_prefix("ses_").is_some_and(|body| {
@@ -157,18 +155,18 @@ pub(crate) fn is_valid_session_id(value: &str) -> bool {
     })
 }
 
-/// The handle `name` of the tool arguments `args`, TS's `extractHandle`: a string value after
-/// [`js::trim`], when it is not empty; `None` for an absent key, any other JSON value, an empty or
-/// whitespace-only string, and absent arguments. No check of the value's shape.
+/// The handle `name` of the tool arguments `args`: a string value after [`wire::trim`], when it is
+/// not empty; `None` for an absent key, any other JSON value, an empty or whitespace-only string,
+/// and absent arguments. No check of the value's shape.
 pub(crate) fn extract_handle(args: Option<&Map<String, Value>>, name: &str) -> Option<String> {
-    let trimmed = js::trim(args?.get(name)?.as_str()?);
+    let trimmed = wire::trim(args?.get(name)?.as_str()?);
     (!trimmed.is_empty()).then(|| trimmed.to_owned())
 }
 
 /// Where the session ID of a call comes from; its tag value is [`SessionSource::as_str`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum SessionSource {
-    /// Hook mode: the customer's `resolveSessionId` hook gives the session.
+    /// Hook mode: the customer's `resolve_session_id` hook gives the session.
     Hook,
     /// The agent sent a valid session ID.
     Supplied,
@@ -181,7 +179,7 @@ pub(crate) enum SessionSource {
 }
 
 impl SessionSource {
-    /// The TS name of the source, the value of the `agentcat_session_id_source` tag.
+    /// The name of the source, the value of the `agentcat_session_id_source` tag.
     pub(crate) fn as_str(self) -> &'static str {
         match self {
             Self::Hook => "hook",
@@ -193,7 +191,7 @@ impl SessionSource {
     }
 }
 
-/// The handles of one call, TS's `HandleResolution`. An empty `session_id` means no session.
+/// The handles of one call. An empty `session_id` means no session.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub(crate) struct HandleResolution {
     /// The session ID; empty for the sources `Hook` (until the hook settles), `Invalid` and
@@ -201,7 +199,7 @@ pub(crate) struct HandleResolution {
     pub(crate) session_id: String,
     /// Where the session ID comes from.
     pub(crate) session_source: SessionSource,
-    /// Whether the customer configured a `resolveSessionId` hook; then the agent is never told
+    /// Whether the customer configured a `resolve_session_id` hook; then the agent is never told
     /// a session ID.
     pub(crate) hook_mode: bool,
     /// The `agent_id` the agent sent, trimmed; its source is always `"supplied"`.
@@ -209,24 +207,24 @@ pub(crate) struct HandleResolution {
 }
 
 impl HandleResolution {
-    /// The agent ID, when it is a non-empty string (TS tests `res.agentId` for truth).
+    /// The agent ID, when it is a non-empty string.
     fn agent(&self) -> Option<&str> {
         self.agent_id.as_deref().filter(|agent| !agent.is_empty())
     }
 }
 
-/// The handles of a call with the tool arguments `args`, TS's `resolveHandles`, checked in TS's
-/// order. In hook mode the session is provisional: empty, source `Hook`. Otherwise, when the tool
-/// declares its own `session_id` (`session_param_is_ours` false), the arguments are the
-/// customer's: empty, source `Foreign`. Otherwise the [`extract_handle`] value of `session_id`:
-/// absent or the start sentinel in any ASCII case mints a new ID (source `Minted`); a valid
-/// session ID is used as it is (`Supplied`); any other value gives no session (`Invalid`), and
-/// the value is not kept. With `agent_tracking`, `agent_id` is the [`extract_handle`] value of
-/// `agent_id`. `None` only when minting fails.
+/// The handles of a call with the tool arguments `args`, checked in this order. In hook mode the
+/// session is provisional: empty, source `Hook`. Otherwise, when the tool declares its own
+/// `session_id` (`session_param_is_ours` false), the arguments are the customer's: empty, source
+/// `Foreign`. Otherwise the [`extract_handle`] value of `session_id`: absent or the start sentinel
+/// in any ASCII case mints a new ID (source `Minted`); a valid session ID is used as it is
+/// (`Supplied`); any other value gives no session (`Invalid`), and the value is not kept. With
+/// `agent_tracking`, `agent_id` is the [`extract_handle`] value of `agent_id`. `None` only when
+/// minting fails.
 ///
-/// TS compares `value.toLowerCase()` with `"start"`. No non-ASCII character lowercases to an
-/// ASCII letter of `start` (`ſ` stays `ſ`), so an ASCII case-insensitive compare is the same
-/// test; the property test `extract_and_resolve_match_ts` checks it.
+/// The start sentinel matches in any case. No non-ASCII character lowercases to an ASCII letter
+/// of `start` (`ſ` stays `ſ`), so an ASCII case-insensitive compare gives the same answer as a
+/// compare of the Unicode lowercase text; a property test of `handles/tests.rs` checks it.
 pub(crate) fn resolve_handles(
     args: Option<&Map<String, Value>>,
     hook_mode: bool,
@@ -262,7 +260,7 @@ pub(crate) fn resolve_handles(
     })
 }
 
-/// The text block that tells the agent about its session, TS's `buildMintBackText`: the issued
+/// The text block that tells the agent about its session: the issued
 /// block with the new ID for `Minted`, the unrecognized block for `Invalid`, and `None` for the
 /// other sources and always in hook mode. The agent ID is never in it.
 pub(crate) fn build_mint_back_text(res: &HandleResolution) -> Option<String> {
@@ -281,7 +279,7 @@ pub(crate) fn build_mint_back_text(res: &HandleResolution) -> Option<String> {
     }
 }
 
-/// The structured handle state for `mcp_session`, TS's `buildStructuredMintBack`, keys in the
+/// The structured handle state for `mcp_session`, keys in the
 /// order `session_id`, `agent_id`, `status`. Outside hook mode and for a source other than
 /// `Foreign`, the session is ours to report: `session_id` (except for `Invalid`) and `status`
 /// (`"issued"` for `Minted`, `"unrecognized"` for `Invalid`, `"active"` otherwise). `agent_id`
@@ -306,10 +304,10 @@ pub(crate) fn build_structured_mint_back(res: &HandleResolution) -> Option<Map<S
     (!mint.is_empty()).then_some(mint)
 }
 
-/// The SDK's tags for a call, TS's `buildHandleTags`: `agentcat_session_id_source`; with an
-/// agent ID, `agentcat_agent_id` (CR and LF each replaced by a space, then cut to 200 UTF-16
-/// units with [`js::cut_utf16`], which drops an astral character that straddles the cut where TS
-/// keeps its first half: RD-22) and `agentcat_agent_id_source: "supplied"`; and
+/// The SDK's tags for a call: `agentcat_session_id_source`; with an agent ID, `agentcat_agent_id`
+/// (CR and LF each replaced by a space, then cut to 200 UTF-16 units with [`wire::cut_utf16`],
+/// which drops a character outside the BMP that straddles the cut) and
+/// `agentcat_agent_id_source: "supplied"`; and
 /// `agentcat_protocol_version` when `protocol_version` is a non-empty string.
 pub(crate) fn build_handle_tags(
     res: &HandleResolution,
@@ -324,7 +322,7 @@ pub(crate) fn build_handle_tags(
         let flat = agent.replace(['\r', '\n'], " ");
         tags.insert(
             AGENTCAT_TAG_AGENT_ID.to_owned(),
-            js::cut_utf16(&flat, AGENT_ID_TAG_MAX_UNITS).into(),
+            wire::cut_utf16(&flat, AGENT_ID_TAG_MAX_UNITS).into(),
         );
         tags.insert(
             AGENTCAT_TAG_AGENT_SOURCE.to_owned(),
@@ -337,15 +335,15 @@ pub(crate) fn build_handle_tags(
     tags
 }
 
-/// The final session of a hook-mode call from the hook's value, TS's `sessionFromHookValue`: a
-/// value that is not empty after [`js::trim`] gives [`derive_session_id`] of the trimmed value
+/// The final session of a hook-mode call from the hook's value: a
+/// value that is not empty after [`wire::trim`] gives [`derive_session_id`] of the trimmed value
 /// (source `Hook`); no value or an empty one gives a new random ID (source `Minted`), which the
 /// agent never learns. `None` only when minting fails.
 pub(crate) fn session_from_hook_value(
     hook_value: Option<&str>,
     project_id: Option<&str>,
 ) -> Option<(String, SessionSource)> {
-    match hook_value.map(js::trim).filter(|value| !value.is_empty()) {
+    match hook_value.map(wire::trim).filter(|value| !value.is_empty()) {
         Some(value) => Some((derive_session_id(value, project_id), SessionSource::Hook)),
         None => Some((new_session_id()?, SessionSource::Minted)),
     }

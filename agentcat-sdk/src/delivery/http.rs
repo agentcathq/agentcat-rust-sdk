@@ -1,12 +1,13 @@
-//! The [`Publisher`] that posts to the `AgentCat` API through `agentcat-api` (C44).
+//! The [`Publisher`] that posts to the `AgentCat` API through `agentcat-api`.
 //!
 //! One attempt is one `publish_event` call on a `reqwest` client with a 5 s connect timeout, a
 //! per-attempt timeout (10 s) and the User-Agent `agentcat-rust/<crate version>`, which is also
-//! `Configuration::user_agent`. There is no API key. The client is built lazily (design §6.7): the
+//! `Configuration::user_agent`. There is no API key. The client is built lazily: the
 //! worker's first [`prepare`](Publisher::prepare) builds it, on the delivery thread, so building a
 //! handle loads no TLS roots on the caller's thread. Any `Err` is a failed attempt whose text is
-//! the error's `Display`; the worker retries it with TS's delays. A 2xx answer needs a JSON body
-//! under `application/json` (RD-37), or `agentcat-api` fails it. No `reqwest` or `agentcat-api`
+//! the error's `Display`; the worker retries it with the delays of
+//! [`DeliveryConfig`](super::DeliveryConfig). A 2xx answer needs a JSON body under
+//! `application/json`, or `agentcat-api` fails it. No `reqwest` or `agentcat-api`
 //! type leaves this module.
 use std::future::ready;
 use std::sync::{Arc, OnceLock};
@@ -102,7 +103,7 @@ impl ApiPublisher {
 }
 
 /// The warning for an `https:` `base_url` in a build without a TLS feature, which cannot reach
-/// it (C44); `None` in a build with one.
+/// it; `None` in a build with one.
 fn tls_warning(base_url: &str) -> Option<String> {
     let https = base_url
         .trim_start()
@@ -116,7 +117,7 @@ fn tls_warning(base_url: &str) -> Option<String> {
     })
 }
 
-/// The client of every attempt (C44).
+/// The client of every attempt.
 fn build_client(attempt_timeout: Duration) -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
         .connect_timeout(CONNECT_TIMEOUT)
@@ -127,7 +128,7 @@ fn build_client(attempt_timeout: Duration) -> Result<reqwest::Client, String> {
 }
 
 impl Publisher for ApiPublisher {
-    /// Builds the client on the first call (C44): a failed build gives one line to `log` and,
+    /// Builds the client on the first call: a failed build gives one line to `log` and,
     /// on this call and every later one, [`NO_CLIENT`].
     fn prepare(&self, log: &mut Vec<String>) -> Result<(), String> {
         match self.configuration(log) {

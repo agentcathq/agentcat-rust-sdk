@@ -1,9 +1,8 @@
-//! The settling of the call hooks and the application of their results (C37, TS's
-//! `settleWithTimeout` and `applyPendingEventFields`, B-084, B-093, B-095, B-096): each `hooks:*`
-//! case of `tests/vectors/queue.json` against TS, and the Rust-only paths (the abort after the
-//! budget, RD-35; a panicking hook). Each hook is a task on the test runtime that has finished
-//! (`returns`, `throws`) or never finishes (`hangs`), and every wait uses a 50 ms budget; the
-//! timeout text keeps TS's `30000` whatever the budget is.
+//! The settling of the call hooks and the application of their results: each `hooks:*` case of
+//! `tests/vectors/queue.json` against the fixture, and the Rust-only paths (the abort after the
+//! budget; a panicking hook). Each hook is a task on the test runtime that has finished (`returns`,
+//! `throws`) or never finishes (`hangs`), and every wait uses a 50 ms budget; the timeout text
+//! keeps the fixed `30000` whatever the budget is.
 use std::future::pending;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -16,11 +15,11 @@ use super::{HookResults, apply, settle};
 use crate::config::{HookError, UserIdentity};
 use crate::handles::{derive_session_id, is_valid_session_id};
 use crate::hooks::PendingHooks;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::test_support::json::object;
 use crate::test_support::queue::{self, Task, returns, throws};
-use crate::test_support::{assert_js_eq, vectors};
+use crate::test_support::{assert_same_json_text, vectors};
+use crate::wire;
 
 /// The hook budget of every test.
 const BUDGET: Duration = Duration::from_millis(50);
@@ -43,9 +42,9 @@ fn hangs_watched<T: Send + 'static>(dropped: &Arc<AtomicBool>) -> Task<T> {
     })
 }
 
-/// A tool-call event as `from_call` leaves it, in TS key order, with the session `session` (`""`
-/// in hook mode) and the SDK tags `tags`.
-fn call_event(session: &str, tags: Value) -> TsEvent {
+/// A tool-call event as `from_call` leaves it, in key order, with the session `session` (`""` in
+/// hook mode) and the SDK tags `tags`.
+fn call_event(session: &str, tags: Value) -> EventObject {
     let mut event = object(json!({
         "id": "",
         "sessionId": session,
@@ -66,14 +65,14 @@ fn call_event(session: &str, tags: Value) -> TsEvent {
 }
 
 /// The keys of `event`, in order.
-fn keys(event: &TsEvent) -> Vec<&str> {
+fn keys(event: &EventObject) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 
-/// TS's `applyPendingEventFields` order (B-084, B-096, B-095): the hook-mode session first, then
-/// the identity in its TS places, then the customer tags under the SDK tags, then the properties.
+/// The order in which the hooks' results apply: the hook-mode session first, then the identity in
+/// its places, then the customer tags under the SDK tags, then the properties.
 #[tokio::test]
-async fn settled_hooks_apply_in_ts_order() {
+async fn settled_hooks_apply_in_the_documented_order() {
     let user = UserIdentity::new("user-42")
         .user_name("Ada")
         .user_data(object(json!({"plan": "pro"})));
@@ -111,13 +110,13 @@ async fn settled_hooks_apply_in_ts_order() {
         "properties": {"device": "mobile"},
     });
     assert_eq!(
-        js::stringify(&Value::Object(event)),
-        js::stringify(&expected)
+        wire::stringify(&Value::Object(event)),
+        wire::stringify(&expected)
     );
 }
 
-/// C37, RD-35: a hook that has not settled within the budget is aborted after TS's timeout line,
-/// which names TS's 30 000 ms whatever the budget is, and the event goes on without it.
+/// A hook that has not settled within the budget is aborted after the timeout line, which names 30
+/// 000 ms whatever the budget is, and the event goes on without it.
 #[tokio::test]
 async fn hanging_hook_is_aborted_after_budget() {
     let dropped = Arc::new(AtomicBool::new(false));
@@ -149,11 +148,11 @@ async fn hanging_hook_is_aborted_after_budget() {
     );
 }
 
-/// C37: a hook that panics gives TS's background-failure line with the panic's message and no
-/// value; the other hooks still apply. A panicking `resolve_session_id` (what a synchronous throw
-/// of TS's hook becomes, since a hook's code runs when its task is first polled) leaves hook mode
-/// to mint a session, as TS's contained throw does. The panic also prints through the process
-/// panic hook.
+/// A hook that panics gives the background-failure line with the panic's message and no value; the
+/// other hooks still apply. A panicking `resolve_session_id` (a panic anywhere in the hook's code
+/// happens inside its task, since the code runs when the task is first polled) leaves hook mode to
+/// mint a session, as a contained failure does. The panic also prints through the process panic
+/// hook.
 #[tokio::test]
 async fn panicking_hook_logs_and_publishes_without_it() {
     let session: Task<String> = tokio::spawn(async { panic!("sync hook boom") });
@@ -167,7 +166,7 @@ async fn panicking_hook_logs_and_publishes_without_it() {
     assert_eq!(
         log,
         [
-            "Warning: resolveSessionId hook failed in background - sync hook boom",
+            "Warning: resolve_session_id hook failed in background - sync hook boom",
             "Warning: identify hook failed in background - identify exploded",
         ]
     );
@@ -187,9 +186,8 @@ async fn panicking_hook_logs_and_publishes_without_it() {
     assert_eq!(event["properties"], json!({"device": "mobile"}));
 }
 
-/// A hook that is not set and a hook that gives nothing (TS's `null`) give no result and no log
-/// line, and the event keeps what the call gave it: no identity, the SDK tags only, no
-/// properties.
+/// A hook that is not set and a hook that gives nothing (`None`) give no result and no log line,
+/// and the event keeps what the call gave it: no identity, the SDK tags only, no properties.
 #[tokio::test]
 async fn unset_and_null_hooks_change_nothing() {
     let mut log = Vec::new();
@@ -207,15 +205,15 @@ async fn unset_and_null_hooks_change_nothing() {
     let before = event.clone();
     apply(&mut event, results, false).expect("no session step");
     assert_eq!(
-        js::stringify(&Value::Object(event)),
-        js::stringify(&Value::Object(before))
+        wire::stringify(&Value::Object(event)),
+        wire::stringify(&Value::Object(before))
     );
 }
 
-/// A hook's own error gives TS's per-hook text followed by the error's `Display` (C37), in the
-/// order TS logs hooks that settle together.
+/// A hook's own error gives the per-hook text followed by the error's `Display`, in the order the
+/// hooks settle together.
 #[tokio::test]
-async fn hook_errors_use_ts_texts() {
+async fn hook_errors_use_the_pinned_texts() {
     let hooks = PendingHooks {
         resolve_session_id: Some(throws("no session")),
         identify: Some(throws("no identity")),
@@ -227,10 +225,10 @@ async fn hook_errors_use_ts_texts() {
     assert_eq!(
         log,
         [
-            "resolveSessionId hook error: no session",
-            "Error: identify callback threw - no identity",
-            "eventTags callback error: no tags",
-            "eventProperties callback error: no properties",
+            "resolve_session_id hook error: no session",
+            "Error: identify hook returned an error - no identity",
+            "event_tags callback error: no tags",
+            "event_properties callback error: no properties",
         ]
     );
     assert_eq!(results.session_value, None);
@@ -239,10 +237,10 @@ async fn hook_errors_use_ts_texts() {
     assert_eq!(results.properties, None);
 }
 
-/// B-093: the `eventTags` result goes through `validate_tags` when it settles; each dropped tag
-/// gives TS's line, and only the valid tags remain.
+/// The `event_tags` result goes through `validate_tags` when it settles; each dropped tag gives the
+/// pinned line, and only the valid tags remain.
 #[tokio::test]
-async fn invalid_tags_are_dropped_with_ts_logs() {
+async fn invalid_tags_are_dropped_with_the_pinned_logs() {
     let raw = object(json!({"bad/key": "x", "count": 5, "env": "prod"}));
     let mut hooks = PendingHooks::default();
     hooks.event_tags = Some(returns(Some(raw)));
@@ -258,7 +256,7 @@ async fn invalid_tags_are_dropped_with_ts_logs() {
     assert_eq!(results.tags, Some(object(json!({"env": "prod"}))));
 }
 
-/// B-096: `{...customerTags, ...sdkTags}`: an SDK tag keeps its value on a name collision, at the
+/// Customer tags merge under the SDK tags: an SDK tag keeps its value on a name collision, at the
 /// customer's place in the key order.
 #[test]
 fn sdk_tags_win_collisions() {
@@ -271,13 +269,13 @@ fn sdk_tags_win_collisions() {
     };
     apply(&mut event, results, false).expect("no session step");
     assert_eq!(
-        js::stringify(&event["tags"]),
+        wire::stringify(&event["tags"]),
         r#"{"agentcat_session_id_source":"supplied","env":"test"}"#
     );
 }
 
-/// In hook mode a missing hook value mints a session with the `minted` source (TS's
-/// `sessionFromHookValue`); outside hook mode the session stays as the call resolved it.
+/// In hook mode a missing hook value mints a session with the `minted` source; outside hook mode
+/// the session stays as the call resolved it.
 #[test]
 fn hook_mode_without_value_mints() {
     let mut event = call_event("", json!({"agentcat_session_id_source": "hook"}));
@@ -305,7 +303,7 @@ fn hook_mode_without_value_mints() {
 
 // ------------------------------------------------------------------- queue.json hooks:* cases
 
-/// The request fields `apply` decides (ruling P3), each with the event key it comes from.
+/// The request fields `apply` decides, each with the event key it comes from.
 const APPLIED: [(&str, &str); 6] = [
     ("sessionId", "sessionId"),
     ("identifyActorGivenId", "identifyActorGivenId"),
@@ -316,9 +314,10 @@ const APPLIED: [(&str, &str); 6] = [
 ];
 
 /// Runs the `queue.json` case `name`: its hook outcomes settle under [`BUDGET`] and apply to its
-/// event. The log lines must be TS's, as `queue::expected_logs` gives them, and each field
-/// of [`APPLIED`] must be the one of TS's first request; a minted session (`<minted>`) must be a
-/// valid session ID with the `minted` source. A case without a request checks only the logs.
+/// event. The log lines must be the fixture's, as `queue::expected_logs` gives them, and each field
+/// of [`APPLIED`] must be the one of the fixture's first request; a minted session (`<minted>`)
+/// must be a valid session ID with the `minted` source. A case without a request checks only the
+/// logs.
 async fn check_hook_case(name: &str) {
     let case = queue::case(name);
     let hooks = case["hooks"].as_object().expect("hooks");
@@ -326,7 +325,7 @@ async fn check_hook_case(name: &str) {
     let mut event = object(case["event"].clone());
 
     let mut log = Vec::new();
-    let results = settle(queue::pending_of(hooks), BUDGET, &mut log).await;
+    let results = settle(queue::pending_of(name, hooks), BUDGET, &mut log).await;
     assert_eq!(log, queue::expected_logs(&case), "{name}: logs");
 
     apply(&mut event, results, hook_mode).expect("minting works");
@@ -352,9 +351,11 @@ async fn check_hook_case(name: &str) {
             (Some(Value::String(session)), Some(Value::Null)) if key == "sessionId" => {
                 assert_eq!(session, "", "{context}");
             }
-            (Some(actual), Some(expected)) => assert_js_eq(actual, expected, &context),
+            (Some(actual), Some(expected)) => assert_same_json_text(actual, expected, &context),
             (None, None) => {}
-            (actual, expected) => panic!("{context}: {actual:?} where TS has {expected:?}"),
+            (actual, expected) => {
+                panic!("{context}: {actual:?} where the fixture has {expected:?}")
+            }
         }
     }
 }
@@ -383,7 +384,7 @@ hook_cases! {
     queue_hooks_tags_invalid_mixed => "hooks:tags-invalid:mixed",
     queue_hooks_tags_invalid_51_valid => "hooks:tags-invalid:51-valid",
     queue_hooks_tags_invalid_none_valid => "hooks:tags-invalid:none-valid",
-    queue_hooks_tags_invalid_ts_bang_key => "hooks:tags-invalid:ts-bang-key",
+    queue_hooks_tags_invalid_bang_key => "hooks:tags-invalid:bang-key",
     queue_hooks_tags_collide => "hooks:tags-collide",
     queue_hooks_tags_throws => "hooks:tags-throws",
     queue_hooks_properties => "hooks:properties",

@@ -1,11 +1,9 @@
-//! The tool-call pipeline (B-022) over in-memory connections: the schema of the called tool and
-//! the stripped arguments (C03, B-050, B-051, RD-12), foreign tools (B-060), the mint-back and its
-//! mirror (B-056 to B-059, B-069), `get_more_tools` (B-028, B-046), tracing off (R27, RD-29),
-//! errors (RD-05, D16, C24), MRTR (B-025), the degraded path (K-05), the hooks' snapshot, the
-//! [`CallContext`], the record's fields (B-077, B-083, B-096), concurrent calls and cancelled
-//! calls (C41, RD-34). The texts the agent reads come from the functions the TS vectors pin
-//! (`build_mint_back_text`, `report_missing`, ...); the log lines are the TS texts of
-//! `src/engine/callWrap.ts`.
+//! The tool-call pipeline over in-memory connections: the schema of the called tool and the
+//! stripped arguments, foreign tools, the mint-back and its mirror, `get_more_tools`, tracing off,
+//! errors, MRTR, the degraded path, the hooks' snapshot, the [`CallContext`], the record's fields,
+//! concurrent calls and cancelled calls. The texts the agent reads come from the functions the
+//! fixtures pin (`build_mint_back_text`, `report_missing`, ...); the log lines are the texts the
+//! call path writes for a rebuild, a degraded call and a failed lookup.
 use std::future::ready;
 use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
@@ -50,11 +48,11 @@ use crate::tokens::{estimate_input_tokens, estimate_output_tokens};
 /// A connected test client.
 type Client = RunningService<RoleClient, InitializeRequestParams>;
 
-/// The log line of a rebuild that worked (`callWrap.ts:121`).
+/// The log line of a rebuild that worked.
 const REBUILT: &str =
     "Rebuilt injection registries on demand (tools/call before tools/list on this instance)";
 
-/// The log line of a rebuild that timed out (`callWrap.ts:108,124`).
+/// The log line of a rebuild that timed out.
 const REBUILD_TIMED_OUT: &str =
     "Warning: registry rebuild-on-demand failed - Error: tools/list did not respond within 5000ms";
 
@@ -133,8 +131,8 @@ fn with_handles(own: Value) -> Value {
     Value::Object(arguments)
 }
 
-/// TS's `sid(label)` (`test-utils.ts`): a well-formed session ID, `ses_` and the letters and digits
-/// of `label` padded with `0` to 27.
+/// A session ID for tests: a well-formed session ID, `ses_` and the letters and digits of `label`
+/// padded with `0` to 27.
 fn sid(label: &str) -> String {
     let body: String = label
         .chars()
@@ -145,8 +143,7 @@ fn sid(label: &str) -> String {
     format!("ses_{body}")
 }
 
-/// Whether `result` starts with a mint-back block, TS's `mintBackOf`: a first text block that
-/// begins `[session_id`.
+/// Whether `result` starts with a mint-back block: a first text block that begins `[session_id`.
 fn has_mint_back(result: &CallToolResult) -> bool {
     texts(result)
         .first()
@@ -176,14 +173,13 @@ fn listed(tools: &[Tool], name: &str) -> Value {
     serde_json::to_value(tool).unwrap()
 }
 
-/// The listings of the TS end-to-end suites (`v2/lowlevel-handles`, `v2/agent-tracking`,
-/// `v2/get-more-tools`, `context-preservation`): with agent tracking on, a tool gets `session_id`,
+/// The listing with each handle option: with agent tracking on, a tool gets `session_id`,
 /// `agent_id` and `context` after its own parameters, all required, and `context` has the default
 /// description unless the tool declares its own; `get_more_tools` gets both handles, a required
 /// `context` and its annotations, and a plain-object output schema gets `mcp_session`. With agent
-/// tracking off (the default), no tool gets `agent_id`; with tracing off, no tool gets a handle
-/// but `get_more_tools` is listed; with report-missing off, the handles stay and `get_more_tools`
-/// is gone (`handles-integration`).
+/// tracking off (the default), no tool gets `agent_id`; with tracing off, no tool gets a handle but
+/// `get_more_tools` is listed; with report-missing off, the handles stay and `get_more_tools` is
+/// gone.
 #[tokio::test]
 async fn listing_follows_the_handle_options() {
     let plain = connect(Sample, "plain").await;
@@ -251,10 +247,10 @@ async fn listing_follows_the_handle_options() {
     assert_eq!(schema["required"], json!(all));
 }
 
-// --- the schema of the called tool and the stripped arguments (Review Focus 1) ---------------
+// --- the schema of the called tool and the stripped arguments ---------------------------------
 
-/// C03, B-050: after a listing, a `deny_unknown_fields` tool called with `session_id`, `agent_id`
-/// and `context` receives only its own field and succeeds.
+/// After a listing, a `deny_unknown_fields` tool called with `session_id`, `agent_id` and `context`
+/// receives only its own field and succeeds.
 #[tokio::test]
 async fn strict_tool_gets_stripped_arguments_after_listing() {
     let (agentcat, sink) = recording(tracking());
@@ -267,7 +263,7 @@ async fn strict_tool_gets_stripped_arguments_after_listing() {
     assert!(!record.is_error);
 }
 
-/// C03: on a fresh handle (no listing), the schema comes from `inner.get_tool`, so the strict tool
+/// On a fresh handle (no listing), the schema comes from `inner.get_tool`, so the strict tool
 /// succeeds without a rebuild.
 #[tokio::test]
 async fn strict_tool_gets_stripped_arguments_before_listing() {
@@ -305,10 +301,10 @@ async fn paged_pipeline_logs(options: &Options) -> Vec<String> {
     logs
 }
 
-/// C03, B-027, RD-12: a hand-written server without `get_tool` and no listing yet: the first call
-/// rebuilds the registry from every page (the pipeline's lines, then the rebuild line, once), and
-/// the strict tool gets its own field only. The tool has no output schema, so the rebuilt registry
-/// closes the mirror gate (B-069).
+/// A hand-written server without `get_tool` and no listing yet: the first call rebuilds the
+/// registry from every page (the pipeline's lines, then the rebuild line, once), and the strict
+/// tool gets its own field only. The tool has no output schema, so the rebuilt registry closes the
+/// mirror gate.
 #[tokio::test]
 async fn strict_tool_without_get_tool_rebuilds_registry() {
     let mut expected = paged_pipeline_logs(&tracking()).await;
@@ -338,15 +334,13 @@ async fn strict_tool_without_get_tool_rebuilds_registry() {
     assert_eq!(sink.take_records().len(), 2);
 }
 
-/// RD-12, TS's `rebuild-on-demand` scenario (the per-request lanes of the e2e-http v1 and v2
-/// matrices) and era-2026's "rebuild-on-demand serves calls on instances that never listed": a
-/// fresh handle on a server without `get_tool` gets a call before any listing, with the defaults,
-/// no `session_id` and the context `rebuild on demand`. The registry is rebuilt, the call mints a
-/// `ses_` session and answers the mint-back first, the record keeps that session, the tool name
-/// and the intent, and the tool gets its own argument only (the rebuild restored the strip). A
-/// second fresh handle, as the next per-request instance, rebuilds too and keeps that session with
-/// no mint-back (track-lowlevel's "rebuilds registries on demand when tools/call arrives before
-/// any tools/list").
+/// Rebuild on demand, as the per-request instances of an HTTP server need it: a fresh handle on a
+/// server without `get_tool` gets a call before any listing, with the defaults, no `session_id` and
+/// the context `rebuild on demand`. The registry is rebuilt, the call mints a `ses_` session and
+/// answers the mint-back first, the record keeps that session, the tool name and the intent, and
+/// the tool gets its own argument only (the rebuild restored the strip). A second fresh handle, as
+/// the next per-request instance, rebuilds too and keeps that session with no mint-back (a call
+/// that arrives before any listing rebuilds the registries on demand).
 #[tokio::test]
 async fn rebuild_on_demand_mints_and_records_the_call() {
     let (agentcat, sink) = recording(Options::default());
@@ -381,8 +375,8 @@ async fn rebuild_on_demand_mints_and_records_the_call() {
     assert_eq!(paged_arguments(&result), json!({"x": "warm"}));
 }
 
-/// B-027, B-051, B-069: a listing that never answers bounds the call at 5 s; the call goes on
-/// with the heuristic strip, and with no listing ever recorded the mirror gate is open.
+/// A listing that never answers bounds the call at 5 s; the call goes on with the heuristic strip,
+/// and with no listing ever recorded the mirror gate is open.
 #[tokio::test]
 async fn rebuild_times_out_after_5s() {
     let (agentcat, sink) = recording(tracking());
@@ -401,7 +395,11 @@ async fn rebuild_times_out_after_5s() {
     );
     let mint = build_structured_mint_back(&record.resolution).expect("minted");
     let mirrored = json!({MCP_SESSION_KEY: mint, "x": "1"});
-    assert_eq!(result.structured_content, Some(mirrored), "B-069");
+    assert_eq!(
+        result.structured_content,
+        Some(mirrored),
+        "the mirror gate is open"
+    );
 }
 
 /// The text the `echo` tool of [`FailingList`] answers.
@@ -435,8 +433,8 @@ impl ServerHandler for FailingList {
     }
 }
 
-/// B-027: a listing that fails every time does not stop the calls: each call tries the rebuild
-/// again (no listing was ever recorded), logs the failure, and still reaches the handler.
+/// A listing that fails every time does not stop the calls: each call tries the rebuild again (no
+/// listing was ever recorded), logs the failure, and still reaches the handler.
 #[tokio::test]
 async fn rebuild_retries_after_a_failed_listing() {
     let (agentcat, sink) = recording(Options::default());
@@ -450,8 +448,7 @@ async fn rebuild_retries_after_a_failed_listing() {
     assert_eq!(sink.take_records().len(), 2);
 }
 
-/// TS's composed-input `union_tool` (`handles-integration.test.ts`): its `oneOf` input schema gets
-/// no injected parameters.
+/// A composed-input `union_tool`: its `oneOf` input schema gets no injected parameters.
 fn union_tool() -> Tool {
     let schema = object(json!({
         "type": "object",
@@ -502,11 +499,10 @@ impl ServerHandler for Composed {
     }
 }
 
-/// B-050 (Task 7 fix round 1): a composed-input tool gets no injected parameters, and TS still
-/// gives every listed tool a registry entry, an empty one here (`listWrap.ts`: "the strip
-/// fallback must apply only to tools never seen in any listing"; call.json case
-/// `strip:entry:empty-list`). So the handler receives the arguments as sent, whether the SDK
-/// learns the tool from `get_tool`, from a listing, or from a rebuild.
+/// A composed-input tool gets no injected parameters, and every listed tool still gets a registry
+/// entry, an empty one here (the strip fallback applies only to tools never seen in any listing;
+/// call.json case `strip:entry:empty-list`). So the handler receives the arguments as sent, whether
+/// the SDK learns the tool from `get_tool`, from a listing, or from a rebuild.
 #[tokio::test]
 async fn composed_tool_gets_the_same_arguments_on_every_path() {
     let sent = with_handles(json!({"kind": "a", "a": "x"}));
@@ -526,11 +522,11 @@ async fn composed_tool_gets_the_same_arguments_on_every_path() {
     }
 }
 
-/// TS's composed-schema tests (`handles-integration.test.ts`, B-039, K-07): `union_tool`'s `oneOf`
-/// input schema gets no injected parameter (none under `properties`, both `oneOf` branches kept),
-/// yet nobody declared `session_id`, so the name is the SDK's: a call without one mints a session
-/// and answers the mint-back first, tagged `minted`; a call that echoes a well-formed session is
-/// honored, `supplied` and not `foreign`, with no mint-back.
+/// Composed-schema tests: `union_tool`'s `oneOf` input schema gets no injected parameter (none
+/// under `properties`, both `oneOf` branches kept), yet nobody declared `session_id`, so the name
+/// is the SDK's: a call without one mints a session and answers the mint-back first, tagged
+/// `minted`; a call that echoes a well-formed session is honored, `supplied` and not `foreign`,
+/// with no mint-back.
 #[tokio::test]
 async fn composed_tool_mints_and_honors_an_issued_session() {
     let (agentcat, sink) = recording(Options::default());
@@ -568,8 +564,8 @@ async fn composed_tool_mints_and_honors_an_issued_session() {
     assert_eq!(record.tags[SESSION_SOURCE_TAG], "supplied");
 }
 
-/// RD-12, K-01: a tool on page 2 that declares its own `context` keeps it after page 1 is listed
-/// again, because the registry merges pages; TS's heuristic strip would remove it.
+/// A tool on page 2 that declares its own `context` keeps it after page 1 is listed again, because
+/// the registry merges pages; the heuristic strip would remove it.
 #[tokio::test]
 async fn page_two_tool_keeps_own_context() {
     let (agentcat, sink) = recording(tracking());
@@ -587,16 +583,16 @@ async fn page_two_tool_keeps_own_context() {
     assert_eq!(
         record.user_intent,
         Some(json!("The tool's own context value.")),
-        "K-08"
+        "the tool's own context is kept"
     );
     assert!(!sink.logs().iter().any(|line| line == REBUILT));
 }
 
-// --- tools that declare their own parameters (Review Focus 2) ---------------------------------
+// --- tools that declare their own parameters ---------------------------------------------------
 
-/// B-060, C19: a tool that declares its own `session_id` gets the value untouched, even `start`;
-/// no mint-back text; the session source is `foreign`. The same before a listing (its `get_tool`
-/// schema) and after one (the registry's declared set).
+/// A tool that declares its own `session_id` gets the value untouched, even `start`; no mint-back
+/// text; the session source is `foreign`. The same before a listing (its `get_tool` schema) and
+/// after one (the registry's declared set).
 #[tokio::test]
 async fn own_session_param_is_foreign() {
     let (agentcat, sink) = recording(tracking());
@@ -619,8 +615,8 @@ async fn own_session_param_is_foreign() {
     }
 }
 
-/// K-08: a tool that declares its own `context` receives it untouched, and it is still recorded as
-/// the intent.
+/// A tool that declares its own `context` receives it untouched, and it is still recorded as the
+/// intent.
 #[tokio::test]
 async fn own_context_reaches_handler() {
     let (agentcat, sink) = recording(Options::default());
@@ -637,8 +633,8 @@ async fn own_context_reaches_handler() {
 
 // --- the mint-back and its mirror -----------------------------------------------------------
 
-/// B-055, B-056: `start` mints and an unknown value is unrecognized, each with its text first; a
-/// supplied ID gets no text.
+/// `start` mints and an unknown value is unrecognized, each with its text first; a supplied ID gets
+/// no text.
 #[tokio::test]
 async fn mint_back_for_minted_and_invalid_only() {
     let (agentcat, sink) = recording(Options::default());
@@ -667,10 +663,10 @@ async fn mint_back_for_minted_and_invalid_only() {
     assert_eq!(texts(&supplied), ["hi"]);
 }
 
-/// TS's `resolveHandles` "agent tracking is OFF by default — omitted option resolves no agent id"
-/// (`enableAgentTracking` defaults to `false`; B-031 step 3): with the default options, a call
-/// that sends an `agent_id` still mints a session and resolves no agent: no agent ID on the
-/// record, no agent tags, and a mint-back without an `agent_id` line.
+/// Agent tracking is off by default: an omitted option resolves no agent ID
+/// (`enable_agent_tracking` defaults to `false`): with the default options, a call that sends an
+/// `agent_id` still mints a session and resolves no agent: no agent ID on the record, no agent
+/// tags, and a mint-back without an `agent_id` line.
 #[tokio::test]
 async fn default_options_resolve_no_agent() {
     let (agentcat, sink) = recording(Options::default());
@@ -691,14 +687,13 @@ async fn default_options_resolve_no_agent() {
     assert_eq!(texts(&result).first(), Some(&block.as_str()));
 }
 
-/// TS's "strips registry-scoped args before the original handler, keeps raw on the event"
-/// (`engine-callwrap.test.ts`), and "strips injected params before the customer handler; event
-/// keeps them", "echoed handles are reused verbatim with no mint-back" and "callback receives
-/// stripped args; supplied handles reused silently" (`handles-integration.test.ts`); B-050,
-/// B-056: with agent tracking on, a call that echoes a well-formed `session_id`, an `agent_id` and
-/// a `context` reaches the tool with its own argument only and gets no mint-back, before a listing
-/// (the rebuild) and after one. The record keeps the session and the agent verbatim, tagged
-/// `supplied`, the context as the intent, and the arguments as sent in its request.
+/// Handles that the SDK injected are stripped before the original handler and kept raw on the
+/// event, echoed handles are reused verbatim with no mint-back, and the callback receives stripped
+/// args with supplied handles reused silently. With agent tracking on, a call that echoes a
+/// well-formed `session_id`, an `agent_id` and a `context` reaches the tool with its own argument
+/// only and gets no mint-back, before a listing (the rebuild) and after one. The record keeps the
+/// session and the agent verbatim, tagged `supplied`, the context as the intent, and the arguments
+/// as sent in its request.
 #[tokio::test]
 async fn supplied_handles_are_stripped_for_the_tool_and_kept_on_the_record() {
     let session = sid("fixed");
@@ -786,10 +781,10 @@ impl ServerHandler for Outputs {
     }
 }
 
-/// B-058, B-069, C21: the mirror goes first into the structured content of a tool whose output
-/// schema got `mcp_session` (a hand-written listing, and the macro's `structured` through
-/// `get_tool`); a tool whose output schema was skipped or that has none gets no mirror, but still
-/// the mint-back text first (B-056); a customer's own `mcp_session` stays.
+/// The mirror goes first into the structured content of a tool whose output schema got
+/// `mcp_session` (a hand-written listing, and the macro's `structured` through `get_tool`); a tool
+/// whose output schema was skipped or that has none gets no mirror, but still the mint-back text
+/// first; a customer's own `mcp_session` stays.
 #[tokio::test]
 async fn mirror_gate_follows_registry() {
     let (agentcat, sink) = recording(Options::default());
@@ -841,8 +836,8 @@ async fn mirror_gate_follows_registry() {
     );
 }
 
-/// B-059: the record keeps the customer's result: the same content and structured content as the
-/// handler alone answers, without the mint-back text or the mirror.
+/// The record keeps the customer's result: the same content and structured content as the handler
+/// alone answers, without the mint-back text or the mirror.
 #[tokio::test]
 async fn record_keeps_the_original_result() {
     let plain = connect(Sample, "plain").await;
@@ -862,15 +857,15 @@ async fn record_keeps_the_original_result() {
     assert_eq!(
         record.output_tokens,
         estimate_output_tokens(Some(&response)),
-        "B-072: on the original result"
+        "the original result is the one counted"
     );
 }
 
 // --- get_more_tools -------------------------------------------------------------------------
 
-/// B-046: `get_more_tools` is answered by the SDK with the canned text after the mint-back, logged
-/// with the context length, and recorded with its session, the arguments as sent, the context as
-/// the intent and the canned result as the response.
+/// `get_more_tools` is answered by the SDK with the canned text after the mint-back, logged with
+/// the context length, and recorded with its session, the arguments as sent, the context as the
+/// intent and the canned result as the response.
 #[tokio::test]
 async fn get_more_tools_answered_and_recorded() {
     let (agentcat, sink) = recording(Options::default());
@@ -899,11 +894,10 @@ async fn get_more_tools_answered_and_recorded() {
     assert_eq!(sink.logs()[before..], [line]);
 }
 
-/// TS's report-missing "should maintain task continuity when calling `report_missing` between other
-/// tools" and "should handle multiple missing tool reports in the same task" (B-046, B-056): an
-/// agent that echoes one well-formed `session_id` on every call, `get_more_tools` included, gets
-/// no mint-back, and every record keeps that session, `supplied`, in the order of the calls, each
-/// with its own tool and context.
+/// Report-missing keeps task continuity: when `report_missing` is called between other tools, and
+/// when several missing tools are reported in the same task, an agent that echoes one well-formed
+/// `session_id` on every call, `get_more_tools` included, gets no mint-back, and every record keeps
+/// that session, `supplied`, in the order of the calls, each with its own tool and context.
 #[tokio::test]
 async fn supplied_session_holds_across_get_more_tools_calls() {
     let session = sid("report_missing_continuity");
@@ -934,9 +928,9 @@ async fn supplied_session_holds_across_get_more_tools_calls() {
     }
 }
 
-/// TS's report-missing "should track `get_more_tools` across different sessions" (B-046, B-055):
-/// two tracked servers, each with its own connection, each answering a `get_more_tools` call that
-/// sends no `session_id`, record two different minted sessions, each with its own context.
+/// Report-missing tracks `get_more_tools` across different sessions: two tracked servers, each with
+/// its own connection, each answering a `get_more_tools` call that sends no `session_id`, record
+/// two different minted sessions, each with its own context.
 #[tokio::test]
 async fn get_more_tools_mints_a_session_per_connection() {
     let mut sessions = Vec::new();
@@ -993,8 +987,8 @@ impl ServerHandler for OwnMore {
     }
 }
 
-/// B-028: with report-missing on, the SDK answers a customer's own `get_more_tools`; with it off,
-/// the customer's tool runs: traced, with tracing off, and on the degraded path. Client and server
+/// With report-missing on, the SDK answers a customer's own `get_more_tools`; with it off, the
+/// customer's tool runs: traced, with tracing off, and on the degraded path. Client and server
 /// share this current-thread runtime, so the session ID switch reaches the server.
 #[tokio::test]
 async fn customer_get_more_tools_is_shadowed() {
@@ -1013,7 +1007,7 @@ async fn customer_get_more_tools_is_shadowed() {
     let record = only_record(&sink);
     assert_eq!(
         record.user_intent, None,
-        "B-083: never for the name get_more_tools"
+        "no intent for the name get_more_tools"
     );
 
     let untraced = Options::default()
@@ -1045,11 +1039,11 @@ fn echoed_arguments(result: &CallToolResult) -> Value {
     echo["request"]["params"]["arguments"].clone()
 }
 
-/// R27, RD-29, C03: with tracing off, the SDK still strips what it injected before the handler
-/// runs. A `deny_unknown_fields` tool receives its own field only, after a listing (the
-/// registry) and before one (`get_tool`), and gets no mint-back; a tool the SDK has no schema
-/// for (a handler without `get_tool` whose listing is empty) gets TS's heuristic strip of
-/// `session_id`, `agent_id` and `context` (B-051).
+/// With tracing off, the SDK still strips what it injected before the handler runs. A
+/// `deny_unknown_fields` tool receives its own field only, after a listing (the registry) and
+/// before one (`get_tool`), and gets no mint-back; a tool the SDK has no schema for (a handler
+/// without `get_tool` whose listing is empty) gets the heuristic strip of `session_id`, `agent_id`
+/// and `context`.
 #[tokio::test]
 async fn tracing_off_strips_injected_arguments() {
     let arguments = json!({"text": "hi", "context": "Tracing is off; the SDK still strips this."});
@@ -1079,9 +1073,8 @@ async fn tracing_off_strips_injected_arguments() {
     assert!(sink.take_records().is_empty());
 }
 
-/// R27, RD-29, K-08: with tracing off, a tool that declares its own `context` receives it, before
-/// any listing (its `get_tool` schema) and after one (the registry); TS's heuristic would strip
-/// it.
+/// With tracing off, a tool that declares its own `context` receives it, before any listing (its
+/// `get_tool` schema) and after one (the registry); the heuristic strip would remove it.
 #[tokio::test]
 async fn tracing_off_keeps_own_context() {
     let (agentcat, sink) = recording(Options::default().enable_tracing(false));
@@ -1105,9 +1098,9 @@ async fn tracing_off_keeps_own_context() {
     assert!(sink.take_records().is_empty());
 }
 
-/// K-05, B-023: with tracing off nothing is recorded: not a result, an `is_error` result, a
-/// JSON-RPC error or a panic; `get_more_tools` is still answered (and logged), with no mint-back.
-/// After a listing, the only log line is the intercept's.
+/// With tracing off nothing is recorded: not a result, an `is_error` result, a JSON-RPC error or a
+/// panic; `get_more_tools` is still answered (and logged), with no mint-back. After a listing, the
+/// only log line is the intercept's.
 #[tokio::test]
 async fn tracing_off_records_nothing() {
     let (agentcat, sink) = recording(Options::default().enable_tracing(false));
@@ -1134,11 +1127,10 @@ async fn tracing_off_records_nothing() {
     assert!(sink.take_records().is_empty(), "nothing is recorded");
 }
 
-/// Controller ruling P16 (TS returns before `ensureRegistries` with tracing off,
-/// `callWrap.ts:159-165`): with tracing off, a call to a handler without `get_tool` that never
-/// listed still rebuilds the registry to learn the schema (R27), but writes none of the rebuild's
-/// log lines: not the pipeline's, not the rebuild line, not a failed rebuild's. `alpha` loses the
-/// injected `context`; `beta`, rebuilt from page 2, keeps its own, which TS's heuristic would drop.
+/// With tracing off, a call to a handler without `get_tool` that never listed still rebuilds the
+/// registry to learn the schema, but writes none of the rebuild's log lines: not the pipeline's,
+/// not the rebuild line, not a failed rebuild's. `alpha` loses the injected `context`; `beta`,
+/// rebuilt from page 2, keeps its own, which the heuristic strip would drop.
 #[tokio::test]
 async fn tracing_off_rebuild_logs_nothing() {
     let (agentcat, sink) = recording(Options::default().enable_tracing(false));
@@ -1166,9 +1158,8 @@ async fn tracing_off_rebuild_logs_nothing() {
     assert!(sink.take_records().is_empty());
 }
 
-/// TS, K-05: the degraded path (no session ID could be issued) keeps the raw arguments, also
-/// after a listing: the handler receives `session_id`, `agent_id` and `context` as sent, and
-/// nothing is recorded.
+/// The degraded path (no session ID could be issued) keeps the raw arguments, also after a listing:
+/// the handler receives `session_id`, `agent_id` and `context` as sent, and nothing is recorded.
 #[tokio::test]
 async fn degraded_path_keeps_raw_arguments() {
     let (agentcat, sink) = recording(tracking());
@@ -1181,9 +1172,8 @@ async fn degraded_path_keeps_raw_arguments() {
     assert!(sink.take_records().is_empty());
 }
 
-/// Carry-forward (plan 4 Task 9): the call path builds the hooks' [`ToolCall`] snapshot only when
-/// a hook starts: never without hooks, once for a call with a hook; in hook mode the session hook
-/// alone counts.
+/// The call path builds the hooks' [`ToolCall`] snapshot only when a hook starts: never without
+/// hooks, once for a call with a hook; in hook mode the session hook alone counts.
 ///
 /// [`ToolCall`]: crate::ToolCall
 #[tokio::test]
@@ -1220,8 +1210,8 @@ async fn snapshot_built_only_with_hooks() {
     }
 }
 
-/// Design §7.4, RD-05, C24: an `Err(ErrorData)` reaches the client exactly as without the SDK; the
-/// record has the error with the JSON-RPC code name as its type, and no response.
+/// An `Err(ErrorData)` reaches the client exactly as without the SDK; the record has the error with
+/// the JSON-RPC code name as its type, and no response.
 #[tokio::test]
 async fn error_data_returned_unchanged() {
     let plain = connect(Probe, "plain").await;
@@ -1237,13 +1227,17 @@ async fn error_data_returned_unchanged() {
     let record = only_record(&sink);
     assert!(record.is_error);
     assert_eq!(record.error, Some(error_data_error(&expected)));
-    assert_eq!(record.error.unwrap()["type"], "InternalError", "C24");
+    assert_eq!(
+        record.error.unwrap()["type"],
+        "InternalError",
+        "the code name"
+    );
     assert_eq!(record.response, None);
     assert_eq!(record.output_tokens, None);
 }
 
-/// RD-05, D16: rmcp's error for an unknown tool reaches the client unchanged (no mint-back is
-/// possible) and is recorded.
+/// Rmcp's error for an unknown tool reaches the client unchanged (no mint-back is possible) and is
+/// recorded.
 #[tokio::test]
 async fn unknown_tool_error_unchanged() {
     let plain = connect(Sample, "plain").await;
@@ -1258,12 +1252,15 @@ async fn unknown_tool_error_unchanged() {
     );
     let record = only_record(&sink);
     assert_eq!(record.resource_name, "nope");
-    assert_eq!(record.error.unwrap()["type"], "InvalidParams", "C24");
+    assert_eq!(
+        record.error.unwrap()["type"],
+        "InvalidParams",
+        "the code name"
+    );
 }
 
-/// D16, B-056, B-097: an `is_error` result gets the mint-back text first (the session part only,
-/// since no `agent_id` was sent); the record has the result's error, computed on the customer's
-/// result.
+/// An `is_error` result gets the mint-back text first (the session part only, since no `agent_id`
+/// was sent); the record has the result's error, computed on the customer's result.
 #[tokio::test]
 async fn is_error_result_gets_mint_back() {
     let plain = connect(Sample, "plain").await;
@@ -1310,8 +1307,8 @@ async fn send(client: &Client, request: ClientRequest) -> ServerResult {
         .expect("the request is answered")
 }
 
-/// B-025: an `InputRequiredResult` reaches the client as the handler answered it (no mint-back),
-/// and the record is tagged `agentcat_mrtr: input_required`, after the other tags.
+/// An `InputRequiredResult` reaches the client as the handler answered it (no mint-back), and the
+/// record is tagged `agentcat_mrtr: input_required`, after the other tags.
 #[tokio::test]
 async fn input_required_is_tagged_not_decorated() {
     let ask = || params("ask", json!({"session_id": "start"}));
@@ -1337,8 +1334,8 @@ async fn input_required_is_tagged_not_decorated() {
     assert!(!record.is_error);
 }
 
-/// B-025, B-096: a call with input responses is tagged `agentcat_mrtr: continuation`, first among
-/// the tags, and its complete result gets the mint-back.
+/// A call with input responses is tagged `agentcat_mrtr: continuation`, first among the tags, and
+/// its complete result gets the mint-back.
 #[tokio::test]
 async fn continuation_is_tagged() {
     let mut responses = InputResponses::new();
@@ -1362,10 +1359,9 @@ async fn continuation_is_tagged() {
     assert_eq!(record.tags["agentcat_mrtr"], "continuation");
 }
 
-/// B-022 steps 8 and 9, K-05: when no session ID can be minted, the call takes the degraded path:
-/// a log line, the raw arguments to the handler (so the strict tool refuses them), no record;
-/// `get_more_tools` is still answered. Client and server share this current-thread runtime, so
-/// the switch reaches the server.
+/// When no session ID can be minted, the call takes the degraded path: a log line, the raw
+/// arguments to the handler (so the strict tool refuses them), no record; `get_more_tools` is still
+/// answered. Client and server share this current-thread runtime, so the switch reaches the server.
 #[tokio::test]
 async fn session_id_failure_takes_degraded_path() {
     let (agentcat, sink) = recording(Options::default());
@@ -1419,8 +1415,8 @@ fn whoami(result: &CallToolResult) -> Value {
     serde_json::from_str(text).expect("whoami answers JSON")
 }
 
-/// Design §5: a tool reads its call's session and agent from the [`CallContext`]: the minted ID,
-/// a supplied ID, and no session for an unrecognized value.
+/// A tool reads its call's session and agent from the [`CallContext`]: the minted ID, a supplied
+/// ID, and no session for an unrecognized value.
 #[tokio::test]
 async fn call_context_reaches_tool() {
     let (agentcat, sink) = recording(tracking());
@@ -1459,9 +1455,8 @@ async fn call_context_reaches_tool() {
     );
 }
 
-/// Task 7 fix round 1 ruling: a call the SDK does not trace (tracing off, or the degraded path
-/// when no session ID can be issued) still reaches the tool with a [`CallContext`], one with no
-/// session and no agent.
+/// A call the SDK does not trace (tracing off, or the degraded path when no session ID can be
+/// issued) still reaches the tool with a [`CallContext`], one with no session and no agent.
 #[tokio::test]
 async fn call_context_reaches_untraced_tool() {
     let none = json!({"session_id": null, "agent_id": null});
@@ -1481,10 +1476,10 @@ async fn call_context_reaches_untraced_tool() {
     assert!(sink.take_records().is_empty());
 }
 
-/// B-077, B-083, B-096: the resource name (`Unknown Tool` for an empty name), the intent rules,
-/// the order of the tags, the token estimates, and the server and client of the record.
+/// The resource name (`Unknown Tool` for an empty name), the intent rules, the order of the tags,
+/// the token estimates, and the server and client of the record.
 #[tokio::test]
-async fn record_fields_follow_b077() {
+async fn record_fields_hold_the_resource_name_intent_tags_and_tokens() {
     let (agentcat, sink) = recording(tracking());
     let client = connect(agentcat.track(Sample), "fields").await;
     let raw =
@@ -1541,8 +1536,8 @@ async fn record_fields_follow_b077() {
     );
 }
 
-/// TS's `custom-context-description.test.ts` end to end: with a custom `context` description,
-/// every listed tool shows it, and each call records its own `context` as the intent.
+/// End to end, with a custom `context` description, every listed tool shows it, and each call
+/// records its own `context` as the intent.
 #[tokio::test]
 async fn custom_description_listing_and_intents() {
     let description = "Explain your intent for this operation";
@@ -1578,8 +1573,8 @@ async fn custom_description_listing_and_intents() {
     }
 }
 
-/// B-029: concurrent calls, each with its own agent, each get their own minted session, in the
-/// mint-back, in the call context and in the record.
+/// Concurrent calls, each with its own agent, each get their own minted session, in the mint-back,
+/// in the call context and in the record.
 #[tokio::test]
 async fn concurrent_calls_are_independent() {
     let (agentcat, sink) = recording(tracking());
@@ -1629,7 +1624,7 @@ async fn concurrent_calls_are_independent() {
     }
 }
 
-// --- cancelled calls (C41, RD-34) --------------------------------------------------------------
+// --- cancelled calls --------------------------------------------------------------
 
 /// How long the tool of [`Slow`] takes.
 const SLOW_TOOL: Duration = Duration::from_secs(60);
@@ -1659,9 +1654,9 @@ impl ServerHandler for Slow {
     }
 }
 
-/// C41, RD-34: a call future dropped before the tool answers (here by the customer's timeout)
-/// publishes its record with no response, `is_error`, the cancelled error in the RD-06 key order,
-/// and the duration until the drop.
+/// A call future dropped before the tool answers (here by the customer's timeout) publishes its
+/// record with no response, `is_error`, the cancelled error in the fixed key order, and the
+/// duration until the drop.
 #[tokio::test]
 async fn cancelled_call_publishes_record() {
     tokio::time::pause();
@@ -1690,8 +1685,8 @@ async fn cancelled_call_publishes_record() {
     );
 }
 
-/// C41: a call that completes goes to the sink exactly once, never as cancelled: a result, an
-/// `is_error` result, a JSON-RPC error, the `get_more_tools` intercept and a panic.
+/// A call that completes goes to the sink exactly once, never as cancelled: a result, an `is_error`
+/// result, a JSON-RPC error, the `get_more_tools` intercept and a panic.
 #[tokio::test]
 async fn completed_call_is_recorded_once() {
     let (agentcat, sink) = recording(Options::default());
@@ -1716,9 +1711,9 @@ async fn completed_call_is_recorded_once() {
     }
 }
 
-/// C41, the guard's log-not-send contract (`RecordGuard::discard`): a discarded record goes to the
-/// sink neither as it is nor as cancelled by the guard's drop, and the log line it is given does.
-/// The line is the test's own; this does not cover the warning text that `finish` builds.
+/// The guard's log-not-send contract (`RecordGuard::discard`): a discarded record goes to the sink
+/// neither as it is nor as cancelled by the guard's drop, and the log line it is given does. The
+/// line is the test's own; this does not cover the warning text that `finish` builds.
 #[tokio::test]
 async fn discarded_record_is_logged_not_sent() {
     let (agentcat, sink) = recording(Options::default());

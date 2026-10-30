@@ -1,0 +1,807 @@
+{
+  "transcript": [
+    {
+      "session": 0,
+      "op": "discover",
+      "result": {
+        "protocolVersion": "2026-07-28",
+        "serverInfo": {
+          "name": "e2e-server",
+          "version": "1.0.0"
+        },
+        "capabilities": {
+          "tools": {
+            "listChanged": true
+          }
+        },
+        "instructions": null
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "echo",
+        "arguments": {
+          "msg": "start"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "[session_id issued — see this tool's session_id parameter description]\nsession_id: <ses#1>\nThis is the first-call issuance described in this tool's session_id parameter description."
+          },
+          {
+            "type": "text",
+            "text": "start"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom",
+        "arguments": {
+          "session": "<ses#1>",
+          "resource": "string-form",
+          "message": "with a session",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom",
+        "arguments": {
+          "session": "",
+          "resource": "string-form-no-session",
+          "message": "without a session",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom_server",
+        "arguments": {
+          "session": "<ses#1>",
+          "resource": "server-form",
+          "message": "with a session",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom_server",
+        "arguments": {
+          "resource": "server-form-no-session",
+          "message": "without a session",
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom_server",
+        "arguments": {
+          "session": "<ses#1>",
+          "resource": "server-form-tags",
+          "tags": {
+            "bad key!": "dropped",
+            "abcdefghijklmnopqrstuvwxyz0123456": "dropped",
+            "count": 5,
+            "multi": "line\nbreak",
+            "kind": "custom"
+          },
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    },
+    {
+      "session": 0,
+      "op": "callTool",
+      "request": {
+        "name": "emit_custom_server",
+        "arguments": {
+          "session": "<ses#1>",
+          "resource": "server-form-no-valid-tag",
+          "tags": {
+            "count": 5
+          },
+          "session_id": "<ses#1>"
+        }
+      },
+      "result": {
+        "resultType": "complete",
+        "content": [
+          {
+            "type": "text",
+            "text": "published"
+          }
+        ]
+      }
+    }
+  ],
+  "events": [
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#1>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "echo",
+        "duration": "<duration>",
+        "input_tokens": 5,
+        "output_tokens": 2,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "echo",
+              "arguments": {
+                "msg": "start"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 0
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 0
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "start"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "minted"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#2>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom",
+        "duration": "<duration>",
+        "input_tokens": 42,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom",
+              "arguments": {
+                "session": "<ses#1>",
+                "resource": "string-form",
+                "message": "with a session",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 1
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 1
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#3>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "agentcat:custom",
+        "resource_name": "string-form",
+        "timestamp": "<timestamp>",
+        "user_intent": "with a session",
+        "parameters": {
+          "from": "emit_custom"
+        },
+        "tags": {
+          "kind": "custom"
+        }
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#4>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom",
+        "duration": "<duration>",
+        "input_tokens": 37,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom",
+              "arguments": {
+                "session": "",
+                "resource": "string-form-no-session",
+                "message": "without a session",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 2
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 2
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#5>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": null,
+        "event_type": "agentcat:custom",
+        "resource_name": "string-form-no-session",
+        "timestamp": "<timestamp>",
+        "user_intent": "without a session",
+        "parameters": {
+          "from": "emit_custom"
+        },
+        "tags": {
+          "kind": "custom"
+        }
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#6>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom_server",
+        "duration": "<duration>",
+        "input_tokens": 42,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom_server",
+              "arguments": {
+                "session": "<ses#1>",
+                "resource": "server-form",
+                "message": "with a session",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 3
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 3
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#7>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "agentcat:custom",
+        "resource_name": "server-form",
+        "duration": "<duration>",
+        "timestamp": "<timestamp>",
+        "user_intent": "with a session",
+        "parameters": {
+          "from": "emit_custom_server"
+        },
+        "identify_data": {},
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#8>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom_server",
+        "duration": "<duration>",
+        "input_tokens": 33,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom_server",
+              "arguments": {
+                "resource": "server-form-no-session",
+                "message": "without a session",
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 4
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 4
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#9>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": null,
+        "event_type": "agentcat:custom",
+        "resource_name": "server-form-no-session",
+        "duration": "<duration>",
+        "timestamp": "<timestamp>",
+        "user_intent": "without a session",
+        "parameters": {
+          "from": "emit_custom_server"
+        },
+        "identify_data": {},
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#10>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom_server",
+        "duration": "<duration>",
+        "input_tokens": 71,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom_server",
+              "arguments": {
+                "session": "<ses#1>",
+                "resource": "server-form-tags",
+                "tags": {
+                  "bad key!": "dropped",
+                  "abcdefghijklmnopqrstuvwxyz0123456": "dropped",
+                  "count": 5,
+                  "multi": "line\nbreak",
+                  "kind": "custom"
+                },
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 5
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 5
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#11>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "agentcat:custom",
+        "resource_name": "server-form-tags",
+        "duration": "<duration>",
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "from": "emit_custom_server"
+        },
+        "identify_data": {},
+        "tags": {
+          "kind": "custom"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#12>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "mcp:tools/call",
+        "resource_name": "emit_custom_server",
+        "duration": "<duration>",
+        "input_tokens": 43,
+        "output_tokens": 3,
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "request": {
+            "method": "tools/call",
+            "params": {
+              "name": "emit_custom_server",
+              "arguments": {
+                "session": "<ses#1>",
+                "resource": "server-form-no-valid-tag",
+                "tags": {
+                  "count": 5
+                },
+                "session_id": "<ses#1>"
+              },
+              "_meta": {
+                "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+                "io.modelcontextprotocol/clientInfo": {
+                  "name": "e2e-client",
+                  "version": "1.0.0"
+                },
+                "io.modelcontextprotocol/clientCapabilities": {}
+              }
+            },
+            "jsonrpc": "2.0",
+            "id": 6
+          },
+          "extra": {
+            "_meta": {
+              "io.modelcontextprotocol/protocolVersion": "2026-07-28",
+              "io.modelcontextprotocol/clientInfo": {
+                "name": "e2e-client",
+                "version": "1.0.0"
+              },
+              "io.modelcontextprotocol/clientCapabilities": {}
+            },
+            "requestId": 6
+          }
+        },
+        "response": {
+          "content": [
+            {
+              "type": "text",
+              "text": "published"
+            }
+          ]
+        },
+        "identify_data": {},
+        "tags": {
+          "agentcat_protocol_version": "2026-07-28",
+          "agentcat_session_id_source": "supplied"
+        },
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    },
+    {
+      "content_type": "application/json",
+      "query": "",
+      "body": {
+        "id": "<evt#13>",
+        "project_id": "proj_E2E000000000000000000000000",
+        "session_id": "<ses#1>",
+        "event_type": "agentcat:custom",
+        "resource_name": "server-form-no-valid-tag",
+        "duration": "<duration>",
+        "timestamp": "<timestamp>",
+        "parameters": {
+          "from": "emit_custom_server"
+        },
+        "identify_data": {},
+        "sdk_language": "Rust",
+        "agentcat_version": "1.0.0",
+        "server_name": "e2e-server",
+        "server_version": "1.0.0",
+        "client_name": "e2e-client",
+        "client_version": "1.0.0"
+      }
+    }
+  ]
+}

@@ -1,6 +1,5 @@
-//! `call` against the TS SDK: the cases of `tests/vectors/call.json`, property tests that run
-//! random arguments and structured content through the JS oracle, and Rust-only tests of the
-//! error shapes (RD-05, RD-06, C24, C41).
+//! `call`: the cases of `tests/vectors/call.json` and `tests/vectors/call_cases.json`, property
+//! tests of the strip and of the mirror's key order, and tests of the error shapes.
 use std::collections::BTreeSet;
 
 use proptest::prelude::*;
@@ -11,10 +10,11 @@ use super::{
     cancelled_error, code_name, error_data_error, mirror_mint_back, prepend_mint_back,
     report_missing, result_error, strip_arguments,
 };
-use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, report_missing_log_line};
+use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM};
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
+use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{json_value, object_key};
-use crate::test_support::{assert_js_eq, config, oracle, vectors};
+use crate::test_support::{assert_same_json_text, config, vectors};
 
 /// The case name prefixes of `call.json`.
 const KINDS: [&str; 5] = [
@@ -51,7 +51,7 @@ fn injectable(name: &str) -> &'static str {
         .unwrap_or_else(|| panic!("{name} is not an injected parameter"))
 }
 
-/// The registry entry of tool `name` in a TS registry, `[[tool, [params]]]`.
+/// The registry entry of tool `name` in a registry, `[[tool, [params]]]`.
 fn entry_of(registry: &Value, name: &str) -> Option<ToolEntry> {
     registry
         .as_array()?
@@ -68,44 +68,48 @@ fn entry_of(registry: &Value, name: &str) -> Option<ToolEntry> {
         })
 }
 
-/// The rmcp result of the TS result `ts`, after checking that it survives a round trip through
-/// rmcp's `CallToolResult` (so the comparisons see every key of the TS result).
-fn result_from_ts(ts: &Value) -> CallToolResult {
-    let result: CallToolResult =
-        serde_json::from_value(ts.clone()).unwrap_or_else(|e| panic!("rmcp cannot hold {ts}: {e}"));
+/// The rmcp result of the result `fixture`, after checking that it survives a round trip through
+/// rmcp's `CallToolResult` (so the comparisons see every key of the result).
+fn result_from_json(fixture: &Value) -> CallToolResult {
+    let result: CallToolResult = serde_json::from_value(fixture.clone())
+        .unwrap_or_else(|e| panic!("rmcp cannot hold {fixture}: {e}"));
     assert_eq!(
         serde_json::to_value(&result).unwrap(),
-        *ts,
+        *fixture,
         "rmcp's CallToolResult drops or changes a key"
     );
     result
 }
 
-/// Checks the fields of an rmcp result that TS's result has: `content`, `structuredContent` and
-/// `isError`.
-fn check_result(result: &CallToolResult, ts: &Value, context: &str) {
+/// Checks the fields of an rmcp result that the fixture result has: `content`, `structuredContent`
+/// and `isError`.
+fn check_result(result: &CallToolResult, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(result).unwrap();
     for key in ["content", "structuredContent", "isError"] {
-        match (actual.get(key), ts.get(key)) {
-            (Some(actual), Some(ts)) => assert_js_eq(actual, ts, &format!("{context}: {key}")),
+        match (actual.get(key), fixture.get(key)) {
+            (Some(actual), Some(fixture)) => {
+                assert_same_json_text(actual, fixture, &format!("{context}: {key}"));
+            }
             (None, None) => {}
-            (actual, ts) => panic!("{context}: {key} is {actual:?}, TS {ts:?}"),
+            (actual, fixture) => {
+                panic!("{context}: {key} is {actual:?}, the fixture has {fixture:?}")
+            }
         }
     }
 }
 
-/// Checks `strip_arguments` against TS's arguments for the call `input` (`{name, arguments,
-/// registry}`).
-fn check_strip(input: &Value, ts: &Value, context: &str) {
+/// Checks `strip_arguments` against the arguments the fixture gives for the call `input` (`{name,
+/// arguments, registry}`).
+fn check_strip(input: &Value, fixture: &Value, context: &str) {
     let name = input["name"].as_str().unwrap();
     let arguments = object(&input["arguments"]);
     let entry = entry_of(&input["registry"], name);
     let actual = strip_arguments(arguments, entry.as_ref(), name);
-    assert_js_eq(&Value::Object(actual), ts, context);
+    assert_same_json_text(&Value::Object(actual), fixture, context);
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let mut seen = BTreeSet::new();
     for case in vectors::cases("call") {
         let name = vectors::name(&case);
@@ -115,7 +119,7 @@ fn vectors_match_ts() {
         match kind {
             "strip" => check_strip(input, output, name),
             "mint-back" => {
-                let mut result = result_from_ts(&input["result"]);
+                let mut result = result_from_json(&input["result"]);
                 if let Some(text) = input["text"].as_str() {
                     prepend_mint_back(&mut result, text.to_owned());
                 }
@@ -125,17 +129,15 @@ fn vectors_match_ts() {
                 let mut structured = input.get("structuredContent").cloned();
                 mirror_mint_back(&mut structured, object(&input["mint"]).clone());
                 match output.get("structuredContent") {
-                    Some(ts) => assert_js_eq(structured.as_ref().unwrap(), ts, name),
+                    Some(fixture) => {
+                        assert_same_json_text(structured.as_ref().unwrap(), fixture, name);
+                    }
                     None => assert_eq!(structured, None, "{name}"),
                 }
             }
             "result-error" => {
-                let result = result_from_ts(input);
-                let mut ts = output.clone();
-                // RD-06: the platform is "rust".
-                assert_eq!(ts["platform"], "javascript", "{name}");
-                ts["platform"] = json!("rust");
-                assert_js_eq(&Value::Object(result_error(&result)), &ts, name);
+                let result = result_from_json(input);
+                assert_same_json_text(&Value::Object(result_error(&result)), output, name);
             }
             _ => check_report_missing(&case, name),
         }
@@ -147,33 +149,27 @@ fn vectors_match_ts() {
     );
 }
 
-/// A "report-missing:" case: the result and the log line of `report_missing`. A case with
-/// deviation RD-26 is one where TS reads the `length` of an object (R23): the test asserts
-/// Rust's line, which counts 0, and that it is not TS's.
+/// A "report-missing:" case: the result and the log line of `report_missing`. The line counts
+/// the UTF-16 units of a string context, the items of an array, and 0 for any other value: the
+/// `object-length-*` cases pin that an object with a `length` key counts 0 as well.
 fn check_report_missing(case: &Map<String, Value>, name: &str) {
     let (result, line) = report_missing(case["input"].get("context"));
-    let ts = &case["output"];
-    check_result(&result, &ts["value"], name);
-    let ts_logs: Vec<&str> = ts["logs"]
+    let expected = &case["output"];
+    check_result(&result, &expected["value"], name);
+    let logs: Vec<&str> = expected["logs"]
         .as_array()
         .unwrap()
         .iter()
         .map(|log| log.as_str().unwrap())
         .collect();
-    match case.get("deviation").and_then(Value::as_str) {
-        None => assert_eq!(vec![line.as_str()], ts_logs, "{name}"),
-        Some(deviation) => {
-            assert_eq!(deviation, "RD-26", "{name}");
-            assert_eq!(line, report_missing_log_line(0), "{name}: Rust counts 0");
-            assert_ne!(vec![line.as_str()], ts_logs, "{name}: TS counts the key");
-        }
-    }
+    assert_eq!(vec![line.as_str()], logs, "{name}");
 }
 
-/// The wire order of the mirrored `structured_content` is TS's (C21), also in the `JSON.stringify`
-/// text of each `structured:` case: `assert_js_eq` sorts index keys itself and cannot see this.
+/// The wire order of the mirrored `structured_content` is the fixture's, also in the
+/// `wire::stringify` text of each `structured:` case: `assert_same_json_text` sorts index keys
+/// itself and cannot see this.
 #[test]
-fn mirror_wire_order_matches_ts() {
+fn mirror_wire_order_keeps_the_index_keys_first() {
     let mut checked = 0;
     for case in vectors::cases("call") {
         let name = vectors::name(&case);
@@ -183,9 +179,9 @@ fn mirror_wire_order_matches_ts() {
         let input = &case["input"];
         let mut structured = input.get("structuredContent").cloned();
         mirror_mint_back(&mut structured, object(&input["mint"]).clone());
-        if let Some(ts_text) = case.get("output_text") {
+        if let Some(expected_text) = case.get("output_text") {
             let actual = serde_json::to_string(structured.as_ref().unwrap()).unwrap();
-            assert_eq!(&Value::String(actual), ts_text, "{name}");
+            assert_eq!(&Value::String(actual), expected_text, "{name}");
             checked += 1;
         } else {
             assert_eq!(structured, None, "{name}");
@@ -197,9 +193,9 @@ fn mirror_wire_order_matches_ts() {
     );
 }
 
-/// C24: the JSON-RPC code names.
+/// The JSON-RPC code names.
 #[test]
-fn code_names_follow_c24() {
+fn code_names_are_the_json_rpc_names() {
     for (code, name) in [
         (ErrorCode::PARSE_ERROR, "ParseError"),
         (ErrorCode::INVALID_REQUEST, "InvalidRequest"),
@@ -216,10 +212,10 @@ fn code_names_follow_c24() {
     }
 }
 
-/// RD-05 and RD-06: an `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that
-/// key order, and its `data` stays out.
+/// An `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that key order, and
+/// its `data` stays out.
 #[test]
-fn error_data_error_has_the_rd06_shape() {
+fn error_data_error_has_message_type_and_platform() {
     let error = ErrorData::new(
         ErrorCode::INVALID_PARAMS,
         "bad input",
@@ -237,10 +233,10 @@ fn error_data_error_has_the_rd06_shape() {
     );
 }
 
-/// C41, RD-34, RD-06: the error of a call whose future was dropped before it completed is
-/// `{message, type: "cancelled", platform: "rust"}`, in that key order.
+/// The error of a call whose future was dropped before it completed is `{message, type:
+/// "cancelled", platform: "rust"}`, in that key order.
 #[test]
-fn cancelled_error_has_the_c41_shape() {
+fn cancelled_error_has_message_type_and_platform() {
     let shape = Value::Object(cancelled_error());
     assert_eq!(
         serde_json::to_string(&shape).unwrap(),
@@ -248,8 +244,8 @@ fn cancelled_error_has_the_c41_shape() {
     );
 }
 
-/// RD-06: an error result without text has the TS message `Unknown error`, and one with text has
-/// no `type` (TS's is `undefined`).
+/// An error result without text has the message `Unknown error`, and one with text has no `type`
+/// (`type` is absent).
 #[test]
 fn result_error_has_no_type() {
     let result = CallToolResult::error(vec![]);
@@ -260,11 +256,49 @@ fn result_error_has_no_type() {
     );
 }
 
-/// The TS arguments of a random call, from the oracle: `{name, arguments, registry}`.
-fn ts_strip(input: &Value) -> Value {
-    oracle::call("oracle.strip", std::slice::from_ref(input))
-        .unwrap()
-        .unwrap()
+/// The cases of `call_cases.json`: `strip:` cases, the arguments a handler gets from random
+/// arguments with and without a registry entry, and `structured:` cases, the structured content
+/// of a result after the mirror. The check compares the JSON text, so the key order counts.
+#[test]
+fn strip_and_mirror_match_call_cases() {
+    let mut seen = BTreeSet::new();
+    for case in vectors::cases("call_cases") {
+        let name = vectors::name(&case);
+        let kind = kind_of(name);
+        seen.insert(kind);
+        let input = &case["input"];
+        let actual = match kind {
+            "strip" => {
+                let tool = input["name"].as_str().unwrap();
+                let entry = entry_of(&input["registry"], tool);
+                Value::Object(strip_arguments(
+                    object(&input["arguments"]),
+                    entry.as_ref(),
+                    tool,
+                ))
+            }
+            "structured" => {
+                let mut structured = input.get("structuredContent").cloned();
+                mirror_mint_back(&mut structured, object(&input["mint"]).clone());
+                let mut result = Map::new();
+                if let Some(structured) = structured {
+                    result.insert("structuredContent".to_owned(), structured);
+                }
+                Value::Object(result)
+            }
+            other => panic!("{name}: call_cases.json has no {other} cases"),
+        };
+        assert_eq!(
+            serde_json::to_string(&actual).unwrap(),
+            serde_json::to_string(&case["output"]).unwrap(),
+            "{name}"
+        );
+    }
+    assert_eq!(
+        seen,
+        BTreeSet::from(["strip", "structured"]),
+        "call_cases.json has cases of both kinds"
+    );
 }
 
 fn arg_key() -> impl Strategy<Value = String> {
@@ -277,8 +311,11 @@ fn arg_key() -> impl Strategy<Value = String> {
 proptest! {
     #![proptest_config(config())]
 
+    /// With a registry entry, the strip removes the names the entry recorded; without one, all
+    /// three injected names, or only `session_id` and `agent_id` for `get_more_tools`. Every
+    /// other argument keeps its value and its place.
     #[test]
-    fn strip_matches_ts(
+    fn strip_removes_only_the_injected_names_and_keeps_the_order(
         entries in prop::collection::vec((arg_key(), json_value(1, 2)), 0..=6),
         tool in prop::sample::select(vec!["get_more_tools", "t"]),
         registry in prop_oneof![
@@ -289,14 +326,26 @@ proptest! {
         ],
     ) {
         let arguments: Map<String, Value> = entries.into_iter().collect();
+        let removed: Vec<&str> = match &registry {
+            Some((name, params)) if *name == tool => params.clone(),
+            _ if tool == "get_more_tools" => vec![SESSION_ID_PARAM, AGENT_ID_PARAM],
+            _ => vec![SESSION_ID_PARAM, AGENT_ID_PARAM, CONTEXT_PARAM],
+        };
         let registry = registry.map_or(Value::Null, |(name, params)| json!([[name, params]]));
-        let input = json!({"name": tool, "arguments": arguments, "registry": registry});
-        let ts = ts_strip(&input);
-        check_strip(&input, &ts, &input.to_string());
+        let entry = entry_of(&registry, tool);
+        let actual = strip_arguments(&arguments, entry.as_ref(), tool);
+        let expected: Vec<(&String, &Value)> = arguments
+            .iter()
+            .filter(|(key, _)| !removed.contains(&key.as_str()))
+            .collect();
+        prop_assert_eq!(actual.iter().collect::<Vec<_>>(), expected);
     }
 
+    /// The mirror gives an object without its own `mcp_session` key that key, with the mint as
+    /// its value, after the array-index keys (ascending) and before the other keys (in their
+    /// order); the values stay. Any other structured content stays as it is, key order included.
     #[test]
-    fn mirror_matches_ts(
+    fn mirror_puts_mcp_session_after_the_index_keys(
         structured in prop_oneof![
             3 => prop::collection::vec((object_key(), json_value(1, 2)), 0..=6)
                 .prop_map(|entries| Some(Value::Object(entries.into_iter().collect()))),
@@ -311,29 +360,26 @@ proptest! {
             body.insert("mcp_session".to_owned(), json!("customer"));
         }
         let mint: Map<String, Value> = mint_keys.into_iter().map(|key| (key.to_owned(), json!(format!("<{key}>")))).collect();
-        let mut result = json!({"content": []});
-        if let Some(structured) = &structured {
-            result["structuredContent"] = structured.clone();
-        }
-        let ts = oracle::call(
-            "handles.mirrorStructuredMintBack",
-            &[result, Value::Object(mint.clone())],
-        ).unwrap().unwrap();
-        mirror_mint_back(&mut structured, mint);
-        let context = format!("{structured:?}");
-        match (&structured, ts.get("structuredContent")) {
-            (Some(actual), Some(ts)) => {
-                assert_js_eq(actual, ts, &context);
-                // An object that is left alone keeps its order (R23: TS's index-first order of a
-                // customer's own keys is a JavaScript artifact); a mirrored one has C21's.
-                if let (false, Value::Object(actual), Value::Object(ts)) = (own, actual, ts) {
-                    let actual: Vec<&String> = actual.keys().collect();
-                    let ts: Vec<&String> = ts.keys().collect();
-                    assert_eq!(actual, ts, "{context}: key order");
+        let before = structured.clone();
+        mirror_mint_back(&mut structured, mint.clone());
+        match (&before, &structured) {
+            (Some(Value::Object(body)), Some(Value::Object(mirrored)))
+                if !body.contains_key("mcp_session") =>
+            {
+                let order = index_keys_first(
+                    std::iter::once("mcp_session").chain(body.keys().map(String::as_str)),
+                );
+                let keys: Vec<&str> = mirrored.keys().map(String::as_str).collect();
+                prop_assert_eq!(keys, order);
+                prop_assert_eq!(&mirrored["mcp_session"], &Value::Object(mint));
+                for (key, value) in body {
+                    prop_assert_eq!(&mirrored[key], value);
                 }
             }
-            (None, None) => {}
-            (actual, ts) => panic!("{context}: {actual:?}, TS {ts:?}"),
+            _ => prop_assert_eq!(
+                serde_json::to_string(&structured).unwrap(),
+                serde_json::to_string(&before).unwrap()
+            ),
         }
     }
 }

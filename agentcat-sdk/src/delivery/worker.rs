@@ -1,4 +1,4 @@
-//! The worker of a handle (C36, B-087, B-101 to B-105): one OS thread, `agentcat-delivery`, with a
+//! The worker of a handle: one OS thread, `agentcat-delivery`, with a
 //! current-thread tokio runtime that has the time driver. Its loop writes the queued log lines,
 //! takes pending jobs while fewer than `concurrency` run, answers `flush` and `shutdown` and owns
 //! their deadlines. Each job runs as a task on the worker's runtime and holds its slot through
@@ -14,17 +14,17 @@ use tokio::sync::Notify;
 use tokio::task::JoinHandle;
 
 use super::queue::{Job, Kind, Queue, Request, Worker};
-use super::wire::publish_request;
+use super::request::publish_request;
 use super::{DeliveryConfig, LineWriter, Observer, Publisher};
 use crate::event::assemble::from_call;
-use crate::js;
-use crate::pipeline::TsEvent;
+use crate::pipeline::EventObject;
 use crate::pipeline::process::{Redactors, process};
+use crate::wire;
 
 /// The name of the worker thread.
 pub(super) const THREAD_NAME: &str = "agentcat-delivery";
 
-/// TS's line after the fourth failed attempt of an event, before the error.
+/// The line after the fourth failed attempt of an event, before the error.
 const DELIVERY_FAILED: &str = "Failed to deliver AgentCat event after retries: ";
 
 /// The line when the worker's thread or its runtime cannot start, before the error.
@@ -154,7 +154,7 @@ fn run_thread(shared: &Arc<Shared>) {
     // The runtime drops here, before `_exit`, with any task left on it.
 }
 
-/// The worker's loop (C36). Each turn it writes the queued lines, starts pending jobs while
+/// The worker's loop. Each turn it writes the queued lines, starts pending jobs while
 /// fewer than `concurrency` run, and answers the requests:
 ///
 /// - A flush gets `true` once nothing is pending or in flight, `false` at its deadline.
@@ -233,8 +233,8 @@ async fn run(shared: &Arc<Shared>) {
     }
 }
 
-/// Stops the worker for good (C36, C12): drops the pending jobs, after TS's `Shutting down with
-/// <n> events still in queue` when there are any (the pending queue only, as TS counts it), and
+/// Stops the worker for good: drops the pending jobs, after the line `Shutting down with <n>
+/// events still in queue` when there are any (`<n>` counts the pending queue only), and
 /// aborts the jobs in flight. It returns once each aborted job is dropped, so the hooks and the
 /// redaction tasks of the abandoned events are aborted too before any caller hears the answer.
 async fn stop(shared: &Shared, tasks: &mut Vec<JoinHandle<()>>) {
@@ -270,7 +270,7 @@ impl Drop for Slot {
 /// One job, holding `_slot` until it ends: a tool call is assembled into its event
 /// ([`from_call`]), the event goes through [`process`] (whose lines are written when it ends),
 /// the observer is told about the finished event, and an event with a project is posted with
-/// TS's retries ([`post`]); a telemetry-only event (`projectId` `""`) is never posted (B-104).
+/// retries ([`post`]); a telemetry-only event (`projectId` `""`) is never posted.
 async fn run_job(shared: Arc<Shared>, job: Job, _slot: Slot) {
     let job = match job {
         Job::Call(record) => from_call(*record, &shared.project_id),
@@ -296,13 +296,13 @@ async fn run_job(shared: Arc<Shared>, job: Job, _slot: Slot) {
     }
 }
 
-/// Posts `event` as TS's `sendEvent` does (B-102): up to 4 attempts with one request, the same
+/// Posts `event`: up to 4 attempts with one request, the same
 /// `evt_` ID each time. After each failure `Failed to send event <id>, retrying... [Error:
 /// <text>]`, then the next of `retry_delays`; after the fourth `Failed to deliver AgentCat event
-/// after retries: <text>`; on success TS's metadata line ([`success_line`]). The publisher is
+/// after retries: <text>`; on success the metadata line ([`success_line`]). The publisher is
 /// prepared first ([`Publisher::prepare`]), with its lines written; one that can never send gets
-/// no attempt, only the final line (C44).
-async fn post(shared: &Shared, event: &TsEvent) {
+/// no attempt, only the final line.
+async fn post(shared: &Shared, event: &EventObject) {
     let mut log = Vec::new();
     let prepared = shared.publisher.prepare(&mut log);
     for line in &log {
@@ -313,7 +313,7 @@ async fn post(shared: &Shared, event: &TsEvent) {
         return;
     }
     let request = publish_request(event);
-    let id = js::to_js_string(event.get("id"));
+    let id = wire::coerce_to_string(event.get("id"));
     let mut delays = shared.config.retry_delays.iter();
     loop {
         match shared.publisher.publish(request.clone()).await {
@@ -335,14 +335,14 @@ async fn post(shared: &Shared, event: &TsEvent) {
     }
 }
 
-/// TS's line after a successful attempt, the event's metadata and never its payload: `Successfully
+/// The line after a successful attempt, the event's metadata and never its payload: `Successfully
 /// sent event <id> | <eventType> | session <sessionId> | <projectId> | <duration> ms | <actor>`,
-/// each field as a JavaScript template literal writes it (`undefined` for an absent one), the
-/// actor the `identifyActorGivenId` when it is truthy, else `anonymous`.
-fn success_line(event: &TsEvent) -> String {
-    let field = |key: &str| js::to_js_string(event.get(key));
+/// each field in its string form ([`wire::coerce_to_string`], `undefined` for an absent one), the
+/// actor the `identifyActorGivenId` when it is truthy ([`wire::truthy`]), else `anonymous`.
+fn success_line(event: &EventObject) -> String {
+    let field = |key: &str| wire::coerce_to_string(event.get(key));
     let actor = match event.get("identifyActorGivenId") {
-        Some(actor) if js::truthy(actor) => js::to_js_string(Some(actor)),
+        Some(actor) if wire::truthy(actor) => wire::coerce_to_string(Some(actor)),
         _ => "anonymous".to_owned(),
     };
     format!(
@@ -355,7 +355,7 @@ fn success_line(event: &TsEvent) -> String {
     )
 }
 
-/// The `serde_json` features a customer build unified on that change the SDK's JSON (R22), found
+/// The `serde_json` features a customer build unified on that change the SDK's JSON, found
 /// at run time by parsing a probe: `arbitrary_precision` lets a `Number` read `1e400`;
 /// `float_roundtrip` makes `f64` parsing exact, where the default parser rounds
 /// `9007199254740993.0`, `0.9999999999999999` and `7.038531e-26` to a neighbor.
@@ -375,10 +375,12 @@ pub(super) fn json_features() -> Vec<&'static str> {
     features
 }
 
-/// The log line for a unified `serde_json` `feature` (R22).
+/// The log line for a unified `serde_json` `feature`. The feature changes how `serde_json` reads
+/// or writes numbers, so the JSON text that the token estimates and the size checks count can
+/// differ from that of a build without it.
 pub(super) fn feature_warning(feature: &str) -> String {
     format!(
         "Warning: serde_json feature \"{feature}\" is enabled in this build; AgentCat token \
-         estimates and size checks may differ from the TypeScript SDK"
+         estimates and size checks may differ from builds without it"
     )
 }

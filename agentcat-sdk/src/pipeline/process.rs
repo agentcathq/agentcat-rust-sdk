@@ -1,17 +1,17 @@
-//! The per-event pipeline of TS's queue (`processEvent` in `src/modules/eventQueue.ts`, B-087):
-//! [`process`] takes one [`EventJob`] through every stage, in TS's order, and gives the event to
-//! publish, or nothing when a stage drops it. Each stage's failure is a log line with TS's text.
+//! The per-event pipeline of the delivery queue: [`process`] takes one [`EventJob`] through every
+//! stage, in a fixed order, and gives the event to publish, or nothing when a stage drops it.
+//! Each stage's failure is a log line with the stage's text.
 //!
 //! The customer's redaction hooks run on the job's runtime, the one the call (or the caller of
-//! `publish_custom_event`) ran on, not on the delivery worker's (C38, C14). Without that runtime,
-//! or when the hook's task panics or is cancelled, the event is dropped with the stage's line
-//! (RD-36). The hook's task is aborted when the pipeline is dropped before it ends.
+//! `publish_custom_event`) ran on, not on the delivery worker's. Without that runtime, or when the
+//! hook's task panics or is cancelled, the event is dropped with the stage's line. The hook's task
+//! is aborted when the pipeline is dropped before it ends.
 use std::time::Duration;
 
 use serde_json::Value;
 use tokio::runtime::Handle;
 
-use super::TsEvent;
+use super::EventObject;
 use super::redact::{apply_event_redaction, redact_strings, visit_strings};
 use super::sanitize::sanitize_event;
 use super::settle::{apply, failure_message, settle};
@@ -37,28 +37,28 @@ pub(crate) struct Redactors {
     pub(crate) event: Option<EventRedactor>,
 }
 
-/// The event `job` publishes, after TS's stages in TS's order (B-087), or `None` when a stage
-/// drops it. Each stage's log lines go to `log`.
+/// The event `job` publishes, after the stages below in their order, or `None` when a stage drops
+/// it. Each stage's log lines go to `log`.
 ///
 /// 1. The backtrace of a captured error becomes `error.stack` ([`render_backtrace`]).
 /// 2. The call hooks settle, each within `hook_budget` ([`settle`]), and their results go into the
 ///    event ([`apply`]). When `apply` cannot mint a hook-mode session, `Failed to resolve pending
-///    hook results: could not generate a session ID`, and the event goes on, as TS's `catch` does.
+///    hook results: could not generate a session ID`, and the event goes on.
 /// 3. With `job.event_redaction` and an event hook: the hook gets the event as an [`Event`] on the
 ///    job's runtime, and the system fields come back from the original
 ///    ([`apply_event_redaction`]). The hook's `None` drops the event with `Event dropped by
-///    redactEvent hook`; its error, its task's panic or no runtime drops it with `Failed to redact
+///    redact_event hook`; its error, its task's panic or no runtime drops it with `Failed to redact
 ///    event (event-level hook): <why>`.
 /// 4. With `job.string_redaction` and a string hook: the hook gets each string of the walk of
 ///    [`redact_strings`] in walk order, all in one task on the job's runtime, and its results
 ///    replace the strings; the first error, the task's panic or no runtime drops the event with
 ///    `Failed to redact event: <why>`.
 /// 5. [`sanitize_event`], then [`truncate_event`], each merged into the event with [`assign`]; a
-///    truncation error drops it with `Failed to truncate event: <error>` (Rust's sanitization
-///    cannot fail, so TS's `Failed to sanitize event` line never comes).
+///    truncation error drops it with `Failed to truncate event: <error>` (sanitization cannot
+///    fail, so it has no line).
 /// 6. An event without an `id` (or with `""`) gets a new `evt_` ID; when none can be made, the
 ///    event is dropped with `Failed to deliver AgentCat event after retries: could not generate an
-///    event ID`, the line of TS's outer `catch`.
+///    event ID`, the line of a failed delivery.
 ///
 /// Runs on a runtime with the time driver (the hook budget). Dropping the future aborts the
 /// hook tasks of the job and a redaction task that runs.
@@ -67,7 +67,7 @@ pub(crate) async fn process(
     redactors: &Redactors,
     hook_budget: Duration,
     log: &mut Vec<String>,
-) -> Option<TsEvent> {
+) -> Option<EventObject> {
     process_with_ids(job, redactors, hook_budget, new_event_id, log).await
 }
 
@@ -78,7 +78,7 @@ async fn process_with_ids(
     hook_budget: Duration,
     new_id: fn() -> Option<String>,
     log: &mut Vec<String>,
-) -> Option<TsEvent> {
+) -> Option<EventObject> {
     let EventJob {
         mut event,
         hooks,
@@ -100,9 +100,9 @@ async fn process_with_ids(
     if event_redaction && let Some(hook) = &redactors.event {
         match redact_event(hook, &event, runtime.as_ref()).await {
             Ok(result) => {
-                let Some(redacted) = apply_event_redaction(&event, result.map(Event::into_ts))
+                let Some(redacted) = apply_event_redaction(&event, result.map(Event::into_object))
                 else {
-                    log.push("Event dropped by redactEvent hook".to_owned());
+                    log.push("Event dropped by redact_event hook".to_owned());
                     return None;
                 };
                 event = redacted;
@@ -151,39 +151,38 @@ async fn process_with_ids(
     Some(event)
 }
 
-/// JavaScript's `Object.assign(event, stage)`, the way TS merges a stage's result into the event:
-/// each key of `stage` sets its value, in place when `event` has the key and last when it does
-/// not; a key `stage` lacks stays.
-pub(crate) fn assign(event: &mut TsEvent, stage: TsEvent) {
+/// Merges a stage's result into the event: each key of `stage` sets its value, in place when
+/// `event` has the key and last when it does not; a key `stage` lacks stays.
+pub(crate) fn assign(event: &mut EventObject, stage: EventObject) {
     event.extend(stage);
 }
 
-/// What the event-level `hook` gives for `event`, run on `runtime` (C38): `Ok(None)` drops the
+/// What the event-level `hook` gives for `event`, run on `runtime`: `Ok(None)` drops the
 /// event; `Err` holds why it could not run (no runtime, its error, its task's panic or
 /// cancellation).
 async fn redact_event(
     hook: &EventRedactor,
-    event: &TsEvent,
+    event: &EventObject,
     runtime: Option<&Handle>,
 ) -> Result<Option<Event>, String> {
     let runtime = runtime.ok_or_else(|| NO_RUNTIME.to_owned())?;
-    match AbortOnDrop::new(runtime.spawn(hook.call(Event::from_ts(event)))).await {
+    match AbortOnDrop::new(runtime.spawn(hook.call(Event::from_object(event)))).await {
         Ok(result) => result.map_err(|error| error.to_string()),
         Err(error) => Err(failure_message(error)),
     }
 }
 
 /// `event` with each string the walk of [`redact_strings`] visits replaced by what the string
-/// `hook` gives for it (C38). The walk's own rule decides which strings and in what order:
+/// `hook` gives for it. The walk's own rule decides which strings and in what order:
 /// [`visit_strings`] collects them from the borrowed event, one task on `runtime` awaits the hook
 /// on each in that order and stops at its first error, and [`redact_strings`] puts the results in.
 /// `Err` holds why it could not run (no runtime, the hook's error, the task's panic or
 /// cancellation).
 async fn redact_event_strings(
     hook: &StringRedactor,
-    event: &TsEvent,
+    event: &EventObject,
     runtime: Option<&Handle>,
-) -> Result<TsEvent, String> {
+) -> Result<EventObject, String> {
     let runtime = runtime.ok_or_else(|| NO_RUNTIME.to_owned())?;
     let mut strings = Vec::new();
     visit_strings(event, |text| strings.push(text.to_owned()));

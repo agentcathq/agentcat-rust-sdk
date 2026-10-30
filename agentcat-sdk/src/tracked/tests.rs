@@ -1,7 +1,7 @@
 //! `Tracked<H>` forwards: each `ServerHandler` method that a client can reach answers through the
-//! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only
-//! the streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle
-//! that `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes (C45).
+//! wrapper exactly as through the handler alone. The notification methods and `get_tool` (only the
+//! streamable HTTP transport calls it) are forwarded too; a client cannot call them. A handle that
+//! `AGENTCAT_ENABLED` turned off forwards the methods the SDK otherwise changes.
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::time::Duration;
@@ -287,9 +287,9 @@ async fn forwards_every_method() {
     tracked.cancel().await.unwrap();
 }
 
-/// C01, design §6.2 (every other method forwards unchanged): `accepted_subscription_filter`, which
-/// rmcp asks for a `subscriptions/listen` request, is the wrapped handler's own answer: the filter
-/// the [`Probe`] accepts, and none from a handler that keeps rmcp's default.
+/// Every other method forwards unchanged: `accepted_subscription_filter`, which rmcp asks for a
+/// `subscriptions/listen` request, is the wrapped handler's own answer: the filter the [`Probe`]
+/// accepts, and none from a handler that keeps rmcp's default.
 #[test]
 fn accepted_subscription_filter_is_forwarded() {
     /// A handler with rmcp's default methods only.
@@ -319,7 +319,7 @@ fn tracked_debug_names_the_inner_type() {
 }
 
 /// The warning for a listing with no tools.
-const EMPTY_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before AgentCat.track().";
+const EMPTY_WARNING: &str = "Warning: No tools found in the original list. This is likely due to the tools not being registered before `track`.";
 
 /// A tracked handle that logs to a [`RecordingSink`].
 fn recording_handle() -> (AgentCat, Arc<RecordingSink>) {
@@ -400,7 +400,11 @@ async fn get_more_tools_on_every_page() {
             .iter()
             .map(|t| t.name.to_string())
             .collect();
-        assert_eq!(names, [own, GET_MORE_TOOLS_NAME], "C20");
+        assert_eq!(
+            names,
+            [own, GET_MORE_TOOLS_NAME],
+            "the own tool comes first"
+        );
     }
 }
 
@@ -420,7 +424,7 @@ fn get_tool_returns_the_injected_schema() {
     assert_ne!(expected, own);
     assert_eq!(tracked.get_tool("echo"), Some(expected));
 
-    // C02: the report-missing tool answers by name; an unknown name has none.
+    // The report-missing tool answers by name; an unknown name has none.
     let more = tracked.get_tool(GET_MORE_TOOLS_NAME).expect("injected");
     assert_eq!(more, crate::inject::get_more_tools_tool());
     assert_eq!(tracked.get_tool("nope"), None);
@@ -495,7 +499,10 @@ async fn get_tool_leaves_the_listing_logs_intact() {
     let (_, entry) = tracked
         .lookup_tool("own_session")
         .expect("listed by the macro");
-    assert!(entry.declares_session, "C19");
+    assert!(
+        entry.declares_session,
+        "the entry declares the session parameter"
+    );
     assert!(tracked.get_tool("own_session").is_some());
     assert!(sink.logs().is_empty(), "a lookup logs nothing");
     all_tools(&connect(tracked, "later").await).await;
@@ -511,10 +518,10 @@ fn conflict_lines(sink: &RecordingSink) -> usize {
         .count()
 }
 
-/// TS's `getReportedConflicts` "returns a stable set per key, and independent sets for different
-/// keys" (C19: the set lives in the registry of a handle and an inner type, TS's per-server
-/// key): listing again through the same handle, also through a second `track` of the same type,
-/// does not log the conflict again, and another handle has its own set and logs it once.
+/// A stable set of reported conflicts per key, and independent sets for different keys (the set
+/// lives in the registry of a handle and an inner type, a per-server key): listing again through
+/// the same handle, also through a second `track` of the same type, does not log the conflict
+/// again, and another handle has its own set and logs it once.
 #[tokio::test]
 async fn conflict_reports_are_kept_per_handle_and_type() {
     let (first, first_sink) = recording_handle();
@@ -559,11 +566,11 @@ async fn call_answer(
     answer(client, ClientRequest::CallToolRequest(request)).await
 }
 
-/// C45, C29: a handle that `AGENTCAT_ENABLED` turned off forwards untouched. The listing is the
-/// handler's own (no `get_more_tools`, no injected parameters), `get_tool` is the handler's, a
-/// call reaches the handler with its raw arguments and a `CallContext` without session or agent,
-/// `get_more_tools` is the handler's to answer, `initialize` keeps no client identity, and nothing
-/// reaches the sink: no record, no log line.
+/// A handle that `AGENTCAT_ENABLED` turned off forwards untouched. The listing is the handler's own
+/// (no `get_more_tools`, no injected parameters), `get_tool` is the handler's, a call reaches the
+/// handler with its raw arguments and a `CallContext` without session or agent, `get_more_tools` is
+/// the handler's to answer, `initialize` keeps no client identity, and nothing reaches the sink: no
+/// record, no log line.
 #[tokio::test]
 async fn disabled_handle_forwards_untouched() {
     let options = || Options::default().enable_agent_tracking(true);
@@ -622,10 +629,10 @@ impl ServerHandler for CountedInfo {
     }
 }
 
-/// C45: on a handle that `AGENTCAT_ENABLED` turned off, each form of custom event returns
-/// `Ok(())` before it does any work, an empty project ID included: the string form, the
-/// `CallContext` form, and the `Tracked` form, which does not call the handler's `get_info`.
-/// Nothing reaches the sink, not even the "Published custom event" line.
+/// On a handle that `AGENTCAT_ENABLED` turned off, each form of custom event returns `Ok(())`
+/// before it does any work, an empty project ID included: the string form, the `CallContext` form,
+/// and the `Tracked` form, which does not call the handler's `get_info`. Nothing reaches the sink,
+/// not even the "Published custom event" line.
 #[tokio::test]
 async fn disabled_handle_custom_events_do_nothing() {
     let sink = Arc::new(RecordingSink::default());

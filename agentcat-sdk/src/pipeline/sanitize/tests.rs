@@ -1,32 +1,17 @@
-//! `sanitize_event` against TS: the vectors of `tests/vectors/sanitize.json` and a property test
-//! that runs the same events through the JS oracle.
+//! `sanitize_event`: the cases of `tests/vectors/sanitize.json` and
+//! `tests/vectors/sanitize_cases.json`, and property tests of what the step replaces and keeps.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
-use super::sanitize_event;
-use crate::pipeline::TsEvent;
-use crate::test_support::strategies::{js_string, ts_event};
-use crate::test_support::{assert_js_eq, config_capped, markers, oracle, vectors};
-
-/// Each RD-24 and RD-27 case and its twin, a case of the same file. RD-24: the same event with
-/// `_proto_` for each `__proto__` key. RD-27: the same blocks with `{"a": 1}` for the `type`
-/// that has an own `toString` key.
-const TWINS: [(&str, &str); 7] = [
-    ("proto:parameters", "proto:parameters-twin"),
-    ("proto:parameters-string", "proto:parameters-string-twin"),
-    ("proto:parameters-null", "proto:parameters-null-twin"),
-    (
-        "proto:parameters-array-value",
-        "proto:parameters-array-value-twin",
-    ),
-    ("proto:parameters-nested", "proto:parameters-nested-twin"),
-    ("proto:structured-content", "proto:structured-content-twin"),
-    ("block:type-tostring-key", "block:type-object"),
-];
+use super::{BINARY_DATA_NOTE, sanitize_event};
+use crate::pipeline::EventObject;
+use crate::test_support::json::index_keys_first;
+use crate::test_support::strategies::{edge_string, tool_call_event};
+use crate::test_support::{assert_same_json_text, config_capped, markers, vectors};
 
 /// The event a case holds: `input`, or `input_text` parsed in insertion order; `$repeat`
 /// macros expanded.
-fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
+fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
     let value = match (case.get("input"), case.get("input_text")) {
         (Some(input), None) => input.clone(),
         (None, Some(Value::String(text))) => {
@@ -40,173 +25,95 @@ fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
     }
 }
 
-/// `value` with each `from` key renamed to `to`, at any depth, at the same place in the order.
-fn rename_key(value: &Value, from: &str, to: &str) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .map(|(key, item)| {
-                    let key = if key == from { to } else { key };
-                    (key.to_owned(), rename_key(item, from, to))
-                })
-                .collect(),
-        ),
-        Value::Array(items) => {
-            Value::Array(items.iter().map(|i| rename_key(i, from, to)).collect())
-        }
-        other => other.clone(),
-    }
-}
-
-/// `true` when `value` has a `__proto__` key anywhere.
-fn has_proto_key(value: &Value) -> bool {
-    match value {
-        Value::Object(map) => map.contains_key("__proto__") || map.values().any(has_proto_key),
-        Value::Array(items) => items.iter().any(has_proto_key),
-        _ => false,
-    }
-}
-
-/// The twin of the case `name` in [`TWINS`]: its name and the case.
-fn twin_of<'a>(
-    cases: &'a [Map<String, Value>],
-    name: &str,
-) -> (&'static str, &'a Map<String, Value>) {
-    let (_, twin_name) = TWINS
-        .iter()
-        .find(|(case, _)| *case == name)
-        .unwrap_or_else(|| panic!("{name} has a twin in TWINS"));
-    let twin = cases
-        .iter()
-        .find(|case| vectors::name(case) == *twin_name)
-        .unwrap_or_else(|| panic!("the twin {twin_name} of {name} is in the file"));
-    (twin_name, twin)
-}
-
+/// Cases that pin a rule by name: the `proto:` cases, that a `__proto__` key is an ordinary key
+/// and stays (each `-twin` case spells it `_proto_`); the `response:array` cases, that an array
+/// `response` stays an array; `block:type-tostring-key`, that a `type` object with a `toString`
+/// key is written `[object Object]` in the message, as any other object is (`block:type-object`).
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("sanitize");
     assert!(cases.len() >= 100, "sanitize.json has its cases");
     for case in &cases {
         let name = vectors::name(case);
         let context = format!("sanitize.json {name}");
-        let input = input_of(case, &context);
-        let actual = Value::Object(sanitize_event(&input));
-        let deviation = case.get("deviation").and_then(Value::as_str);
-        if deviation != Some("RD-27") {
-            assert!(
-                case.get("error").is_none(),
-                "{context}: only the RD-27 case throws in TS"
-            );
-        }
-        match deviation {
-            None => assert_js_eq(&actual, &case["output"], &context),
-            Some("RD-24") => check_rd24(&cases, name, &input, &actual, &context),
-            Some("RD-25") => check_rd25(&actual, &case["output"], &context),
-            Some("RD-27") => check_rd27(&cases, name, &input, &actual, case, &context),
-            Some(other) => panic!("{context}: unknown deviation {other}"),
-        }
+        assert!(
+            !case.contains_key("error"),
+            "{context}: sanitize never fails, so a case holds no error"
+        );
+        let actual = Value::Object(sanitize_event(&input_of(case, &context)));
+        assert_same_json_text(&actual, &case["output"], &context);
     }
 }
 
-/// RD-24: TS drops a `__proto__` key from the walked parts (a prototype assignment), Rust keeps
-/// it. The twin has `_proto_` for the key: Rust's event with the key renamed is TS's output for
-/// the twin. TS's output for the case itself is the twin's without the key.
-fn check_rd24(
-    cases: &[Map<String, Value>],
-    name: &str,
-    input: &TsEvent,
-    actual: &Value,
-    context: &str,
-) {
-    let (twin_name, twin) = twin_of(cases, name);
-    let renamed = rename_key(&Value::Object(input.clone()), "__proto__", "_proto_");
-    assert_eq!(
-        renamed,
-        Value::Object(input_of(twin, twin_name)),
-        "{context}: the twin {twin_name} has `_proto_` for `__proto__`"
-    );
-    assert!(
-        has_proto_key(actual),
-        "{context}: RD-24: Rust keeps the key"
-    );
-    assert_js_eq(
-        &rename_key(actual, "__proto__", "_proto_"),
-        &twin["output"],
-        &format!("{context}: RD-24, against the TS output of {twin_name}"),
-    );
+/// The cases of `sanitize_cases.json`: random tool-call events with large base64 strings and
+/// content blocks of every kind. The check compares the JSON text, so the key order counts.
+#[test]
+fn sanitize_matches_sanitize_cases() {
+    let cases = vectors::cases("sanitize_cases");
+    assert!(cases.len() >= 20, "sanitize_cases.json has its cases");
+    for case in &cases {
+        let name = vectors::name(case);
+        let actual = Value::Object(sanitize_event(&input_of(case, name)));
+        assert_eq!(
+            serde_json::to_string(&actual).unwrap(),
+            serde_json::to_string(&case["output"]).unwrap(),
+            "{name}"
+        );
+    }
 }
 
-/// RD-25: Rust keeps an array `response` an array; TS spreads it into an object with index keys.
-/// The array holds TS's values in index order, and every other field is TS's.
-fn check_rd25(actual: &Value, expected: &Value, context: &str) {
-    let mut event = actual.as_object().expect("an event").clone();
-    let Some(Value::Array(items)) = event.remove("response") else {
-        panic!("{context}: RD-25: the response stays an array");
+/// Whether the step replaces `text`: at least 10 240 UTF-16 units of `A-Z`, `a-z`, `0-9`, `+`,
+/// `/`, `\n` and `\r` (at least one), then only `=`.
+fn is_large_base64(text: &str) -> bool {
+    let body = text.trim_end_matches('=');
+    text.encode_utf16().count() >= 10_240
+        && !body.is_empty()
+        && body
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || "+/\n\r".contains(c))
+}
+
+/// Checks a walked value (the `parameters`, or the `structuredContent` of a response): each
+/// large base64 string is the note, every other value stays, and objects list their keys with
+/// the array-index keys first.
+fn check_walked(input: &Value, output: &Value) -> Result<(), TestCaseError> {
+    match (input, output) {
+        (Value::String(text), _) if is_large_base64(text) => {
+            prop_assert_eq!(output, BINARY_DATA_NOTE);
+        }
+        (Value::Array(items), Value::Array(out)) => {
+            prop_assert_eq!(items.len(), out.len());
+            for (item, out) in items.iter().zip(out) {
+                check_walked(item, out)?;
+            }
+        }
+        (Value::Object(map), Value::Object(out)) => {
+            let keys: Vec<&str> = out.keys().map(String::as_str).collect();
+            prop_assert_eq!(keys, index_keys_first(map.keys().map(String::as_str)));
+            for (key, item) in map {
+                check_walked(item, &out[key])?;
+            }
+        }
+        _ => prop_assert_eq!(output, input),
+    }
+    Ok(())
+}
+
+/// Whether the step keeps the content block `block` as it is: a `text` or `resource_link` block,
+/// a `resource` block without a `blob` in an object `resource`, and a block that is neither an
+/// object nor an array.
+fn keeps_block(block: &Value) -> bool {
+    let Value::Object(map) = block else {
+        return !block.is_array();
     };
-    let mut ts = expected.as_object().expect("TS's event").clone();
-    let Some(Value::Object(spread)) = ts.remove("response") else {
-        panic!("{context}: TS spreads the response into an object");
-    };
-    let keys: Vec<String> = (0..items.len()).map(|i| i.to_string()).collect();
-    assert_eq!(
-        spread.keys().cloned().collect::<Vec<_>>(),
-        keys,
-        "{context}"
-    );
-    let values = Value::Array(spread.into_iter().map(|(_, value)| value).collect());
-    assert_js_eq(&Value::Array(items), &values, context);
-    assert_js_eq(&Value::Object(event), &Value::Object(ts), context);
-}
-
-/// RD-27: TS throws when it writes the message for a `type` with an own `toString` key. Rust
-/// writes `[object Object]`: it gives TS's output for the twin, whose block has `{"a": 1}` for
-/// the `type` and is the same elsewhere.
-fn check_rd27(
-    cases: &[Map<String, Value>],
-    name: &str,
-    input: &TsEvent,
-    actual: &Value,
-    case: &Map<String, Value>,
-    context: &str,
-) {
-    assert_eq!(
-        case.get("error"),
-        Some(&json!(
-            "TypeError: Cannot convert object to primitive value"
-        )),
-        "{context}: TS throws"
-    );
-    let (twin_name, twin) = twin_of(cases, name);
-    let mut swapped = input.clone();
-    let block = &mut swapped["response"]["content"][0]["type"];
-    assert!(
-        block.get("toString").is_some(),
-        "{context}: the type has a toString key"
-    );
-    *block = json!({ "a": 1 });
-    assert_eq!(
-        Value::Object(swapped),
-        Value::Object(input_of(twin, twin_name)),
-        "{context}: the twin {twin_name} differs only in the type"
-    );
-    assert_js_eq(
-        actual,
-        &twin["output"],
-        &format!("{context}: RD-27, against the TS output of {twin_name}"),
-    );
-}
-
-/// Runs `event` through Rust and through TS (the oracle) and compares the results.
-fn compare(event: &TsEvent) {
-    let actual = Value::Object(sanitize_event(event));
-    let ts = oracle::call(
-        "sanitization.sanitizeEvent",
-        &[Value::Object(event.clone())],
-    )
-    .unwrap()
-    .expect("a reply");
-    assert_js_eq(&actual, &ts, "sanitizeEvent");
+    match map.get("type").and_then(Value::as_str) {
+        Some("text" | "resource_link") => true,
+        Some("resource") => !map
+            .get("resource")
+            .and_then(Value::as_object)
+            .is_some_and(|resource| resource.contains_key("blob")),
+        _ => false,
+    }
 }
 
 /// A string of 10 230 to 10 262 characters from the base64 alphabet with line breaks, a repeated
@@ -234,12 +141,12 @@ fn base64_run() -> impl Strategy<Value = String> + Clone {
 
 /// Strings of an event: mostly short, sometimes a [`base64_run`].
 fn text() -> impl Strategy<Value = String> + Clone {
-    prop_oneof![30 => js_string(8), 1 => base64_run()]
+    prop_oneof![30 => edge_string(8), 1 => base64_run()]
 }
 
-/// A content block that [`ts_event`] does not make: a `type` that is a number, `null`, a boolean,
-/// absent, an array or an object without a `toString` key (never RD-27); a block that is not an
-/// object; a `resource` of each shape.
+/// A content block that [`tool_call_event`] does not make: a `type` that is a number, `null`, a
+/// boolean, absent, an array or an object without a `toString` key (the text of such an object is
+/// pinned by the fixtures); a block that is not an object; a `resource` of each shape.
 fn odd_block() -> impl Strategy<Value = Value> {
     prop_oneof![
         prop::sample::select(vec![
@@ -269,12 +176,12 @@ fn odd_block() -> impl Strategy<Value = Value> {
     ]
 }
 
-/// A [`ts_event`] with up to 3 more content blocks ([`odd_block`]) in its `response`; its
+/// A [`tool_call_event`] with up to 3 more content blocks ([`odd_block`]) in its `response`; its
 /// `response` sometimes replaced by a string, a number or a boolean, and its `parameters` and
 /// `structuredContent` sometimes by a [`base64_run`] or an array holding one.
-fn sanitize_event_input() -> impl Strategy<Value = TsEvent> {
+fn sanitize_event_input() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(text()),
+        tool_call_event(text()),
         prop::collection::vec(odd_block(), 0..=3),
         0u8..10,
         prop::option::of(base64_run()),
@@ -316,18 +223,74 @@ fn sanitize_event_input() -> impl Strategy<Value = TsEvent> {
         })
 }
 
-// The property test leaves out the inputs where Rust differs from TS on purpose, which only the
-// vector cases of `sanitize.json` check against TS (with twins that rename the key or the type):
-// a `__proto__` key in the parameters, in `structuredContent` or in a block (RD-24); an array
-// `response` (RD-25); a block `type` with an own `toString` key (RD-27, where TS throws). It also
-// leaves out events with other shapes than a tool-call event (no `response`, a `parameters`
-// that is not `{request, extra}`): those are vector cases too. `ts_event` never makes a `toString`
-// or `__proto__` key, and `odd_block` has no `type` with a `toString` key.
+// The strategy makes tool-call events ([`tool_call_event`]) with more content blocks and other
+// `response` and `parameters` values. None has a `__proto__` key, a `toString` key or an array
+// `response`: the cases of `sanitize.json` hold those.
 proptest! {
     #![proptest_config(config_capped(300))]
 
+    /// A sanitized event comes back unchanged from a second run.
     #[test]
-    fn sanitize_matches_ts(event in sanitize_event_input()) {
-        compare(&event);
+    fn sanitize_is_idempotent(event in sanitize_event_input()) {
+        let once = sanitize_event(&event);
+        let twice = sanitize_event(&once);
+        prop_assert_eq!(serde_json::to_string(&twice).unwrap(), serde_json::to_string(&once).unwrap());
+    }
+
+    /// The step replaces only the large base64 strings of the `parameters` and of an object or
+    /// array `structuredContent`. Every other field stays, and the keys of the event and of an
+    /// object `response` come with the array-index keys first.
+    #[test]
+    fn sanitize_replaces_only_large_base64_strings_in_the_tool_values(
+        event in sanitize_event_input(),
+    ) {
+        let sanitized = sanitize_event(&event);
+        let keys: Vec<&str> = sanitized.keys().map(String::as_str).collect();
+        prop_assert_eq!(keys, index_keys_first(event.keys().map(String::as_str)));
+        for (key, value) in &event {
+            let out = &sanitized[key];
+            match (key.as_str(), value) {
+                ("parameters", _) => check_walked(value, out)?,
+                ("response", Value::Object(response)) => {
+                    let out = out.as_object().unwrap();
+                    let keys: Vec<&str> = out.keys().map(String::as_str).collect();
+                    prop_assert_eq!(keys, index_keys_first(response.keys().map(String::as_str)));
+                    for (key, value) in response {
+                        match (key.as_str(), value) {
+                            ("structuredContent", Value::Object(_) | Value::Array(_)) => {
+                                check_walked(value, &out[key])?;
+                            }
+                            ("content", Value::Array(_)) => {}
+                            _ => prop_assert_eq!(&out[key], value),
+                        }
+                    }
+                }
+                _ => prop_assert_eq!(out, value),
+            }
+        }
+    }
+
+    /// Each content block of an object `response` is kept when the dashboard can show it, and
+    /// replaced by a text block with a note otherwise.
+    #[test]
+    fn sanitize_keeps_the_blocks_it_can_show_and_replaces_the_others_with_a_note(
+        event in sanitize_event_input(),
+    ) {
+        let sanitized = sanitize_event(&event);
+        let Some(Value::Array(blocks)) = event.get("response").and_then(|response| response.get("content")) else {
+            return Ok(());
+        };
+        let out = sanitized["response"]["content"].as_array().unwrap();
+        prop_assert_eq!(blocks.len(), out.len());
+        for (block, out) in blocks.iter().zip(out) {
+            if keeps_block(block) {
+                prop_assert_eq!(out, block);
+            } else {
+                let note = out["text"].as_str().unwrap();
+                prop_assert_eq!(out.as_object().unwrap().len(), 2);
+                prop_assert_eq!(&out["type"], "text");
+                prop_assert!(note.starts_with('[') && note.ends_with(" redacted - not supported by AgentCat]"), "{}", note);
+            }
+        }
     }
 }

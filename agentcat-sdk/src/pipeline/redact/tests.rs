@@ -1,8 +1,8 @@
-//! `redact_strings` and `apply_event_redaction` against TS: the vectors of
-//! `tests/vectors/redact.json` and property tests that run the same events through the JS oracle.
+//! `redact_strings` and `apply_event_redaction`: the cases of `tests/vectors/redact.json` and
+//! `tests/vectors/redact_cases.json`, and property tests of the walk and of the restore.
 //!
-//! The redactor of every test is the oracle's: it records each string it gets, gives
-//! `"[R:" + s + "]"`, and fails on call number `throw_at` (1-based) when a case has one.
+//! The redactor of every test records each string it gets, gives `"[R:" + s + "]"`, and fails on
+//! call number `throw_at` (1-based) when a case has one.
 use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
@@ -10,19 +10,20 @@ use super::{
     EVENT_HOOK_FIELD, PROTECTED_FIELDS, RESTORED_FIELDS, STRING_HOOK_FIELD, apply_event_redaction,
     redact_strings, visit_strings,
 };
-use crate::pipeline::TsEvent;
-use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
-use crate::test_support::{assert_js_eq, config, markers, oracle, vectors};
+use crate::pipeline::EventObject;
+use crate::test_support::json::index_keys_first;
+use crate::test_support::strategies::{edge_string, json_value, object_key, tool_call_event};
+use crate::test_support::{assert_same_json_text, config, markers, vectors};
 
-/// TS's fields for the two hooks, which the restore treats in its own way.
+/// The fields of the string hook and the event hook, which the restore treats in its own way.
 const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 
 /// What [`redact`] gives: the event, or the number of the call that failed.
-type Redacted = Result<TsEvent, usize>;
+type Redacted = Result<EventObject, usize>;
 
-/// Runs [`redact_strings`] on `event` with the oracle's redactor: the result and every string
+/// Runs [`redact_strings`] on `event` with the test redactor: the result and every string
 /// the redactor got, in order.
-fn redact(event: &TsEvent, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
+fn redact(event: &EventObject, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
     let mut calls = Vec::new();
     let result = redact_strings(event, |text| {
         calls.push(text.to_owned());
@@ -36,7 +37,7 @@ fn redact(event: &TsEvent, throw_at: Option<usize>) -> (Redacted, Vec<String>) {
 }
 
 /// The event a walk case holds: `input`, or `input_text` parsed in insertion order.
-fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
+fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
     let value = match (case.get("input"), case.get("input_text")) {
         (Some(input), None) => input.clone(),
         (None, Some(Value::String(text))) => {
@@ -48,109 +49,71 @@ fn input_of(case: &Map<String, Value>, context: &str) -> TsEvent {
 }
 
 /// `value` as an event.
-fn event_of(value: Value, context: &str) -> TsEvent {
+fn event_of(value: Value, context: &str) -> EventObject {
     match value {
         Value::Object(event) => event,
         other => panic!("{context}: not an event: {other}"),
     }
 }
 
-/// `value` without its `__proto__` keys, at any depth.
-fn without_proto(value: &Value) -> Value {
-    match value {
-        Value::Object(map) => Value::Object(
-            map.iter()
-                .filter(|(key, _)| *key != "__proto__")
-                .map(|(key, item)| (key.clone(), without_proto(item)))
-                .collect(),
-        ),
-        Value::Array(items) => Value::Array(items.iter().map(without_proto).collect()),
-        other => other.clone(),
-    }
-}
-
-/// `true` when `value` has a `__proto__` key anywhere.
-fn has_proto_key(value: &Value) -> bool {
-    match value {
-        Value::Object(map) => map.contains_key("__proto__") || map.values().any(has_proto_key),
-        Value::Array(items) => items.iter().any(has_proto_key),
-        _ => false,
-    }
-}
-
-/// The calls as a JSON array, to compare with TS's through [`assert_js_eq`].
+/// The calls as a JSON array, to compare with the fixture's through [`assert_same_json_text`].
 fn calls_value(calls: Vec<String>) -> Value {
     Value::Array(calls.into_iter().map(Value::String).collect())
 }
 
+/// The `proto:` and `apply:proto-` cases pin that a `__proto__` key is an ordinary key: the
+/// redactor gets the strings under it, and the key stays, also at the top level of a hook's
+/// result.
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("redact");
     assert!(cases.len() >= 100, "redact.json has its cases");
     let (restore, walk): (Vec<_>, Vec<_>) =
         cases.iter().partition(|case| case.contains_key("original"));
     assert!(restore.len() >= 40, "redact.json has its restore cases");
     for case in walk {
-        check_walk_case(case);
+        check_walk_case(case, "redact.json");
     }
     for case in restore {
-        check_restore_case(case);
+        check_restore_case(case, "redact.json");
     }
 }
 
-/// A walk case: the calls are TS's exactly, and the event (or the error after those calls).
-fn check_walk_case(case: &Map<String, Value>) {
+/// A walk case: the calls are the fixture's exactly, and the event (or the error after those
+/// calls).
+fn check_walk_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
-    let context = format!("redact.json {name}");
+    let context = format!("{file} {name}");
     let input = input_of(case, &context);
     let throw_at = case.get("throw_at").map(|n| {
         let n = n.as_u64().expect("throw_at is a count");
         usize::try_from(n).expect("throw_at fits a usize")
     });
     let (result, calls) = redact(&input, throw_at);
-    assert_js_eq(
+    assert_same_json_text(
         &calls_value(calls),
         &case["calls"],
         &format!("{context}: calls"),
     );
-    let deviation = case.get("deviation").and_then(Value::as_str);
     match (result, case.get("output"), case.get("error")) {
         (Ok(event), Some(output), None) => {
-            let actual = Value::Object(event);
-            match deviation {
-                None => assert_js_eq(&actual, output, &context),
-                Some("RD-24") => check_rd24(&actual, output, &context),
-                Some(other) => panic!("{context}: unknown deviation {other}"),
-            }
+            assert_same_json_text(&Value::Object(event), output, &context);
         }
         (Err(call), None, Some(_)) => {
             assert_eq!(Some(call), throw_at, "{context}: the failing call's error");
         }
         (result, output, error) => {
-            panic!("{context}: Rust gives {result:?}; TS gives output {output:?}, error {error:?}")
+            panic!(
+                "{context}: Rust gives {result:?}; the fixture gives output {output:?}, error {error:?}"
+            )
         }
     }
 }
 
-/// RD-24, walk: TS passes the strings under a `__proto__` key to the redactor (the calls are
-/// checked as for any case) and then drops the key. Rust keeps it, and the rest is TS's output.
-fn check_rd24(actual: &Value, expected: &Value, context: &str) {
-    assert!(
-        has_proto_key(actual),
-        "{context}: RD-24: Rust keeps the key"
-    );
-    assert!(!has_proto_key(expected), "{context}: TS drops the key");
-    assert_js_eq(
-        &without_proto(actual),
-        expected,
-        &format!("{context}: RD-24, without the __proto__ keys"),
-    );
-}
-
 /// A restore case: the event the hook's result becomes, or `None` for a drop.
-fn check_restore_case(case: &Map<String, Value>) {
+fn check_restore_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
-    let context = format!("redact.json {name}");
+    let context = format!("{file} {name}");
     let original = event_of(case["original"].clone(), &context);
     let replacement = match case.get("replacement") {
         None | Some(Value::Null) => None,
@@ -158,75 +121,101 @@ fn check_restore_case(case: &Map<String, Value>) {
     };
     let actual = apply_event_redaction(&original, replacement).map(Value::Object);
     let expected = &case["output"];
-    match (actual, case.get("deviation").and_then(Value::as_str)) {
-        (None, None) => assert_eq!(expected, &Value::Null, "{context}: TS drops the event"),
-        (Some(actual), None) => assert_js_eq(&actual, expected, &context),
-        (Some(actual), Some("RD-24")) => check_rd24_restore(&actual, expected, &context),
-        (actual, deviation) => panic!("{context}: Rust gives {actual:?} with {deviation:?}"),
-    }
-}
-
-/// RD-24, restore: `Object.assign` drops a top-level `__proto__` key of the hook's result in TS;
-/// Rust keeps it, and the rest is TS's output.
-fn check_rd24_restore(actual: &Value, expected: &Value, context: &str) {
-    let event = actual.as_object().expect("an event");
-    assert!(
-        event.contains_key("__proto__"),
-        "{context}: RD-24: Rust keeps the top-level key"
-    );
-    assert!(
-        expected.get("__proto__").is_none(),
-        "{context}: TS drops the top-level key"
-    );
-    let rest: Map<String, Value> = event
-        .iter()
-        .filter(|(key, _)| *key != "__proto__")
-        .map(|(key, value)| (key.clone(), value.clone()))
-        .collect();
-    assert_js_eq(
-        &Value::Object(rest),
-        expected,
-        &format!("{context}: RD-24, without the top-level __proto__ key"),
-    );
-}
-
-/// Runs `event` through Rust and through TS (the oracle) and compares the calls and the results.
-fn compare_redact(event: &TsEvent, throw_at: Option<usize>) {
-    let (result, calls) = redact(event, throw_at);
-    let mut request = Map::new();
-    request.insert("event".to_owned(), Value::Object(event.clone()));
-    if let Some(n) = throw_at {
-        request.insert("throwAt".to_owned(), json!(n));
-    }
-    let ts = oracle::call("oracle.redactEvent", &[Value::Object(request)])
-        .unwrap()
-        .expect("a reply");
-    assert_js_eq(&calls_value(calls), &ts["calls"], "redactEvent: calls");
-    match (result, ts.get("value"), ts.get("error")) {
-        (Ok(event), Some(value), None) => {
-            assert_js_eq(&Value::Object(event), value, "redactEvent");
-        }
-        (Err(call), None, Some(_)) => assert_eq!(Some(call), throw_at, "redactEvent: error"),
-        (result, value, error) => {
-            panic!("Rust gives {result:?}; TS gives value {value:?}, error {error:?}")
-        }
-    }
-}
-
-/// Runs the restore through Rust and through TS (the oracle) and compares the results.
-fn compare_restore(original: &TsEvent, replacement: Option<&TsEvent>) {
-    let actual = apply_event_redaction(original, replacement.cloned()).map(Value::Object);
-    let request = json!({
-        "original": original,
-        "replacement": replacement,
-    });
-    let ts = oracle::call("oracle.applyEventRedaction", &[request])
-        .unwrap()
-        .expect("a reply");
     match actual {
-        Some(actual) => assert_js_eq(&actual, &ts, "applyEventRedaction"),
-        None => assert_eq!(ts, Value::Null, "applyEventRedaction drops the event"),
+        None => assert_eq!(expected, &Value::Null, "{context}: the event is dropped"),
+        Some(actual) => assert_same_json_text(&actual, expected, &context),
     }
+}
+
+/// The cases of `redact_cases.json`: `walk:` cases, random events through the walk (some with a
+/// redactor that fails before or after the last string), and `restore:` cases, random hook
+/// results restored against random originals.
+#[test]
+fn walks_and_restores_match_redact_cases() {
+    let cases = vectors::cases("redact_cases");
+    let (restore, walk): (Vec<_>, Vec<_>) =
+        cases.iter().partition(|case| case.contains_key("original"));
+    assert!(walk.len() >= 50, "redact_cases.json has its walk cases");
+    assert!(
+        restore.len() >= 50,
+        "redact_cases.json has its restore cases"
+    );
+    for case in walk {
+        check_walk_case(case, "redact_cases.json");
+        if let Some(error) = case.get("error") {
+            assert_eq!(
+                error,
+                &case["throw_at"],
+                "{}: the failing call",
+                vectors::name(case)
+            );
+        }
+    }
+    for case in restore {
+        check_restore_case(case, "redact_cases.json");
+    }
+}
+
+/// `value` with every string `s` in it written `[R:s]`.
+fn wrap_all(value: &Value) -> Value {
+    match value {
+        Value::String(text) => Value::String(format!("[R:{text}]")),
+        Value::Array(items) => Value::Array(items.iter().map(wrap_all).collect()),
+        Value::Object(map) => Value::Object(
+            map.iter()
+                .map(|(key, value)| (key.clone(), wrap_all(value)))
+                .collect(),
+        ),
+        other => other.clone(),
+    }
+}
+
+/// The walk's result for an object of the top level (the event, or an object under `""` keys
+/// only), from the rule: a protected key keeps its value, and so does the event's own
+/// `timestamp` string; a `""` key holds another top-level object; every other string is
+/// redacted.
+fn expected_walk(object: &Map<String, Value>, is_event: bool) -> Map<String, Value> {
+    object
+        .iter()
+        .map(|(key, value)| {
+            let kept = PROTECTED_FIELDS.contains(&key.as_str())
+                || (is_event && key == "timestamp" && value.is_string());
+            let walked = match value {
+                _ if kept => value.clone(),
+                Value::Object(inner) if key.is_empty() => {
+                    Value::Object(expected_walk(inner, false))
+                }
+                _ => wrap_all(value),
+            };
+            (key.clone(), walked)
+        })
+        .collect()
+}
+
+/// The restore's result, from the rule: the hook's result without `eventRedactionFn`, where the
+/// string-hook field and each restored field take the original's value (in their place when the
+/// result has them, at the end in that order when not) or go when the original lacks them.
+fn expected_restore(original: &EventObject, replacement: &EventObject) -> Vec<(String, Value)> {
+    let copied: Vec<&str> = std::iter::once(STRING_HOOK_FIELD)
+        .chain(RESTORED_FIELDS)
+        .collect();
+    let mut expected: Vec<(String, Value)> = replacement
+        .iter()
+        .filter(|(key, _)| *key != EVENT_HOOK_FIELD)
+        .filter_map(|(key, value)| match original.get(key) {
+            Some(kept) if copied.contains(&key.as_str()) => Some((key.clone(), kept.clone())),
+            None if copied.contains(&key.as_str()) => None,
+            _ => Some((key.clone(), value.clone())),
+        })
+        .collect();
+    for field in copied {
+        if let Some(value) = original.get(field)
+            && !expected.iter().any(|(key, _)| key == field)
+        {
+            expected.push((field.to_owned(), value.clone()));
+        }
+    }
+    expected
 }
 
 /// A key the walk treats in a special way somewhere: a protected name, `timestamp`, `""`, or an
@@ -240,13 +229,13 @@ fn walk_key() -> impl Strategy<Value = String> + Clone {
 }
 
 /// A JSON value of up to 3 levels whose object keys are [`walk_key`]s and whose strings are
-/// [`js_string`]s.
+/// [`edge_string`]s.
 fn walk_value() -> impl Strategy<Value = Value> + Clone {
     let leaf = prop_oneof![
         Just(Value::Null),
         any::<bool>().prop_map(Value::Bool),
         any::<i32>().prop_map(Value::from),
-        js_string(20).prop_map(Value::String),
+        edge_string(20).prop_map(Value::String),
     ];
     leaf.prop_recursive(3, 24, 4, |inner| {
         prop_oneof![
@@ -257,11 +246,11 @@ fn walk_value() -> impl Strategy<Value = Value> + Clone {
     })
 }
 
-/// A [`ts_event`], sometimes with a `""` key (whose objects TS treats as the top level) and with
+/// A [`tool_call_event`], sometimes with a `""` key (whose objects count as the top level) and with
 /// [`walk_value`]s in `parameters` or in place of the `timestamp`.
-fn redact_input() -> impl Strategy<Value = TsEvent> {
+fn redact_input() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(js_string(20)),
+        tool_call_event(edge_string(20)),
         prop::option::weighted(0.3, walk_value()),
         prop::option::weighted(0.3, walk_value()),
         prop::option::weighted(0.1, walk_value()),
@@ -282,14 +271,14 @@ fn redact_input() -> impl Strategy<Value = TsEvent> {
 
 /// An event of up to 6 [`walk_key`]s with [`walk_value`]s: protected names, `timestamp` and `""`
 /// at the top level and below it, nested objects and arrays, and every JSON type.
-fn walk_event() -> impl Strategy<Value = TsEvent> {
+fn walk_event() -> impl Strategy<Value = EventObject> {
     prop::collection::vec((walk_key(), walk_value()), 0..=6)
         .prop_map(|entries| entries.into_iter().collect())
 }
 
 /// A map of up to 8 entries whose keys are mostly the event's keys (the restored ones, the
 /// hook fields, other fields) and whose values are [`json_value`]s or timestamps.
-fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
+fn restore_map() -> impl Strategy<Value = EventObject> + Clone {
     let key = prop_oneof![
         4 => prop::sample::select(RESTORED_FIELDS.map(str::to_owned).to_vec()),
         1 => prop::sample::select(HOOK_FIELDS.map(str::to_owned).to_vec()),
@@ -310,15 +299,38 @@ fn restore_map() -> impl Strategy<Value = TsEvent> + Clone {
 proptest! {
     #![proptest_config(config())]
 
+    /// The walk redacts every string but those under a protected key of the top level and the
+    /// event's own `timestamp` string, and lists the event's keys with the array-index keys first.
     #[test]
-    fn redact_strings_matches_ts(
-        event in redact_input(),
-        throw_at in prop::option::weighted(0.2, 1usize..=12),
+    fn the_walk_redacts_every_string_but_the_protected_top_level_ones(
+        event in prop_oneof![redact_input(), walk_event()],
     ) {
-        compare_redact(&event, throw_at);
+        let (result, _) = redact(&event, None);
+        let redacted = result.unwrap();
+        prop_assert_eq!(&redacted, &expected_walk(&event, true));
+        let keys: Vec<&str> = redacted.keys().map(String::as_str).collect();
+        prop_assert_eq!(keys, index_keys_first(event.keys().map(String::as_str)));
     }
 
-    /// C38: the async string hook gets the strings of [`visit_strings`] and gives its results to
+    /// A redactor that fails on call `n` stops the walk there with its error, after the first
+    /// `n` strings of a full walk; one that fails past the last string changes nothing.
+    #[test]
+    fn a_failing_redactor_stops_the_walk_at_its_call(
+        event in redact_input(),
+        throw_at in 1usize..=12,
+    ) {
+        let (full, all_calls) = redact(&event, None);
+        let (result, calls) = redact(&event, Some(throw_at));
+        if throw_at <= all_calls.len() {
+            prop_assert_eq!(result, Err(throw_at));
+            prop_assert_eq!(&calls[..], &all_calls[..throw_at]);
+        } else {
+            prop_assert_eq!(result, full);
+            prop_assert_eq!(calls, all_calls);
+        }
+    }
+
+    /// The async string hook gets the strings of [`visit_strings`] and gives its results to
     /// [`redact_strings`] in that order, so the two walks must visit the same strings in the
     /// same order. Fed those results in visit order, `redact_strings` builds the same event as
     /// with the redactor called inside the walk, and uses every result.
@@ -336,11 +348,21 @@ proptest! {
         prop_assert_eq!(results.next(), None);
     }
 
+    /// The restore drops the event when the hook gives none. Otherwise it keeps the hook's
+    /// result but `eventRedactionFn`, and takes the string-hook field and the restored fields
+    /// from the original.
     #[test]
-    fn apply_event_redaction_matches_ts(
+    fn the_restore_takes_the_system_fields_from_the_original(
         original in restore_map(),
         replacement in prop::option::weighted(0.9, restore_map()),
     ) {
-        compare_restore(&original, replacement.as_ref());
+        let actual = apply_event_redaction(&original, replacement.clone());
+        match replacement {
+            None => prop_assert_eq!(actual, None),
+            Some(replacement) => {
+                let actual: Vec<(String, Value)> = actual.unwrap().into_iter().collect();
+                prop_assert_eq!(actual, expected_restore(&original, &replacement));
+            }
+        }
     }
 }

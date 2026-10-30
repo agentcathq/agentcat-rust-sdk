@@ -1,4 +1,5 @@
-//! R07: `mcp_session` must stay the first key, so `serde_json/preserve_order` must be on in the SDK's own dependency.
+//! `mcp_session` must stay the first key, so `serde_json/preserve_order` must be on in the SDK's
+//! own dependency.
 #[test]
 fn serde_json_keeps_insertion_order() {
     let mut map = serde_json::Map::new();
