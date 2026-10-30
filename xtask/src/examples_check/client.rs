@@ -178,7 +178,9 @@ async fn http_answer(
         for data in events.take_data() {
             let reply: Value = serde_json::from_str(&data)
                 .map_err(|e| format!("{method}: an event is not JSON ({e}): {data}"))?;
-            if reply.get("id") == Some(id) {
+            // A request of the example to the client (`ping`, `sampling/createMessage`) has a
+            // method, and its ID may match.
+            if reply.get("id") == Some(id) && reply.get("method").is_none() {
                 return Ok(Some(reply));
             }
         }

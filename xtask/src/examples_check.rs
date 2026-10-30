@@ -13,14 +13,16 @@
 //! server-sent-event answer for streamable HTTP) sends `initialize`, `tools/list` and three tool
 //! calls with protocol version 2025-11-25, and closes the connection right after the last call:
 //! for a stdio example it closes stdin; for an HTTP example it stops sending and then sends
-//! SIGTERM (Unix) or ends the process (Windows, which has no SIGTERM).
+//! SIGTERM (Unix) or ends the process (Windows, which has no SIGTERM), and keeps its stdin open
+//! until it exits.
 //! The check asserts:
 //! - the first call issues a session ID in a text block before the tool's result, and keeps that
 //!   result;
 //! - each call returns the expected text and `isError`;
 //! - one `mcp:tools/call` publish per call, every publish for `proj_examples`, no request other
 //!   than a publish, and for `hooks` the values of the hooks and one custom event;
-//! - every stdout line is a JSON-RPC message (an HTTP example prints no stdout line at all);
+//! - every stdout line is a JSON-RPC message (an HTTP example prints no stdout line at all), and
+//!   the stdout closes within 5 s of the exit;
 //! - the example exits 0 within 5 s of the stdin close or the SIGTERM;
 //! - the publish of the last call arrives before the exit.
 //!
@@ -43,6 +45,7 @@ use serde_json::{Map, Value, json};
 use tokio::io::AsyncReadExt;
 use tokio::process::{Child, ChildStdin, Command};
 use tokio::sync::mpsc::{UnboundedReceiver, unbounded_channel};
+use tokio::task::JoinHandle;
 
 use client::{Client, Connection, read_stdout};
 use judge::{judge_call, judge_hooks, judge_publishes, judge_tools};
@@ -61,8 +64,9 @@ const LISTEN_TIMEOUT: Duration = Duration::from_secs(20);
 /// How long the client may take from the start of the example to the close of the connection.
 const SESSION_TIMEOUT: Duration = Duration::from_secs(60);
 
-/// How long the readers of the example's stdout and stderr may take to finish after its exit.
-const DRAIN_TIMEOUT: Duration = Duration::from_secs(5);
+/// How long the readers of the example's stdout and stderr may take to finish after its exit. A
+/// stdout that stays open longer (a child process of the example holds it) is a failure.
+pub const DRAIN_BUDGET: Duration = Duration::from_secs(5);
 
 /// The `context` argument of every call.
 const CONTEXT: &str = "Checking the example";
@@ -202,7 +206,7 @@ pub fn run(args: &[String], root: &Path) -> (u8, Vec<String>) {
             );
         }
     };
-    let outcome = runtime.block_on(check(example, &binary, root, EXIT_BUDGET));
+    let outcome = runtime.block_on(check(example, &binary, root, EXIT_BUDGET, DRAIN_BUDGET));
     report(example, &outcome)
 }
 
@@ -305,8 +309,16 @@ struct Outcome {
     exit_after: Option<Duration>,
 }
 
-/// Runs the example at `binary` and checks it.
-async fn check(example: Example, binary: &Path, root: &Path, exit_budget: Duration) -> Outcome {
+/// Runs the example at `binary` in the directory `root` and checks it: the example must exit
+/// within `exit_budget` of the close of the connection, and its stdout must close within
+/// `drain_budget` of its exit.
+async fn check(
+    example: Example,
+    binary: &Path,
+    root: &Path,
+    exit_budget: Duration,
+    drain_budget: Duration,
+) -> Outcome {
     let mut outcome = Outcome::default();
     let (mock, home, port) = match prepare(example).await {
         Ok(prepared) => prepared,
@@ -351,12 +363,17 @@ async fn check(example: Example, binary: &Path, root: &Path, exit_budget: Durati
         ))
     });
     let exited_at = match driven {
-        Ok(closed_at) => wait_for_exit(example, &mut child, closed_at, exit_budget, &mut outcome)
-            .await
-            .unwrap_or_else(|message| {
-                outcome.fatal = Some(message);
-                None
-            }),
+        Ok((closed_at, held_stdin)) => {
+            let exited_at =
+                wait_for_exit(example, &mut child, closed_at, exit_budget, &mut outcome)
+                    .await
+                    .unwrap_or_else(|message| {
+                        outcome.fatal = Some(message);
+                        None
+                    });
+            drop(held_stdin);
+            exited_at
+        }
         Err(message) => {
             outcome.fatal = Some(message);
             let _ = child.start_kill();
@@ -365,17 +382,7 @@ async fn check(example: Example, binary: &Path, root: &Path, exit_budget: Durati
         }
     };
 
-    if let Ok(Ok(bad_lines)) = tokio::time::timeout(DRAIN_TIMEOUT, stdout_reader).await {
-        outcome.failures.extend(bad_lines.iter().map(|line| {
-            format!(
-                "a stdout line is not JSON-RPC: {}",
-                Value::String(line.clone())
-            )
-        }));
-    }
-    if let Ok(Ok(text)) = tokio::time::timeout(DRAIN_TIMEOUT, stderr_reader).await {
-        outcome.stderr = text;
-    }
+    drain(stdout_reader, stderr_reader, drain_budget, &mut outcome).await;
     if outcome.fatal.is_none() {
         let requests = mock.requests();
         outcome
@@ -387,6 +394,40 @@ async fn check(example: Example, binary: &Path, root: &Path, exit_budget: Durati
     }
     drop(home);
     outcome
+}
+
+/// Waits up to `drain_budget` for the readers of the example's stdout and stderr, which finish when
+/// the pipes close, and adds what they found to `outcome`. A stdout that does not close in time,
+/// or a reader that fails, is a failure: the stdout check must not pass without a word.
+async fn drain(
+    mut stdout_reader: JoinHandle<Vec<String>>,
+    mut stderr_reader: JoinHandle<String>,
+    drain_budget: Duration,
+    outcome: &mut Outcome,
+) {
+    match tokio::time::timeout(drain_budget, &mut stdout_reader).await {
+        Ok(Ok(bad_lines)) => outcome.failures.extend(bad_lines.iter().map(|line| {
+            format!(
+                "a stdout line is not JSON-RPC: {}",
+                Value::String(line.clone())
+            )
+        })),
+        Ok(Err(e)) => outcome
+            .failures
+            .push(format!("the reader of the example's stdout failed: {e}")),
+        Err(_) => {
+            stdout_reader.abort();
+            outcome.failures.push(format!(
+                "the example's stdout did not close within {} ms of its exit",
+                drain_budget.as_millis()
+            ));
+        }
+    }
+    match tokio::time::timeout(drain_budget, &mut stderr_reader).await {
+        Ok(Ok(text)) => outcome.stderr = text,
+        Ok(Err(_)) => {}
+        Err(_) => stderr_reader.abort(),
+    }
 }
 
 /// The mock API, the temporary home and, for an HTTP example, a free port.
@@ -407,9 +448,9 @@ struct Started {
     /// The JSON-RPC messages of a stdio example's stdout.
     messages: UnboundedReceiver<Value>,
     /// Returns the stdout lines that are not JSON-RPC messages, after the example's exit.
-    stdout_reader: tokio::task::JoinHandle<Vec<String>>,
+    stdout_reader: JoinHandle<Vec<String>>,
     /// Returns the example's stderr, after its exit.
-    stderr_reader: tokio::task::JoinHandle<String>,
+    stderr_reader: JoinHandle<String>,
 }
 
 /// Starts the example at `binary` with `env`, and the readers of its stdout and stderr.
@@ -490,7 +531,8 @@ async fn wait_for_exit(
 }
 
 /// Connects to the example, lists its tools, makes the calls and closes the connection right
-/// after the last call, with no pause; returns the time of the close.
+/// after the last call, with no pause; returns the time of the close and, for an HTTP example, its
+/// stdin, which must stay open until the example exits (so that only the SIGTERM can end it).
 async fn drive(
     example: Example,
     child: &mut Child,
@@ -498,9 +540,8 @@ async fn drive(
     stdin: ChildStdin,
     messages: UnboundedReceiver<Value>,
     failures: &mut Vec<String>,
-) -> Result<Instant, String> {
-    // An HTTP example keeps its stdin open until the end of the run.
-    let (connection, _held_stdin) = match port {
+) -> Result<(Instant, Option<ChildStdin>), String> {
+    let (connection, held_stdin) = match port {
         None => (Connection::Stdio { stdin, messages }, None),
         Some(port) => {
             wait_for_port(child, port).await?;
@@ -524,7 +565,7 @@ async fn drive(
     if example.transport == Transport::Http {
         stop(child).await?;
     }
-    Ok(closed_at)
+    Ok((closed_at, held_stdin))
 }
 
 /// Lists the tools and makes the calls of `example`; a failed request stops the run.
@@ -613,5 +654,7 @@ async fn wait_for_port(child: &mut Child, port: u16) -> Result<(), String> {
     Err(format!("the example did not listen on port {port}"))
 }
 
+#[cfg(test)]
+mod end_to_end;
 #[cfg(test)]
 mod tests;
