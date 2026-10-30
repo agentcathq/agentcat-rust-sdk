@@ -1181,7 +1181,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "bad/key": "x",
             "kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk": "x",
@@ -1300,7 +1300,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "k00": "v0",
             "k01": "v1",
@@ -1509,7 +1509,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "a b!": "x",
             "empty": 1
@@ -1620,7 +1620,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "valid": "value",
             "invalid!": "value"
@@ -1731,7 +1731,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "agentcat_session_id_source": "customer-value",
             "env": "test"
@@ -1841,7 +1841,7 @@
         }
       },
       "hooks": {
-        "eventTags": {
+        "event_tags": {
           "throws": "Tags callback failed"
         }
       },
@@ -1948,7 +1948,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "returns": {
             "device": "desktop",
             "flags": [
@@ -2071,7 +2071,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "returns": {}
         }
       },
@@ -2178,7 +2178,7 @@
         }
       },
       "hooks": {
-        "eventProperties": {
+        "event_properties": {
           "throws": "Properties callback failed"
         }
       },
@@ -2285,7 +2285,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         }
       },
@@ -2390,7 +2390,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         }
       },
@@ -2447,7 +2447,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": null
         }
       },
@@ -2552,7 +2552,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "throws": "no session here"
         }
       },
@@ -2658,16 +2658,16 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "hangs": true
         },
         "identify": {
           "hangs": true
         },
-        "eventTags": {
+        "event_tags": {
           "hangs": true
         },
-        "eventProperties": {
+        "event_properties": {
           "hangs": true
         }
       },
@@ -2776,7 +2776,7 @@
         }
       },
       "hooks": {
-        "resolveSessionId": {
+        "resolve_session_id": {
           "returns": "customer-abc"
         },
         "identify": {
@@ -2789,13 +2789,13 @@
             }
           }
         },
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "env": "test",
             "agentcat_session_id_source": "customer-value"
           }
         },
-        "eventProperties": {
+        "event_properties": {
           "returns": {
             "device": "mobile"
           }
@@ -3322,7 +3322,7 @@
             }
           }
         },
-        "eventTags": {
+        "event_tags": {
           "returns": {
             "note": "has SECRET-VALUE-42"
           }

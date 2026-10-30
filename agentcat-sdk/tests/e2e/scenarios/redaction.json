@@ -1,11 +1,11 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "identify": { "returns": { "userId": "user-late", "userName": "Late User", "userData": { "plan": "late" } }, "sleepMs": 200 },
-    "eventTags": { "returns": { "note": "SECRET_TOKEN" } },
-    "eventProperties": { "returns": { "region": "SECRET_TOKEN" } },
-    "redactSensitiveInformation": { "replace": "SECRET_TOKEN" },
-    "redactEvent": { "merge": { "resourceName": "renamed", "sessionId": "merged-session", "properties": { "merged": "yes" } } }
+    "identify": { "returns": { "userId": "user-late", "userName": "Late User", "userData": { "plan": "late" } }, "sleep_ms": 200 },
+    "event_tags": { "returns": { "note": "SECRET_TOKEN" } },
+    "event_properties": { "returns": { "region": "SECRET_TOKEN" } },
+    "redact_sensitive_information": { "replace": "SECRET_TOKEN" },
+    "redact_event": { "merge": { "resourceName": "renamed", "sessionId": "merged-session", "properties": { "merged": "yes" } } }
   },
   "expectPublishes": 7,
   "sessions": [

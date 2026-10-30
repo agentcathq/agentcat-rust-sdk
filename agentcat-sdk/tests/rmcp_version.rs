@@ -1,4 +1,4 @@
-//! The rmcp version this test binary compiled against. The CI matrix (R25) sets
+//! The rmcp version this test binary compiled against. The CI matrix sets
 //! `RMCP_EXPECTED_VERSION` so that each leg proves it built the rmcp minor it names.
 use rmcp::model::Implementation;
 

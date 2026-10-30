@@ -4,11 +4,11 @@
       "name": "listing:regression:0",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -146,11 +146,11 @@
       "name": "listing:regression:1",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -424,11 +424,11 @@
       "name": "listing:one-page-tracing-agent-tracking:0",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": false,
         "pages": [
@@ -557,11 +557,11 @@
       "name": "listing:two-pages-hook-mode-tracing-context-agent-tracking:1",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -860,11 +860,11 @@
       "name": "listing:two-pages-tracing-agent-tracking:2",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": false,
         "pages": [
@@ -1341,10 +1341,10 @@
       "name": "listing:two-pages-report-missing-agent-tracking:3",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": false,
         "pages": [
@@ -1685,10 +1685,10 @@
       "name": "listing:one-page-context:4",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -1772,10 +1772,10 @@
       "name": "listing:one-page-report-missing-context:5",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -1944,11 +1944,11 @@
       "name": "listing:two-pages-hook-mode:6",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -2149,11 +2149,11 @@
       "name": "listing:one-page-hook-mode-tracing-context-agent-tracking:7",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "7B"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "7B"
         },
         "hookMode": true,
         "pages": [
@@ -2339,11 +2339,11 @@
       "name": "listing:one-page-tracing-context-agent-tracking:8",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "😀世世"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "😀世世"
         },
         "hookMode": false,
         "pages": [
@@ -2626,10 +2626,10 @@
       "name": "listing:two-pages-hook-mode-report-missing-context-agent-tracking:9",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -2969,10 +2969,10 @@
       "name": "listing:one-page-tracing-agent-tracking:10",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": false,
         "pages": [
@@ -3085,11 +3085,11 @@
       "name": "listing:two-pages-hook-mode-report-missing-tracing:11",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "\u000bfh \\"
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "\u000bfh \\"
         },
         "hookMode": true,
         "pages": [
@@ -3414,10 +3414,10 @@
       "name": "listing:one-page-hook-mode-report-missing:12",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -3501,11 +3501,11 @@
       "name": "listing:two-pages-report-missing-context-agent-tracking:13",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": false,
         "pages": [
@@ -3830,11 +3830,11 @@
       "name": "listing:two-pages-report-missing:14",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "rUc"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "rUc"
         },
         "hookMode": false,
         "pages": [
@@ -4223,10 +4223,10 @@
       "name": "listing:one-page-report-missing-context-agent-tracking:15",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": false,
         "pages": [
@@ -4426,11 +4426,11 @@
       "name": "listing:two-pages-hook-mode-report-missing-agent-tracking:16",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -4653,10 +4653,10 @@
       "name": "listing:one-page-hook-mode-context-agent-tracking:17",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -4803,11 +4803,11 @@
       "name": "listing:two-pages-hook-mode-tracing-context-agent-tracking:18",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -5098,10 +5098,10 @@
       "name": "listing:one-page-hook-mode-tracing:19",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -5341,10 +5341,10 @@
       "name": "listing:two-pages-hook-mode-report-missing-tracing-context:20",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -5686,11 +5686,11 @@
       "name": "listing:two-pages-hook-mode-context-agent-tracking:21",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -5997,11 +5997,11 @@
       "name": "listing:two-pages-report-missing-agent-tracking:22",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": false,
         "pages": [
@@ -6339,11 +6339,11 @@
       "name": "listing:two-pages-report-missing-context:23",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false,
-          "customContextDescription": "h\u0019kél😀"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false,
+          "custom_context_description": "h\u0019kél😀"
         },
         "hookMode": false,
         "pages": [
@@ -6639,11 +6639,11 @@
       "name": "listing:one-page:24",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": false,
         "pages": [
@@ -6763,11 +6763,11 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing:25",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -6909,10 +6909,10 @@
       "name": "listing:two-pages-hook-mode-tracing-agent-tracking:26",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -7358,10 +7358,10 @@
       "name": "listing:two-pages-hook-mode-report-missing-context-agent-tracking:27",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -7767,11 +7767,11 @@
       "name": "listing:one-page-hook-mode-tracing-context-agent-tracking:28",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -8030,11 +8030,11 @@
       "name": "listing:two-pages-hook-mode-tracing-agent-tracking:29",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "éYéj"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "éYéj"
         },
         "hookMode": true,
         "pages": [
@@ -8307,11 +8307,11 @@
       "name": "listing:two-pages-hook-mode-tracing-context:30",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -8600,11 +8600,11 @@
       "name": "listing:two-pages-hook-mode-tracing-agent-tracking:31",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -8856,11 +8856,11 @@
       "name": "listing:one-page-report-missing:32",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "why"
         },
         "hookMode": false,
         "pages": [
@@ -9046,10 +9046,10 @@
       "name": "listing:two-pages-hook-mode-report-missing-tracing-agent-tracking:33",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -9533,10 +9533,10 @@
       "name": "listing:two-pages-hook-mode:34",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -9815,11 +9815,11 @@
       "name": "listing:two-pages-report-missing-tracing-agent-tracking:35",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": false,
         "pages": [
@@ -10417,10 +10417,10 @@
       "name": "listing:one-page-context:36",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -10504,11 +10504,11 @@
       "name": "listing:two-pages-hook-mode-context:37",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -10810,10 +10810,10 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing-agent-tracking:38",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -10983,11 +10983,11 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing-context-agent-tracking:39",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -11326,11 +11326,11 @@
       "name": "listing:two-pages-hook-mode:40",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "why"
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -11519,10 +11519,10 @@
       "name": "listing:one-page-tracing-context:41",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -11584,11 +11584,11 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing:42",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -11738,11 +11738,11 @@
       "name": "listing:two-pages-hook-mode-context-agent-tracking:43",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -11946,10 +11946,10 @@
       "name": "listing:one-page-hook-mode-report-missing:44",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -12139,11 +12139,11 @@
       "name": "listing:one-page-hook-mode-report-missing-agent-tracking:45",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "𝄞Y😀W"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "𝄞Y😀W"
         },
         "hookMode": true,
         "pages": [
@@ -12346,11 +12346,11 @@
       "name": "listing:one-page-report-missing-agent-tracking:46",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": "M`r"
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": "M`r"
         },
         "hookMode": false,
         "pages": [
@@ -12435,11 +12435,11 @@
       "name": "listing:one-page-hook-mode-context-agent-tracking:47",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "世Y世\\X?"
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "世Y世\\X?"
         },
         "hookMode": true,
         "pages": [
@@ -12671,10 +12671,10 @@
       "name": "listing:two-pages-tracing-context:48",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -13209,11 +13209,11 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing-context-agent-tracking:49",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": "why"
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -13378,10 +13378,10 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing-agent-tracking:50",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -13630,10 +13630,10 @@
       "name": "listing:two-pages-report-missing-agent-tracking:51",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": false,
         "pages": [
@@ -14044,10 +14044,10 @@
       "name": "listing:one-page-hook-mode-report-missing-tracing-context-agent-tracking:52",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -14130,11 +14130,11 @@
       "name": "listing:two-pages-hook-mode-tracing:53",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": "why"
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": "why"
         },
         "hookMode": true,
         "pages": [
@@ -14343,10 +14343,10 @@
       "name": "listing:two-pages-hook-mode-report-missing-agent-tracking:54",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true
         },
         "hookMode": true,
         "pages": [
@@ -14675,10 +14675,10 @@
       "name": "listing:two-pages-hook-mode-context:55",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false
         },
         "hookMode": true,
         "pages": [
@@ -14980,11 +14980,11 @@
       "name": "listing:one-page-hook-mode-context:56",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -15105,10 +15105,10 @@
       "name": "listing:one-page-context-agent-tracking:57",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true
         },
         "hookMode": false,
         "pages": [
@@ -15265,11 +15265,11 @@
       "name": "listing:two-pages-tracing:58",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false,
+          "custom_context_description": ""
         },
         "hookMode": false,
         "pages": [
@@ -15452,11 +15452,11 @@
       "name": "listing:two-pages-hook-mode-report-missing-tracing-context-agent-tracking:59",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": true,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -15770,10 +15770,10 @@
       "name": "listing:one-page-report-missing:60",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": false
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": false
         },
         "hookMode": false,
         "pages": [
@@ -15846,11 +15846,11 @@
       "name": "listing:two-pages-context:61",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": false,
-          "enableToolCallContext": true,
-          "enableAgentTracking": false,
-          "customContextDescription": "　Y"
+          "enable_report_missing": false,
+          "enable_tracing": false,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": false,
+          "custom_context_description": "　Y"
         },
         "hookMode": false,
         "pages": [
@@ -16237,11 +16237,11 @@
       "name": "listing:two-pages-hook-mode-report-missing-agent-tracking:62",
       "input": {
         "options": {
-          "enableReportMissing": true,
-          "enableTracing": false,
-          "enableToolCallContext": false,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": true,
+          "enable_tracing": false,
+          "enable_tool_call_context": false,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": true,
         "pages": [
@@ -16494,11 +16494,11 @@
       "name": "listing:two-pages-tracing-context-agent-tracking:63",
       "input": {
         "options": {
-          "enableReportMissing": false,
-          "enableTracing": true,
-          "enableToolCallContext": true,
-          "enableAgentTracking": true,
-          "customContextDescription": ""
+          "enable_report_missing": false,
+          "enable_tracing": true,
+          "enable_tool_call_context": true,
+          "enable_agent_tracking": true,
+          "custom_context_description": ""
         },
         "hookMode": false,
         "pages": [

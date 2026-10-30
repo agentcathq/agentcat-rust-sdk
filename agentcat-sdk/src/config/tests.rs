@@ -1,5 +1,5 @@
 //! `Options`: each setter changes its own getter only, and an empty custom description means the
-//! default one (B-004). B-004's default values are pinned by the harness profile `{}`, not here.
+//! default one. The default values are pinned by the harness profile `{}`, not here.
 use super::env::{
     AGENTCAT_API_URL, AGENTCAT_ENABLED, DEFAULT_API_BASE_URL, Env, MCPCAT_API_URL, MapEnv,
     ProcessEnv, resolve_api_base_url, sdk_enabled,
@@ -113,7 +113,7 @@ fn empty_custom_description_uses_the_default() {
     );
 }
 
-/// A set hook shows as `"<hook>"`, never as its closure; the options stay `Clone` (D19, C14).
+/// A set hook shows as `"<hook>"`, never as its closure; the options stay `Clone`.
 #[test]
 fn debug_hides_hooks() {
     let none = format!("{:?}", Options::default());
@@ -150,7 +150,7 @@ fn debug_hides_hooks() {
     );
 }
 
-/// B-004, B-031: the custom `context` description reaches the listing of the tools that get the
+/// The custom `context` description reaches the listing of the tools that get the
 /// parameter, and `get_more_tools` keeps its own.
 #[tokio::test]
 async fn custom_context_description_lands_in_the_listing() {
@@ -176,7 +176,7 @@ async fn custom_context_description_lands_in_the_listing() {
     client.cancel().await.unwrap();
 }
 
-/// B-006, C10: the option beats `AGENTCAT_API_URL`, which beats `MCPCAT_API_URL`, which beats the
+/// The option beats `AGENTCAT_API_URL`, which beats `MCPCAT_API_URL`, which beats the
 /// default; an empty value counts as unset; the value is not trimmed.
 #[test]
 fn api_base_url_precedence() {
@@ -208,7 +208,7 @@ fn api_base_url_precedence() {
     assert_eq!(option.api_base_url_option(), Some("https://o.example"));
 }
 
-/// D44, R10: `false`, `0`, `no` and `off` turn the SDK off, trimmed and in any case; every other
+/// `false`, `0`, `no` and `off` turn the SDK off, trimmed and in any case; every other
 /// value, an empty one and an unset variable leave it on.
 #[test]
 fn sdk_enabled_values() {
@@ -270,7 +270,7 @@ fn map_env_has_a_home_only_when_given() {
     );
 }
 
-/// D36, D44, C42: `ProcessEnv`, where `AGENTCAT_PROJECT_ID`, `AGENTCAT_ENABLED` and the home
+/// `ProcessEnv`, where `AGENTCAT_PROJECT_ID`, `AGENTCAT_ENABLED` and the home
 /// directory of `<home>/agentcat.log` come from, reads the real environment: a variable that nobody
 /// sets is `None`, one that the test runner sets for every test process (`CARGO_PKG_NAME`, as cargo
 /// and nextest do) has its value, and the home directory is the user's, an absolute path.

@@ -1,5 +1,5 @@
-//! `CustomEvent`: each setter stores its own field and no other (B-009), and the two
-//! `publish_custom_event` forms build TS's event (C11, C16, C47, K-03).
+//! `CustomEvent`: each setter stores its own field and no other, and the two
+//! `publish_custom_event` forms build the event the fixture gives.
 use std::future::ready;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
@@ -30,7 +30,7 @@ use crate::wire;
 /// How long a test waits for a flush.
 const WAIT: Duration = Duration::from_secs(2);
 
-/// The text TS logs for a server-form event without a session.
+/// The text the worker logs for a server-form event without a session.
 const NO_SESSION_LINE: &str = "publish_custom_event: no session_id provided; event will be published without a session. Pass CustomEvent::session_id to attribute it to a task.";
 
 /// The frozen clock of the vectors.
@@ -41,7 +41,7 @@ const fn ms(n: u64) -> Duration {
     Duration::from_millis(n)
 }
 
-/// TS's queue limits with short budgets.
+/// The queue limits with short budgets.
 fn fast() -> DeliveryConfig {
     DeliveryConfig {
         max_pending: 10_000,
@@ -147,7 +147,7 @@ fn string_form_requires_project() {
 
 #[test]
 fn string_form_honors_project_argument() {
-    // K-03: the string form sends the argument's project; the server form sends the handle's.
+    // The string form sends the argument's project; the server form sends the handle's.
     let (agentcat, publisher, _lines) = rig("proj_handle", Options::default());
     agentcat
         .publish_custom_event("ses_1", "proj_argument", CustomEvent::new())
@@ -240,7 +240,7 @@ fn server_form_dropped_with_tracing_off() {
             "Published custom event without a session with type 'agentcat:custom'"
         ]
     );
-    // The string form is not gated by tracing (TS adds it to the queue directly).
+    // The string form is not gated by tracing (it goes to the queue directly).
     agentcat
         .publish_custom_event("ses_1", "proj", CustomEvent::new())
         .expect("queued");
@@ -248,7 +248,7 @@ fn server_form_dropped_with_tracing_off() {
 }
 
 #[test]
-fn server_form_without_session_logs_ts_line() {
+fn server_form_without_session_logs_the_drop_line() {
     let (agentcat, _publisher, lines) = rig("proj_handle", Options::default());
     let call = bare_call(&agentcat);
     call.publish_custom_event("proj", CustomEvent::new())
@@ -263,12 +263,12 @@ fn server_form_without_session_logs_ts_line() {
 
 #[test]
 fn server_form_applies_redact_event_only() {
-    // K-03: the event hook runs on a custom event of the server form, the string hook never.
+    // The event hook runs on a custom event of the server form, the string hook never.
     let options = Options::default()
         .redact_event(|event: Event| {
-            let mut ts = event.into_object();
-            ts.insert("response".to_owned(), json!({"scrubbed": true}));
-            ready(Ok::<_, HookError>(Some(Event::from_object(&ts))))
+            let mut fixture = event.into_object();
+            fixture.insert("response".to_owned(), json!({"scrubbed": true}));
+            ready(Ok::<_, HookError>(Some(Event::from_object(&fixture))))
         })
         .redact_sensitive_information(|text: String| {
             ready(Ok::<_, HookError>(text.replace("SECRET", "[REDACTED]")))
@@ -401,13 +401,13 @@ fn server_form_duration_is_given_or_elapsed() {
     };
     assert_eq!(duration("given"), Some(1500));
     assert_eq!(duration("elapsed"), Some(250));
-    // TS's `eventInput.duration || elapsed`: a zero duration counts as none.
+    // A zero duration counts as none: `duration || elapsed`.
     assert_eq!(duration("zero"), Some(250));
 }
 
 // ------------------------------------------------------------------------------------ vectors
 
-/// The `CustomEvent` of a vector's `data` (TS's `CustomEventData`).
+/// The `CustomEvent` of a vector's `data`.
 fn event_of(data: &Map<String, Value>) -> CustomEvent {
     let mut event = CustomEvent::new();
     let text = |key: &str| data.get(key).and_then(Value::as_str);
@@ -468,9 +468,9 @@ fn rust_identity(mut request: Value) -> Value {
 
 /// Each `custom:*` case of `queue.json` through the builders and the whole delivery worker, with a
 /// recording publisher and the vector's frozen clock: the requests and every log line, the
-/// builder's included, must be TS's.
+/// builder's included, must be the fixture's.
 #[test]
-fn custom_vectors_match_ts() {
+fn custom_fixture_cases_hold() {
     let runtime = hooks_runtime();
     let _entered = runtime.enter();
     let now: SystemTime = wire::parse_iso_millis(FROZEN).expect("a time");
@@ -519,7 +519,7 @@ fn custom_vectors_match_ts() {
         let (agentcat, publisher, lines) = result;
         let requests: Vec<Value> = delivered(&agentcat, &publisher)
             .iter()
-            .map(queue::to_ts_model)
+            .map(queue::to_request_model)
             .collect();
         let expected: Vec<Value> = queue::expected_requests(&case)
             .into_iter()
@@ -538,7 +538,7 @@ fn custom_vectors_match_ts() {
     assert_eq!(ran, 18, "every custom case ran");
 }
 
-/// TS's queue writes its drop line inside `add`, before `publishCustomEvent` writes its own: the
+/// The queue writes its drop line inside `add`, before `publish_custom_event` writes its own: the
 /// event and the `Published` line reach the worker together. The test waits for the two lines on
 /// the capture's signal of each new line.
 #[test]
@@ -587,7 +587,7 @@ impl Sink for OrderSink {
     }
 }
 
-/// TS's `publishCustomEvent` logs its `Published` line after the queue's `add` (`index.ts:444-450`):
+/// `publish_custom_event` logs its `Published` line after the queue's `add`:
 /// a sink without its own `event_then_log` takes the event, then the line, through the trait's
 /// default.
 #[test]

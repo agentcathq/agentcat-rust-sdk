@@ -1,7 +1,7 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "enableTracing": false
+    "enable_tracing": false
   },
   "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 0,

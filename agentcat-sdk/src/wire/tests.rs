@@ -1,4 +1,4 @@
-//! `js`: the cases of `tests/vectors/js.json` and `tests/vectors/wire_cases.json`, and property
+//! `wire`: the cases of `tests/vectors/wire.json` and `tests/vectors/wire_cases.json`, and property
 //! tests of the rules of each function (texts that read back, the key order, the trimmed and cut
 //! strings, the type names).
 use std::collections::BTreeSet;
@@ -13,10 +13,10 @@ use super::{
 };
 use crate::test_support::json::index_keys_first;
 use crate::test_support::rules::check_cut;
-use crate::test_support::strategies::{js_string, json_value, number, object_key};
-use crate::test_support::{assert_js_eq, config, vectors};
+use crate::test_support::strategies::{edge_string, json_value, number, object_key};
+use crate::test_support::{assert_same_json_text, config, vectors};
 
-/// The case name prefixes of `js.json`.
+/// The case name prefixes of `wire.json`.
 const KINDS: [&str; 7] = [
     "stringify",
     "stringify-text",
@@ -34,7 +34,7 @@ fn text<'a>(case: &'a Map<String, Value>, field: &str) -> &'a str {
         .unwrap_or_else(|| panic!("{}: no string {field:?}", vectors::name(case)))
 }
 
-/// The `value` of a `{value?}` input: `None` when the key is absent (JS `undefined`).
+/// The `value` of a `{value?}` input: `None` when the key is absent (an `undefined` value).
 fn value_of(case: &Map<String, Value>) -> Option<&Value> {
     case["input"]
         .as_object()
@@ -42,7 +42,7 @@ fn value_of(case: &Map<String, Value>) -> Option<&Value> {
         .get("value")
 }
 
-/// Checks one `js.json` case against its TS output; returns its kind (the name prefix).
+/// Checks one `wire.json` case against its output; returns its kind (the name prefix).
 fn check_case(case: &Map<String, Value>) -> &'static str {
     let name = vectors::name(case);
     let kind = KINDS
@@ -66,7 +66,7 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
                 panic!("{name}: input is not [text, units]");
             };
             let units = usize::try_from(units).unwrap();
-            assert_js_eq(&json!(cut_utf16(s, units)), output, name);
+            assert_same_json_text(&json!(cut_utf16(s, units)), output, name);
         }
         "trim" => assert_eq!(trim(text(case, "input")), text(case, "output"), "{name}"),
         "utf16-len" => {
@@ -99,8 +99,8 @@ fn at_millis(ms: i64) -> SystemTime {
     }
 }
 
-/// `iso_millis` writes what `Date.prototype.toISOString` writes, for epoch 0, 7 ms, 999 ms and
-/// the other `iso:` cases of `js.json`.
+/// `iso_millis` writes the ISO 8601 text with milliseconds, for epoch 0, 7 ms, 999 ms and
+/// the other `iso:` cases of `wire.json`.
 #[test]
 fn iso_millis_matches_to_iso_string() {
     let mut seen = 0;
@@ -113,7 +113,7 @@ fn iso_millis_matches_to_iso_string() {
         assert_eq!(iso_millis(at_millis(ms)), text(&case, "output"), "{name}");
         seen += 1;
     }
-    assert!(seen >= 3, "js.json must have iso: cases");
+    assert!(seen >= 3, "wire.json must have iso: cases");
     // Sub-millisecond parts are cut, not rounded.
     assert_eq!(
         iso_millis(UNIX_EPOCH + Duration::new(1, 999_999_999)),
@@ -142,7 +142,7 @@ fn iso_millis_out_of_range_does_not_panic() {
     );
 }
 
-/// `parse_iso_millis` reads the `parse-iso:` texts of `js.json` to the instant `Date.parse`
+/// `parse_iso_millis` reads the `parse-iso:` texts of `wire.json` to the instant the case
 /// gives, and the `iso:` outputs back to their instants; text that is not a date gives `None`.
 #[test]
 fn parse_iso_millis_reads_both_forms() {
@@ -167,13 +167,13 @@ fn parse_iso_millis_reads_both_forms() {
             seen += 1;
         }
     }
-    assert!(seen >= 8, "js.json must have iso: and parse-iso: cases");
+    assert!(seen >= 8, "wire.json must have iso: and parse-iso: cases");
     assert_eq!(parse_iso_millis("yesterday"), None);
     assert_eq!(parse_iso_millis(""), None);
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let seen: BTreeSet<&str> = vectors::cases("wire")
         .iter()
         .filter(|case| !is_time_case(vectors::name(case)))
@@ -182,7 +182,7 @@ fn vectors_match_ts() {
     assert_eq!(
         seen,
         BTreeSet::from(KINDS),
-        "js.json must have cases of every kind"
+        "wire.json must have cases of every kind"
     );
 }
 
@@ -194,11 +194,11 @@ fn negative_zero_is_written_0() {
     assert_eq!(number_to_string(&zero), "0");
 }
 
-/// C40: `to_js_value` is the `JSON.stringify` text read back, so `serde_json` writes it as
-/// JavaScript does: `1.0` as `1`, `-0.0` as `0`, an integer above 2^53 rounded to the nearest
+/// `as_published` is the `JSON.stringify` text read back, so `serde_json` writes it like
+/// `JSON.stringify`: `1.0` as `1`, `-0.0` as `0`, an integer above 2^53 rounded to the nearest
 /// `f64`, and index-like keys first in ascending order, at every depth.
 #[test]
-fn to_js_value_writes_stringify_text() {
+fn as_published_writes_stringify_text() {
     let value = json!({
         "10": 1.0,
         "2": [-0.0, 9_007_199_254_740_993_u64, {"b": 2.0, "1": 0.5}],
@@ -216,9 +216,9 @@ fn to_js_value_writes_stringify_text() {
 }
 
 /// A value nested deeper than `serde_json` reads (128 levels) cannot be read back, so
-/// `to_js_value` gives it unchanged.
+/// `as_published` gives it unchanged.
 #[test]
-fn to_js_value_past_the_nesting_limit_is_a_copy() {
+fn as_published_past_the_nesting_limit_is_a_copy() {
     let mut value = json!(1.0);
     for _ in 0..200 {
         value = json!([value]);
@@ -243,8 +243,8 @@ fn objects_with_a_to_string_key_are_written_object_object() {
 }
 
 /// The plain JSON text of a number: a safe integer, or at most 15 digits times 10^e with
-/// |e| <= 22, written with or without a decimal point and an exponent (Ruling P3). `serde_json`
-/// without `float_roundtrip` (R22) parses such a text to the `f64` `JSON.parse` gives: an exact
+/// |e| <= 22, written with or without a decimal point and an exponent. `serde_json`
+/// without `float_roundtrip` parses such a text to the `f64` `JSON.parse` gives: an exact
 /// significand times or divided by an exact power of ten, rounded once.
 fn plain_number_text() -> impl Strategy<Value = String> + Clone {
     const SAFE: i64 = (1 << 53) - 1;
@@ -280,13 +280,13 @@ fn plain_number_text() -> impl Strategy<Value = String> + Clone {
 
 /// A JSON text of `json_value`'s shape with [`plain_number_text`] numbers, whose objects list
 /// their keys in shuffled order and often repeat one (a repeated key keeps its first position
-/// and takes its last value, in JavaScript and in `serde_json`'s `preserve_order` map).
+/// and takes its last value, in `JSON.stringify` and in `serde_json`'s `preserve_order` map).
 fn json_text() -> impl Strategy<Value = String> + Clone {
     let leaf = prop_oneof![
         Just("null".to_owned()),
         any::<bool>().prop_map(|b| b.to_string()),
         plain_number_text(),
-        js_string(16).prop_map(|s| Value::String(s).to_string()),
+        edge_string(16).prop_map(|s| Value::String(s).to_string()),
     ];
     leaf.prop_recursive(5, 64, 8, |inner| {
         let key = prop_oneof![
@@ -309,7 +309,7 @@ fn json_text() -> impl Strategy<Value = String> + Clone {
     })
 }
 
-/// A string that often starts and ends with JavaScript whitespace or its neighbors U+0085,
+/// A string that often starts and ends with the white space `trim` removes or its neighbors U+0085,
 /// U+180E and U+200B, which `trim` keeps.
 fn padded_string() -> impl Strategy<Value = String> + Clone {
     let edge = prop::collection::vec(
@@ -321,7 +321,7 @@ fn padded_string() -> impl Strategy<Value = String> + Clone {
         0..4,
     )
     .prop_map(String::from_iter);
-    (edge.clone(), js_string(20), edge).prop_map(|(head, body, tail)| head + &body + &tail)
+    (edge.clone(), edge_string(20), edge).prop_map(|(head, body, tail)| head + &body + &tail)
 }
 
 /// The cases of `wire_cases.json`: random values and JSON texts for `stringify`, random padded
@@ -393,7 +393,7 @@ fn check_read_back(read: &Value, original: &Value, path: &str) -> Result<(), Tes
     Ok(())
 }
 
-/// What `to_js_string` gives for a JSON value, from the rule: arrays are their items joined with
+/// What `coerce_to_string` gives for a JSON value, from the rule: arrays are their items joined with
 /// `,` (a `null` item as `""`), objects `[object Object]`.
 fn joined(value: &Value) -> String {
     match value {
@@ -471,20 +471,20 @@ proptest! {
 
     /// `cut_utf16` gives the longest prefix of at most `units` UTF-16 units.
     #[test]
-    fn cut_is_the_longest_prefix_within_the_units((text, units) in (js_string(30), 0..40usize)) {
+    fn cut_is_the_longest_prefix_within_the_units((text, units) in (edge_string(30), 0..40usize)) {
         check_cut(&text, cut_utf16(&text, units), units)?;
     }
 
     /// `utf16_len` counts the UTF-16 units.
     #[test]
-    fn utf16_len_counts_the_utf16_units(text in js_string(30)) {
+    fn utf16_len_counts_the_utf16_units(text in edge_string(30)) {
         prop_assert_eq!(utf16_len(&text), text.encode_utf16().count());
     }
 
-    /// `to_js_string` writes no value as `undefined`, joins arrays with `,` and writes objects as
+    /// `coerce_to_string` writes no value as `undefined`, joins arrays with `,` and writes objects as
     /// `[object Object]`.
     #[test]
-    fn to_js_string_joins_arrays_and_writes_objects_as_object_object(
+    fn coerce_to_string_joins_arrays_and_writes_objects_as_object_object(
         value in proptest::option::of(json_value(3, 4)),
     ) {
         let expected = value.as_ref().map_or_else(|| "undefined".to_owned(), joined);
@@ -508,7 +508,7 @@ proptest! {
 }
 
 /// `write_stringify` writes the text `stringify` returns, for every `stringify` case of
-/// `js.json` (the TS text) and every `stringify-text` case.
+/// `wire.json` (the text) and every `stringify-text` case.
 #[test]
 fn write_stringify_equals_stringify() {
     let mut seen = 0;
@@ -527,7 +527,7 @@ fn write_stringify_equals_stringify() {
         assert_eq!(written, text(&case, "output"), "{name}");
         seen += 1;
     }
-    assert!(seen >= 10, "js.json must have stringify cases");
+    assert!(seen >= 10, "wire.json must have stringify cases");
 }
 
 /// The fast path of `own_entries` (no index-like key) keeps insertion order, and the index path
@@ -549,8 +549,8 @@ fn own_entries_fast_path_keeps_order() {
     assert_eq!(own_entries(&Map::new()).count(), 0);
 }
 
-/// No decision: this pins a Rust contract, `ExactSizeIterator` (its `size_hint` is exact and `len`
-/// is the number of entries left), which `OwnEntries`, the iterator of C04's key order, implements.
+/// This pins a Rust contract, `ExactSizeIterator` (its `size_hint` is exact and `len`
+/// is the number of entries left), which `OwnEntries`, the iterator of the key order, implements.
 /// It holds on both paths, before and while the iterator is consumed.
 #[test]
 fn own_entries_len_is_exact() {

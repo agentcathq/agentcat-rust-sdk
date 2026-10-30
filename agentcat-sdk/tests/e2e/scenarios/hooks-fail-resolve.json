@@ -1,10 +1,10 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "resolveSessionId": { "throws": "resolve failed" },
-    "identify": { "throws": "identify failed", "sleepMs": 200 },
-    "eventTags": { "returns": { "bad key!": "dropped", "abcdefghijklmnopqrstuvwxyz0123456": "dropped", "count": 5, "multi": "line\nbreak", "team": "core" } },
-    "eventProperties": { "throws": "properties failed" }
+    "resolve_session_id": { "throws": "resolve failed" },
+    "identify": { "throws": "identify failed", "sleep_ms": 200 },
+    "event_tags": { "returns": { "bad key!": "dropped", "abcdefghijklmnopqrstuvwxyz0123456": "dropped", "count": 5, "multi": "line\nbreak", "team": "core" } },
+    "event_properties": { "throws": "properties failed" }
   },
   "expectPublishes": 5,
   "sessions": [

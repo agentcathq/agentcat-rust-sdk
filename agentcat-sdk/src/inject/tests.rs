@@ -13,8 +13,8 @@ use super::{
 };
 use crate::config::Options;
 use crate::constants::{AGENT_ID_PARAM, GET_MORE_TOOLS_NAME, SESSION_ID_PARAM};
-use crate::test_support::strategies::{js_string, tool_list};
-use crate::test_support::{assert_js_eq, config, vectors};
+use crate::test_support::strategies::{edge_string, tool_list};
+use crate::test_support::{assert_same_json_text, config, vectors};
 
 /// The case name prefixes of `inject.json`.
 const KINDS: [&str; 8] = [
@@ -28,13 +28,13 @@ const KINDS: [&str; 8] = [
     "seeded",
 ];
 
-/// The keys of the TS options of a case.
+/// The keys of the options of a case.
 const OPTION_KEYS: [&str; 5] = [
-    "enableReportMissing",
-    "enableTracing",
-    "enableToolCallContext",
-    "enableAgentTracking",
-    "customContextDescription",
+    "enable_report_missing",
+    "enable_tracing",
+    "enable_tool_call_context",
+    "enable_agent_tracking",
+    "custom_context_description",
 ];
 
 /// The kind (name prefix) of the case `name`.
@@ -48,33 +48,36 @@ fn kind_of(name: &str) -> &'static str {
         .unwrap_or_else(|| panic!("{name}: unknown kind"))
 }
 
-/// The [`Options`] of the TS options `ts`: the four switches, and the context description when
-/// `ts` has one.
-fn options_from_ts(ts: &Value) -> Options {
-    let ts = ts.as_object().unwrap_or_else(|| panic!("options {ts}"));
-    for key in ts.keys() {
+/// The [`Options`] of the options `fixture`: the four switches, and the context description when
+/// `fixture` has one.
+fn options_from_json(fixture: &Value) -> Options {
+    let fixture = fixture
+        .as_object()
+        .unwrap_or_else(|| panic!("options {fixture}"));
+    for key in fixture.keys() {
         assert!(OPTION_KEYS.contains(&key.as_str()), "unknown option {key}");
     }
     let flag = |key: &str| {
-        ts.get(key)
+        fixture
+            .get(key)
             .and_then(Value::as_bool)
-            .unwrap_or_else(|| panic!("option {key} of {ts:?} is not a boolean"))
+            .unwrap_or_else(|| panic!("option {key} of {fixture:?} is not a boolean"))
     };
     let options = Options::default()
-        .enable_report_missing(flag("enableReportMissing"))
-        .enable_tracing(flag("enableTracing"))
-        .enable_tool_call_context(flag("enableToolCallContext"))
-        .enable_agent_tracking(flag("enableAgentTracking"));
-    match ts.get("customContextDescription") {
+        .enable_report_missing(flag("enable_report_missing"))
+        .enable_tracing(flag("enable_tracing"))
+        .enable_tool_call_context(flag("enable_tool_call_context"))
+        .enable_agent_tracking(flag("enable_agent_tracking"));
+    match fixture.get("custom_context_description") {
         None => options,
         Some(text) => options.custom_context_description(text.as_str().unwrap()),
     }
 }
 
-/// The [`InjectConfig`] of an `{options, hookMode}` input (Ruling P1: [`InjectConfig::new`] with
+/// The [`InjectConfig`] of an `{options, hookMode}` input ([`InjectConfig::new`] with
 /// the case's hook mode). Without hook mode it is also what [`InjectConfig::from_options`] gives.
 fn config_of(input: &Value) -> InjectConfig {
-    let options = options_from_ts(&input["options"]);
+    let options = options_from_json(&input["options"]);
     let hook_mode = input["hookMode"].as_bool().unwrap();
     let config = InjectConfig::new(&options, hook_mode);
     if !hook_mode {
@@ -83,14 +86,14 @@ fn config_of(input: &Value) -> InjectConfig {
     config
 }
 
-/// The rmcp tool of the TS tool `ts`, after checking that the tool survives a round trip through
-/// rmcp's `Tool` (so the comparisons below see every key of the TS output).
-fn tool_from_ts(ts: &Value) -> Tool {
-    let tool: Tool =
-        serde_json::from_value(ts.clone()).unwrap_or_else(|e| panic!("rmcp cannot hold {ts}: {e}"));
+/// The rmcp tool of the tool `fixture`, after checking that the tool survives a round trip through
+/// rmcp's `Tool` (so the comparisons below see every key of the output).
+fn tool_from_json(fixture: &Value) -> Tool {
+    let tool: Tool = serde_json::from_value(fixture.clone())
+        .unwrap_or_else(|e| panic!("rmcp cannot hold {fixture}: {e}"));
     assert_eq!(
         serde_json::to_value(&tool).unwrap(),
-        *ts,
+        *fixture,
         "rmcp's Tool drops or changes a key"
     );
     tool
@@ -102,7 +105,13 @@ fn pages_of(input: &Value) -> Vec<Vec<Tool>> {
         .as_array()
         .unwrap()
         .iter()
-        .map(|page| page.as_array().unwrap().iter().map(tool_from_ts).collect())
+        .map(|page| {
+            page.as_array()
+                .unwrap()
+                .iter()
+                .map(tool_from_json)
+                .collect()
+        })
         .collect()
 }
 
@@ -119,37 +128,39 @@ fn strings(value: &Value) -> Vec<&str> {
         .collect()
 }
 
-/// TS's registry of a page, `[[name, [params]]]`, as a map.
-fn ts_registry(page: &Value) -> BTreeMap<&str, Vec<&str>> {
+/// The registry of a page, `[[name, [params]]]`, as a map.
+fn expected_registry(page: &Value) -> BTreeMap<&str, Vec<&str>> {
     let registry = page["registry"].as_array().unwrap();
     let map: BTreeMap<&str, Vec<&str>> = registry
         .iter()
         .map(|entry| (entry[0].as_str().unwrap(), strings(&entry[1])))
         .collect();
-    assert_eq!(map.len(), registry.len(), "TS registry names repeat");
+    assert_eq!(map.len(), registry.len(), "registry names repeat");
     map
 }
 
-/// Checks one tool against TS's: the schemas as `JSON.stringify` writes them (key order counts)
+/// Checks one tool against the fixture's: the schemas as `JSON.stringify` writes them (key order counts)
 /// and the whole tool with key order ignored.
-fn check_tool(tool: &Tool, ts: &Value, context: &str) {
+fn check_tool(tool: &Tool, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(tool).unwrap();
-    assert_js_eq(
+    assert_same_json_text(
         &actual["inputSchema"],
-        &ts["inputSchema"],
+        &fixture["inputSchema"],
         &format!("{context}: inputSchema"),
     );
-    match (actual.get("outputSchema"), ts.get("outputSchema")) {
-        (Some(actual), Some(ts)) => {
-            assert_js_eq(actual, ts, &format!("{context}: outputSchema"));
+    match (actual.get("outputSchema"), fixture.get("outputSchema")) {
+        (Some(actual), Some(fixture)) => {
+            assert_same_json_text(actual, fixture, &format!("{context}: outputSchema"));
         }
         (None, None) => {}
-        (actual, ts) => panic!("{context}: outputSchema {actual:?}, TS {ts:?}"),
+        (actual, fixture) => {
+            panic!("{context}: outputSchema {actual:?}, the fixture has {fixture:?}")
+        }
     }
-    assert_eq!(actual, *ts, "{context}: the tool (key order ignored)");
+    assert_eq!(actual, *fixture, "{context}: the tool (key order ignored)");
 }
 
-/// Checks the list of one page against TS's: tool names in order, each tool, the registry (map
+/// Checks the list of one page against the fixture's: tool names in order, each tool, the registry (map
 /// order ignored, parameter order compared), the output registry and the declared set as sets,
 /// and the log lines in order. `declared_before` is the declared set before the page: the names
 /// the page adds are the entries that declare `session_id`.
@@ -157,18 +168,18 @@ fn check_page(
     list: &InjectedList,
     state: &InjectState,
     declared_before: &BTreeSet<String>,
-    ts: &Value,
+    fixture: &Value,
     context: &str,
 ) {
-    let ts_tools = ts["tools"].as_array().unwrap();
+    let expected_tools = fixture["tools"].as_array().unwrap();
     let names: Vec<&str> = list.tools.iter().map(|tool| tool.name.as_ref()).collect();
-    let ts_names: Vec<&str> = ts_tools
+    let expected_names: Vec<&str> = expected_tools
         .iter()
         .map(|tool| tool["name"].as_str().unwrap())
         .collect();
-    assert_eq!(names, ts_names, "{context}: tool names");
-    for (i, (tool, ts_tool)) in list.tools.iter().zip(ts_tools).enumerate() {
-        check_tool(tool, ts_tool, &format!("{context}: tool {i}"));
+    assert_eq!(names, expected_names, "{context}: tool names");
+    for (i, (tool, expected_tool)) in list.tools.iter().zip(expected_tools).enumerate() {
+        check_tool(tool, expected_tool, &format!("{context}: tool {i}"));
     }
 
     let registry: BTreeMap<&str, Vec<&str>> = list
@@ -181,7 +192,7 @@ fn check_page(
         list.entries.len(),
         "{context}: entry names repeat"
     );
-    assert_eq!(registry, ts_registry(ts), "{context}: registry");
+    assert_eq!(registry, expected_registry(fixture), "{context}: registry");
 
     let output: BTreeSet<&str> = list
         .entries
@@ -189,16 +200,21 @@ fn check_page(
         .filter(|(_, entry)| entry.output_injected)
         .map(|(name, _)| name.as_str())
         .collect();
-    let ts_output: BTreeSet<&str> = strings(&ts["outputRegistry"]).into_iter().collect();
-    assert_eq!(output, ts_output, "{context}: output registry");
+    let expected_output: BTreeSet<&str> = strings(&fixture["outputRegistry"]).into_iter().collect();
+    assert_eq!(output, expected_output, "{context}: output registry");
 
     let declared: BTreeSet<&str> = state
         .declared_session_params
         .iter()
         .map(String::as_str)
         .collect();
-    let ts_declared: BTreeSet<&str> = strings(&ts["declaredSessionParams"]).into_iter().collect();
-    assert_eq!(declared, ts_declared, "{context}: declared session params");
+    let expected_declared: BTreeSet<&str> = strings(&fixture["declaredSessionParams"])
+        .into_iter()
+        .collect();
+    assert_eq!(
+        declared, expected_declared,
+        "{context}: declared session params"
+    );
     let mut expected_declared = declared_before.clone();
     for (name, entry) in &list.entries {
         if entry.declares_session {
@@ -211,21 +227,21 @@ fn check_page(
     );
 
     let logs: Vec<&str> = list.logs.iter().map(String::as_str).collect();
-    assert_eq!(logs, strings(&ts["logs"]), "{context}: logs");
+    assert_eq!(logs, strings(&fixture["logs"]), "{context}: logs");
 }
 
-/// Lists `pages` in turn on one [`InjectState`] and checks each list against TS's.
-fn check_pages(config: &InjectConfig, pages: Vec<Vec<Tool>>, ts: &[Value], context: &str) {
-    assert_eq!(pages.len(), ts.len(), "{context}: page count");
+/// Lists `pages` in turn on one [`InjectState`] and checks each list against the fixture's.
+fn check_pages(config: &InjectConfig, pages: Vec<Vec<Tool>>, fixture: &[Value], context: &str) {
+    assert_eq!(pages.len(), fixture.len(), "{context}: page count");
     let mut state = InjectState::default();
-    for (i, (tools, ts_page)) in pages.into_iter().zip(ts).enumerate() {
+    for (i, (tools, expected_page)) in pages.into_iter().zip(fixture).enumerate() {
         let before = state.declared_session_params.clone();
         let list = build_injected_list(config, tools, &mut state);
         check_page(
             &list,
             &state,
             &before,
-            ts_page,
+            expected_page,
             &format!("{context}: page {i}"),
         );
     }
@@ -252,7 +268,7 @@ fn check_unrepresentable(case: &Map<String, Value>, name: &str) {
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let mut seen = BTreeSet::new();
     for case in vectors::cases("inject") {
         let name = vectors::name(&case);
@@ -279,11 +295,11 @@ fn vectors_match_ts() {
 }
 
 /// [`inject_tool`] gives a tool what the listing gives it: on the first page of each case (so the
-/// state is fresh, as it is for TS's first listing), each listed tool whose registry name no other
-/// tool there shares is injected alone and compared with TS's tool and registry records. A page of
-/// one tool, with no `get_more_tools` shadow warning, also has TS's log lines.
+/// state is fresh, as it is for a first listing), each listed tool whose registry name no other
+/// tool there shares is injected alone and compared with the fixture's tool and registry records. A page of
+/// one tool, with no `get_more_tools` shadow warning, also has the fixture's log lines.
 #[test]
-fn inject_tool_matches_ts() {
+fn inject_tool_follows_the_fixture_cases() {
     let mut checked = 0;
     for case in vectors::cases("inject") {
         let name = vectors::name(&case);
@@ -293,7 +309,7 @@ fn inject_tool_matches_ts() {
         let input = &case["input"];
         let config = config_of(input);
         let tools = pages_of(input).swap_remove(0);
-        let ts = &case["output"][0];
+        let fixture = &case["output"][0];
         let shadowed =
             config.report_missing && tools.iter().any(|tool| tool.name == GET_MORE_TOOLS_NAME);
         let mut listed = tools;
@@ -308,9 +324,9 @@ fn inject_tool_matches_ts() {
             }
         };
         let keys: Vec<String> = listed.iter().map(key).collect();
-        let registry = ts_registry(ts);
-        let output = strings(&ts["outputRegistry"]);
-        let declared = strings(&ts["declaredSessionParams"]);
+        let registry = expected_registry(fixture);
+        let output = strings(&fixture["outputRegistry"]);
+        let declared = strings(&fixture["declaredSessionParams"]);
         let single = listed.len() == 1 && !shadowed;
         for (i, tool) in listed.into_iter().enumerate() {
             let key = &keys[i];
@@ -321,7 +337,7 @@ fn inject_tool_matches_ts() {
             let mut logs = Vec::new();
             let (tool, entry) = inject_tool(&config, tool, &mut state, &mut logs);
             let context = format!("{name}: tool {i}");
-            check_tool(&tool, &ts["tools"][i], &context);
+            check_tool(&tool, &fixture["tools"][i], &context);
             let params = registry.get(key.as_str()).cloned().unwrap_or_default();
             assert_eq!(entry.injected, params, "{context}: injected");
             assert_eq!(
@@ -335,7 +351,7 @@ fn inject_tool_matches_ts() {
                 "{context}: declares session_id"
             );
             if single {
-                assert_eq!(logs, strings(&ts["logs"]), "{context}: logs");
+                assert_eq!(logs, strings(&fixture["logs"]), "{context}: logs");
             }
             checked += 1;
         }
@@ -344,20 +360,20 @@ fn inject_tool_matches_ts() {
 }
 
 #[test]
-fn get_more_tools_tool_is_the_ts_descriptor() {
+fn get_more_tools_tool_is_the_pinned_descriptor() {
     let descriptor = vectors::cases("constants")
         .into_iter()
         .find(|case| vectors::name(case) == "get_more_tools_descriptor")
         .and_then(|mut case| case.remove("value"))
         .unwrap();
     let tool = serde_json::to_value(get_more_tools_tool()).unwrap();
-    assert_js_eq(&tool, &descriptor, "get_more_tools");
+    assert_same_json_text(&tool, &descriptor, "get_more_tools");
 }
 
-/// The TS tests "does not mutate the customer's outputSchema object" (handle-injection) and "does
+/// The tests "does not mutate the customer's outputSchema object" (handle-injection) and "does
 /// not mutate the input tool objects" (engine-listwrap): the pipeline edits schemas with
 /// `Arc::make_mut`, so a clone of a listed tool that shares its schemas keeps them as they were,
-/// also for a tool whose injection fails (B-044).
+/// also for a tool whose injection fails.
 #[test]
 fn shared_schemas_stay_unchanged() {
     let tools: Vec<Tool> = [
@@ -380,7 +396,7 @@ fn shared_schemas_stay_unchanged() {
         .iter()
         .map(|tool| serde_json::to_value(tool).unwrap())
         .collect();
-    // The context step stays off: it runs after a failed handle step, as in TS, and would give
+    // The context step stays off: it runs after a failed handle step and would give
     // `failing` its `context`.
     let options = Options::default()
         .enable_agent_tracking(true)
@@ -396,13 +412,13 @@ fn shared_schemas_stay_unchanged() {
     assert_eq!(after, before);
 }
 
-/// TS options with every switch random, and sometimes a context description.
-fn ts_options() -> impl Strategy<Value = Value> {
+/// Options with every switch random, and sometimes a context description.
+fn inject_options() -> impl Strategy<Value = Value> {
     let description = prop_oneof![
         2 => Just(None),
         1 => Just(Some(String::new())),
         1 => Just(Some("why".to_owned())),
-        1 => js_string(8).prop_map(Some),
+        1 => edge_string(8).prop_map(Some),
     ];
     (
         any::<bool>(),
@@ -414,13 +430,13 @@ fn ts_options() -> impl Strategy<Value = Value> {
         .prop_map(
             |(report_missing, tracing, context, agent_tracking, description)| {
                 let mut options = json!({
-                    "enableReportMissing": report_missing,
-                    "enableTracing": tracing,
-                    "enableToolCallContext": context,
-                    "enableAgentTracking": agent_tracking,
+                    "enable_report_missing": report_missing,
+                    "enable_tracing": tracing,
+                    "enable_tool_call_context": context,
+                    "enable_agent_tracking": agent_tracking,
                 });
                 if let Some(description) = description {
-                    options["customContextDescription"] = json!(description);
+                    options["custom_context_description"] = json!(description);
                 }
                 options
             },
@@ -486,7 +502,7 @@ proptest! {
     /// report-missing is on and the page has no tool of that name.
     #[test]
     fn listing_keeps_the_tool_order_and_adds_get_more_tools_last(
-        options in ts_options(),
+        options in inject_options(),
         hook_mode in any::<bool>(),
         pages in prop::collection::vec(tool_list(), 1..=2),
     ) {
@@ -504,7 +520,7 @@ proptest! {
     /// input schema but a falsy one under an injected name, which the pipeline may replace.
     #[test]
     fn listing_keeps_every_customer_property_but_a_falsy_injected_name(
-        options in ts_options(),
+        options in inject_options(),
         hook_mode in any::<bool>(),
         pages in prop::collection::vec(tool_list(), 1..=2),
     ) {
@@ -531,7 +547,7 @@ proptest! {
     /// that tool's `required` list, and among its properties when they are an object.
     #[test]
     fn injected_parameters_are_required(
-        options in ts_options(),
+        options in inject_options(),
         hook_mode in any::<bool>(),
         pages in prop::collection::vec(tool_list(), 1..=2),
     ) {
@@ -563,7 +579,7 @@ proptest! {
     /// them.
     #[test]
     fn relisting_a_listed_page_changes_no_tool(
-        options in ts_options(),
+        options in inject_options(),
         hook_mode in any::<bool>(),
         pages in prop::collection::vec(tool_list(), 1..=2),
     ) {

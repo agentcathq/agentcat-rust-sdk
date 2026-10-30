@@ -1,14 +1,14 @@
-//! The constants of `constants` against `tests/vectors/constants.json`, which the TS SDK wrote.
+//! The constants of `constants` against `tests/vectors/constants.json`, which the SDK wrote.
 use std::sync::OnceLock;
 
 use serde_json::{Map, Value};
 
 use super::*;
-use crate::test_support::{assert_js_eq, vectors};
+use crate::test_support::{assert_same_json_text, vectors};
 use crate::wire;
 
-/// TS exports that stay out of the crate for now (exporters and diagnostics: second pass, R04,
-/// C05, RD-16).
+/// Fixture exports that stay out of the crate for now (exporters and diagnostics: a later
+/// release).
 const NOT_PORTED: [&str; 4] = [
     "AGENTCAT_SOURCE",
     "DIAGNOSTICS_SCOPE_NAME",
@@ -24,7 +24,7 @@ const FUNCTION_CASES: [&str; 3] = [
     "get_more_tools_result",
 ];
 
-/// Every ported constant, by its TS export name.
+/// Every ported constant, by its export name.
 const PORTED: [(&str, &str); 26] = [
     (
         "DEFAULT_CONTEXT_PARAMETER_DESCRIPTION",
@@ -99,14 +99,14 @@ fn expected(name: &str) -> Value {
 }
 
 #[test]
-fn every_ported_constant_equals_ts() {
+fn every_constant_equals_its_fixture_value() {
     for (name, actual) in PORTED {
-        assert_js_eq(&Value::from(actual), &expected(name), name);
+        assert_same_json_text(&Value::from(actual), &expected(name), name);
     }
 }
 
 #[test]
-fn every_ts_constant_is_ported_or_listed() {
+fn every_fixture_constant_is_ported_or_listed() {
     let plain: Vec<String> = cases()
         .iter()
         .map(|c| vectors::name(c).to_owned())
@@ -123,19 +123,19 @@ fn every_ts_constant_is_ported_or_listed() {
     for (name, _) in PORTED {
         assert!(
             plain.iter().any(|p| p == name),
-            "{name}: no TS constant of that name"
+            "{name}: no fixture constant of that name"
         );
     }
     for name in NOT_PORTED {
         assert!(
             plain.iter().any(|p| p == name),
-            "{name}: no TS constant of that name"
+            "{name}: no fixture constant of that name"
         );
     }
 }
 
 #[test]
-fn mint_back_session_line_matches_ts() {
+fn mint_back_session_line_is_pinned() {
     let case = case("mint_back_session_line");
     let input = case["input"].as_str().unwrap_or_else(|| {
         panic!(
@@ -143,7 +143,7 @@ fn mint_back_session_line_matches_ts() {
             case["input"]
         )
     });
-    assert_js_eq(
+    assert_same_json_text(
         &Value::from(mint_back_session_line(input)),
         &case["value"],
         "mint_back_session_line",
@@ -151,8 +151,8 @@ fn mint_back_session_line_matches_ts() {
 }
 
 #[test]
-fn get_more_tools_descriptor_matches_ts() {
-    assert_js_eq(
+fn get_more_tools_descriptor_is_pinned() {
+    assert_same_json_text(
         &get_more_tools_descriptor(),
         &expected("get_more_tools_descriptor"),
         "get_more_tools_descriptor",
@@ -160,8 +160,8 @@ fn get_more_tools_descriptor_matches_ts() {
 }
 
 #[test]
-fn get_more_tools_result_matches_ts() {
-    assert_js_eq(
+fn get_more_tools_result_is_pinned() {
+    assert_same_json_text(
         &get_more_tools_result(),
         &expected("get_more_tools_result"),
         "get_more_tools_result",
@@ -169,9 +169,9 @@ fn get_more_tools_result_matches_ts() {
 }
 
 #[test]
-fn get_more_tools_result_text_matches_ts() {
+fn get_more_tools_result_text_is_pinned() {
     let value = expected("get_more_tools_result");
-    assert_js_eq(
+    assert_same_json_text(
         &Value::from(GET_MORE_TOOLS_RESULT_TEXT),
         &value["content"][0]["text"],
         "get_more_tools_result text",
@@ -182,7 +182,7 @@ fn get_more_tools_result_text_matches_ts() {
 /// [`report_missing_log_line`] writes for the case's `context` string, whose length counts
 /// UTF-16 units.
 #[test]
-fn report_missing_log_line_matches_ts() {
+fn report_missing_log_line_is_pinned() {
     let case = case("get_more_tools_result");
     let context = case["input"]["context"].as_str().unwrap_or_else(|| {
         panic!(
@@ -201,7 +201,7 @@ fn report_missing_log_line_matches_ts() {
         1,
         "get_more_tools_result logs one line: {logs:?}"
     );
-    assert_js_eq(
+    assert_same_json_text(
         &Value::from(report_missing_log_line(wire::utf16_len(context))),
         &logs[0],
         "get_more_tools_result log",

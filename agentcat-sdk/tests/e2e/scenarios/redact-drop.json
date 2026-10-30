@@ -1,7 +1,7 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "redactEvent": { "returns": null }
+    "redact_event": { "returns": null }
   },
   "expectPublishes": 1,
   "sessions": [

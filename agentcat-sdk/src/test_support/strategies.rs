@@ -1,5 +1,5 @@
-//! The input generators the property tests share. They lean on the inputs where JavaScript and
-//! Rust differ: escapes, JavaScript whitespace, characters outside the BMP (two UTF-16 units),
+//! The input generators the property tests share. They lean on the inputs where text
+//! and Rust differ: escapes, the white space `trim` removes, characters outside the BMP (two UTF-16 units),
 //! array-index-like object keys, and numbers that `JSON.stringify` writes in its own way.
 use std::ops::{Range, RangeInclusive};
 
@@ -12,10 +12,9 @@ use crate::pipeline::EventObject;
 /// One part of a character mix: its weight, and the characters it draws from, evenly.
 type Part = (u32, &'static [RangeInclusive<char>]);
 
-/// The BMP characters of [`js_char`] in their weights, then any BMP character (the last part, for
-/// [`bmp_string`] only). The third part lists the JavaScript whitespace set (what
-/// `String.prototype.trim` removes) and its neighbors U+0085, U+180E and U+200B, which are not
-/// JavaScript whitespace.
+/// The BMP characters of [`edge_char`] in their weights, then any BMP character (the last part, for
+/// [`bmp_string`] only). The third part lists the white space that `wire::trim` removes and
+/// its neighbors U+0085, U+180E and U+200B, which `wire::trim` does not remove.
 #[expect(
     clippy::single_range_in_vec_init,
     reason = "a part is a list of ranges, and the private use area is one range"
@@ -94,15 +93,15 @@ fn pick(parts: &[Part], draw: u32) -> char {
     panic!("draw {draw} is past the end of the mix")
 }
 
-/// Object keys a strategy never gives: `__proto__` (RD-24 has its own vector cases), `toString`
-/// (RD-27: TS throws on a joined array that holds an object with that key) and the marker keys of
+/// Object keys a strategy never gives: `__proto__` (its vector cases are separate), `toString`
+/// (a joined array that holds an object with that key has a text the vector cases pin) and the marker keys of
 /// the strict JSON encoding.
 const RESERVED_KEYS: [&str; 5] = ["__proto__", "toString", "$utf16", "$f64", "$repeat"];
 
 /// One character: a weighted mix of ASCII letters and digits, `"` and `\`, U+0000 to U+001F,
-/// U+007F, the JavaScript whitespace set and its neighbors, BMP letters, the private use area
+/// U+007F, the white space `trim` removes and its neighbors, BMP letters, the private use area
 /// U+E000 to U+F8FF, characters outside the BMP, and any `char`.
-pub(crate) fn js_char() -> impl Strategy<Value = char> + Clone {
+pub(crate) fn edge_char() -> impl Strategy<Value = char> + Clone {
     prop_oneof![
         12 => mix(&BMP_PARTS[..BMP_PARTS.len() - 1]),
         2 => prop::sample::select(vec!['\u{1F600}', '\u{1D11E}']),
@@ -110,13 +109,13 @@ pub(crate) fn js_char() -> impl Strategy<Value = char> + Clone {
     ]
 }
 
-/// A string of 0 to `max_len` characters of [`js_char`].
-pub(crate) fn js_string(max_len: usize) -> impl Strategy<Value = String> + Clone {
-    prop::collection::vec(js_char(), 0..=max_len).prop_map(String::from_iter)
+/// A string of 0 to `max_len` characters of [`edge_char`].
+pub(crate) fn edge_string(max_len: usize) -> impl Strategy<Value = String> + Clone {
+    prop::collection::vec(edge_char(), 0..=max_len).prop_map(String::from_iter)
 }
 
 /// A string of `len` characters, all in the BMP, so its UTF-16 length is its length in
-/// characters: the characters of [`js_char`] without those outside the BMP, and any BMP `char`
+/// characters: the characters of [`edge_char`] without those outside the BMP, and any BMP `char`
 /// (weight 1 against 12). Fast enough for strings of several hundred thousand characters.
 pub(crate) fn bmp_string(len: Range<usize>) -> impl Strategy<Value = String> + Clone {
     prop::collection::vec(mix(&BMP_PARTS), len).prop_map(String::from_iter)
@@ -124,7 +123,7 @@ pub(crate) fn bmp_string(len: Range<usize>) -> impl Strategy<Value = String> + C
 
 /// An object key: array-index-like keys (`"0"` to `"20"`, `"4294967294"`, `"4294967295"`, and
 /// the non-index spellings `"01"`, `"-1"`, `"1.5"`), short words, `"..."`, `"context"`,
-/// `"type"`, `"text"`, and [`js_string`] of up to 12 characters. Never `__proto__`, `toString`,
+/// `"type"`, `"text"`, and [`edge_string`] of up to 12 characters. Never `__proto__`, `toString`,
 /// `$utf16`, `$f64` or `$repeat`.
 pub(crate) fn object_key() -> impl Strategy<Value = String> + Clone {
     let fixed = |keys: &[&str]| {
@@ -135,7 +134,7 @@ pub(crate) fn object_key() -> impl Strategy<Value = String> + Clone {
         1 => fixed(&["4294967294", "4294967295", "01", "-1", "1.5"]),
         2 => fixed(&["a", "b", "id", "key", "name", "value", "data", "items"]),
         2 => fixed(&["...", "context", "type", "text"]),
-        3 => js_string(12),
+        3 => edge_string(12),
     ]
     .prop_filter("a reserved key", |key| {
         !RESERVED_KEYS.contains(&key.as_str())
@@ -168,14 +167,14 @@ pub(crate) fn number() -> impl Strategy<Value = Number> + Clone {
 }
 
 /// A JSON value nested at most `depth` arrays or objects deep, each with at most `width` items:
-/// `null`, booleans, [`number`]s, [`js_string`]s of up to 16 characters, arrays, and objects
+/// `null`, booleans, [`number`]s, [`edge_string`]s of up to 16 characters, arrays, and objects
 /// with [`object_key`] keys.
 pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Value> + Clone {
     let leaf = prop_oneof![
         Just(Value::Null),
         any::<bool>().prop_map(Value::Bool),
         number().prop_map(Value::Number),
-        js_string(16).prop_map(Value::String),
+        edge_string(16).prop_map(Value::String),
     ];
     let branch = u32::try_from(width).unwrap_or(u32::MAX);
     leaf.prop_recursive(
@@ -192,8 +191,8 @@ pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Valu
     )
 }
 
-/// A tool-call event as the TS SDK holds it when its pipeline runs ([`TsEvent`]), its keys in the
-/// order TS sets them: `id` (`""`), `sessionId`, `projectId`, `eventType` (`"mcp:tools/call"`),
+/// A tool-call event as the SDK holds it when its pipeline runs ([`EventObject`]), its keys in the
+/// order the SDK sets them: `id` (`""`), `sessionId`, `projectId`, `eventType` (`"mcp:tools/call"`),
 /// `timestamp` (ISO 8601 with milliseconds), `duration`, `inputTokens`, `resourceName`,
 /// `parameters` (`{request, extra}`), `response` (`{content, structuredContent?, isError?}`, see
 /// [`content_block`]), `userIntent`, `isError`, `error` (`{message, type, platform, frames?}`),
@@ -203,11 +202,11 @@ pub(crate) fn json_value(depth: u32, width: usize) -> impl Strategy<Value = Valu
 /// absent; every string a customer, a client or the SDK sets is drawn from `text`, and the JSON
 /// payloads are [`payload`]s.
 ///
-/// The fields TS truncation limits with `truncateString` hold strings and `frames` is an array,
-/// so no event meets RD-26 (an object with a `length` key) or RD-27 (an object with a `toString`
+/// The fields that truncation limits with `truncateString` hold strings and `frames` is an array,
+/// so no event meets the cases of an object with a `length` key or an object with a `toString`
 /// key in a joined array): the objects of the payloads only reach `normalize`. No object of an
 /// event has a `toString` or `__proto__` key ([`RESERVED_KEYS`]); a test checks it.
-pub(crate) fn ts_event(
+pub(crate) fn tool_call_event(
     text: impl Strategy<Value = String> + Clone + 'static,
 ) -> impl Strategy<Value = EventObject> + Clone {
     let string = || text.clone().prop_map(Value::String).boxed();
@@ -253,7 +252,7 @@ pub(crate) fn ts_event(
     })
 }
 
-/// An ISO 8601 timestamp with milliseconds, as `Date.prototype.toISOString` writes it.
+/// An ISO 8601 timestamp with milliseconds in UTC.
 fn timestamp() -> impl Strategy<Value = Value> + Clone {
     (
         (2000u32..2100, 1u32..=12, 1u32..=28),
@@ -542,8 +541,8 @@ mod tests {
     use serde_json::Value;
 
     use super::{
-        BMP_PARTS, SLOTS, bmp_string, js_string, json_value, number, object_key, pick, size, slots,
-        ts_event,
+        BMP_PARTS, SLOTS, bmp_string, edge_string, json_value, number, object_key, pick, size,
+        slots, tool_call_event,
     };
     use crate::test_support::config;
 
@@ -561,7 +560,7 @@ mod tests {
         }
     }
 
-    /// The keys of a [`ts_event`], in order.
+    /// The keys of a [`tool_call_event`], in order.
     const EVENT_KEYS: [&str; 24] = [
         "id",
         "sessionId",
@@ -655,7 +654,7 @@ mod tests {
         }
 
         #[test]
-        fn js_strings_have_at_most_max_len_chars(s in js_string(7)) {
+        fn edge_strings_have_at_most_max_len_chars(s in edge_string(7)) {
             prop_assert!(s.chars().count() <= 7, "{s:?}");
         }
 
@@ -677,7 +676,7 @@ mod tests {
         }
 
         #[test]
-        fn ts_events_have_the_ts_key_order_and_the_fixed_fields(event in ts_event(js_string(8))) {
+        fn events_have_the_event_key_order_and_the_fixed_fields(event in tool_call_event(edge_string(8))) {
             let keys: Vec<&str> = event.keys().map(String::as_str).collect();
             let mut order = EVENT_KEYS.iter();
             for key in &keys {
@@ -696,8 +695,8 @@ mod tests {
             for key in ["userIntent", "resourceName", "serverName", "serverVersion", "clientName", "clientVersion"] {
                 prop_assert!(event.get(key).is_none_or(Value::is_string), "{key}");
             }
-            // RD-24 (`__proto__`) and RD-27 (`toString`) have vector cases of their own, and
-            // `ts_event` never makes one of those keys, nor a marker key of the strict encoding.
+            // Keys `__proto__` and `toString` have vector cases of their own, and
+            // `tool_call_event` never makes one of those keys, nor a marker key of the strict encoding.
             prop_assert!(!has_reserved_key(&Value::Object(event)), "a reserved key");
         }
     }

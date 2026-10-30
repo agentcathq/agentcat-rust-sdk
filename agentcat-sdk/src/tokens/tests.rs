@@ -6,14 +6,14 @@ use proptest::prelude::*;
 use serde_json::{Map, Value, json};
 
 use super::{estimate_input_tokens, estimate_output_tokens, estimate_tokens};
-use crate::test_support::strategies::{js_string, json_value, object_key};
+use crate::test_support::strategies::{edge_string, json_value, object_key};
 use crate::test_support::{config, vectors};
 use crate::wire;
 
 /// The case name prefixes of `tokens.json`, and `divisor` (a case without a prefix).
 const KINDS: [&str; 5] = ["bytes", "utf8", "input", "output", "divisor"];
 
-/// What a case expects: a token count, or `None` where TS gives `undefined` (the file has `null`).
+/// What a case expects: a token count, or `None` where the fixture has no count (the file has `null`).
 fn expected(case: &Map<String, Value>) -> Option<i32> {
     let output = &case["output"];
     if output.is_null() {
@@ -25,7 +25,7 @@ fn expected(case: &Map<String, Value>) -> Option<i32> {
     Some(i32::try_from(tokens).unwrap())
 }
 
-/// Checks one `tokens.json` case against its TS output; returns its kind (the name prefix).
+/// Checks one `tokens.json` case against its output; returns its kind (the name prefix).
 fn check_case(case: &Map<String, Value>) -> &'static str {
     let name = vectors::name(case);
     let kind = KINDS
@@ -46,9 +46,9 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
         "input" => assert_eq!(estimate_input_tokens(input), expected(case), "{name}"),
         "output" => assert_eq!(estimate_output_tokens(input), expected(case), "{name}"),
         "divisor" => {
-            // The divisor TS pins, applied to every byte count up to 2000, in float arithmetic.
+            // The divisor the fixture pins, applied to every byte count up to 2000, in float arithmetic.
             let divisor = case["output"].as_f64().expect("divisor");
-            assert_eq!(divisor, 3.5, "TS pins the divisor 3.5");
+            assert_eq!(divisor, 3.5, "the fixture pins the divisor 3.5");
             for bytes in 0_u32..=2000 {
                 #[expect(clippy::cast_possible_truncation, reason = "at most 572 tokens")]
                 let tokens = (f64::from(bytes) / divisor).ceil() as i32;
@@ -61,10 +61,10 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let seen: BTreeSet<&str> = vectors::cases("tokens").iter().map(check_case).collect();
     assert_eq!(seen, BTreeSet::from(KINDS), "every kind has a case");
-    // TS maps absent arguments and an absent response to undefined, as null (a vector case).
+    // Absent arguments and an absent response have no estimate (a vector case).
     assert_eq!(estimate_input_tokens(None), None);
     assert_eq!(estimate_output_tokens(None), None);
 }
@@ -115,16 +115,16 @@ fn counted_block() -> impl Strategy<Value = (Value, u64)> {
     let not_object: fn(&Value) -> bool = |value| !value.is_object();
     let other_type = prop::sample::select(vec!["image", "audio", "resource_link", "Text", ""]);
     prop_oneof![
-        js_string(40).prop_map(|t| (json!({"type": "text", "text": t}), utf8_len(&t))),
-        (js_string(40), js_string(8)).prop_map(|(t, other)| {
+        edge_string(40).prop_map(|t| (json!({"type": "text", "text": t}), utf8_len(&t))),
+        (edge_string(40), edge_string(8)).prop_map(|(t, other)| {
             let block = json!({"type": "text", "text": t, "resource": {"text": other}});
             (block, utf8_len(&t))
         }),
-        js_string(40).prop_map(|t| {
+        edge_string(40).prop_map(|t| {
             let block = json!({"type": "resource", "resource": {"uri": "u", "text": t}});
             (block, utf8_len(&t))
         }),
-        (js_string(40), js_string(8)).prop_map(|(t, other)| {
+        (edge_string(40), edge_string(8)).prop_map(|(t, other)| {
             let block =
                 json!({"type": "resource", "text": other, "resource": {"uri": "u", "text": t}});
             (block, utf8_len(&t))
@@ -143,13 +143,13 @@ fn counted_block() -> impl Strategy<Value = (Value, u64)> {
             0
         )),
         json_but(not_object).prop_map(|r| (json!({"type": "resource", "resource": r}), 0)),
-        (other_type, js_string(16)).prop_map(|(kind, t)| {
+        (other_type, edge_string(16)).prop_map(|(kind, t)| {
             (json!({"type": kind, "text": t, "resource": {"text": t}}), 0)
         }),
-        (json_but(not_string), js_string(16)).prop_map(|(kind, t)| {
+        (json_but(not_string), edge_string(16)).prop_map(|(kind, t)| {
             (json!({"type": kind, "text": t, "resource": {"text": t}}), 0)
         }),
-        js_string(16).prop_map(|t| (json!({"text": t, "resource": {"text": t}}), 0)),
+        edge_string(16).prop_map(|t| (json!({"text": t, "resource": {"text": t}}), 0)),
         json_but(not_object).prop_map(|block| (block, 0)),
     ]
 }

@@ -6,8 +6,8 @@ use serde_json::{Map, Value, json};
 use super::{BINARY_DATA_NOTE, sanitize_event};
 use crate::pipeline::EventObject;
 use crate::test_support::json::index_keys_first;
-use crate::test_support::strategies::{js_string, ts_event};
-use crate::test_support::{assert_js_eq, config_capped, markers, vectors};
+use crate::test_support::strategies::{edge_string, tool_call_event};
+use crate::test_support::{assert_same_json_text, config_capped, markers, vectors};
 
 /// The event a case holds: `input`, or `input_text` parsed in insertion order; `$repeat`
 /// macros expanded.
@@ -30,7 +30,7 @@ fn input_of(case: &Map<String, Value>, context: &str) -> EventObject {
 /// `response` stays an array; `block:type-tostring-key`, that a `type` object with a `toString`
 /// key is written `[object Object]` in the message, as any other object is (`block:type-object`).
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("sanitize");
     assert!(cases.len() >= 100, "sanitize.json has its cases");
     for case in &cases {
@@ -41,7 +41,7 @@ fn vectors_match_ts() {
             "{context}: sanitize never fails, so a case holds no error"
         );
         let actual = Value::Object(sanitize_event(&input_of(case, &context)));
-        assert_js_eq(&actual, &case["output"], &context);
+        assert_same_json_text(&actual, &case["output"], &context);
     }
 }
 
@@ -141,11 +141,11 @@ fn base64_run() -> impl Strategy<Value = String> + Clone {
 
 /// Strings of an event: mostly short, sometimes a [`base64_run`].
 fn text() -> impl Strategy<Value = String> + Clone {
-    prop_oneof![30 => js_string(8), 1 => base64_run()]
+    prop_oneof![30 => edge_string(8), 1 => base64_run()]
 }
 
-/// A content block that [`ts_event`] does not make: a `type` that is a number, `null`, a boolean,
-/// absent, an array or an object without a `toString` key (never RD-27); a block that is not an
+/// A content block that [`tool_call_event`] does not make: a `type` that is a number, `null`, a boolean,
+/// absent, an array or an object without a `toString` key (the text of such an object is pinned by the fixtures); a block that is not an
 /// object; a `resource` of each shape.
 fn odd_block() -> impl Strategy<Value = Value> {
     prop_oneof![
@@ -176,12 +176,12 @@ fn odd_block() -> impl Strategy<Value = Value> {
     ]
 }
 
-/// A [`ts_event`] with up to 3 more content blocks ([`odd_block`]) in its `response`; its
+/// A [`tool_call_event`] with up to 3 more content blocks ([`odd_block`]) in its `response`; its
 /// `response` sometimes replaced by a string, a number or a boolean, and its `parameters` and
 /// `structuredContent` sometimes by a [`base64_run`] or an array holding one.
 fn sanitize_event_input() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(text()),
+        tool_call_event(text()),
         prop::collection::vec(odd_block(), 0..=3),
         0u8..10,
         prop::option::of(base64_run()),
@@ -223,7 +223,7 @@ fn sanitize_event_input() -> impl Strategy<Value = EventObject> {
         })
 }
 
-// The strategy makes tool-call events ([`ts_event`]) with more content blocks and other
+// The strategy makes tool-call events ([`tool_call_event`]) with more content blocks and other
 // `response` and `parameters` values. None has a `__proto__` key, a `toString` key or an array
 // `response`: the cases of `sanitize.json` hold those.
 proptest! {

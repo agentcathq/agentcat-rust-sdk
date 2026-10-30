@@ -1,13 +1,13 @@
-//! The delivery queue and its worker thread (C36, B-100 to B-105): what the worker posts and logs
-//! (TS's lines, retries after the configured delays, telemetry-only events never posted), the
+//! The delivery queue and its worker thread: what the worker posts and logs
+//! (the lines the fixture pins, retries after the configured delays, telemetry-only events never posted), the
 //! queue's limits (drop the oldest pending, at most `concurrency` in flight, a push that never
 //! blocks), `flush` and `shutdown` with their deadlines and the blocking twins, their edge cases
 //! (before the first event, twice, cancelled, after a timed-out shutdown, the stop's wait for the
 //! aborted tasks), and the drain on the last drop (`Queue::close`), off and on the worker thread.
 //! Every test shrinks the budgets through [`DeliveryConfig`] and writes the worker's lines to a
 //! [`CapturedLines`], except `log_lines_are_written_by_the_worker`, which uses the process logger.
-//! The TS texts come from `queue.json` (`success_line_matches_ts` here; the retry cases run in
-//! `pipeline::process::tests::queue_retry_vectors_match_ts`).
+//! The texts come from `queue.json` (`success_line_matches_the_fixture` here; the retry cases run in
+//! `pipeline::process::tests::queue_retry_fixture_cases_hold`).
 use std::future::pending;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
@@ -48,7 +48,7 @@ const WAIT: Duration = Duration::from_secs(2);
 /// The name of the worker thread.
 const WORKER_THREAD: &str = "agentcat-delivery";
 
-/// TS's line for a successful attempt starts with this.
+/// The line for a successful attempt starts with this.
 const SUCCESS: &str = "Successfully sent event ";
 
 /// `n` milliseconds.
@@ -56,7 +56,7 @@ const fn ms(n: u64) -> Duration {
     Duration::from_millis(n)
 }
 
-/// TS's queue limits with short retry delays, hook budget and drain.
+/// The queue limits with short retry delays, hook budget and drain.
 fn fast() -> DeliveryConfig {
     DeliveryConfig {
         max_pending: 10_000,
@@ -163,10 +163,10 @@ impl ServerHandler for Empty {}
 
 // ------------------------------------------------------------------------------- defaults
 
-/// B-100 to B-102, C37, R06: the default budgets are TS's queue values (10 000 pending, 5 in
+/// The default budgets are the queue values (10 000 pending, 5 in
 /// flight, retries after 1, 2 and 4 s, 30 s per hook) and the 5 s drain of the last drop.
 #[test]
-fn default_config_is_ts_queue() {
+fn default_config_is_the_queue_limits() {
     let config = DeliveryConfig::default();
     assert_eq!(config.max_pending, 10_000);
     assert_eq!(config.concurrency, 5);
@@ -177,10 +177,9 @@ fn default_config_is_ts_queue() {
 
 // ------------------------------------------------------------------------------- publishing
 
-/// B-077, B-087: the record of a tool call served by rmcp is assembled on the worker and posted
+/// The record of a tool call served by rmcp is assembled on the worker and posted
 /// once, with the handle's project, the tool, the server and client of the call, a minted session
-/// and an `evt_` ID (TS's "should process events end-to-end through publishEvent" and "should
-/// publish event with server tracking data and session info").
+/// and an `evt_` ID, with server tracking data and session info.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn call_record_is_published() {
     let publisher = RecordingPublisher::new();
@@ -210,7 +209,7 @@ async fn call_record_is_published() {
     assert!(lines[0].starts_with(&format!("{SUCCESS}{id} | mcp:tools/call | session ses_")));
 }
 
-/// B-003, B-104, C43: an event without a project (telemetry only) finishes the pipeline and goes
+/// An event without a project (telemetry only) finishes the pipeline and goes
 /// to the observer, but is never posted and logs no success line; an event with a project goes to
 /// both.
 #[test]
@@ -247,10 +246,10 @@ fn telemetry_only_is_not_posted_but_observed() {
     assert!(lines[0].starts_with(SUCCESS) && lines[0].contains(PROJECT));
 }
 
-/// B-102: a failing publish is tried 4 times: after each failure TS's `Failed to send event <id>,
+/// A failing publish is tried 4 times: after each failure the line `Failed to send event <id>,
 /// retrying... [Error: <text>]`, then the next configured delay, and after the fourth `Failed to
 /// deliver AgentCat event after retries: <text>`; `flush` then returns `true`, the event settled
-/// (TS's "settles fail-open when `AgentCat` ingestion exhausts retries"). The worker thread writes
+/// (fail-open: the event settles when ingestion exhausts its retries). The worker thread writes
 /// every line.
 #[test]
 fn retries_three_times_then_logs_failure() {
@@ -281,7 +280,7 @@ fn retries_three_times_then_logs_failure() {
     }
 }
 
-/// A publisher that can never send (C44, a client that failed to build).
+/// A publisher that can never send (a client that failed to build).
 struct Unusable(Arc<std::sync::atomic::AtomicUsize>);
 
 impl Publisher for Unusable {
@@ -295,7 +294,7 @@ impl Publisher for Unusable {
     }
 }
 
-/// C44: an unusable publisher gets no attempt and no retry. The final failure line is logged at
+/// An unusable publisher gets no attempt and no retry. The final failure line is logged at
 /// once, well under one retry delay, and `flush` returns `true`.
 #[test]
 fn unusable_publisher_drops_the_event_at_once() {
@@ -324,9 +323,9 @@ fn unusable_publisher_drops_the_event_at_once() {
     );
 }
 
-/// Design §6.7, C44: the real publisher builds its client on the worker thread, at the first
+/// The real publisher builds its client on the worker thread, at the first
 /// event, not when the handle is built: the failing build here names the thread it ran on. A
-/// build that fails is logged once, and each event is then dropped at once with TS's final
+/// build that fails is logged once, and each event is then dropped at once with the final
 /// failure line (here with retry delays of 1 s and more, which a retry would show).
 #[test]
 fn failed_client_build_is_logged_once_by_the_worker() {
@@ -374,7 +373,7 @@ fn failed_client_build_is_logged_once_by_the_worker() {
     }
 }
 
-/// TS sets an event's ID once, before `sendEvent`, so every attempt sends the same `evt_` ID and
+/// An event's ID is set once, before the first attempt, so every attempt sends the same `evt_` ID and
 /// every line names it. `queue.json` masks the IDs as `<evt>`, so only this test pins it.
 #[test]
 fn retry_attempts_share_one_event_id() {
@@ -404,12 +403,12 @@ fn retry_attempts_share_one_event_id() {
 }
 
 /// Each non-retry `queue.json` case through the worker with a publisher that works: every line the
-/// worker writes must be TS's after [`queue::worker_logs`], the success line of a posted event
+/// worker writes must be the fixture's after [`queue::worker_logs`], the success line of a posted event
 /// included (`session ` with an empty session, `undefined ms` without a duration, the identify
 /// hook's user or `anonymous`), with `<evt>` for each `evt_` ID and `<minted>` for a session the
 /// hooks minted. A telemetry-only case logs no success line.
 #[test]
-fn success_line_matches_ts() {
+fn success_line_matches_the_fixture() {
     let runtime = hooks_runtime();
     let mut ran = 0;
     for case in queue::cases() {
@@ -458,8 +457,8 @@ fn minted_session(request: &PublishEventRequest) -> Option<String> {
     request.session_id.clone().flatten()
 }
 
-/// TS's success line names the actor with `${event.identifyActorGivenId || "anonymous"}`
-/// (`eventQueue.ts:231`): an empty given ID, which JavaScript reads as false, is `anonymous`.
+/// The success line names the actor with the given ID of the `identify` hook, or `anonymous`:
+/// an empty given ID counts as none, so it is `anonymous`.
 #[test]
 fn success_line_names_an_empty_actor_anonymous() {
     let publisher = RecordingPublisher::new();
@@ -481,9 +480,9 @@ fn success_line_names_an_empty_actor_anonymous() {
 
 // -------------------------------------------------------------------------------- the queue
 
-/// B-100: a push onto `max_pending` pending events drops the oldest pending one, not the one in
-/// flight, with TS's `Event queue full, dropping oldest event` (TS's "settles an event when queue
-/// overflow drops it": `flush` does not wait for the dropped event).
+/// A push onto `max_pending` pending events drops the oldest pending one, not the one in
+/// flight, with `Event queue full, dropping oldest event` (`flush` does not wait for the dropped
+/// event).
 #[test]
 fn overflow_drops_oldest_pending() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -511,7 +510,7 @@ fn overflow_drops_oldest_pending() {
     assert_eq!(other, ["Event queue full, dropping oldest event"]);
 }
 
-/// Ruling P10 (RD-35's reason): the job an overflow drops aborts its hook tasks on the customer's
+/// The job an overflow drops aborts its hook tasks on the customer's
 /// runtime instead of leaving them running detached.
 #[test]
 fn overflow_drop_aborts_hooks() {
@@ -540,7 +539,7 @@ fn overflow_drop_aborts_hooks() {
     assert_eq!(publisher.resource_names(), ["a", "c"]);
 }
 
-/// B-100, design §7.3: with every slot held, 10 000 pushes take under a second: a push only
+/// With every slot held, 10 000 pushes take under a second: a push only
 /// appends under a short lock and wakes the worker.
 #[test]
 fn enqueue_never_blocks() {
@@ -562,9 +561,8 @@ fn enqueue_never_blocks() {
     assert!(!agentcat.shutdown_blocking(ms(50)));
 }
 
-/// B-101: at most 5 events are in flight at once, each holding its slot through its attempts; the
-/// others wait in the queue, and all of them are posted in the end (TS's "should handle multiple
-/// events").
+/// At most 5 events are in flight at once, each holding its slot through its attempts; the
+/// others wait in the queue, and all of them are posted in the end.
 #[test]
 fn at_most_five_in_flight() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -586,9 +584,9 @@ fn at_most_five_in_flight() {
 
 // ------------------------------------------------------------------------- flush, shutdown
 
-/// R06, C36: `flush` answers once the queue and the in-flight events are empty: it waits for an
-/// attempt in flight and returns `true` after it ends (TS's "keeps the registered task pending
-/// until `AgentCat` ingestion completes").
+/// `flush` answers once the queue and the in-flight events are empty: it waits for an
+/// attempt in flight and returns `true` after it ends (until ingestion completes, the registered
+/// task stays pending).
 #[test]
 fn flush_waits_for_in_flight() {
     let (publisher, gate) = RecordingPublisher::gated();
@@ -613,7 +611,7 @@ fn flush_waits_for_in_flight() {
     thread.join().unwrap();
 }
 
-/// C36, D43: a timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about
+/// A timeout past what `Instant` can hold, such as `Duration::MAX`, gets a deadline about
 /// a century ahead (the doc of `Request::new`), which no worker reaches: such a `flush` waits for
 /// the queue to empty and answers `true`, as a customer who passes `Duration::MAX` expects.
 #[test]
@@ -634,7 +632,7 @@ fn unbounded_timeout_waits_for_the_queue() {
     assert_eq!(publisher.finished(), 1);
 }
 
-/// R06, C36, review focus 1: with an event held by a hook that hangs, `flush` returns `false` at
+/// With an event held by a hook that hangs, `flush` returns `false` at
 /// its deadline, in its blocking form and in its async form on a runtime without a time driver:
 /// the worker owns the deadline, so the customer's runtime needs no timer.
 #[test]
@@ -671,8 +669,8 @@ fn flush_returns_false_at_deadline() {
     assert!(!agentcat.shutdown_blocking(ms(50)));
 }
 
-/// C12, B-105: `shutdown` drains, then a push is dropped with TS's `Queue is shutting down, event
-/// dropped`, which the worker writes (TS's "should prevent adding events after destroy").
+/// `shutdown` drains, then a push is dropped with `Queue is shutting down, event
+/// dropped`, which the worker writes.
 #[tokio::test]
 async fn shutdown_rejects_later_events() {
     let publisher = RecordingPublisher::new();
@@ -697,7 +695,7 @@ async fn shutdown_rejects_later_events() {
     );
 }
 
-/// C36, C12, B-105: a `shutdown` that reaches its deadline abandons what is left after TS's
+/// A `shutdown` that reaches its deadline abandons what is left after
 /// `Shutting down with 2 events still in queue` (the pending queue only, not the event in flight)
 /// and returns `false`.
 #[test]
@@ -729,9 +727,8 @@ fn shutdown_logs_events_left() {
     );
 }
 
-/// R06: the blocking twins work on a thread without a tokio runtime: `flush_blocking` waits for
-/// the queue to empty, and `shutdown_blocking` drains before it stops (TS's "should handle
-/// destroy method without errors").
+/// The blocking twins work on a thread without a tokio runtime: `flush_blocking` waits for
+/// the queue to empty, and `shutdown_blocking` drains before it stops, without errors.
 #[test]
 fn blocking_twins_work_outside_a_runtime() {
     assert!(Handle::try_current().is_err());
@@ -789,7 +786,7 @@ fn other_lines(lines: &CapturedLines) -> Vec<String> {
         .collect()
 }
 
-/// C36, C12: a `shutdown` that reaches its deadline stops the worker for good and answers
+/// A `shutdown` that reaches its deadline stops the worker for good and answers
 /// `false`. A `flush` after it answers `true` at once, in both forms: the stop abandoned what was
 /// left, so nothing is left to wait for.
 #[test]
@@ -813,7 +810,7 @@ fn flush_after_timed_out_shutdown_returns_true() {
     );
 }
 
-/// C36: the worker cannot tell a caller that stopped waiting from one that waits. A cancelled
+/// The worker cannot tell a caller that stopped waiting from one that waits. A cancelled
 /// async `flush` (its future dropped after its first poll, here by the customer's timeout)
 /// leaves its request in the worker's waiting list until the queue and the in-flight events are
 /// empty (or its deadline passes); then the worker sends an answer that nobody reads and lets the
@@ -877,10 +874,10 @@ fn handle_with_held_attempt() -> (
     (agentcat, delivery, publisher, gate, lines)
 }
 
-/// C36, C12: a cancelled async `shutdown` still shuts the handle down. Only the cancelled
+/// A cancelled async `shutdown` still shuts the handle down. Only the cancelled
 /// shutdown can mark the queue or stop the worker here: the probes are flushes.
 ///
-/// - Its first poll marks the queue shutting down, so the next event, `b`, is dropped with TS's
+/// - Its first poll marks the queue shutting down, so the next event, `b`, is dropped with the
 ///   line before any probe exists.
 /// - Its request stays in the worker's waiting list. With a deadline no test reaches, the worker
 ///   drains the event in flight, stops once it is idle with nothing left to abandon (no `Shutting
@@ -958,7 +955,7 @@ fn cancelled_shutdown_leaves_waiting_list_when_worker_idles() {
     assert_eq!(other_lines(&lines), Vec::<String>::new());
 }
 
-/// C12, C36: `shutdown` is terminal, and a second call answers `true` at once in both forms and
+/// `shutdown` is terminal, and a second call answers `true` at once in both forms and
 /// logs nothing: after a first one that drained, and after a first one that timed out and
 /// abandoned the event in flight.
 #[test]
@@ -992,7 +989,7 @@ fn shutdown_twice_second_returns_true() {
     assert_eq!(lines.lines(), Vec::<String>::new());
 }
 
-/// C36, C42: `flush` on a handle that has taken no event and no log line answers `true` at once
+/// `flush` on a handle that has taken no event and no log line answers `true` at once
 /// in both forms and starts no thread: nothing was taken. The first event then starts the worker.
 #[test]
 fn flush_before_first_event_returns_true_without_thread() {
@@ -1012,7 +1009,7 @@ fn flush_before_first_event_returns_true_without_thread() {
     assert_eq!(publisher.resource_names(), ["first"]);
 }
 
-/// C36, C12: `shutdown` on a handle that has taken no event answers `true` at once in both forms
+/// `shutdown` on a handle that has taken no event answers `true` at once in both forms
 /// and starts no thread. It is still terminal: a later event is dropped and starts no thread
 /// either, and a `flush` after it answers `true` at once.
 #[test]
@@ -1032,7 +1029,7 @@ fn shutdown_before_first_event_returns_true_without_thread() {
     assert!(publisher.attempts().is_empty());
 }
 
-/// C12, C42: TS logs `Queue is shutting down, event dropped` for an event after `shutdown`. On a
+/// The queue logs `Queue is shutting down, event dropped` for an event after `shutdown`. On a
 /// handle whose worker never started, Rust drops that line with the event, and a log line after
 /// the shutdown too (`Queue::takes_lines`): a handle whose worker never starts writes nothing, and
 /// no thread starts to write a line. With a worker, the line is written
@@ -1087,7 +1084,7 @@ impl Publisher for HangsHolding {
     }
 }
 
-/// C36, C37: the stop of a `shutdown` at its deadline aborts the event in flight and awaits its
+/// The stop of a `shutdown` at its deadline aborts the event in flight and awaits its
 /// task before the worker answers, so the abandoned event's future, and what it holds (here an
 /// attempt; hooks and redaction tasks alike), is gone when the caller hears `false`. The test holds
 /// that future's drop: while it is held no answer comes, and the answer comes after the drop.
@@ -1135,7 +1132,7 @@ fn stop_awaits_aborted_tasks_before_answering() {
     );
 }
 
-/// C36: a worker thread that ends by a panic (here in its line writer) is gone, as `Exit` and
+/// A worker thread that ends by a panic (here in its line writer) is gone, as `Exit` and
 /// `Shared::gone` say: the event it held is dropped and never posted, the `flush` that waited is
 /// answered `false` at once, not at its deadline, and a later request gets `false` at once (the
 /// module docs: both forms give `false` when the worker is gone).
@@ -1185,7 +1182,7 @@ fn worker_that_panics_is_gone() {
 
 // ------------------------------------------------------------------------------- last drop
 
-/// C36: `Queue::close`, the queue side of the last drop, marks the queue closed and shutting
+/// `Queue::close`, the queue side of the last drop, marks the queue closed and shutting
 /// down in every state of the worker. A worker that runs gets a shutdown with the drain, and the
 /// caller waits for its answer only when that worker runs on another thread: on the worker thread
 /// nobody can wait, so nobody gets the answer. Without a running worker nothing was taken, so
@@ -1227,7 +1224,7 @@ fn close_waits_only_for_a_worker_on_another_thread() {
     }
 }
 
-/// R06, C36: when the last handle drops, `Drop` drains the queue within `drop_drain`: the events
+/// When the last handle drops, `Drop` drains the queue within `drop_drain`: the events
 /// pushed before it are posted, and their lines written, when the drop returns.
 #[test]
 fn last_drop_drains_queue() {
@@ -1256,7 +1253,7 @@ impl Drop for OnDrop {
     }
 }
 
-/// Design §13, review focus 1: on a current-thread customer runtime, the last handle drops inside
+/// On a current-thread customer runtime, the last handle drops inside
 /// `block_on` while the call's `identify` hook still needs that runtime. The hook cannot run while
 /// `Drop` blocks the only thread, so the drain waits for `drop_drain` (300 ms) and returns in under
 /// a second; the abandoned event is not posted, and its hook is aborted, not left to finish.
@@ -1358,7 +1355,7 @@ impl Publisher for DropsLastHandle {
     }
 }
 
-/// C36: when the last handle drops on the worker thread itself (here inside an attempt, as a
+/// When the last handle drops on the worker thread itself (here inside an attempt, as a
 /// publisher or a hook output holding the last clone can), `Drop` does not wait for the drain,
 /// which would be a wait for its own thread; the worker drains and exits on its own.
 #[test]
@@ -1401,9 +1398,9 @@ fn drop_on_worker_thread_does_not_wait() {
 
 // ---------------------------------------------------------------------------------- logging
 
-/// C42, B-117: a call-path line, the warning of an empty tool listing, reaches the file of the
+/// A call-path line, the warning of an empty tool listing, reaches the file of the
 /// process logger in a temp home through the worker. The first `logging::configure` of a process
-/// wins, so this test relies on nextest's process per test (ruling P4).
+/// wins, so this test relies on nextest's process per test.
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn log_lines_are_written_by_the_worker() {
     let home = TempHome::new("delivery-log");
@@ -1422,14 +1419,14 @@ async fn log_lines_are_written_by_the_worker() {
     assert!(text.lines().any(|line| line.ends_with(&expected)), "{text}");
 }
 
-/// Task 11 (R22): the workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so
+/// The workspace turns neither `arbitrary_precision` nor `float_roundtrip` on, so
 /// the self-check finds nothing and the worker writes no warning.
 #[test]
 fn json_features_empty_in_this_build() {
     assert_eq!(super::worker::json_features(), Vec::<&str>::new());
 }
 
-/// The self-check line names the feature, with the text the plan fixes (R22).
+/// The self-check line names the feature, with the text the plan fixes.
 #[test]
 fn feature_warning_has_the_fixed_text() {
     assert_eq!(

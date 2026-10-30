@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use super::{FLUSH, Fake, Recorded};
 use crate::event::Event;
 
-/// C43: a fake that built no handle has nothing to flush and nothing recorded. `events` answers
+/// A fake that built no handle has nothing to flush and nothing recorded. `events` answers
 /// at once with no events, the record counts as settled, and `assert_nothing_tracked` passes.
 #[tokio::test]
 async fn fake_events_with_no_handles_is_empty() {
@@ -42,7 +42,7 @@ fn recorded_names_the_flush_timeout_when_a_flush_timed_out() {
     assert_eq!(settled.to_string(), "recorded: []");
 }
 
-/// C43: the listing of the fake's failure messages names each recorded event by its type and its
+/// The listing of the fake's failure messages names each recorded event by its type and its
 /// resource name (`-` without one), separated by a comma and a space.
 #[test]
 fn recorded_lists_each_event() {

@@ -7,7 +7,7 @@ use super::{MAX_BREADTH, MAX_DEPTH, MAX_STRING_LENGTH, normalize};
 use crate::test_support::json::index_keys_first;
 use crate::test_support::rules::check_cut;
 use crate::test_support::strategies::json_value;
-use crate::test_support::{assert_js_eq, config_capped, vectors};
+use crate::test_support::{assert_same_json_text, config_capped, vectors};
 
 /// The value a case holds: `input`, or `input_text` parsed in insertion order.
 fn input_of(case: &Map<String, Value>) -> Value {
@@ -33,14 +33,14 @@ fn limits_of(case: &Map<String, Value>) -> (usize, usize, usize) {
 /// The `proto:` cases pin that a `__proto__` key is an ordinary key: it keeps its normalized
 /// value and counts toward the breadth. Each has a `-twin` case that spells the key `_proto_`.
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("normalize");
     assert!(cases.len() > 60, "the file has its cases");
     for case in &cases {
         let name = vectors::name(case);
         let (depth, breadth, max_string) = limits_of(case);
         let actual = normalize(&input_of(case), depth, breadth, max_string);
-        assert_js_eq(&actual, &case["output"], name);
+        assert_same_json_text(&actual, &case["output"], name);
     }
 }
 
@@ -54,7 +54,7 @@ fn normalize_matches_normalize_cases() {
         let name = vectors::name(case);
         let (depth, breadth, max_string) = limits_of(case);
         let actual = normalize(&input_of(case), depth, breadth, max_string);
-        assert_js_eq(&actual, &case["output"], name);
+        assert_same_json_text(&actual, &case["output"], name);
     }
 }
 

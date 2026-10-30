@@ -1,11 +1,11 @@
-//! Panics and captured errors of a tool call, over in-memory connections (design §6.4, C23,
-//! RD-06, RD-17): a panic of the tool is recorded and resumed, so the client gets no response, as
+//! Panics and captured errors of a tool call, over in-memory connections: a panic of the
+//! tool is recorded and resumed, so the client gets no response, as
 //! without the SDK, and the server keeps serving; [`capture_error`] replaces the error of the
 //! record; a panic in a customer call the SDK makes on the `tools/call` path (the rebuild's
 //! `list_tools`, `get_tool`, `get_info`) is contained and the call goes on.
 //!
-//! These are Rust-only paths (panics, `Error::source`), so the expected values are shapes, not TS
-//! outputs. Each panic prints its message through the default panic hook into the test's captured
+//! These are Rust-only paths (panics, `Error::source`), so the expected values are shapes, not
+//! fixture outputs. Each panic prints its message through the default panic hook into the test's captured
 //! output, which the test runner shows only for a failing test.
 use std::any::type_name;
 use std::backtrace::{Backtrace, BacktraceStatus};
@@ -43,16 +43,16 @@ const NO_RESPONSE: Duration = Duration::from_millis(500);
 const ANSWERED: Duration = Duration::from_secs(2);
 
 /// The log line of a rebuild that failed with the panic of [`PanickingList`]
-/// (`callWrap.ts:108,124`).
+/// when the call path rebuilds the registry.
 const LIST_PANICKED: &str =
     "Warning: registry rebuild-on-demand failed - Error: list_tools exploded";
 
-/// The log line of a `get_tool` lookup of `beta` that panicked on the call path (C30), in the
-/// style of [`LIST_PANICKED`]. Rust-only: TS has no `get_tool`.
+/// The log line of a `get_tool` lookup of `beta` that panicked on the call path, in the
+/// style of [`LIST_PANICKED`].
 const LOOKUP_PANICKED: &str = "Warning: Tool lookup for beta panicked: get_tool exploded";
 
-/// The log line of a `get_info` that panicked on the call path (C30), in the style of
-/// [`LIST_PANICKED`]. Rust-only: TS reads the server info without customer code.
+/// The log line of a `get_info` that panicked on the call path, in the style of
+/// [`LIST_PANICKED`].
 const INFO_PANICKED: &str = "Warning: get_info panicked: get_info exploded";
 
 /// A handle with the default options whose log lines and records go to a [`RecordingSink`].
@@ -103,7 +103,7 @@ fn keys(object: &Map<String, Value>) -> Vec<&str> {
     object.keys().map(String::as_str).collect()
 }
 
-/// The `error` of a panic whose message is `message` (C23).
+/// The `error` of a panic whose message is `message`.
 fn panic_shape(message: &str) -> Map<String, Value> {
     let shape = json!({"message": message, "type": "panic", "platform": "rust"});
     shape.as_object().cloned().expect("an object")
@@ -349,7 +349,7 @@ impl ServerHandler for PanickingInfo {
     }
 }
 
-/// Design §6.4, C23, Review Focus 3: a panic of the tool reaches the client as it does without
+/// A panic of the tool reaches the client as it does without
 /// the SDK (no response), and the record has the panic: `type: "panic"`, the payload as the
 /// message, no response and no output tokens. The SDK resumes the panic with the tool's own
 /// payload.
@@ -381,7 +381,7 @@ async fn panic_is_recorded_and_resumed() {
     assert_eq!(only_record(&sink).error, Some(panic_shape("explode")));
 }
 
-/// Review Focus 3: after a tool panicked, the server answers the next call, which gets its own
+/// After a tool panicked, the server answers the next call, which gets its own
 /// record without the panic.
 #[tokio::test]
 async fn server_keeps_serving_after_panic() {
@@ -402,7 +402,7 @@ async fn server_keeps_serving_after_panic() {
     assert_eq!(records[1].error, None);
 }
 
-/// C23: the message of a panic is its payload when that is a `&str` (`panic!` with a literal) or a
+/// The message of a panic is its payload when that is a `&str` (`panic!` with a literal) or a
 /// `String` (`panic!` with arguments), and `Box<dyn Any>` for any other payload, as Rust's panic
 /// hook names it.
 #[test]
@@ -428,8 +428,8 @@ fn panic_payload_kinds() {
     }
 }
 
-/// R09, RD-06, RD-17: an error a tool records with `capture_error` before it fails is the error
-/// of the record, in place of the result's (B-097): its `Display` text, its type path, the `rust`
+/// An error a tool records with `capture_error` before it fails is the error
+/// of the record, in place of the result's: its `Display` text, its type path, the `rust`
 /// platform and one chained entry per `source()`, in that key order. The result still reaches
 /// the client as rmcp made it.
 #[tokio::test]
@@ -520,7 +520,7 @@ impl Error for Looping {
 
 /// `capture_error` outside a tool call does nothing and does not panic. A task the tool spawns
 /// does not inherit the call, and a call's captured error does not outlive it, so the next call's
-/// record has the error of its own result (B-097).
+/// record has the error of its own result.
 #[tokio::test]
 async fn capture_error_outside_a_call_does_nothing() {
     capture_error(&Wrapper(RootCause));
@@ -542,7 +542,7 @@ async fn capture_error_outside_a_call_does_nothing() {
     assert_eq!(record.error, Some(result_error(&failed)));
 }
 
-/// B-097: a call that does not fail records no error, even after `capture_error`.
+/// A call that does not fail records no error, even after `capture_error`.
 #[tokio::test]
 async fn captured_error_without_a_failure_is_dropped() {
     let (agentcat, sink) = recording();
@@ -556,8 +556,8 @@ async fn captured_error_without_a_failure_is_dropped() {
     assert_eq!(record.error, None);
 }
 
-/// C23: an error recorded with `capture_error` replaces the JSON-RPC code name of an
-/// `Err(ErrorData)` (R09), which still reaches the client unchanged; a panic after it gives
+/// An error recorded with `capture_error` replaces the JSON-RPC code name of an
+/// `Err(ErrorData)`, which still reaches the client unchanged; a panic after it gives
 /// `type: "panic"`. The handler calls `capture_error` before it returns its future, so the SDK's
 /// scope covers that part of `call_tool` too.
 #[tokio::test]
@@ -590,9 +590,9 @@ async fn captured_error_wins_over_error_data() {
     );
 }
 
-/// Controller ruling (Task 8): a `list_tools` that panics in the registry rebuild is a failed
-/// rebuild (B-027): the warning carries the panic's message, nothing is recorded, so the next call
-/// tries again, and the call goes on with TS's heuristic strip (B-051).
+/// A `list_tools` that panics in the registry rebuild is a failed
+/// rebuild: the warning carries the panic's message, nothing is recorded, so the next call
+/// tries again, and the call goes on with the heuristic strip.
 #[tokio::test]
 async fn rebuild_panic_is_a_failed_rebuild() {
     let (agentcat, sink) = recording();
@@ -602,7 +602,7 @@ async fn rebuild_panic_is_a_failed_rebuild() {
         let result = call(&client, "anything", arguments)
             .await
             .expect("a result");
-        assert_eq!(received(&result), json!({"x": "1"}), "B-051");
+        assert_eq!(received(&result), json!({"x": "1"}), "the heuristic strip");
     }
     assert_eq!(sink.logs(), [LIST_PANICKED, LIST_PANICKED]);
     let listed = agentcat
@@ -614,9 +614,9 @@ async fn rebuild_panic_is_a_failed_rebuild() {
     assert!(records.iter().all(|record| record.error.is_none()));
 }
 
-/// Controller ruling (Task 8): a `get_tool` that panics gives no schema (C03), so the call takes
+/// A `get_tool` that panics gives no schema, so the call takes
 /// the registry's entry after a rebuild: `beta` keeps its own `context`, which the heuristic strip
-/// would drop. Each panic is logged with its message (C30).
+/// would drop. Each panic is logged with its message.
 #[tokio::test]
 async fn get_tool_panic_is_no_schema() {
     let (agentcat, sink) = recording();
@@ -648,10 +648,10 @@ async fn get_tool_panic_is_no_schema() {
     );
 }
 
-/// Controller ruling P16: with tracing off, learning the schema writes no log line. A `get_tool`
+/// With tracing off, learning the schema writes no log line. A `get_tool`
 /// that panics and a rebuild whose `list_tools` panics stay silent, and the calls still go out
 /// stripped: `beta` keeps its own `context` (the registry after the rebuild), and a tool that the
-/// failed rebuild taught nothing gets TS's heuristic strip (B-051).
+/// failed rebuild taught nothing gets the heuristic strip.
 #[tokio::test]
 async fn tracing_off_lookup_panics_log_nothing() {
     let sink = Arc::new(RecordingSink::default());
@@ -669,13 +669,13 @@ async fn tracing_off_lookup_panics_log_nothing() {
     let result = call(&client, "anything", arguments)
         .await
         .expect("a result");
-    assert_eq!(received(&result), json!({"x": "1"}), "B-051");
+    assert_eq!(received(&result), json!({"x": "1"}), "the heuristic strip");
     assert!(sink.logs().is_empty(), "{:?}", sink.logs());
     assert!(sink.take_records().is_empty());
 }
 
-/// Controller ruling (Task 8): a `get_info` that panics leaves the record without a server name
-/// and version (B-086), and the panic is logged with its message (C30); the call goes on.
+/// A `get_info` that panics leaves the record without a server name
+/// and version, and the panic is logged with its message; the call goes on.
 #[tokio::test]
 async fn get_info_panic_records_no_server() {
     let (agentcat, sink) = recording();
@@ -696,7 +696,7 @@ async fn get_info_panic_records_no_server() {
     assert_eq!(infos, [INFO_PANICKED], "{logs:?}");
 }
 
-/// R27: `capture_error` takes an unsized `dyn Error`, such as the content of a `Box<dyn Error>`;
+/// `capture_error` takes an unsized `dyn Error`, such as the content of a `Box<dyn Error>`;
 /// the record has its message, and the `dyn` type's name as its type.
 #[tokio::test]
 async fn capture_error_accepts_dyn_error() {

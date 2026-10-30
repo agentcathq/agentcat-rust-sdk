@@ -2,9 +2,9 @@
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
     "identify": { "returns": { "userId": "user-1", "userName": "User One", "userData": { "plan": "pro" } } },
-    "eventTags": { "returns": { "team": "core" } },
-    "eventProperties": { "returns": { "region": "eu" } },
-    "redactSensitiveInformation": { "replace": "SECRET_TOKEN" }
+    "event_tags": { "returns": { "team": "core" } },
+    "event_properties": { "returns": { "region": "eu" } },
+    "redact_sensitive_information": { "replace": "SECRET_TOKEN" }
   },
   "httpHeaders": { "x-test-header": "e2e", "user-agent": "e2e-driver/1.0" },
   "expectPublishes": 11,

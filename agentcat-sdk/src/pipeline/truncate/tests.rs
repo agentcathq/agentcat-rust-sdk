@@ -10,12 +10,12 @@ use super::{
 };
 use crate::pipeline::EventObject;
 use crate::test_support::rules::check_cut;
-use crate::test_support::strategies::{bmp_string, js_string, number, ts_event};
-use crate::test_support::{assert_js_eq, config, config_capped, markers, vectors};
+use crate::test_support::strategies::{bmp_string, edge_string, number, tool_call_event};
+use crate::test_support::{assert_same_json_text, config, config_capped, markers, vectors};
 use crate::wire;
 
 /// The largest event, in bytes, of the field-limit property test: far enough under the 102 400
-/// bytes of the size guard that a cut character (RD-22) never meets it.
+/// bytes of the size guard that a cut character never meets it.
 const FIELD_TEST_MAX_BYTES: usize = 90_000;
 
 /// The UTF-8 size of `JSON.stringify(event)`.
@@ -25,10 +25,14 @@ fn size_of(event: &EventObject) -> usize {
 
 /// Asserts that `actual` is the `expected` result of a case: `{"value": event}`, or
 /// `{"error": text}` for the text of the error.
-fn assert_matches_ts(actual: &Result<EventObject, TruncateError>, expected: &Value, context: &str) {
+fn assert_reply_matches(
+    actual: &Result<EventObject, TruncateError>,
+    expected: &Value,
+    context: &str,
+) {
     match (actual, expected.get("value"), expected.get("error")) {
         (Ok(event), Some(value), None) => {
-            assert_js_eq(&Value::Object(event.clone()), value, context);
+            assert_same_json_text(&Value::Object(event.clone()), value, context);
         }
         (Err(error), None, Some(Value::String(message))) => {
             assert_eq!(error.to_string(), *message, "{context}");
@@ -38,10 +42,10 @@ fn assert_matches_ts(actual: &Result<EventObject, TruncateError>, expected: &Val
                 Ok(event) => format!("an event of {} bytes", size_of(event)),
                 Err(error) => format!("the error {error}"),
             };
-            let ts = expected
+            let expected_text = expected
                 .get("error")
                 .map_or_else(|| "an event".to_owned(), Value::to_string);
-            panic!("{context}: Rust gives {rust}, TS gives {ts}");
+            panic!("{context}: Rust gives {rust}, the fixture gives {expected_text}");
         }
     }
 }
@@ -94,7 +98,7 @@ fn truncate_event_by_value_matches_vectors() {
             let name = vectors::name(case);
             let context = format!("{set}.json {name}");
             let actual = truncate_event(input_of(case, &context));
-            assert_matches_ts(&actual, &reply_of(case, &context), &context);
+            assert_reply_matches(&actual, &reply_of(case, &context), &context);
         }
     }
 }
@@ -111,7 +115,7 @@ fn truncate_matches_truncate_cases() {
         let name = vectors::name(case);
         let context = format!("truncate_cases.json {name}");
         let actual = truncate_event(input_of(case, &context));
-        assert_matches_ts(&actual, &reply_of(case, &context), &context);
+        assert_reply_matches(&actual, &reply_of(case, &context), &context);
     }
 }
 
@@ -178,7 +182,7 @@ fn size_guard_cuts_at_the_minimum_reduction() {
 
 /// Checks a field with a length limit: a string over `limit` UTF-16 units keeps its longest
 /// prefix within the limit and gets `"..."`; an array of more than `limit` items becomes the
-/// `to_js_string` text of its first `limit` items and `"..."`; any other value stays.
+/// `coerce_to_string` text of its first `limit` items and `"..."`; any other value stays.
 fn check_limited(input: &Value, output: &Value, limit: usize) -> Result<(), TestCaseError> {
     match input {
         Value::String(text) if text.encode_utf16().count() > limit => {
@@ -286,9 +290,9 @@ fn push_content(event: &mut EventObject, block: Value) {
 }
 
 /// A string of `limit - 4` to `limit + 4` UTF-16 units: `x`s, then up to 6 characters of
-/// [`js_string`], so that a character outside the BMP can straddle the limit.
+/// [`edge_string`], so that a character outside the BMP can straddle the limit.
 fn near(limit: usize) -> impl Strategy<Value = String> + Clone {
-    (limit - 4..=limit + 4, js_string(6)).prop_map(|(units, tail)| {
+    (limit - 4..=limit + 4, edge_string(6)).prop_map(|(units, tail)| {
         let mut text = "x".repeat(units - wire::utf16_len(&tail));
         text.push_str(&tail);
         text
@@ -296,10 +300,10 @@ fn near(limit: usize) -> impl Strategy<Value = String> + Clone {
 }
 
 /// An item of a joined `userIntent` array: a string, a number, `null`, a boolean, a nested
-/// array, or `{"a": 1}` (no `toString` key: RD-27).
+/// array, or `{"a": 1}` (no `toString` key).
 fn intent_item() -> impl Strategy<Value = Value> + Clone {
     prop_oneof![
-        js_string(4).prop_map(Value::String),
+        edge_string(4).prop_map(Value::String),
         number().prop_map(Value::Number),
         Just(Value::Null),
         any::<bool>().prop_map(Value::Bool),
@@ -366,10 +370,10 @@ fn near_limit() -> impl Strategy<Value = Near> {
     ]
 }
 
-/// A [`ts_event`] with up to 3 fields near their limits, under [`FIELD_TEST_MAX_BYTES`].
+/// A [`tool_call_event`] with up to 3 fields near their limits, under [`FIELD_TEST_MAX_BYTES`].
 fn near_limit_event() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(js_string(40)),
+        tool_call_event(edge_string(40)),
         prop::collection::vec(near_limit(), 0..=3),
     )
         .prop_map(|(mut event, changes)| {
@@ -410,8 +414,8 @@ fn bulk() -> impl Strategy<Value = Vec<(u8, usize, String)>> {
 /// Puts the `i`th bulk string `text` into `event` at `spot`: inside `depth` objects `{"n": ...}`
 /// under a key of `parameters`, `response.structuredContent`, `identifyActorData`, `error` or
 /// `properties`; as a content text block; or as `error.message`, a tag, `userIntent` or
-/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: JavaScript puts the index keys
-/// first.
+/// `resourceName`. The keys are `9`, `bulk1`, `7`, `bulk3`, ...: the index keys come
+/// first in the text of `JSON.stringify`.
 fn place(event: &mut EventObject, i: usize, spot: u8, depth: usize, text: String) {
     let key = if i.is_multiple_of(2) {
         (9 - i).to_string()
@@ -440,9 +444,9 @@ fn place(event: &mut EventObject, i: usize, spot: u8, depth: usize, text: String
     };
 }
 
-/// A [`ts_event`] of BMP strings with [`bulk`] strings placed in it, 90 to 400 KB.
+/// A [`tool_call_event`] of BMP strings with [`bulk`] strings placed in it, 90 to 400 KB.
 fn large_event() -> impl Strategy<Value = EventObject> {
-    (ts_event(bmp_string(0..24)), bulk())
+    (tool_call_event(bmp_string(0..24)), bulk())
         .prop_map(|(mut event, pieces)| {
             for (i, (spot, depth, text)) in pieces.into_iter().enumerate() {
                 place(&mut event, i, spot, depth, text);
@@ -501,10 +505,10 @@ proptest! {
     #![proptest_config(config())]
 
     /// The size guard measures an event with `byte_size`, which counts the UTF-8 bytes of
-    /// `JSON.stringify(event)` (TS's `jsonByteSize`) without building the text: over random
-    /// events, it is the length of the text `js::stringify` writes.
+    /// `JSON.stringify(event)` without building the text: over random
+    /// events, it is the length of the text `wire::stringify` writes.
     #[test]
-    fn byte_size_matches_stringify_len(event in ts_event(js_string(40))) {
+    fn byte_size_matches_stringify_len(event in tool_call_event(edge_string(40))) {
         prop_assert_eq!(super::byte_size(&event), size_of(&event));
     }
 }

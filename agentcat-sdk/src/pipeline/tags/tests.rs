@@ -5,8 +5,8 @@ use serde_json::{Map, Number, Value};
 
 use super::validate_tags;
 use crate::test_support::json::index_keys_first;
-use crate::test_support::strategies::{js_string, number, object_key};
-use crate::test_support::{assert_js_eq, config, vectors};
+use crate::test_support::strategies::{edge_string, number, object_key};
+use crate::test_support::{assert_same_json_text, config, vectors};
 
 /// The tags a case holds: `input`, or `input_text` parsed in insertion order.
 fn input_of(case: &Map<String, Value>) -> Map<String, Value> {
@@ -28,7 +28,7 @@ fn check_case(case: &Map<String, Value>) {
     let mut log = Vec::new();
     let actual = validate_tags(&input_of(case), &mut log);
     let actual = actual.map_or(Value::Null, Value::Object);
-    assert_js_eq(&actual, &case["output"], name);
+    assert_same_json_text(&actual, &case["output"], name);
     let expected: Vec<&str> = case["logs"]
         .as_array()
         .expect("logs")
@@ -39,7 +39,7 @@ fn check_case(case: &Map<String, Value>) {
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("tags");
     assert!(cases.len() > 50, "the file has its cases");
     cases.iter().for_each(check_case);
@@ -82,7 +82,7 @@ fn tag_key() -> impl Strategy<Value = String> + Clone {
 /// A tag value: mostly strings (some with newlines), also numbers and `null`.
 fn tag_value() -> impl Strategy<Value = Value> + Clone {
     prop_oneof![
-        6 => js_string(120).prop_map(Value::String),
+        6 => edge_string(120).prop_map(Value::String),
         2 => "[a-z]{190,210}".prop_map(Value::String),
         // Astral characters are 2 UTF-16 units each: 190 to 213 units, the 200-unit limit inside.
         2 => (95_usize..=105, 0_usize..=3)

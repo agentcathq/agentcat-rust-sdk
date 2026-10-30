@@ -1,6 +1,6 @@
-//! `event` against the TS SDK: the cases of `tests/vectors/event.json` (the client identity ladder
-//! and the protocol version), and Rust-only tests of the shapes of `parameters.request` (B-082) and
-//! `parameters.extra` (D34, D06), of the stateless HTTP identity (C22), of the records a tracked
+//! `event`: the cases of `tests/vectors/event.json` (the client identity ladder
+//! and the protocol version), and Rust-only tests of the shapes of `parameters.request` and
+//! `parameters.extra`, of the stateless HTTP identity, of the records a tracked
 //! server makes over HTTP, and of the [`RecordingSink`]'s records. The context tests run over an
 //! in-memory connection and over streamable HTTP on a loopback port.
 use std::collections::{BTreeMap, BTreeSet, HashMap};
@@ -59,10 +59,10 @@ fn meta_of(input: &Value) -> JsonObject {
     }
 }
 
-/// The client of TS's `getClientInfoForRequest` result as the event reads it: its `name` and
-/// `version` (B-077), or `null` for `undefined`. TS hands back a handshake client whole, its other
+/// The client of a fixture's client result as the event reads it: its `name` and
+/// `version`, or `null` for `undefined`. A handshake client is handed back whole, its other
 /// fields included.
-fn ts_client(output: Option<&Value>) -> Value {
+fn expected_client(output: Option<&Value>) -> Value {
     let Some(output) = output else {
         return Value::Null;
     };
@@ -85,11 +85,11 @@ fn check_client_info(input: &Value, output: Option<&Value>, name: &str) {
     let meta: &mut JsonObject = &mut context.meta;
     meta.extend(meta_of(input));
     let actual = identity_json(client_identity(&context).as_ref());
-    assert_eq!(actual, ts_client(output), "{name}");
+    assert_eq!(actual, expected_client(output), "{name}");
 }
 
 /// A "headers:" case: [`project_headers`] of a header map that holds the case's `[name, value]`
-/// pairs in their order, against TS's object, in its key order too.
+/// pairs in their order, against the fixture's object, in its key order too.
 fn check_headers(input: &Value, output: Option<&Value>, name: &str) {
     let mut headers = HeaderMap::new();
     for pair in input.as_array().unwrap() {
@@ -100,16 +100,16 @@ fn check_headers(input: &Value, output: Option<&Value>, name: &str) {
         headers.append(header, value);
     }
     let actual = Value::Object(project_headers(&headers));
-    let ts = output.unwrap_or_else(|| panic!("{name}: no output"));
+    let fixture = output.unwrap_or_else(|| panic!("{name}: no output"));
     assert_eq!(
         serde_json::to_string(&actual).unwrap(),
-        serde_json::to_string(ts).unwrap(),
+        serde_json::to_string(fixture).unwrap(),
         "{name}"
     );
 }
 
 #[tokio::test]
-async fn vectors_match_ts() {
+async fn fixture_cases_hold() {
     let mut seen = BTreeSet::new();
     for case in vectors::cases("event") {
         let name = vectors::name(&case);
@@ -159,11 +159,11 @@ async fn call_echo(client: &RunningService<RoleClient, InitializeRequestParams>)
         .expect("ContextEcho answers with structured content")
 }
 
-/// B-082: `method`, `params`, `jsonrpc`, `id` in that order; `params` holds the raw arguments,
+/// `method`, `params`, `jsonrpc`, `id` in that order; `params` holds the raw arguments,
 /// injected parameters included, and the context's `_meta` last, only when the request sent one.
 /// A `_meta` left in the params is not the request's: rmcp moves the request's into the context.
 #[tokio::test]
-async fn request_value_has_the_b082_keys() {
+async fn request_value_has_the_request_keys_in_order() {
     let mut params = CallToolRequestParams::new("add_todo").with_arguments(raw_arguments());
     let mut stale = RequestMetaObject::new();
     stale.insert("stale".to_owned(), json!(true));
@@ -204,7 +204,7 @@ async fn request_value_has_the_b082_keys() {
     client.cancel().await.unwrap();
 }
 
-/// D34: on stdio (no HTTP request parts) `extra` is `{_meta, requestId}`: no `sessionId` and no
+/// On stdio (no HTTP request parts) `extra` is `{_meta, requestId}`: no `sessionId` and no
 /// `requestInfo`.
 #[tokio::test]
 async fn extra_stdio_has_no_request_info() {
@@ -217,7 +217,7 @@ async fn extra_stdio_has_no_request_info() {
     client.cancel().await.unwrap();
 }
 
-/// B-085: on stdio the client of a legacy session is the client of its `initialize`.
+/// On stdio the client of a legacy session is the client of its `initialize`.
 #[tokio::test]
 async fn stdio_client_is_the_handshake_client() {
     let client = connect(ContextEcho, "stdio-client").await;
@@ -236,9 +236,9 @@ fn parts(uri: &str, headers: &[(&str, &[u8])]) -> Parts {
     builder.body(()).unwrap().into_parts().0
 }
 
-/// D06: `requestInfo` is `{headers, url}`, with every header of the request under its lower-case
+/// `requestInfo` is `{headers, url}`, with every header of the request under its lower-case
 /// name and the values of a repeated header joined with ", " in arrival order. (The order of the
-/// names, and TS's other rules, are the "headers:" cases of `vectors_match_ts`.)
+/// names, and the other rules, are the "headers:" cases of `fixture_cases_hold`.)
 #[test]
 fn extra_joins_repeated_headers() {
     let parts = parts(
@@ -262,7 +262,7 @@ fn extra_joins_repeated_headers() {
     assert_eq!(info["url"], "http://localhost:8080/mcp");
 }
 
-/// D06: a header value that is not UTF-8 is read lossily (each bad byte becomes U+FFFD), also in
+/// A header value that is not UTF-8 is read lossily (each bad byte becomes U+FFFD), also in
 /// the `Host` of the URL.
 #[test]
 fn extra_non_utf8_header_is_lossy() {
@@ -284,7 +284,7 @@ fn extra_non_utf8_header_is_lossy() {
     );
 }
 
-/// D34: the URL of an origin-form request is `http://<Host><path and query>`; an absolute request
+/// The URL of an origin-form request is `http://<Host><path and query>`; an absolute request
 /// URI is the URL as it is, whatever the `Host` header says. An authority-form target (a
 /// `CONNECT` request) has an authority but no scheme, so it is not the absolute request URI of the
 /// `request_url` rustdoc: its URL comes from the `Host` header too, with the root path.
@@ -315,7 +315,7 @@ fn extra_url_from_host() {
     );
 }
 
-/// D34: an origin-form request without a `Host` header has no URL, so `requestInfo` has only its
+/// An origin-form request without a `Host` header has no URL, so `requestInfo` has only its
 /// headers.
 #[test]
 fn extra_no_host_no_url() {
@@ -332,7 +332,7 @@ fn identity(context: &RequestContext<RoleServer>) -> Value {
     identity_json(client_identity(context).as_ref())
 }
 
-/// C22: the handshake client counts on stdio and on a request with an `mcp-session-id` header, not
+/// The handshake client counts on stdio and on a request with an `mcp-session-id` header, not
 /// on an HTTP request without one (rmcp fabricates that peer info). A `_meta` client counts
 /// everywhere.
 #[tokio::test]
@@ -367,7 +367,7 @@ async fn client_identity_skips_peer_info_on_stateless_http() {
     assert_eq!(identity(&stateless), modern);
 }
 
-/// The header the HTTP test clients send on every request, and its value (TS's header-capture
+/// The header the HTTP test clients send on every request, and its value (the header-capture
 /// test sends the same).
 const SENTINEL: (&str, &str) = ("x-agentcat-health-run", "hcrun:header-capture");
 
@@ -380,9 +380,9 @@ fn sentinel() -> HashMap<HeaderName, HeaderValue> {
     )])
 }
 
-/// D34 over legacy stateful HTTP: `extra` is `{sessionId, _meta, requestId, requestInfo}`;
+/// Over legacy stateful HTTP, `extra` is `{sessionId, _meta, requestId, requestInfo}`;
 /// `sessionId` is the `mcp-session-id` header; `requestInfo` has the headers the client sent and
-/// the URL it called. The client is the client of the session's `initialize` (B-085).
+/// the URL it called. The client is the client of the session's `initialize`.
 #[tokio::test]
 async fn stateful_http_record_has_session_and_client() {
     let config = StreamableHttpServerConfig::default().with_json_response(true);
@@ -405,8 +405,8 @@ async fn stateful_http_record_has_session_and_client() {
     client.cancel().await.unwrap();
 }
 
-/// C22 over stateless HTTP (`legacy_session_mode(false)`) with a legacy client: no `sessionId`,
-/// and no client, although rmcp's peer info names rmcp itself (`03-rmcp.md` §5.2).
+/// Over stateless HTTP (`legacy_session_mode(false)`) with a legacy client: no `sessionId`,
+/// and no client, although rmcp's peer info names rmcp itself.
 #[tokio::test]
 async fn stateless_identity_is_unknown() {
     let config = StreamableHttpServerConfig::default()
@@ -448,8 +448,8 @@ async fn record_of_echo(
 }
 
 /// The record-level twin of [`stateful_http_record_has_session_and_client`]: the record of a
-/// tracked call over legacy stateful HTTP has the D34 `extra` with the session header, the client's
-/// headers and URL, and the session's `initialize` client (B-085).
+/// tracked call over legacy stateful HTTP has the `extra` with the session header, the client's
+/// headers and URL, and the session's `initialize` client.
 #[tokio::test]
 async fn tracked_stateful_http_record_has_session_and_client() {
     let config = StreamableHttpServerConfig::default().with_json_response(true);
@@ -472,7 +472,7 @@ async fn tracked_stateful_http_record_has_session_and_client() {
     client.cancel().await.unwrap();
 }
 
-/// The record-level twin of [`stateless_identity_is_unknown`] (C22): the record of a tracked call
+/// The record-level twin of [`stateless_identity_is_unknown`]: the record of a tracked call
 /// over stateless HTTP from a legacy client has no `sessionId` and no client.
 #[tokio::test]
 async fn tracked_stateless_record_has_no_client() {
@@ -491,14 +491,14 @@ async fn tracked_stateless_record_has_no_client() {
     client.cancel().await.unwrap();
 }
 
-/// The keys of TS's v1 `extra` (`event_order.json`, `tool_call.extra`) that reach JSON and that
-/// Rust keeps (D34). TS's other keys hold functions (`sendNotification`, `sendRequest`,
-/// `closeSSEStream`, `closeStandaloneSSEStream`), which JSON drops, or what RD-07 leaves out
+/// The keys of the fixture's v1 `extra` (`event_order.json`, `tool_call.extra`) that reach JSON and that
+/// Rust keeps. The other keys hold functions (`sendNotification`, `sendRequest`,
+/// `closeSSEStream`, `closeStandaloneSSEStream`), which JSON drops, or what the SDK leaves out
 /// (`signal`, `authInfo`, `taskId`, `taskStore`, `taskRequestedTtl`).
 const JSON_EXTRA_KEYS: [&str; 4] = ["sessionId", "_meta", "requestId", "requestInfo"];
 
 /// The strings of the list `field` of the `tool_call` case of `event_order.json`.
-fn ts_order(field: &str) -> Vec<String> {
+fn field_order(field: &str) -> Vec<String> {
     tool_call_case()[field]
         .as_array()
         .unwrap_or_else(|| panic!("tool_call.{field} is a list"))
@@ -507,25 +507,25 @@ fn ts_order(field: &str) -> Vec<String> {
         .collect()
 }
 
-/// B-082, D34, ruling P5: the record of a tracked call over stateful HTTP whose request has a
-/// `_meta` (rmcp's client sends its progress token) has TS's key orders: `parameters.request` is
+/// The record of a tracked call over stateful HTTP whose request has a
+/// `_meta` (rmcp's client sends its progress token) has the fixed key orders: `parameters.request` is
 /// `method, params, jsonrpc, id`, `params` is `name, arguments, _meta`, and `extra` has the keys
-/// Rust keeps in TS's v1 order, `sessionId, _meta, requestId, requestInfo`.
+/// Rust keeps in the fixture's v1 order, `sessionId, _meta, requestId, requestInfo`.
 #[tokio::test]
-async fn request_and_extra_follow_ts_key_order() {
+async fn request_and_extra_follow_the_key_order() {
     let config = StreamableHttpServerConfig::default().with_json_response(true);
     let (url, sink) = serve_tracked_sample(config).await;
     let client = connect_http(&url, "http-client", sentinel()).await;
     let record = record_of_echo(&client, &sink).await;
-    assert_eq!(keys(&record.request), ts_order("request"));
-    assert_eq!(keys(&record.request["params"]), ts_order("params"));
-    let extra: Vec<String> = ts_order("extra")
+    assert_eq!(keys(&record.request), field_order("request"));
+    assert_eq!(keys(&record.request["params"]), field_order("params"));
+    let extra: Vec<String> = field_order("extra")
         .into_iter()
         .filter(|key| JSON_EXTRA_KEYS.contains(&key.as_str()))
         .collect();
     assert_eq!(
         extra, JSON_EXTRA_KEYS,
-        "TS's v1 extra has each key Rust keeps"
+        "the v1 extra has each key Rust keeps"
     );
     assert_eq!(keys(&record.extra), extra);
     client.cancel().await.unwrap();
@@ -621,10 +621,10 @@ fn recording_sink_takes_records_in_order() {
     assert!(sink.take_records().is_empty());
 }
 
-/// D06 keeps the credential headers in `extra`, and the record's `Debug` output hides them as the
+/// The record keeps the credential headers in `extra`, and its `Debug` output hides them as the
 /// [`ToolCall`](crate::ToolCall)'s does: the values of `authorization`, `proxy-authorization`,
 /// `cookie` and `set-cookie` print as `<redacted>` under their names, other headers and the other
-/// fields print as they are. Rust-only: TS has no `Debug`.
+/// fields print as they are.
 #[tokio::test]
 async fn call_record_debug_hides_credentials() {
     let mut context = bare_context(None);
@@ -639,7 +639,7 @@ async fn call_record_debug_hides_credentials() {
     assert!(text.contains("http://localhost:8080/mcp"), "{text}");
     let headers = &record.extra["requestInfo"]["headers"];
     for (name, value) in CREDENTIAL_HEADERS {
-        assert_eq!(headers[name], value, "D06: the data keeps {name}");
+        assert_eq!(headers[name], value, "the data keeps {name}");
     }
 }
 
@@ -651,7 +651,7 @@ fn tool_call_case() -> Map<String, Value> {
         .expect("event_order.json has the tool_call case")
 }
 
-/// The keys of the `tool_call` event of `event_order.json`, in the order TS writes them, without
+/// The keys of the `tool_call` event of `event_order.json`, in the fixture's order, without
 /// `ipAddress`, which `Event` has no field for.
 fn tool_call_keys() -> Vec<String> {
     let case = tool_call_case();
@@ -697,16 +697,16 @@ fn key_list(event: &Map<String, Value>) -> Vec<&str> {
     event.keys().map(String::as_str).collect()
 }
 
-/// C39: an event with every field goes through `from_ts` and `into_ts` unchanged, its keys in the
-/// order of TS's tool-call event (`event_order.json`).
+/// An event with every field goes through `from_object` and `into_object` unchanged, its keys in the
+/// order of the fixture's tool-call event (`event_order.json`).
 #[test]
-fn event_round_trips_in_ts_key_order() {
+fn event_round_trips_in_the_fixed_key_order() {
     let keys = tool_call_keys();
-    let ts: Map<String, Value> = keys
+    let fixture: Map<String, Value> = keys
         .iter()
         .map(|key| (key.clone(), sample_value(key)))
         .collect();
-    let event = super::Event::from_object(&ts);
+    let event = super::Event::from_object(&fixture);
     assert_eq!(
         event.timestamp,
         wire::parse_iso_millis("2024-02-29T23:59:59.999Z").unwrap()
@@ -714,36 +714,36 @@ fn event_round_trips_in_ts_key_order() {
     assert_eq!(event.duration, Some(Duration::from_millis(12)));
     assert_eq!(event.tags.as_ref().map(BTreeMap::len), Some(2));
     let back = event.into_object();
-    assert_eq!(back, ts);
+    assert_eq!(back, fixture);
     assert_eq!(
         key_list(&back),
         keys.iter().map(String::as_str).collect::<Vec<_>>()
     );
 }
 
-/// C39, RD-24: keys that events do not have, `__proto__` among them, are absent after the round
+/// Keys that events do not have, `__proto__` among them, are absent after the round
 /// trip; an absent field stays absent, and no session becomes `""`.
 #[test]
 fn event_has_no_unknown_keys() {
-    let mut ts: Map<String, Value> = Map::new();
+    let mut fixture: Map<String, Value> = Map::new();
     for key in ["id", "projectId", "eventType", "timestamp"] {
-        ts.insert(key.to_owned(), sample_value(key));
+        fixture.insert(key.to_owned(), sample_value(key));
     }
-    ts.insert("extra".to_owned(), json!(1));
-    ts.insert("__proto__".to_owned(), json!({"polluted": true}));
-    ts.insert("ipAddress".to_owned(), json!("10.0.0.1"));
-    let back = super::Event::from_object(&ts).into_object();
+    fixture.insert("extra".to_owned(), json!(1));
+    fixture.insert("__proto__".to_owned(), json!({"polluted": true}));
+    fixture.insert("ipAddress".to_owned(), json!("10.0.0.1"));
+    let back = super::Event::from_object(&fixture).into_object();
     assert_eq!(
         key_list(&back),
         ["id", "sessionId", "projectId", "eventType", "timestamp"]
     );
     assert_eq!(back["sessionId"], json!(""));
 
-    ts.insert("sessionId".to_owned(), json!(""));
-    assert_eq!(super::Event::from_object(&ts).session_id, None);
+    fixture.insert("sessionId".to_owned(), json!(""));
+    assert_eq!(super::Event::from_object(&fixture).session_id, None);
 }
 
-/// The event of a TS event that holds only `id`, `projectId`, `eventType` and `timestamp`, each
+/// The event that holds only `id`, `projectId`, `eventType` and `timestamp`, each
 /// with its [`sample_value`].
 fn sample_system_event() -> super::Event {
     super::Event {
@@ -755,7 +755,7 @@ fn sample_system_event() -> super::Event {
     }
 }
 
-/// The rows of [`from_ts_rejects_wrong_types`] whose value leaves the event as it was: the field
+/// The rows of [`from_object_rejects_wrong_types`] whose value leaves the event as it was: the field
 /// stays `None`, or empty for a text field the event always has.
 fn unchanged_rows() -> Vec<(&'static str, &'static str, Value)> {
     vec![
@@ -782,7 +782,7 @@ fn unchanged_rows() -> Vec<(&'static str, &'static str, Value)> {
     ]
 }
 
-/// The rows of [`from_ts_rejects_wrong_types`] whose value gives a field of `base` a new value.
+/// The rows of [`from_object_rejects_wrong_types`] whose value gives a field of `base` a new value.
 fn changed_rows(base: &super::Event) -> Vec<(&'static str, &'static str, Value, super::Event)> {
     let epoch = super::Event {
         timestamp: UNIX_EPOCH,
@@ -849,13 +849,13 @@ fn changed_rows(base: &super::Event) -> Vec<(&'static str, &'static str, Value, 
     ]
 }
 
-/// C39, the rule of `Event::from_ts`: a field whose TS value has the wrong type is `None` (an
+/// The rule of `Event::from_object`: a field whose value has the wrong type is `None` (an
 /// empty string for `id`, `project_id` and `event_type`), a non-string tag value leaves its tag
 /// out, a `timestamp` that does not parse is the Unix epoch, and a JSON value field keeps any
 /// value, `null` too. Each row sets one key on an event of the system fields; the rest of the
 /// event must stay as it was.
 #[test]
-fn from_ts_rejects_wrong_types() {
+fn from_object_rejects_wrong_types() {
     let base = sample_system_event();
     let system: Map<String, Value> = ["id", "projectId", "eventType", "timestamp"]
         .into_iter()
@@ -866,13 +866,13 @@ fn from_ts_rejects_wrong_types() {
         .into_iter()
         .map(|(case, key, value)| (case, key, value, base.clone()));
     for (case, key, value, expected) in unchanged.chain(changed_rows(&base)) {
-        let mut ts = system.clone();
-        ts.insert(key.to_owned(), value);
-        assert_eq!(super::Event::from_object(&ts), expected, "{case}");
+        let mut fixture = system.clone();
+        fixture.insert(key.to_owned(), value);
+        assert_eq!(super::Event::from_object(&fixture), expected, "{case}");
     }
 }
 
-/// C49: `Event::default()` is the empty event a customer starts from to unit-test a
+/// `Event::default()` is the empty event a customer starts from to unit-test a
 /// `redact_event` hook: empty `id`, `project_id` and `event_type`, the Unix epoch as `timestamp`,
 /// and every other field `None`. The pattern names every field, so a new field must be added here.
 #[test]

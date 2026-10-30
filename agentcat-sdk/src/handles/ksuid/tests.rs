@@ -24,7 +24,7 @@ fn is_base62(text: &str) -> bool {
     text.bytes().all(|b| b.is_ascii_alphanumeric())
 }
 
-/// Checks one `from-parts:*` case: the ID, or `None` where TS throws.
+/// Checks one `from-parts:*` case: the ID, or `None` where the fixture has no ID.
 fn check_from_parts(case: &Map<String, Value>) {
     let name = vectors::name(case);
     let input = &case["input"];
@@ -38,13 +38,13 @@ fn check_from_parts(case: &Map<String, Value>) {
     let actual = from_parts(prefix, time_ms, &payload_of(payload_hex));
     match (case.get("output"), case.get("error")) {
         (Some(output), None) => assert_eq!(actual.as_deref(), output.as_str(), "{name}"),
-        (None, Some(_)) => assert_eq!(actual, None, "{name}: TS throws"),
+        (None, Some(_)) => assert_eq!(actual, None, "{name}: the fixture has no ID"),
         _ => panic!("{name}: a case has exactly one of output and error"),
     }
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("ksuid");
     let mut from_parts_cases = 0;
     for case in cases
@@ -61,7 +61,7 @@ fn vectors_match_ts() {
 }
 
 #[test]
-fn min_and_max_match_ts() {
+fn min_and_max_ids_read_back() {
     let cases = vectors::cases("ksuid");
     let output_of = |name: &str| {
         cases
@@ -165,7 +165,7 @@ fn encode_equals_from_parts_in_range() {
 
 #[test]
 fn random_has_the_shape_and_differs() {
-    // The prefixes of ksuid.test.ts "should handle different prefixes", and the two this SDK uses.
+    // Different prefixes, and the two this SDK uses.
     for prefix in ["event", "user", "task", "session", "req", "ses", "evt"] {
         let first = random(prefix).unwrap();
         let second = random(prefix).unwrap();
@@ -180,7 +180,7 @@ fn random_has_the_shape_and_differs() {
     assert_eq!(ids.len(), 100);
 }
 
-/// ksuid.test.ts "should create unique prefixed KSUIDs": 10 `event_` IDs, all distinct.
+/// Unique prefixed KSUIDs: 10 `event_` IDs, all distinct.
 #[test]
 fn ten_event_ids_are_distinct() {
     let ids: Vec<String> = (0..10).map(|_| random("event").unwrap()).collect();

@@ -1,8 +1,8 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "resolveSessionId": { "returns": "customer-abc" },
-    "enableAgentTracking": true
+    "resolve_session_id": { "returns": "customer-abc" },
+    "enable_agent_tracking": true
   },
   "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 10,

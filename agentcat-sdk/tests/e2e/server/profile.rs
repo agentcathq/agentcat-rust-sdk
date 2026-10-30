@@ -9,19 +9,19 @@ use agentcat_sdk::{Event, HookError, Options, ToolCall, UserIdentity};
 use serde::Deserialize;
 use serde_json::{Map, Value};
 
-/// The text that `redactSensitiveInformation`'s `replace` puts in place of the secret.
+/// The text that `redact_sensitive_information`'s `replace` puts in place of the secret.
 const REDACTED: &str = "[REDACTED]";
 
 /// The SDK options of the options profile `profile` (the scenario's `options`). Each key is
 /// applied with its [`Options`] setter:
 ///
-/// - Flags: `enableTracing`, `enableReportMissing`, `enableToolCallContext` and
-///   `enableAgentTracking` (booleans), `customContextDescription` (a string).
-/// - Hooks, each a canned behavior (see [`behavior`]): `resolveSessionId` (`returns` a string or
+/// - Flags: `enable_tracing`, `enable_report_missing`, `enable_tool_call_context` and
+///   `enable_agent_tracking` (booleans), `custom_context_description` (a string).
+/// - Hooks, each a canned behavior (see [`behavior`]): `resolve_session_id` (`returns` a string or
 ///   `null`), `identify` (`returns` `null` or `{"userId", "userName"?, "userData"?}`),
-///   `eventTags` and `eventProperties` (`returns` an object or `null`),
-///   `redactSensitiveInformation` (`replace` a secret with `[REDACTED]`, or `returns` a string)
-///   and `redactEvent` (`returns: null` drops the event; `merge` sets the event fields it names:
+///   `event_tags` and `event_properties` (`returns` an object or `null`),
+///   `redact_sensitive_information` (`replace` a secret with `[REDACTED]`, or `returns` a string)
+///   and `redact_event` (`returns: null` drops the event; `merge` sets the event fields it names:
 ///   `resourceName`, `sessionId`, `eventType`, `userIntent`, `properties`). Any hook also takes
 ///   `throws`, an error with that message.
 ///
@@ -32,27 +32,27 @@ pub(crate) fn options(profile: &Map<String, Value>) -> Options {
     let mut options = Options::default();
     for (key, value) in profile {
         options = match key.as_str() {
-            "enableTracing" => options.enable_tracing(flag(key, value)),
-            "enableReportMissing" => options.enable_report_missing(flag(key, value)),
-            "enableToolCallContext" => options.enable_tool_call_context(flag(key, value)),
-            "enableAgentTracking" => options.enable_agent_tracking(flag(key, value)),
-            "customContextDescription" => options.custom_context_description(
+            "enable_tracing" => options.enable_tracing(flag(key, value)),
+            "enable_report_missing" => options.enable_report_missing(flag(key, value)),
+            "enable_tool_call_context" => options.enable_tool_call_context(flag(key, value)),
+            "enable_agent_tracking" => options.enable_agent_tracking(flag(key, value)),
+            "custom_context_description" => options.custom_context_description(
                 value
                     .as_str()
                     .unwrap_or_else(|| panic!("{key}: must be a string")),
             ),
-            "resolveSessionId" => options.resolve_session_id(hook(key, value, |id: String| id)),
+            "resolve_session_id" => options.resolve_session_id(hook(key, value, |id: String| id)),
             "identify" => options.identify(hook(key, value, Identity::user)),
-            "eventTags" => options.event_tags(hook(key, value, |tags: Map<String, Value>| tags)),
-            "eventProperties" => {
+            "event_tags" => options.event_tags(hook(key, value, |tags: Map<String, Value>| tags)),
+            "event_properties" => {
                 options.event_properties(hook(key, value, |properties: Map<String, Value>| {
                     properties
                 }))
             }
-            "redactSensitiveInformation" => {
+            "redact_sensitive_information" => {
                 options.redact_sensitive_information(redactor(key, value))
             }
-            "redactEvent" => options.redact_event(event_redactor(key, value)),
+            "redact_event" => options.redact_event(event_redactor(key, value)),
             other => panic!("the options profile has the unknown key {other:?}"),
         };
     }
@@ -66,7 +66,7 @@ fn flag(key: &str, value: &Value) -> bool {
         .unwrap_or_else(|| panic!("{key}: must be a boolean"))
 }
 
-/// A canned behavior: what the hook does, after it sleeps `sleepMs` milliseconds when given.
+/// A canned behavior: what the hook does, after it sleeps `sleep_ms` milliseconds when given.
 struct Behavior {
     kind: Kind,
     sleep: Option<Duration>,
@@ -78,15 +78,15 @@ enum Kind {
     Returns(Value),
     /// `{"throws": "<message>"}`: fails with the message.
     Throws(String),
-    /// `{"replace": "<secret>"}` (`redactSensitiveInformation`): replaces each occurrence of the
+    /// `{"replace": "<secret>"}` (`redact_sensitive_information`): replaces each occurrence of the
     /// secret with [`REDACTED`].
     Replace(String),
-    /// `{"merge": {...}}` (`redactEvent`): sets the event fields it names.
+    /// `{"merge": {...}}` (`redact_event`): sets the event fields it names.
     Merge(Merge),
 }
 
 /// The behavior `spec` of the hook `hook`: an object with exactly one of `returns`, `throws`,
-/// `replace` and `merge`, and an optional `sleepMs`.
+/// `replace` and `merge`, and an optional `sleep_ms`.
 ///
 /// # Panics
 ///
@@ -99,10 +99,10 @@ fn behavior(hook: &str, spec: &Value) -> Behavior {
     let mut sleep = None;
     for (key, value) in fields {
         let next = match key.as_str() {
-            "sleepMs" => {
+            "sleep_ms" => {
                 let ms = value
                     .as_u64()
-                    .unwrap_or_else(|| panic!("{hook}: sleepMs must be a non-negative integer"));
+                    .unwrap_or_else(|| panic!("{hook}: sleep_ms must be a non-negative integer"));
                 sleep = Some(Duration::from_millis(ms));
                 continue;
             }
@@ -233,7 +233,7 @@ fn redactor(
     }
 }
 
-/// The event fields a `redactEvent` merge sets; `None` leaves a field as it is.
+/// The event fields a `redact_event` merge sets; `None` leaves a field as it is.
 #[derive(Clone, Debug, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct Merge {

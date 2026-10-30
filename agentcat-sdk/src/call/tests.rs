@@ -14,7 +14,7 @@ use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM};
 use crate::inject::{CONTEXT_PARAM, ToolEntry};
 use crate::test_support::json::index_keys_first;
 use crate::test_support::strategies::{json_value, object_key};
-use crate::test_support::{assert_js_eq, config, vectors};
+use crate::test_support::{assert_same_json_text, config, vectors};
 
 /// The case name prefixes of `call.json`.
 const KINDS: [&str; 5] = [
@@ -51,7 +51,7 @@ fn injectable(name: &str) -> &'static str {
         .unwrap_or_else(|| panic!("{name} is not an injected parameter"))
 }
 
-/// The registry entry of tool `name` in a TS registry, `[[tool, [params]]]`.
+/// The registry entry of tool `name` in a registry, `[[tool, [params]]]`.
 fn entry_of(registry: &Value, name: &str) -> Option<ToolEntry> {
     registry
         .as_array()?
@@ -68,44 +68,48 @@ fn entry_of(registry: &Value, name: &str) -> Option<ToolEntry> {
         })
 }
 
-/// The rmcp result of the TS result `ts`, after checking that it survives a round trip through
-/// rmcp's `CallToolResult` (so the comparisons see every key of the TS result).
-fn result_from_ts(ts: &Value) -> CallToolResult {
-    let result: CallToolResult =
-        serde_json::from_value(ts.clone()).unwrap_or_else(|e| panic!("rmcp cannot hold {ts}: {e}"));
+/// The rmcp result of the result `fixture`, after checking that it survives a round trip through
+/// rmcp's `CallToolResult` (so the comparisons see every key of the result).
+fn result_from_json(fixture: &Value) -> CallToolResult {
+    let result: CallToolResult = serde_json::from_value(fixture.clone())
+        .unwrap_or_else(|e| panic!("rmcp cannot hold {fixture}: {e}"));
     assert_eq!(
         serde_json::to_value(&result).unwrap(),
-        *ts,
+        *fixture,
         "rmcp's CallToolResult drops or changes a key"
     );
     result
 }
 
-/// Checks the fields of an rmcp result that TS's result has: `content`, `structuredContent` and
+/// Checks the fields of an rmcp result that the fixture result has: `content`, `structuredContent` and
 /// `isError`.
-fn check_result(result: &CallToolResult, ts: &Value, context: &str) {
+fn check_result(result: &CallToolResult, fixture: &Value, context: &str) {
     let actual = serde_json::to_value(result).unwrap();
     for key in ["content", "structuredContent", "isError"] {
-        match (actual.get(key), ts.get(key)) {
-            (Some(actual), Some(ts)) => assert_js_eq(actual, ts, &format!("{context}: {key}")),
+        match (actual.get(key), fixture.get(key)) {
+            (Some(actual), Some(fixture)) => {
+                assert_same_json_text(actual, fixture, &format!("{context}: {key}"));
+            }
             (None, None) => {}
-            (actual, ts) => panic!("{context}: {key} is {actual:?}, TS {ts:?}"),
+            (actual, fixture) => {
+                panic!("{context}: {key} is {actual:?}, the fixture has {fixture:?}")
+            }
         }
     }
 }
 
-/// Checks `strip_arguments` against TS's arguments for the call `input` (`{name, arguments,
+/// Checks `strip_arguments` against the arguments the fixture gives for the call `input` (`{name, arguments,
 /// registry}`).
-fn check_strip(input: &Value, ts: &Value, context: &str) {
+fn check_strip(input: &Value, fixture: &Value, context: &str) {
     let name = input["name"].as_str().unwrap();
     let arguments = object(&input["arguments"]);
     let entry = entry_of(&input["registry"], name);
     let actual = strip_arguments(arguments, entry.as_ref(), name);
-    assert_js_eq(&Value::Object(actual), ts, context);
+    assert_same_json_text(&Value::Object(actual), fixture, context);
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let mut seen = BTreeSet::new();
     for case in vectors::cases("call") {
         let name = vectors::name(&case);
@@ -115,7 +119,7 @@ fn vectors_match_ts() {
         match kind {
             "strip" => check_strip(input, output, name),
             "mint-back" => {
-                let mut result = result_from_ts(&input["result"]);
+                let mut result = result_from_json(&input["result"]);
                 if let Some(text) = input["text"].as_str() {
                     prepend_mint_back(&mut result, text.to_owned());
                 }
@@ -125,13 +129,15 @@ fn vectors_match_ts() {
                 let mut structured = input.get("structuredContent").cloned();
                 mirror_mint_back(&mut structured, object(&input["mint"]).clone());
                 match output.get("structuredContent") {
-                    Some(ts) => assert_js_eq(structured.as_ref().unwrap(), ts, name),
+                    Some(fixture) => {
+                        assert_same_json_text(structured.as_ref().unwrap(), fixture, name);
+                    }
                     None => assert_eq!(structured, None, "{name}"),
                 }
             }
             "result-error" => {
-                let result = result_from_ts(input);
-                assert_js_eq(&Value::Object(result_error(&result)), output, name);
+                let result = result_from_json(input);
+                assert_same_json_text(&Value::Object(result_error(&result)), output, name);
             }
             _ => check_report_missing(&case, name),
         }
@@ -159,10 +165,10 @@ fn check_report_missing(case: &Map<String, Value>, name: &str) {
     assert_eq!(vec![line.as_str()], logs, "{name}");
 }
 
-/// The wire order of the mirrored `structured_content` is TS's (C21), also in the `JSON.stringify`
-/// text of each `structured:` case: `assert_js_eq` sorts index keys itself and cannot see this.
+/// The wire order of the mirrored `structured_content` is the fixture's, also in the `JSON.stringify`
+/// text of each `structured:` case: `assert_same_json_text` sorts index keys itself and cannot see this.
 #[test]
-fn mirror_wire_order_matches_ts() {
+fn mirror_wire_order_keeps_the_index_keys_first() {
     let mut checked = 0;
     for case in vectors::cases("call") {
         let name = vectors::name(&case);
@@ -172,9 +178,9 @@ fn mirror_wire_order_matches_ts() {
         let input = &case["input"];
         let mut structured = input.get("structuredContent").cloned();
         mirror_mint_back(&mut structured, object(&input["mint"]).clone());
-        if let Some(ts_text) = case.get("output_text") {
+        if let Some(expected_text) = case.get("output_text") {
             let actual = serde_json::to_string(structured.as_ref().unwrap()).unwrap();
-            assert_eq!(&Value::String(actual), ts_text, "{name}");
+            assert_eq!(&Value::String(actual), expected_text, "{name}");
             checked += 1;
         } else {
             assert_eq!(structured, None, "{name}");
@@ -186,9 +192,9 @@ fn mirror_wire_order_matches_ts() {
     );
 }
 
-/// C24: the JSON-RPC code names.
+/// The JSON-RPC code names.
 #[test]
-fn code_names_follow_c24() {
+fn code_names_are_the_json_rpc_names() {
     for (code, name) in [
         (ErrorCode::PARSE_ERROR, "ParseError"),
         (ErrorCode::INVALID_REQUEST, "InvalidRequest"),
@@ -205,10 +211,10 @@ fn code_names_follow_c24() {
     }
 }
 
-/// RD-05 and RD-06: an `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that
+/// An `ErrorData` gives `{message, type: <code name>, platform: "rust"}`, in that
 /// key order, and its `data` stays out.
 #[test]
-fn error_data_error_has_the_rd06_shape() {
+fn error_data_error_has_message_type_and_platform() {
     let error = ErrorData::new(
         ErrorCode::INVALID_PARAMS,
         "bad input",
@@ -226,10 +232,10 @@ fn error_data_error_has_the_rd06_shape() {
     );
 }
 
-/// C41, RD-34, RD-06: the error of a call whose future was dropped before it completed is
+/// The error of a call whose future was dropped before it completed is
 /// `{message, type: "cancelled", platform: "rust"}`, in that key order.
 #[test]
-fn cancelled_error_has_the_c41_shape() {
+fn cancelled_error_has_message_type_and_platform() {
     let shape = Value::Object(cancelled_error());
     assert_eq!(
         serde_json::to_string(&shape).unwrap(),
@@ -237,8 +243,8 @@ fn cancelled_error_has_the_c41_shape() {
     );
 }
 
-/// RD-06: an error result without text has the TS message `Unknown error`, and one with text has
-/// no `type` (TS's is `undefined`).
+/// An error result without text has the message `Unknown error`, and one with text has
+/// no `type` (the fixture has none).
 #[test]
 fn result_error_has_no_type() {
     let result = CallToolResult::error(vec![]);

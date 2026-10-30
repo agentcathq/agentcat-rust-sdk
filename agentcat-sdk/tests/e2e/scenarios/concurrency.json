@@ -1,6 +1,6 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
-  "options": { "enableAgentTracking": true },
+  "options": { "enable_agent_tracking": true },
   "eventOrder": "multiset",
   "expectPublishes": 11,
   "sessions": [

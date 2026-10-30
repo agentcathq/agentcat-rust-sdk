@@ -1,39 +1,39 @@
-//! The `queue.json` vectors (TS's event queue, written by `oracle/src/vectors/gen/queue.mjs`): the
-//! loader, each case's hook outcomes as tasks and its redaction hooks as [`Redactors`], TS's log
-//! lines as the pipeline writes them, and TS's camelCase request model of a
+//! The `queue.json` vectors (the event queue fixtures): the
+//! loader, each case's hook outcomes as tasks and its redaction hooks as [`Redactors`], the fixture's log
+//! lines as the pipeline writes them, and the fixture's camelCase request model of a
 //! [`PublishEventRequest`].
 //!
 //! Log lines compare after these steps ([`expected_logs`]):
 //!
 //! - The delivery lines (`Successfully sent event ...`, `Failed to send event ...`) are the
-//!   delivery worker's (plan 4 task 6), not the pipeline's, so they leave the expected lines.
-//! - In a `custom:*` case, the lines `publishCustomEvent` writes before the queue takes the event
-//!   (`Published custom event ...`, `publishCustomEvent: ...` and its `Dropping invalid tag: ...`)
-//!   are the custom-event builder's (plan 4 task 7), so they leave too ([`full_logs`] keeps them
-//!   for `custom::tests::custom_vectors_match_ts`, which runs the builders).
-//! - One normalization (ruling P7): where TS writes a thrown `Error` after a stage's or a hook's
+//!   delivery worker's, not the pipeline's, so they leave the expected lines.
+//! - In a `custom:*` case, the lines `publish_custom_event` writes before the queue takes the event
+//!   (`Published custom event ...`, `publish_custom_event: ...` and its `Dropping invalid tag: ...`)
+//!   are the custom-event builder's, so they leave too ([`full_logs`] keeps them
+//!   for `custom::tests::custom_fixture_cases_hold`, which runs the builders).
+//! - One normalization: where a fixture line writes a thrown error after a stage's or a hook's
 //!   text, as `Error: <message>`, Rust writes the error's `Display`, `<message>`
-//!   ([`ts_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries the
+//!   ([`expected_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries the
 //!   fixture's text (`a length-limited field is a number, a boolean or an object`), so that line
-//!   compares whole, more than the prefix `Failed to truncate event: ` the ruling allows.
+//!   compares whole, not only by the prefix `Failed to truncate event: `.
 //!
-//! The delivery worker's runners ([`worker_logs`], plan 4 task 6) keep the delivery lines, with one
-//! more normalization (ruling P7): where a TS delivery line embeds the error of a failed attempt,
-//! after `[Error: ` and after `Failed to deliver AgentCat event after retries: `, TS writes the
-//! error as `getMCPCompatibleErrorMessage` renders a JS `Error`, `{"stack":"Error: M","message":M}`
-//! (or `Error: M`), and Rust writes the publisher's text `M` ([`ts_delivery_line_as_rust`]). On the
-//! Rust side each `evt_` ID becomes `<evt>` ([`mask_event_ids`]), as the generator masks TS's.
+//! The delivery worker's runners ([`worker_logs`]) keep the delivery lines, with one
+//! more normalization: where a delivery line embeds the error of a failed attempt,
+//! after `[Error: ` and after `Failed to deliver AgentCat event after retries: `, the fixture writes the
+//! error as a JSON object `{"stack":"Error: M","message":M}`
+//! (or `Error: M`), and Rust writes the publisher's text `M` ([`expected_delivery_line_as_rust`]). On the
+//! Rust side each `evt_` ID becomes `<evt>` ([`mask_event_ids`]), as the generator masked the fixture's.
 //!
 //! The delivery tests share a [`RecordingPublisher`] (scripted failures, a gate that holds every
 //! attempt, start notices, a per-attempt delay) and [`CapturedLines`], the worker's log lines with
 //! the thread that wrote each one.
 //!
-//! Requests compare as [`to_ts_model`] writes the Rust request and [`expected_requests`] the TS
+//! Requests compare as [`to_request_model`] writes the Rust request and [`expected_requests`] the fixture's
 //! one: each `evt_` ID is `<evt>` and each minted session `<minted>` (as the generator masks
 //! them), the timestamp is compared to the millisecond, tags compare as a map (sorted keys: the
-//! Rust request holds them in a `HashMap`, RD-03), a `null` `userIntent` is omitted, as the Rust
-//! wire omits it (ruling P12), and any other `userIntent` that is not a string is its
-//! `JSON.stringify` text (RD-33).
+//! Rust request holds them in a `HashMap`), a `null` `userIntent` is omitted, as the Rust
+//! wire omits it, and any other `userIntent` that is not a string is its
+//! `JSON.stringify` text.
 use std::collections::BTreeMap;
 use std::future::{pending, ready};
 use std::mem;
@@ -125,7 +125,7 @@ fn identity_of(value: &Value) -> UserIdentity {
 /// The hook tasks of a case's `hooks`, spawned on the current runtime.
 pub(crate) fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
     PendingHooks {
-        resolve_session_id: hooks.get("resolveSessionId").map(|outcome| {
+        resolve_session_id: hooks.get("resolve_session_id").map(|outcome| {
             outcome_task(outcome, |value| {
                 value.as_str().expect("a string").to_owned()
             })
@@ -134,10 +134,10 @@ pub(crate) fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
             .get("identify")
             .map(|outcome| outcome_task(outcome, identity_of)),
         event_tags: hooks
-            .get("eventTags")
+            .get("event_tags")
             .map(|outcome| outcome_task(outcome, |value| object(value.clone()))),
         event_properties: hooks
-            .get("eventProperties")
+            .get("event_properties")
             .map(|outcome| outcome_task(outcome, |value| object(value.clone()))),
     }
 }
@@ -145,8 +145,8 @@ pub(crate) fn pending_of(hooks: &Map<String, Value>) -> PendingHooks {
 // ------------------------------------------------------------------------------------- jobs
 
 /// The redaction stages of a case's job: a tool call runs both; a custom event never runs the
-/// string stage (K-03), and only its server form runs the event stage (as plan 4 task 7 builds
-/// custom events; `custom::tests::custom_vectors_match_ts` runs these cases through the builders).
+/// string stage, and only its server form runs the event stage (as the custom-event builders
+/// run them; `custom::tests::custom_fixture_cases_hold` runs these cases through the builders).
 fn redaction_stages(case: &Map<String, Value>) -> (bool, bool) {
     match case
         .get("custom")
@@ -242,7 +242,7 @@ pub(crate) fn options_of(case: &Map<String, Value>) -> Options {
 /// The starts of the delivery worker's lines (module docs).
 const DELIVERY_LINES: [&str; 2] = ["Successfully sent event ", "Failed to send event "];
 
-/// The starts of the lines `publishCustomEvent` writes before the queue takes the event (module
+/// The starts of the lines `publish_custom_event` writes before the queue takes the event (module
 /// docs).
 const CUSTOM_BUILDER_LINES: [&str; 3] = [
     "Published custom event ",
@@ -250,7 +250,7 @@ const CUSTOM_BUILDER_LINES: [&str; 3] = [
     "Dropping invalid tag: ",
 ];
 
-/// The texts after which TS writes a thrown `Error` (the hooks' and the stages'): the text of each
+/// The texts after which a fixture line writes a thrown error (the hooks' and the stages'): the text of each
 /// call hook's `catch`, then the queue's stage lines.
 const ERROR_PREFIXES: [&str; 8] = [
     "resolve_session_id hook error: ",
@@ -263,9 +263,9 @@ const ERROR_PREFIXES: [&str; 8] = [
     "Failed to truncate event: ",
 ];
 
-/// A TS log line as Rust writes it (ruling P7, module docs): after one of [`ERROR_PREFIXES`], TS's
+/// A log line as Rust writes it (module docs): after one of [`ERROR_PREFIXES`], the fixture's
 /// `Error: M` is Rust's `M`.
-pub(crate) fn ts_line_as_rust(line: &str) -> String {
+pub(crate) fn expected_line_as_rust(line: &str) -> String {
     for prefix in ERROR_PREFIXES {
         let message = line
             .strip_prefix(prefix)
@@ -298,37 +298,37 @@ fn queue_lines(case: &Map<String, Value>) -> impl Iterator<Item = &str> {
 pub(crate) fn expected_logs(case: &Map<String, Value>) -> Vec<String> {
     queue_lines(case)
         .filter(|line| !DELIVERY_LINES.iter().any(|start| line.starts_with(start)))
-        .map(ts_line_as_rust)
+        .map(expected_line_as_rust)
         .collect()
 }
 
-/// The start of TS's line after the last failed attempt of an event.
+/// The start of the fixture's line after the last failed attempt of an event.
 const DELIVERY_FAILED: &str = "Failed to deliver AgentCat event after retries: ";
 
-/// Where TS's line after a failed attempt embeds the attempt's error.
+/// Where the fixture's line after a failed attempt embeds the attempt's error.
 const ATTEMPT_ERROR: &str = "[Error: ";
 
-/// A TS delivery line as Rust writes it (ruling P7, module docs): the error TS embeds after
+/// A delivery line as Rust writes it (module docs): the error the fixture embeds after
 /// [`ATTEMPT_ERROR`] (up to the closing `]`) or after [`DELIVERY_FAILED`] becomes its message
-/// ([`js_error_message`]). Any other line stays as it is.
-pub(crate) fn ts_delivery_line_as_rust(line: &str) -> String {
+/// ([`error_message_of_rendered`]). Any other line stays as it is.
+pub(crate) fn expected_delivery_line_as_rust(line: &str) -> String {
     if let Some(rendered) = line.strip_prefix(DELIVERY_FAILED) {
-        return format!("{DELIVERY_FAILED}{}", js_error_message(rendered));
+        return format!("{DELIVERY_FAILED}{}", error_message_of_rendered(rendered));
     }
     if line.starts_with(DELIVERY_LINES[1])
         && let Some(at) = line.find(ATTEMPT_ERROR)
         && let Some(rendered) = line[at + ATTEMPT_ERROR.len()..].strip_suffix(']')
     {
         let head = &line[..at + ATTEMPT_ERROR.len()];
-        return format!("{head}{}]", js_error_message(rendered));
+        return format!("{head}{}]", error_message_of_rendered(rendered));
     }
     line.to_owned()
 }
 
-/// The message of a thrown JS `Error` as TS's `getMCPCompatibleErrorMessage` renders it: the
-/// `message` of its JSON `{"stack": "Error: M", "message": M}`, or `M` of `Error: M` (ruling P7);
+/// The message of a thrown error as the fixture renders it: the
+/// `message` of its JSON `{"stack": "Error: M", "message": M}`, or `M` of `Error: M`;
 /// any other text as it is.
-fn js_error_message(rendered: &str) -> String {
+fn error_message_of_rendered(rendered: &str) -> String {
     if let Ok(Value::Object(error)) = serde_json::from_str::<Value>(rendered)
         && let Some(Value::String(message)) = error.get("message")
     {
@@ -341,23 +341,25 @@ fn js_error_message(rendered: &str) -> String {
 }
 
 /// The lines of `case`'s `logs` that the delivery worker writes, the delivery lines included, as
-/// Rust writes them: [`ts_line_as_rust`], then [`ts_delivery_line_as_rust`] (module docs).
+/// Rust writes them: [`expected_line_as_rust`], then [`expected_delivery_line_as_rust`] (module docs).
 pub(crate) fn worker_logs(case: &Map<String, Value>) -> Vec<String> {
     queue_lines(case)
-        .map(|line| ts_delivery_line_as_rust(&ts_line_as_rust(line)))
+        .map(|line| expected_delivery_line_as_rust(&expected_line_as_rust(line)))
         .collect()
 }
 
-/// Every line of `case`'s `logs`, as Rust writes it: [`ts_line_as_rust`], then
-/// [`ts_delivery_line_as_rust`], with the custom-event builder's lines kept (module docs). The
-/// runner of `custom::tests::custom_vectors_match_ts` compares these against all that the worker
+/// Every line of `case`'s `logs`, as Rust writes it: [`expected_line_as_rust`], then
+/// [`expected_delivery_line_as_rust`], with the custom-event builder's lines kept (module docs). The
+/// runner of `custom::tests::custom_fixture_cases_hold` compares these against all that the worker
 /// writes.
 pub(crate) fn full_logs(case: &Map<String, Value>) -> Vec<String> {
     case["logs"]
         .as_array()
         .expect("logs")
         .iter()
-        .map(|line| ts_delivery_line_as_rust(&ts_line_as_rust(line.as_str().expect("a line"))))
+        .map(|line| {
+            expected_delivery_line_as_rust(&expected_line_as_rust(line.as_str().expect("a line")))
+        })
         .collect()
 }
 
@@ -389,8 +391,7 @@ pub(crate) fn mask_event_ids(line: &str) -> String {
 
 // ---------------------------------------------------------------------------------- requests
 
-/// The wire fields of `PublishEventRequest` with the names of TS's model, in the order of TS's
-/// `toPublishEventRequest`.
+/// The wire fields of `PublishEventRequest` with the names of the fixture's model, in its order.
 const MODEL_FIELDS: [(&str, &str); 28] = [
     ("id", "id"),
     ("project_id", "projectId"),
@@ -431,15 +432,15 @@ fn sort_tags(model: &mut Map<String, Value>) {
     }
 }
 
-/// `request` as TS's camelCase model, from its `serde_json` text (module docs): the `evt_` ID as
+/// `request` as the fixture's camelCase model, from its `serde_json` text (module docs): the `evt_` ID as
 /// `<evt>`, a session minted for it (its `agentcat_session_id_source` tag says `minted`) as
-/// `<minted>`, the timestamp as `toISOString` writes it, the tags sorted.
+/// `<minted>`, the timestamp in the ISO 8601 form with milliseconds, the tags sorted.
 ///
 /// # Panics
 ///
 /// When the request has a field the model does not name, an ID that is not an `evt_` ID, a minted
 /// session that is not a session ID, or a timestamp that does not parse.
-pub(crate) fn to_ts_model(request: &PublishEventRequest) -> Value {
+pub(crate) fn to_request_model(request: &PublishEventRequest) -> Value {
     let mut wire = object(serde_json::to_value(request).expect("a request is JSON"));
     let mut model = Map::new();
     for (field, name) in MODEL_FIELDS {
@@ -449,7 +450,7 @@ pub(crate) fn to_ts_model(request: &PublishEventRequest) -> Value {
     }
     assert!(
         wire.is_empty(),
-        "fields the TS model does not name: {wire:?}"
+        "fields the fixture's model does not name: {wire:?}"
     );
 
     let id = model["id"].as_str().expect("an id");
@@ -479,8 +480,8 @@ pub(crate) fn to_ts_model(request: &PublishEventRequest) -> Value {
 }
 
 /// The `requests` of `case`, compared as the module docs say: the tags sorted, a `null`
-/// `userIntent` omitted (ruling P12), any other `userIntent` that is not a string as its
-/// `JSON.stringify` text (RD-33).
+/// `userIntent` omitted, any other `userIntent` that is not a string as its
+/// `JSON.stringify` text.
 pub(crate) fn expected_requests(case: &Map<String, Value>) -> Vec<Value> {
     case["requests"]
         .as_array()
@@ -757,7 +758,7 @@ mod tests {
 
     use super::{expected_requests, object};
 
-    /// Ruling P12, RD-33: a TS `null` `userIntent` leaves the expected request, as the Rust wire
+    /// A `null` `userIntent` leaves the expected request, as the Rust wire
     /// omits it; any other value that is not a string becomes its `JSON.stringify` text; a string
     /// stays as it is.
     #[test]

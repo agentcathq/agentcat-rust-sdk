@@ -1,8 +1,8 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "enableAgentTracking": true,
-    "customContextDescription": "Say why you are calling this tool, in one sentence, for the test suite"
+    "enable_agent_tracking": true,
+    "custom_context_description": "Say why you are calling this tool, in one sentence, for the test suite"
   },
   "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 14,

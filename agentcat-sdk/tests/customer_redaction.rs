@@ -1,7 +1,7 @@
 //! A customer's unit tests of a `redact_event` hook, written where a customer writes them: outside
 //! the crate, where `Event` is `#[non_exhaustive]` and no struct literal builds one, so
-//! `Event::default()` is the way in (C49); and through `testing::Fake` (C43), whose handles run
-//! the hook as production does. Review focus 5 of plan 5.
+//! `Event::default()` is the way in; and through `testing::Fake`, whose handles run
+//! the hook as production does.
 #![expect(clippy::expect_used, reason = "test helpers")]
 
 use agentcat_sdk::testing::Fake;
@@ -42,7 +42,7 @@ fn redact(event: &mut Event) {
     }
 }
 
-/// C49: a customer builds an `Event` with `Event::default()`, sets the field the hook reads and
+/// A customer builds an `Event` with `Event::default()`, sets the field the hook reads and
 /// runs the hook on it directly, with no handle and no server.
 #[tokio::test]
 async fn customer_builds_event_for_redact_hook() {
@@ -109,7 +109,7 @@ async fn connect(
     .expect("the client connects")
 }
 
-/// C43: the same hook on a `Fake` handle. A tool call that carries the secret in its argument and
+/// The same hook on a `Fake` handle. A tool call that carries the secret in its argument and
 /// its response is recorded with the secret masked in both, and nowhere else in the event.
 #[tokio::test]
 async fn fake_records_redacted_event() {

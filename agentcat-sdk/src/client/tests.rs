@@ -1,6 +1,6 @@
 //! `AgentCat`: clones share one handle, `track` wraps a handler with a handle, `Debug` prints the
-//! project ID and the options only, `from_env` reads the project ID (D36), `AGENTCAT_ENABLED`
-//! turns a handle off (C45), and the lifecycle methods.
+//! project ID and the options only, `from_env` reads the project ID, `AGENTCAT_ENABLED`
+//! turns a handle off, and the lifecycle methods.
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -95,10 +95,10 @@ fn offline(lines: &CapturedLines, startup: &[&str]) -> Transport {
     }
 }
 
-/// B-003: an empty project ID makes the worker write TS's warning first, then the transport's
+/// An empty project ID makes the worker write the no-project warning first, then the transport's
 /// own lines.
 #[test]
-fn empty_project_logs_ts_warning() {
+fn empty_project_logs_the_warning_first() {
     let lines = CapturedLines::default();
     let agentcat = AgentCat::assemble(
         String::new(),
@@ -110,7 +110,7 @@ fn empty_project_logs_ts_warning() {
     assert_eq!(
         lines.lines(),
         [NO_PROJECT_WARNING, "from the transport"],
-        "the warning is TS's text"
+        "the warning is the no-project text"
     );
     assert_eq!(
         NO_PROJECT_WARNING,
@@ -235,7 +235,7 @@ fn shutdown_blocking_settles_pending_events() {
     assert!(agentcat.shutdown_blocking(Duration::from_secs(2)));
 }
 
-/// D36: `from_env` takes the project ID from `AGENTCAT_PROJECT_ID`, and the handle is on.
+/// `from_env` takes the project ID from `AGENTCAT_PROJECT_ID`, and the handle is on.
 #[test]
 fn from_env_reads_project_id() {
     let env = MapEnv::new(&[(AGENTCAT_PROJECT_ID, "proj_from_env")]);
@@ -244,8 +244,8 @@ fn from_env_reads_project_id() {
     assert!(agentcat.inner().enabled);
 }
 
-/// D36: without `AGENTCAT_PROJECT_ID`, or with it empty, `from_env` gives a telemetry-only handle
-/// (project `""`, B-003); `AGENTCAT_ENABLED` turns it off as it does `new` (C45).
+/// Without `AGENTCAT_PROJECT_ID`, or with it empty, `from_env` gives a telemetry-only handle
+/// (project `""`); `AGENTCAT_ENABLED` turns it off as it does `new`.
 #[test]
 fn from_env_without_project_is_telemetry_only() {
     for env in [MapEnv::new(&[]), MapEnv::new(&[(AGENTCAT_PROJECT_ID, "")])] {
@@ -259,7 +259,7 @@ fn from_env_without_project_is_telemetry_only() {
     assert!(!agentcat.inner().enabled);
 }
 
-/// C45: a handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool
+/// A handle that `AGENTCAT_ENABLED` turned off starts no thread: not for a listing, a tool
 /// call, a custom event in any of its three forms (which returns `Ok(())`, also for an empty
 /// project ID) or the lifecycle methods, which return `true`.
 #[cfg(target_os = "linux")]
@@ -306,7 +306,7 @@ async fn disabled_handle_starts_no_thread() {
     client.cancel().await.unwrap();
 }
 
-/// P17: under `cfg(test)`, `AgentCat::new` and `track` build their handle in an empty environment,
+/// Under `cfg(test)`, `AgentCat::new` and `track` build their handle in an empty environment,
 /// so an `AGENTCAT_ENABLED=false` in the developer's shell cannot turn the handles of unit tests
 /// off. The test runs [`new_handle_is_on`] in a child process of this test binary with that
 /// variable set, as `forbid(unsafe_code)` rules out `std::env::set_var`.

@@ -8,7 +8,7 @@ use super::markers;
 
 /// The cases of `tests/vectors/<set>.json`, with every `$f64` marker decoded and every `$repeat`
 /// macro of a case's `input` expanded. `$utf16` markers stay: a test compares through
-/// [`markers::d09`], which drops the unpaired surrogates that a Rust string cannot hold.
+/// [`markers::decode_utf16`], which drops the unpaired surrogates that a Rust string cannot hold.
 ///
 /// # Panics
 ///

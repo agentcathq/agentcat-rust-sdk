@@ -1,8 +1,8 @@
 {
   "projectId": "proj_E2E000000000000000000000000",
   "options": {
-    "enableReportMissing": false,
-    "enableToolCallContext": false
+    "enable_report_missing": false,
+    "enable_tool_call_context": false
   },
   "httpHeaders": { "x-test-header": "e2e" },
   "expectPublishes": 6,

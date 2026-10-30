@@ -1,7 +1,7 @@
-//! The `PublishEventRequest` of an event (C40): its JSON values in JavaScript's text (RD-32), the
+//! The `PublishEventRequest` of an event: its JSON values in the `JSON.stringify` text, the
 //! session as `null` without one, `actor_id` from the identity, a `userIntent` that is not a string
-//! as text (RD-33), and the timestamp's milliseconds (RD-04). The queue vectors pin every field
-//! against TS's request (`pipeline::process::tests::queue_vectors_match_ts`).
+//! as text, and the timestamp's milliseconds. The queue vectors pin every field
+//! against the expected request (`pipeline::process::tests::queue_fixture_cases_hold`).
 use serde_json::{Map, Value, json};
 
 use super::publish_request;
@@ -33,12 +33,12 @@ fn body(event: &EventObject) -> String {
     serde_json::to_string(&publish_request(event)).unwrap()
 }
 
-/// C40, RD-32: each JSON value of the request (`parameters`, `response`, `error`, `identify_data`,
+/// Each JSON value of the request (`parameters`, `response`, `error`, `identify_data`,
 /// `properties`) is written as `JSON.stringify` writes the event's value: `1.0` as `1`, `-0.0` as
 /// `0`, 2^53 + 1 rounded to 2^53, index-like keys first in ascending order. A float is the one
-/// listed exception (RD-32): `serde_json` may write it in another text of the same number.
+/// listed exception: `serde_json` may write it in another text of the same number.
 #[test]
-fn wire_values_follow_js_text() {
+fn wire_values_follow_the_stringify_text() {
     let value = json!({
         "10": 1.0,
         "2": -0.0,
@@ -62,7 +62,7 @@ fn wire_values_follow_js_text() {
         text,
         r#"{"2":0,"10":1,"big":9007199254740992,"list":[1,{"2":"b","10":"a"}]}"#
     );
-    for wire in [
+    for key in [
         "parameters",
         "response",
         "error",
@@ -70,14 +70,14 @@ fn wire_values_follow_js_text() {
         "properties",
     ] {
         assert!(
-            sent.contains(&format!(r#""{wire}":{text}"#)),
-            "{wire}: {sent}"
+            sent.contains(&format!(r#""{key}":{text}"#)),
+            "{key}: {sent}"
         );
     }
 
-    // RD-32: a number whose `JSON.stringify` text is not a 64-bit integer reads back as an `f64`, which
-    // serde_json writes in its own text: the same number, here `1e-6` for JavaScript's
-    // `0.000001`. (serde_json 1.0.154 writes `1e+21` as JavaScript does; older releases wrote
+    // A number whose `JSON.stringify` text is not a 64-bit integer reads back as an `f64`, which
+    // serde_json writes in its own text: the same number, here `1e-6` for `0.000001`.
+    // (serde_json 1.0.154 writes `1e+21` like `JSON.stringify`; older releases wrote
     // `1e21`.)
     let floats = json!({"small": 0.000_001, "large": 1e21});
     assert_eq!(
@@ -91,7 +91,7 @@ fn wire_values_follow_js_text() {
     assert_eq!(properties, floats, "the same numbers");
 }
 
-/// TS's `sessionId: event.sessionId || null`: an event without a session (`""`, or no key) sends
+/// A session of `""` or no key sends `session_id: null`: an event without a session sends
 /// `session_id: null`; a session is sent as it is.
 #[test]
 fn sessionless_event_sends_null_session() {
@@ -102,7 +102,7 @@ fn sessionless_event_sends_null_session() {
     assert!(body(&event(json!({}))).contains(r#""session_id":"ses_wire00000000000000000000000""#));
 }
 
-/// TS's `actorId: event.actorId || event.identifyActorGivenId`: a Rust event has no `actorId`, so
+/// A Rust event has no `actorId`, so
 /// `actor_id` is the actor the `identify` hook gave, and absent without one.
 #[test]
 fn actor_id_follows_identity() {
@@ -114,8 +114,8 @@ fn actor_id_follows_identity() {
     assert!(!body(&event(json!({}))).contains("actor_id"));
 }
 
-/// RD-33: `agentcat-api` types `user_intent` as a string, so a `userIntent` that is not a string
-/// goes as its `JSON.stringify` text; a string goes as it is, and TS's `null` as no value.
+/// `agentcat-api` types `user_intent` as a string, so a `userIntent` that is not a string
+/// goes as its `JSON.stringify` text; a string goes as it is, and a `null` as no value.
 #[test]
 fn non_string_user_intent_is_text() {
     let intent = |value: Value| publish_request(&event(json!({"userIntent": value}))).user_intent;
@@ -130,7 +130,7 @@ fn non_string_user_intent_is_text() {
 }
 
 /// The timestamp keeps the event's milliseconds on the wire, as RFC 3339; a zero fraction is left
-/// out, as chrono writes it (RD-04).
+/// out, as chrono writes it.
 #[test]
 fn timestamp_keeps_milliseconds() {
     assert!(

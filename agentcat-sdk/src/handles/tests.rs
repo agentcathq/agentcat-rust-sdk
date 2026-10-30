@@ -14,8 +14,8 @@ use super::{
 };
 use crate::constants::{AGENT_ID_PARAM, SESSION_ID_PARAM, SESSION_START_SENTINEL};
 use crate::test_support::rules::{base62_bytes, check_cut};
-use crate::test_support::strategies::{js_char, js_string};
-use crate::test_support::{assert_js_eq, config, vectors};
+use crate::test_support::strategies::{edge_char, edge_string};
+use crate::test_support::{assert_same_json_text, config, vectors};
 use crate::wire;
 
 /// The case name prefixes of `handles.json`.
@@ -46,17 +46,17 @@ const SOURCES: [SessionSource; 5] = [
     SessionSource::Foreign,
 ];
 
-/// The source TS names `text`.
-fn source_from_ts(text: &str) -> SessionSource {
+/// The source named `text`.
+fn source_from_json(text: &str) -> SessionSource {
     SOURCES
         .into_iter()
         .find(|source| source.as_str() == text)
         .unwrap_or_else(|| panic!("no session source {text:?}"))
 }
 
-/// The resolution `value` holds in TS's camelCase form. An `agentId` comes with
-/// `agentSource: "supplied"`, the one agent source TS has.
-fn resolution_from_ts(value: &Value) -> HandleResolution {
+/// The resolution `value` holds in camelCase form. An `agentId` comes with
+/// `agentSource: "supplied"`, the one agent source there is.
+fn resolution_from_json(value: &Value) -> HandleResolution {
     let field = |name: &str| {
         value
             .get(name)
@@ -72,23 +72,23 @@ fn resolution_from_ts(value: &Value) -> HandleResolution {
     });
     HandleResolution {
         session_id: field("sessionId").as_str().unwrap().to_owned(),
-        session_source: source_from_ts(field("sessionSource").as_str().unwrap()),
+        session_source: source_from_json(field("sessionSource").as_str().unwrap()),
         hook_mode: field("hookMode").as_bool().unwrap(),
         agent_id,
     }
 }
 
-/// `res` in TS's camelCase form, keys in TS's order.
-fn resolution_to_ts(res: &HandleResolution) -> Value {
-    let mut ts = Map::new();
-    ts.insert("sessionId".into(), json!(res.session_id));
-    ts.insert("sessionSource".into(), json!(res.session_source.as_str()));
-    ts.insert("hookMode".into(), json!(res.hook_mode));
+/// `res` in camelCase form, keys in the fixture's order.
+fn resolution_to_json(res: &HandleResolution) -> Value {
+    let mut fixture = Map::new();
+    fixture.insert("sessionId".into(), json!(res.session_id));
+    fixture.insert("sessionSource".into(), json!(res.session_source.as_str()));
+    fixture.insert("hookMode".into(), json!(res.hook_mode));
     if let Some(agent) = &res.agent_id {
-        ts.insert("agentId".into(), json!(agent));
-        ts.insert("agentSource".into(), json!("supplied"));
+        fixture.insert("agentId".into(), json!(agent));
+        fixture.insert("agentSource".into(), json!("supplied"));
     }
-    Value::Object(ts)
+    Value::Object(fixture)
 }
 
 /// `session_id`, or [`MINTED`] for a minted one after checking it is valid.
@@ -101,15 +101,15 @@ fn mask(session_id: &str, source: SessionSource) -> Value {
     }
 }
 
-/// [`resolution_to_ts`] with a minted session ID masked.
+/// [`resolution_to_json`] with a minted session ID masked.
 fn masked_resolution(res: &HandleResolution) -> Value {
-    let mut ts = resolution_to_ts(res);
-    ts["sessionId"] = mask(&res.session_id, res.session_source);
-    ts
+    let mut fixture = resolution_to_json(res);
+    fixture["sessionId"] = mask(&res.session_id, res.session_source);
+    fixture
 }
 
 /// The tool arguments of an `{args?, ...}` input: `None` when absent or not an object (rmcp's
-/// tool arguments are an object or absent; TS reads nothing off any other value).
+/// tool arguments are an object or absent; nothing is read off any other value).
 fn args_of(input: &Value) -> Option<&Map<String, Value>> {
     input.get("args").and_then(Value::as_object)
 }
@@ -132,7 +132,7 @@ fn flag(input: &Value, field: &str) -> bool {
         .unwrap_or_else(|| panic!("{field} of {input} is not a boolean"))
 }
 
-/// Checks one `handles.json` case against its TS output; returns its kind (the name prefix).
+/// Checks one `handles.json` case against its output; returns its kind (the name prefix).
 fn check_case(case: &Map<String, Value>) -> &'static str {
     let name = vectors::name(case);
     let kind = KINDS
@@ -149,16 +149,16 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
         "derive" => {
             let id = input["id"].as_str().unwrap();
             let actual = derive_session_id(id, optional_str(input, "projectId"));
-            assert_js_eq(&json!(actual), output, name);
+            assert_same_json_text(&json!(actual), output, name);
         }
         "valid" => {
             let value = input.as_str().unwrap();
-            assert_js_eq(&json!(is_valid_session_id(value)), output, name);
+            assert_same_json_text(&json!(is_valid_session_id(value)), output, name);
         }
         "extract" => {
             let param = input["name"].as_str().unwrap();
             let actual = extract_handle(args_of(input), param);
-            assert_js_eq(&json!(actual), output, name);
+            assert_same_json_text(&json!(actual), output, name);
         }
         "resolve" => {
             let resolve = || {
@@ -171,24 +171,24 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
                 .unwrap_or_else(|| panic!("{name}: minting failed"))
             };
             let res = resolve();
-            assert_js_eq(&masked_resolution(&res), output, name);
+            assert_same_json_text(&masked_resolution(&res), output, name);
             if res.session_source == SessionSource::Minted {
                 let again = resolve();
                 assert_ne!(res.session_id, again.session_id, "{name}: one ID per mint");
             }
         }
         "mint-back" => {
-            let actual = build_mint_back_text(&resolution_from_ts(input));
-            assert_js_eq(&json!(actual), output, name);
+            let actual = build_mint_back_text(&resolution_from_json(input));
+            assert_same_json_text(&json!(actual), output, name);
         }
         "structured" => {
-            let actual = build_structured_mint_back(&resolution_from_ts(input));
-            assert_js_eq(&json!(actual), output, name);
+            let actual = build_structured_mint_back(&resolution_from_json(input));
+            assert_same_json_text(&json!(actual), output, name);
         }
         "tags" => {
-            let res = resolution_from_ts(&input["res"]);
+            let res = resolution_from_json(&input["res"]);
             let actual = build_handle_tags(&res, optional_str(input, "protocolVersion"));
-            assert_js_eq(&Value::Object(actual), output, name);
+            assert_same_json_text(&Value::Object(actual), output, name);
         }
         "hook-value" => {
             let session = || {
@@ -203,7 +203,7 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
                 "sessionId": mask(&session_id, source),
                 "sessionSource": source.as_str(),
             });
-            assert_js_eq(&actual, output, name);
+            assert_same_json_text(&actual, output, name);
             if source == SessionSource::Minted {
                 assert_ne!(session_id, session().0, "{name}: one ID per mint");
             }
@@ -214,10 +214,10 @@ fn check_case(case: &Map<String, Value>) -> &'static str {
     kind
 }
 
-/// The sentinel test of `resolve_handles` is `eq_ignore_ascii_case`, TS's
-/// `toLowerCase() === "start"`. The two agree when no character but the letter in its two ASCII
+/// The sentinel test of `resolve_handles` is `eq_ignore_ascii_case` against `start`, the same as
+/// lower-casing the value and comparing it with `start`. The two agree when no character but the letter in its two ASCII
 /// cases has that letter as its lowercase, and no character lowercases to a part of the sentinel.
-/// The case lists them for every character of the BMP, as this ICU version of TS gives them.
+/// The case lists them for every character of the BMP, as this ICU version gives them.
 fn check_lowercase(case: &Map<String, Value>) {
     let name = vectors::name(case);
     let letters = case["output"]["letters"]
@@ -271,7 +271,7 @@ fn check_lowercase(case: &Map<String, Value>) {
 }
 
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let seen: BTreeSet<&str> = vectors::cases("handles").iter().map(check_case).collect();
     assert_eq!(
         seen,
@@ -280,10 +280,10 @@ fn vectors_match_ts() {
     );
 }
 
-/// The value-contract test of `constants.test.ts`: `SESSION_ID_PARAM_PATTERN` (whose text
-/// `constants::tests::every_ported_constant_equals_ts` checks) accepts exactly the
+/// The value-contract test of the constants: `SESSION_ID_PARAM_PATTERN` (whose text
+/// `constants::tests::every_constant_equals_its_fixture_value` checks) accepts exactly the
 /// `is_valid_session_id` shape and the start sentinel. Each `valid:*` case carries the verdict of
-/// `new RegExp(SESSION_ID_PARAM_PATTERN)` in TS.
+/// the regular expression built from `SESSION_ID_PARAM_PATTERN`.
 #[test]
 fn pattern_is_the_valid_shape_plus_the_sentinel() {
     let cases = vectors::cases("handles");
@@ -337,7 +337,7 @@ fn session_shaped() -> impl Strategy<Value = String> + Clone {
     ]);
     let digit = prop::sample::select(BASE62.chars().collect::<Vec<_>>());
     let body = prop::collection::vec(digit, 25..=29).prop_map(String::from_iter);
-    let edit = proptest::option::of((js_char(), 0..30_usize, any::<bool>()));
+    let edit = proptest::option::of((edge_char(), 0..30_usize, any::<bool>()));
     let tail = prop::sample::select(vec![
         "", "", "", "\n", "\r", " ", "\u{85}", "\u{FEFF}", "\u{2028}",
     ]);
@@ -355,7 +355,7 @@ fn session_shaped() -> impl Strategy<Value = String> + Clone {
     })
 }
 
-/// JavaScript whitespace and its neighbors that `trim` keeps, 0 to 2 of them.
+/// White space that `trim` removes and its neighbors that `trim` keeps, 0 to 2 of them.
 fn padding() -> impl Strategy<Value = String> + Clone {
     let c = prop::sample::select(vec![
         ' ', '\t', '\n', '\r', '\u{A0}', '\u{3000}', '\u{FEFF}', '\u{85}', '\u{180E}', '\u{200B}',
@@ -398,7 +398,7 @@ fn handle_value() -> impl Strategy<Value = Option<Value>> + Clone {
     ]);
     prop_oneof![
         1 => Just(None),
-        3 => js_string(8).prop_map(|s| Some(json!(s))),
+        3 => edge_string(8).prop_map(|s| Some(json!(s))),
         3 => start_spelling().prop_map(|s| Some(json!(s))),
         2 => padded_valid_id().prop_map(|s| Some(json!(s))),
         1 => other.prop_map(Some),
@@ -411,7 +411,7 @@ fn handle_args() -> impl Strategy<Value = Option<Map<String, Value>>> + Clone {
     let args = (
         handle_value(),
         handle_value(),
-        proptest::option::of(js_string(4)),
+        proptest::option::of(edge_string(4)),
     )
         .prop_map(|(session, agent, other)| {
             let mut args = Map::new();
@@ -429,11 +429,11 @@ fn handle_args() -> impl Strategy<Value = Option<Map<String, Value>>> + Clone {
     prop_oneof![1 => Just(None), 9 => args.prop_map(Some)]
 }
 
-/// An agent ID for the tags: any [`js_string`], or one whose 200th UTF-16 unit is near its end.
+/// An agent ID for the tags: any [`edge_string`], or one whose 200th UTF-16 unit is near its end.
 fn tag_agent_id() -> impl Strategy<Value = String> + Clone {
     prop_oneof![
-        js_string(260),
-        (197_usize..=201, js_string(3)).prop_map(|(n, tail)| "a".repeat(n) + &tail),
+        edge_string(260),
+        (197_usize..=201, edge_string(3)).prop_map(|(n, tail)| "a".repeat(n) + &tail),
     ]
 }
 
@@ -462,11 +462,11 @@ proptest! {
     /// the first 4 hash bytes (big-endian) in milliseconds, and its payload is hash bytes 4 to 19.
     #[test]
     fn derive_holds_the_hash_of_the_id_and_the_project(
-        id in js_string(40),
+        id in edge_string(40),
         project in prop_oneof![
             1 => Just(None),
             1 => Just(Some(String::new())),
-            3 => js_string(10).prop_map(Some),
+            3 => edge_string(10).prop_map(Some),
         ],
     ) {
         let derived = derive_session_id(&id, project.as_deref());
@@ -485,7 +485,7 @@ proptest! {
 
     /// A value is valid exactly when it is `ses_` and 27 base62 digits.
     #[test]
-    fn is_valid_is_the_session_id_shape(value in prop_oneof![4 => session_shaped(), 1 => js_string(30)]) {
+    fn is_valid_is_the_session_id_shape(value in prop_oneof![4 => session_shaped(), 1 => edge_string(30)]) {
         prop_assert_eq!(is_valid_session_id(&value), has_session_shape(&value), "{:?}", value);
     }
 
@@ -546,7 +546,7 @@ proptest! {
         protocol_version in proptest::option::of(prop_oneof![
             Just(String::new()),
             Just("2025-11-25".to_owned()),
-            js_string(6),
+            edge_string(6),
         ]),
     ) {
         let res = HandleResolution {

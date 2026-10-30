@@ -12,10 +12,10 @@ use super::{
 };
 use crate::pipeline::EventObject;
 use crate::test_support::json::index_keys_first;
-use crate::test_support::strategies::{js_string, json_value, object_key, ts_event};
-use crate::test_support::{assert_js_eq, config, markers, vectors};
+use crate::test_support::strategies::{edge_string, json_value, object_key, tool_call_event};
+use crate::test_support::{assert_same_json_text, config, markers, vectors};
 
-/// TS's fields for the two hooks, which the restore treats in its own way.
+/// The fixture's fields for the two hooks, which the restore treats in its own way.
 const HOOK_FIELDS: [&str; 2] = [STRING_HOOK_FIELD, EVENT_HOOK_FIELD];
 
 /// What [`redact`] gives: the event, or the number of the call that failed.
@@ -56,7 +56,7 @@ fn event_of(value: Value, context: &str) -> EventObject {
     }
 }
 
-/// The calls as a JSON array, to compare with TS's through [`assert_js_eq`].
+/// The calls as a JSON array, to compare with the fixture's through [`assert_same_json_text`].
 fn calls_value(calls: Vec<String>) -> Value {
     Value::Array(calls.into_iter().map(Value::String).collect())
 }
@@ -65,7 +65,7 @@ fn calls_value(calls: Vec<String>) -> Value {
 /// redactor gets the strings under it, and the key stays, also at the top level of a hook's
 /// result.
 #[test]
-fn vectors_match_ts() {
+fn fixture_cases_hold() {
     let cases = vectors::cases("redact");
     assert!(cases.len() >= 100, "redact.json has its cases");
     let (restore, walk): (Vec<_>, Vec<_>) =
@@ -79,7 +79,7 @@ fn vectors_match_ts() {
     }
 }
 
-/// A walk case: the calls are TS's exactly, and the event (or the error after those calls).
+/// A walk case: the calls are the fixture's exactly, and the event (or the error after those calls).
 fn check_walk_case(case: &Map<String, Value>, file: &str) {
     let name = vectors::name(case);
     let context = format!("{file} {name}");
@@ -89,18 +89,22 @@ fn check_walk_case(case: &Map<String, Value>, file: &str) {
         usize::try_from(n).expect("throw_at fits a usize")
     });
     let (result, calls) = redact(&input, throw_at);
-    assert_js_eq(
+    assert_same_json_text(
         &calls_value(calls),
         &case["calls"],
         &format!("{context}: calls"),
     );
     match (result, case.get("output"), case.get("error")) {
-        (Ok(event), Some(output), None) => assert_js_eq(&Value::Object(event), output, &context),
+        (Ok(event), Some(output), None) => {
+            assert_same_json_text(&Value::Object(event), output, &context);
+        }
         (Err(call), None, Some(_)) => {
             assert_eq!(Some(call), throw_at, "{context}: the failing call's error");
         }
         (result, output, error) => {
-            panic!("{context}: Rust gives {result:?}; TS gives output {output:?}, error {error:?}")
+            panic!(
+                "{context}: Rust gives {result:?}; the fixture gives output {output:?}, error {error:?}"
+            )
         }
     }
 }
@@ -118,7 +122,7 @@ fn check_restore_case(case: &Map<String, Value>, file: &str) {
     let expected = &case["output"];
     match actual {
         None => assert_eq!(expected, &Value::Null, "{context}: the event is dropped"),
-        Some(actual) => assert_js_eq(&actual, expected, &context),
+        Some(actual) => assert_same_json_text(&actual, expected, &context),
     }
 }
 
@@ -224,13 +228,13 @@ fn walk_key() -> impl Strategy<Value = String> + Clone {
 }
 
 /// A JSON value of up to 3 levels whose object keys are [`walk_key`]s and whose strings are
-/// [`js_string`]s.
+/// [`edge_string`]s.
 fn walk_value() -> impl Strategy<Value = Value> + Clone {
     let leaf = prop_oneof![
         Just(Value::Null),
         any::<bool>().prop_map(Value::Bool),
         any::<i32>().prop_map(Value::from),
-        js_string(20).prop_map(Value::String),
+        edge_string(20).prop_map(Value::String),
     ];
     leaf.prop_recursive(3, 24, 4, |inner| {
         prop_oneof![
@@ -241,11 +245,11 @@ fn walk_value() -> impl Strategy<Value = Value> + Clone {
     })
 }
 
-/// A [`ts_event`], sometimes with a `""` key (whose objects TS treats as the top level) and with
+/// A [`tool_call_event`], sometimes with a `""` key (whose objects count as the top level) and with
 /// [`walk_value`]s in `parameters` or in place of the `timestamp`.
 fn redact_input() -> impl Strategy<Value = EventObject> {
     (
-        ts_event(js_string(20)),
+        tool_call_event(edge_string(20)),
         prop::option::weighted(0.3, walk_value()),
         prop::option::weighted(0.3, walk_value()),
         prop::option::weighted(0.1, walk_value()),
