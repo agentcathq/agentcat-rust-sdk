@@ -120,9 +120,9 @@ per test. For the doctests, run `cargo test --workspace --doc`.
 - In CI, the base is the newest commit with a successful CI run, on any branch, that HEAD descends
   from. When no such commit exists, the base is the parent commit.
 
-**Merge a pull request with a merge commit or a fast-forward, never a squash.** A squash leaves no
-green commit that HEAD descends from. The check then mutates the whole squashed change (on the
-first merge into `main`, the whole crate), and the job runs out of time.
+**Merge a pull request with a merge commit or a fast-forward, never a squash.** After a squash,
+`main` does not descend from the green commits of the branch. The check then mutates the whole
+squashed change again, and a large change can take longer than the time limit of its job.
 
 To run the check by hand, use the commands of `scripts/check.sh`:
 
