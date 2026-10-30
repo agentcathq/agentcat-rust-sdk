@@ -13,9 +13,9 @@
 //!   for `custom::tests::custom_vectors_match_ts`, which runs the builders).
 //! - One normalization (ruling P7): where TS writes a thrown `Error` after a stage's or a hook's
 //!   text, as `Error: <message>`, Rust writes the error's `Display`, `<message>`
-//!   ([`ts_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries TS's
-//!   V8 text (`TypeError: str.slice is not a function`), so that line compares whole, more than the
-//!   prefix `Failed to truncate event: ` the ruling allows.
+//!   ([`ts_line_as_rust`]). The truncation error needs none: Rust's `TruncateError` carries the
+//!   fixture's text (`a length-limited field is a number, a boolean or an object`), so that line
+//!   compares whole, more than the prefix `Failed to truncate event: ` the ruling allows.
 //!
 //! The delivery worker's runners ([`worker_logs`], plan 4 task 6) keep the delivery lines, with one
 //! more normalization (ruling P7): where a TS delivery line embeds the error of a failed attempt,

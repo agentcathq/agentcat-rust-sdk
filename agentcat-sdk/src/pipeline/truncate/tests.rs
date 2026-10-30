@@ -468,7 +468,7 @@ proptest! {
         match truncate_event(event.clone()) {
             Err(error) => {
                 prop_assert!(fails, "{}", error);
-                prop_assert_eq!(error.to_string(), "TypeError: str.slice is not a function");
+                prop_assert_eq!(error.to_string(), "a length-limited field is a number, a boolean or an object");
             }
             Ok(truncated) => {
                 prop_assert!(!fails);

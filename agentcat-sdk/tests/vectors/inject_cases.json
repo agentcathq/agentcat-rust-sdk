@@ -136,8 +136,8 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on boolean 'true'",
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
+            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - cannot add property 'agent_id' to boolean 'true'",
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to boolean 'true'"
           ]
         }
       ]
@@ -414,8 +414,8 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on number '5'",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'agent_id' to number '5'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -1229,8 +1229,8 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'session_id' on number '5'",
-            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'session_id' on string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'session_id' to number '5'",
+            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - cannot add property 'session_id' to string 'abc'",
             "WARN: Tool \"search\" already has 'agent_id' parameter. Skipping agent_id injection."
           ]
         },
@@ -1935,7 +1935,7 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to string 'abc'"
           ]
         }
       ]
@@ -2329,8 +2329,8 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to string 'abc'"
           ]
         }
       ]
@@ -2615,9 +2615,9 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'session_id' on number '5'",
+            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - cannot add property 'session_id' to number '5'",
             "WARN: Tool \"search\" has complex outputSchema (oneOf/allOf/anyOf). Skipping mcp_session injection; mint-back stays content-only for this tool.",
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -3731,8 +3731,8 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'",
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to boolean 'true'",
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to boolean 'true'"
           ]
         },
         {
@@ -4417,7 +4417,7 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Context injection failed for tool \"own\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -5028,7 +5028,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on number '5'"
+            "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - cannot add property 'agent_id' to number '5'"
           ]
         },
         {
@@ -5084,12 +5084,12 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
             "WARN: Tool \"unknown\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
-            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on number '5'",
-            "WARN: Context injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'",
+            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - cannot add property 'agent_id' to number '5'",
+            "WARN: Context injection failed for tool \"search\"; listing it unmodified - cannot add property 'context' to string 'abc'",
             "WARN: Tool \"unknown\" has complex schema (oneOf/allOf/anyOf). Skipping context injection.",
-            "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Context injection failed for tool \"own\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -5677,7 +5677,7 @@
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
             "WARN: Tool \"own\" has complex schema (oneOf/allOf/anyOf). Skipping context injection.",
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to string 'abc'"
           ]
         }
       ]
@@ -6630,7 +6630,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Context injection failed for tool \"own\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -7621,8 +7621,8 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'",
-            "WARN: Context injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to number '5'",
+            "WARN: Context injection failed for tool \"search\"; listing it unmodified - cannot add property 'context' to number '5'",
             "WARN: Tool \"unknown\" has complex schema (oneOf/allOf/anyOf). Skipping context injection."
           ]
         },
@@ -7757,7 +7757,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to string 'abc'",
             "WARN: Tool \"echo\" already has 'context' parameter. Skipping context injection."
           ]
         }
@@ -8017,11 +8017,11 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'",
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Context injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
+            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'mcp_session' to string 'x'",
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Context injection failed for tool \"own\"; listing it unmodified - cannot add property 'context' to string 'abc'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to string 'abc'"
           ]
         }
       ]
@@ -8591,7 +8591,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on string 'abc'"
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to string 'abc'"
           ]
         }
       ]
@@ -8847,7 +8847,7 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: Tool \"own\" has complex schema (oneOf/allOf/anyOf). Skipping handle injection.",
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on number '5'"
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'agent_id' to number '5'"
           ]
         }
       ]
@@ -9522,9 +9522,9 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'",
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on number '3'"
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'mcp_session' to string 'x'",
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'mcp_session' to number '3'"
           ]
         }
       ]
@@ -10222,7 +10222,7 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on number '3'"
+            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - cannot add property 'mcp_session' to number '3'"
           ]
         },
         {
@@ -10737,7 +10737,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'",
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to number '5'",
             "WARN: Tool \"search\" already has 'context' parameter. Skipping context injection."
           ]
         },
@@ -10801,7 +10801,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
+            "WARN: Context injection failed for tool \"search\"; listing it unmodified - cannot add property 'context' to boolean 'true'"
           ]
         }
       ]
@@ -10972,9 +10972,9 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'",
-            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on string 'abc'"
+            "WARN: Handle injection failed for tool \"own\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'",
+            "WARN: Handle injection failed for tool \"search\"; listing it unmodified - cannot add property 'agent_id' to string 'abc'"
           ]
         }
       ]
@@ -13025,8 +13025,8 @@
           ],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'session_id' on boolean 'true'",
-            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - TypeError: Cannot create property 'context' on boolean 'true'"
+            "WARN: Handle injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'session_id' to boolean 'true'",
+            "WARN: Context injection failed for tool \"unknown\"; listing it unmodified - cannot add property 'context' to boolean 'true'"
           ]
         },
         {
@@ -13621,7 +13621,7 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - TypeError: Cannot create property 'agent_id' on boolean 'true'"
+            "WARN: Handle injection failed for tool \"get_more_tools\"; listing it unmodified - cannot add property 'agent_id' to boolean 'true'"
           ]
         }
       ]
@@ -14971,7 +14971,7 @@
           "outputRegistry": [],
           "declaredSessionParams": [],
           "logs": [
-            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'context' on number '5'"
+            "WARN: Context injection failed for tool \"echo\"; listing it unmodified - cannot add property 'context' to number '5'"
           ]
         }
       ]
@@ -15690,7 +15690,7 @@
           "declaredSessionParams": [],
           "logs": [
             "WARN: This server registers its own \"get_more_tools\" tool, which is shadowed by AgentCat's report-missing tool: calls to it are answered by AgentCat and never reach your handler. Rename your tool, or set Options::enable_report_missing(false) to keep yours reachable.",
-            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - TypeError: Cannot create property 'mcp_session' on string 'x'"
+            "WARN: Handle injection failed for tool \"echo\"; listing it unmodified - cannot add property 'mcp_session' to string 'x'"
           ]
         },
         {

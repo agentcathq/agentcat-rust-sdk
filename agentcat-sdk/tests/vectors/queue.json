@@ -3720,7 +3720,7 @@
       "requests": [],
       "delays": [],
       "logs": [
-        "Failed to truncate event: TypeError: str.slice is not a function"
+        "Failed to truncate event: a length-limited field is a number, a boolean or an object"
       ]
     },
     {

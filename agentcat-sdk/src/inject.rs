@@ -4,10 +4,11 @@
 //! schemas, so they are fixed, key order included.
 //!
 //! The pipeline reads the schemas by these rules: a key is "declared" when its value is truthy
-//! ([`wire::truthy`]), a composition key counts when its value is truthy, and setting a property
-//! on a `properties` value that is a string, number or boolean fails with a `TypeError` text,
-//! which the pipeline turns into a log line and an unmodified tool. `inject/tests.rs` checks the
-//! pipeline against `tests/vectors/inject.json` and `tests/vectors/inject_cases.json`.
+//! ([`wire::truthy`]), a composition key counts when its value is truthy, and setting a property on
+//! a `properties` value that is a string, number or boolean fails with an error text (`cannot add
+//! property ...`), which the pipeline turns into a log line and an unmodified tool.
+//! `inject/tests.rs` checks the pipeline against `tests/vectors/inject.json` and
+//! `tests/vectors/inject_cases.json`.
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
@@ -382,7 +383,8 @@ fn inject_handles(
 
 /// The body of the handle step on a tool whose input schema is not composed: `properties` made
 /// an object when falsy, `additionalProperties: false` dropped, `session_id` and `agent_id` added
-/// unless declared, then the output schema's `mcp_session`. `Err` holds the `TypeError` text.
+/// unless declared, then the output schema's `mcp_session`. `Err` holds the [`set_property`] error
+/// text.
 fn add_handles(
     config: &InjectConfig,
     tool: &mut Tool,
@@ -567,7 +569,7 @@ fn drop_additional_false(schema: &mut JsonObject) {
 
 /// Sets `name` to `value` in `properties`: an object takes the key (in its place when it has it
 /// already), an array stays as it is (no key of an array shows in JSON), and a string, number or
-/// boolean fails, with the `TypeError: Cannot create property ...` text as the `Err`
+/// boolean fails, with `cannot add property '<name>' to <type> '<value>'` as the `Err`
 /// (`ensure_properties` has replaced a falsy value, so no `null` gets here).
 fn set_property(properties: &mut Value, name: &str, value: Value) -> Result<(), String> {
     match properties {
@@ -577,7 +579,7 @@ fn set_property(properties: &mut Value, name: &str, value: Value) -> Result<(), 
         }
         Value::Array(_) => Ok(()),
         other => Err(format!(
-            "TypeError: Cannot create property '{name}' on {} '{}'",
+            "cannot add property '{name}' to {} '{}'",
             wire::type_of(Some(other)),
             wire::coerce_to_string(Some(other)),
         )),

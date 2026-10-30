@@ -6446,7 +6446,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "resourceName": 42
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field:server-name-object",
@@ -6457,7 +6457,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "serverName": {}
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field:client-version-array-300",
@@ -6789,7 +6789,7 @@
           "type": "Error"
         }
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field:error-message-absent",
@@ -6827,7 +6827,7 @@
           "frames": true
         }
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:number",
@@ -6838,7 +6838,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "userIntent": 5
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:true",
@@ -6849,7 +6849,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "userIntent": true
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:false",
@@ -6860,7 +6860,7 @@
         "timestamp": "2025-01-15T12:00:00.000Z",
         "userIntent": false
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:null",
@@ -6890,7 +6890,7 @@
           "a": 1
         }
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:length-object",
@@ -6903,7 +6903,7 @@
           "length": 10
         }
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:length-object-over",
@@ -6916,7 +6916,7 @@
           "length": 2049
         }
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "intent:array-2048",
@@ -53025,7 +53025,7 @@
           "frames": true
         }
       },
-      "error": "TypeError: frames.slice is not a function or its return value is not iterable"
+      "error": "error.frames is true, a number other than 0, or an object"
     },
     {
       "name": "frames:number",
@@ -53041,7 +53041,7 @@
           "frames": 7
         }
       },
-      "error": "TypeError: frames.slice is not a function or its return value is not iterable"
+      "error": "error.frames is true, a number other than 0, or an object"
     },
     {
       "name": "frames:object",
@@ -53059,7 +53059,7 @@
           }
         }
       },
-      "error": "TypeError: frames.slice is not a function or its return value is not iterable"
+      "error": "error.frames is true, a number other than 0, or an object"
     },
     {
       "name": "frames:object-length-10",
@@ -53077,7 +53077,7 @@
           }
         }
       },
-      "error": "TypeError: frames.slice is not a function or its return value is not iterable"
+      "error": "error.frames is true, a number other than 0, or an object"
     },
     {
       "name": "frames:object-length-51",
@@ -53095,7 +53095,7 @@
           }
         }
       },
-      "error": "TypeError: frames.slice is not a function or its return value is not iterable"
+      "error": "error.frames is true, a number other than 0, or an object"
     },
     {
       "name": "frames:string-50",

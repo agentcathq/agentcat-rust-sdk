@@ -76,11 +76,10 @@ const BUFFER_BYTES: usize = 200;
 const MIN_REDUCTION: usize = 10;
 
 /// The error text when a limited field holds a number, a boolean or an object.
-const NOT_A_STRING: &str = "TypeError: str.slice is not a function";
+const NOT_A_STRING: &str = "a length-limited field is a number, a boolean or an object";
 
 /// The error text when `error.frames` is `true`, a number other than 0, or an object.
-const NOT_FRAMES: &str =
-    "TypeError: frames.slice is not a function or its return value is not iterable";
+const NOT_FRAMES: &str = "error.frames is true, a number other than 0, or an object";
 
 /// The error of an event that [`truncate_event`] cannot limit; the caller drops the event. The
 /// `Display` is the error text ([`NOT_A_STRING`] or [`NOT_FRAMES`]).
@@ -155,8 +154,7 @@ fn limit_fields(event: &mut EventObject) -> Result<(), TruncateError> {
 ///
 /// # Errors
 ///
-/// `TypeError: str.slice is not a function` for a number, a boolean or an object, whatever the
-/// object's keys.
+/// [`NOT_A_STRING`] for a number, a boolean or an object, whatever the object's keys.
 fn limit_string(value: &Value, limit: usize) -> Result<Option<Value>, TruncateError> {
     match value {
         Value::Null => Ok(None),
@@ -221,8 +219,7 @@ fn limit_error(error: &mut Value) -> Result<(), TruncateError> {
 ///
 /// # Errors
 ///
-/// `TypeError: frames.slice is not a function or its return value is not iterable` for `true`,
-/// another number or an object, whatever the object's keys.
+/// [`NOT_FRAMES`] for `true`, another number or an object, whatever the object's keys.
 fn limit_frames(frames: &Value) -> Result<Option<Value>, TruncateError> {
     let half = MAX_STACK_FRAMES / 2;
     match frames {

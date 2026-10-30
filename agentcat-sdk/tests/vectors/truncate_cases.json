@@ -2698,7 +2698,7 @@
         "clientName": "xt6󮏘\u000fM \u0012X𝄞᠎Yw😀ZFp　\u0001{ 😀W1😀7😀",
         "clientVersion": "𝄞7ta　Haé\"s \"\\1"
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field-limits:limited:7",
@@ -15006,7 +15006,7 @@
         },
         "serverName": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx<𝄞<\u0017😀"
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field-limits:limited:12",
@@ -15264,7 +15264,7 @@
         "serverVersion": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxi",
         "userIntent": false
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field-limits:limited:14",
@@ -48069,7 +48069,7 @@
         "resourceName": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxWx ",
         "userIntent": 5
       },
-      "error": "TypeError: str.slice is not a function"
+      "error": "a length-limited field is a number, a boolean or an object"
     },
     {
       "name": "field-limits:limited:28",
