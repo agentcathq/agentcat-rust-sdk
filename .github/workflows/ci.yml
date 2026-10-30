@@ -11,7 +11,7 @@ permissions:
 
 # A new push to a pull request cancels the older run of that pull request. Every other run (a push
 # to rewrite or main, a manual run) is in the group of its own commit, so a run for a later commit
-# never cancels it or drops it from the queue: every pushed commit keeps a finished run (C48, C53).
+# never cancels it or drops it from the queue: every pushed commit keeps a finished run.
 # (GitHub drops a waiting run when a newer run joins its group, whatever cancel-in-progress says.)
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
@@ -65,7 +65,7 @@ jobs:
           tool: cargo-hack
       - run: cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
-  # Every push and pull request, on the three systems (C48).
+  # Every push and pull request, on the three systems.
   test:
     name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -82,19 +82,13 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
-      # The harness reference server has a branch for each system (its shutdown signal).
-      - run: cargo build -p harness-ref-server
-      # The oracle's build lock and its bundle builds, on each system's file semantics (Windows
-      # refuses a rename onto a file that another process holds open).
-      - run: node --test --test-concurrency=1 oracle/test/lock.test.mjs oracle/test/bundle.test.mjs
       - run: cargo nextest run --workspace --all-features
-      # The tests that compile only without a TLS feature (C44's warning for an https: URL).
+      # The tests that compile only without a TLS feature (the warning for an https: URL).
       - run: cargo nextest run -p agentcat-sdk --no-default-features
-      # R07 in a build of the SDK alone: in a workspace build, another member could turn on
+      # The key order in a build of the SDK alone: in a workspace build, another member could turn on
       # serde_json/preserve_order for it (Cargo unifies features).
       - run: cargo test -p agentcat-sdk --all-features --test json_key_order
       - run: cargo test --workspace --doc
@@ -113,7 +107,6 @@ jobs:
         with:
           toolchain: "1.88"
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
@@ -139,7 +132,7 @@ jobs:
       # a second run checks the doc links of the crate-private items, which the first run skips
       - run: cargo doc --workspace --all-features --no-deps --document-private-items
 
-  # The public API snapshot with its crate allowlist (C51), the package file list and the publish dry run.
+  # The public API snapshot with its crate allowlist, the package file list and the publish dry run.
   api:
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -166,7 +159,7 @@ jobs:
       - run: cargo run -q -p xtask -- package-list
       - run: cargo publish -p agentcat-sdk --dry-run --allow-dirty
 
-  # Line coverage floors (C52): at least 90 % of the crate's lines and 95 % of the pure modules' lines,
+  # Line coverage floors: at least 90 % of the crate's lines and 95 % of the pure modules' lines,
   # test files left out. The nightly reports branch coverage.
   coverage:
     runs-on: ubuntu-latest
@@ -180,8 +173,6 @@ jobs:
           toolchain: stable
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      # The crate's unit tests spawn the JS oracle.
-      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest,cargo-llvm-cov@0.9.1
@@ -222,7 +213,7 @@ jobs:
         with:
           tool: cargo-hack,cargo-minimal-versions,nextest
       - run: cargo minimal-versions check --direct --workspace
-      # The serde_json floor (R22): the feature self-check finds no feature in a build of the SDK
+      # The serde_json floor: the feature self-check finds no feature in a build of the SDK
       # alone on serde_json 1.0.127, the workspace's floor. serde_with 3.15 and later need a newer
       # serde_json, so serde_with goes down to 3.14.1 first. The pins go on Cargo.lock, which is
       # restored after.
@@ -234,9 +225,12 @@ jobs:
           cargo +stable nextest run -p agentcat-sdk --all-features --lib --no-tests=fail -E 'test(=delivery::tests::json_features_empty_in_this_build)'
           cp "$RUNNER_TEMP/Cargo.lock" Cargo.lock
 
-  oracle-harness:
+  # The customer examples, each against a local mock API: stdout carries only JSON-RPC, the last event
+  # arrives, and the process exits 0 within 5 s of the client close. Linux only: on Windows an HTTP
+  # example cannot shut down on its own (xtask/src/examples_check.rs).
+  examples:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -245,100 +239,29 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: ./.github/actions/node-oracle
-      # The harness tests run the Rust reference server.
-      - run: cargo build -p harness-ref-server
-      # One package at a time: oracle/test/fetch.test.mjs dirties the shared TS clone on purpose (R-17).
-      - run: corepack pnpm -r --workspace-concurrency=1 test
-      - run: node harness/src/dump-contract.mjs --check
-      - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
-        with:
-          tool: nextest
-      - run: node --test "scripts/*.test.mjs"
-      # The customer examples (C54) against the local mock API: stdout carries only JSON-RPC, the last
-      # event arrives, and the process exits 0 within 5 s of the client close.
-      - run: cargo build -p agentcat-sdk --examples --all-features
       - name: Examples check
         run: |
-          for example in stdio streamable_http hooks; do
-            node harness/src/examples-check.mjs "$example"
+          for example in stdio streamable_http hooks stateless_http; do
+            cargo run -q -p xtask -- examples-check "$example"
           done
-      # The dashboard demo (C58) against the local mock API: both servers publish the same events.
-      - name: Dashboard demo (mock)
-        run: node harness/demo/run.mjs --mock
-
-  # L3: the MCP-wire delta of the Rust reference server against TS v2 (harness/README.md, "The L3 gate").
-  harness-l3:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: ./.github/actions/node-oracle
-      - run: cargo build -p harness-ref-server
-      # Every scenario, transport and lane: every delta and event difference ruled, every ruling used,
-      # every tracked Rust server drained.
-      - name: Matrix against TS v2
-        run: node harness/src/matrix.mjs
-      # The Rust server against itself: no delta or event difference at all, ruled or not.
-      - name: A/A run
-        run: |
-          node harness/src/matrix.mjs --servers rust,rust --scenarios basic
-          node harness/src/l3-expect.mjs none
-      # HARNESS_CANARY=1 perturbs the second server: the matrix must exit 1 with every driver passing and
-      # an unruled delta difference in every combination, at the canary's paths only, and no event difference.
-      - name: Canary run
-        run: |
-          canary=0
-          node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 HARNESS_CANARY=1 || canary=$?
-          if [ "$canary" -ne 1 ]; then
-            echo "L3 canary failed: the matrix exited $canary, expected 1"
-            exit 1
-          fi
-          node harness/src/l3-expect.mjs caught
-      # HARNESS_CANARY=call changes the mint-back text after the SDK recorded the call: caught in the delta
-      # (results' first content block) of every combination, and nowhere in the events.
-      # HARNESS_CANARY=event renames every event in a redact_event hook: caught in the events (resource_name)
-      # of every combination, and nowhere in the delta.
-      - name: Call and event canary runs
-        run: |
-          for canary in call event; do
-            status=0
-            node harness/src/matrix.mjs --servers rust,rust --scenarios basic --env2 "HARNESS_CANARY=$canary" || status=$?
-            if [ "$status" -ne 1 ]; then
-              echo "L3 $canary canary failed: the matrix exited $status, expected 1"
-              exit 1
-            fi
-            node harness/src/l3-expect.mjs "caught-$canary"
-          done
-      - if: failure()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: harness-l3-out
-          path: harness/out
-          retention-days: 14
 
   rmcp-versions:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 15
     outputs:
       legs: ${{ steps.list.outputs.legs }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
         with:
-          node-version: 22
-      # [{"version": <rmcp>, "macros": <rmcp-macros>}, ...]: one leg per rmcp minor.
+          toolchain: stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+      # [{"version": <rmcp>, "macros": <rmcp-macros>}, ...]: one leg per rmcp minor, from the crates.io API.
       - id: list
         run: |
-          legs="$(node scripts/rmcp-versions.mjs)"
+          legs="$(cargo run -q -p xtask -- rmcp-versions)"
           echo "legs=$legs" >> "$GITHUB_OUTPUT"
 
   rmcp:
@@ -360,13 +283,12 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest
       - run: cargo update -p rmcp --precise ${{ matrix.version }}
       # rmcp-macros keeps its locked version otherwise (it still satisfies the older rmcp's requirement).
-      # The leg takes the highest rmcp-macros of the same minor (scripts/rmcp-versions.mjs): an rmcp
+      # The leg takes the highest rmcp-macros of the same minor (xtask rmcp-versions): an rmcp
       # patch can come without an rmcp-macros patch of the same number.
       - run: cargo update -p rmcp-macros --precise ${{ matrix.macros }}
       - run: grep -A1 -E '^name = "rmcp(-macros)?"$' Cargo.lock
@@ -379,7 +301,7 @@ jobs:
           RMCP_EXPECTED_VERSION: ${{ matrix.version }}
       - run: cargo run -q -p xtask -- rmcp-canary
 
-  # The mutation diff gate (C53): cargo-mutants mutates only the lines that changed since the newest commit
+  # The mutation diff gate: cargo-mutants mutates only the lines that changed since the newest commit
   # with a successful CI run that HEAD descends from, on any branch (scripts/mutants-base.sh; the parent
   # commit when there is none), and no mutant may survive. An empty diff, or one with no mutable SDK source,
   # passes. The full set runs in the nightly. The job needs `actions: read` for that lookup; the full
@@ -407,8 +329,6 @@ jobs:
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      # The mutant copy of the tree carries oracle/.cache and node_modules (.cargo/mutants.toml).
-      - uses: ./.github/actions/node-oracle
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: nextest,cargo-mutants@27.1.0
@@ -430,7 +350,7 @@ jobs:
 
   all-green:
     if: always()
-    needs: [fmt, clippy, hack, test, msrv, docs, api, coverage, deny, minimal-versions, oracle-harness, harness-l3, rmcp-versions, rmcp, mutants]
+    needs: [fmt, clippy, hack, test, msrv, docs, api, coverage, deny, minimal-versions, examples, rmcp-versions, rmcp, mutants]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

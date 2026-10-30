@@ -674,19 +674,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "harness-ref-server"
-version = "0.0.0"
-dependencies = [
- "agentcat-sdk",
- "axum",
- "rmcp",
- "serde",
- "serde_json",
- "tokio",
- "tokio-stream",
-]
-
-[[package]]
 name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

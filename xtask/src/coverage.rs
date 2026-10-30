@@ -1,4 +1,4 @@
-//! The line coverage floors (decision C52).
+//! The line coverage floors.
 //!
 //! `cargo run -p xtask -- coverage <summary.json>` reads the `--json --summary-only` output of
 //! `cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex
@@ -21,7 +21,7 @@ pub const CRATE_FLOOR: u64 = 90;
 /// The lowest share of the pure set's lines ([`PURE_SET`]), in percent, that the tests must run.
 pub const PURE_FLOOR: u64 = 95;
 
-/// The pure set of C52: the modules whose work is mostly value in, value out, so tests reach
+/// The pure set: the modules whose work is mostly value in, value out, so tests reach
 /// nearly all of it. Paths under `agentcat-sdk/src/`; an entry `dir/` is the module `dir`: its
 /// root (`dir/mod.rs` or `dir.rs`) and every file under `dir/`.
 pub const PURE_SET: &[&str] = &[
@@ -109,7 +109,7 @@ pub struct Outcome {
 }
 
 /// The path of `filename` under [`CRATE_SRC`], or `None` for a file outside the crate or a test
-/// file (`tests.rs`, `test_support/`, `tests/`: the files the regex of C52 names).
+/// file (`tests.rs`, `test_support/`, `tests/`: the files the `--ignore-filename-regex` names).
 fn crate_path(filename: &str) -> Option<String> {
     let name = filename.replace('\\', "/");
     let at = name.rfind(CRATE_SRC)?;
@@ -416,7 +416,7 @@ mod tests {
                 ("agentcat-sdk/src/wire/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/tests.rs", 0, 1000),
                 ("agentcat-sdk/src/handles/ksuid/tests.rs", 0, 1000),
-                ("agentcat-sdk/src/test_support/oracle.rs", 0, 1000),
+                ("agentcat-sdk/src/test_support/vectors.rs", 0, 1000),
                 ("agentcat-sdk/src/pipeline/truncate/tests/cut.rs", 0, 1000),
                 ("agentcat-sdk/tests/fake.rs", 0, 1000),
             ],
@@ -449,13 +449,14 @@ mod tests {
             &pure_files(100),
             &[
                 ("xtask/src/main.rs", 0, 1000),
-                ("harness/rust-server/src/main.rs", 0, 1000),
+                ("xtask/src/examples_check/mock.rs", 0, 1000),
                 (".cargo/registry/src/index/rmcp-3.1.0/src/lib.rs", 0, 1000),
                 ("my-agentcat-sdk/src/lib.rs", 0, 1000),
             ],
         );
         assert_eq!(outcome.problems, Vec::<String>::new());
         assert!(!outcome.table.contains("main.rs"), "{}", outcome.table);
+        assert!(!outcome.table.contains("mock.rs"), "{}", outcome.table);
         assert_eq!(row(&outcome.table, "crate"), ["1000", "1000", "100.0", "%"]);
     }
 

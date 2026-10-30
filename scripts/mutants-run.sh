@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Runs `cargo mutants` with the given arguments and maps its exit code (C53 ruling: a timed-out mutant counts
-# as detected). Exit codes of cargo-mutants: 0 all caught, 1 usage error, 2 a mutant was missed, 3 a mutant
+# Runs `cargo mutants` with the given arguments and maps its exit code (a timed-out mutant counts as
+# detected). Exit codes of cargo-mutants: 0 all caught, 1 usage error, 2 a mutant was missed, 3 a mutant
 # timed out, 4 the unmutated tree fails its tests. MUTANTS_OK_CODES (default "0 3") lists the codes that
 # pass; every other code is returned as it is. The diff gate (ci.yml, scripts/check.sh) uses the default;
 # the nightly shards also pass 2, because `mutants-score` judges the missed mutants of all shards together.

@@ -8,10 +8,10 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-/// Methods `Tracked<H>` deliberately does not forward, with the reason (decision C25).
+/// Methods `Tracked<H>` deliberately does not forward, with the reason.
 pub const ALLOWLIST: &[(&str, &str)] = &[(
     "negotiate_initialize",
-    "C25: rmcp added it in 3.3.0, so forwarding it would break the 3.0 floor",
+    "rmcp added it in 3.3.0, so forwarding it would break the 3.0 floor",
 )];
 
 const TRAIT_HEADER: &str = "pub trait ServerHandler";

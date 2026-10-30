@@ -1,4 +1,4 @@
-//! R07: the SDK's own `serde_json` dependency must turn on `preserve_order`.
+//! The SDK's own `serde_json` dependency must turn on `preserve_order`.
 //!
 //! Cargo unifies the features of a dependency across every package of one build, so a key-order
 //! test passes as soon as any other package of the build (or a dev-dependency) turns the feature
@@ -24,13 +24,13 @@ pub fn check_preserve_order(manifest: &str) -> Result<(), String> {
     let missing = || {
         format!(
             "{SDK_MANIFEST}: the [dependencies] serde_json entry must have \
-             features = [\"preserve_order\"] (R07: mcp_session stays the first key)"
+             features = [\"preserve_order\"] (mcp_session stays the first key)"
         )
     };
     let table = entry.as_table().ok_or_else(missing)?;
     if table.get("optional").and_then(toml::Value::as_bool) == Some(true) {
         return Err(format!(
-            "{SDK_MANIFEST}: serde_json must not be optional (R07: preserve_order is always on)"
+            "{SDK_MANIFEST}: serde_json must not be optional (preserve_order is always on)"
         ));
     }
     let on = table
@@ -110,7 +110,7 @@ mod tests {
         assert!(check_preserve_order("[dependencies\n").is_err());
     }
 
-    /// The real manifest: R07 holds for the SDK crate itself, whatever else the workspace builds.
+    /// The real manifest: the SDK crate itself keeps the rule, whatever the workspace builds.
     #[test]
     fn the_sdk_manifest_turns_on_preserve_order() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("..");

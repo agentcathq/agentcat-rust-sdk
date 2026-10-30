@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Prints the base commit of the mutation diff gate (C53): `git diff "$(scripts/mutants-base.sh)"...HEAD`.
+# Prints the base commit of the mutation diff gate: `git diff "$(scripts/mutants-base.sh)"...HEAD`.
 #
 # In CI (GITHUB_ACTIONS=true): the head SHA of the newest successful run of ci.yml, on any branch and not
 # counting this run, whose commit is in the local clone and is an ancestor of HEAD. A green run of another
