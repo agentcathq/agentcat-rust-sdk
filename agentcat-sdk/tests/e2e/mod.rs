@@ -8,6 +8,7 @@
 //!   each transport serves it.
 //! - `driver`: the scripted client, raw JSON-RPC over an in-memory pipe or HTTP.
 //! - `mock_api`: the mock `AgentCat` API that records the publish requests.
+//! - `schema`: the API's schema of a publish body, which every recorded body must match.
 //! - `normalize`: the normalized document, and the one list of the values it replaces.
 //! - `golden`: the comparison with the golden file, and `UPDATE_GOLDEN=1`.
 mod driver;
@@ -15,6 +16,7 @@ mod golden;
 mod mock_api;
 mod normalize;
 mod scenario;
+mod schema;
 mod server;
 
 use std::time::Duration;
@@ -78,8 +80,10 @@ impl Lane {
 ///
 /// When the environment changes what the SDK publishes (see [`check_environment`]), when the
 /// scenario is malformed, when the run fails, when the SDK does not drain within
-/// [`DRAIN_TIMEOUT`], when the mock received a request other than a publish, or when the number
-/// of publishes is not the scenario's `expectPublishes`.
+/// [`DRAIN_TIMEOUT`], when the mock received a request other than a publish, when the number
+/// of publishes is not the scenario's `expectPublishes`, or when a publish body does not match the
+/// API's schema (`publish-event.schema.json`). A run with no publish passes only when the
+/// scenario expects none.
 pub(crate) async fn run_scenario(name: &str, transport: Transport, lane: Lane) -> Value {
     check_environment();
     let scenario = scenario::Scenario::load(name);
@@ -104,6 +108,10 @@ pub(crate) async fn run_scenario(name: &str, transport: Transport, lane: Lane) -
         "the number of publishes of {name} over {} on {}",
         transport.name(),
         lane.version()
+    );
+    schema::assert_valid_bodies(
+        &publishes,
+        &format!("{name} over {} on {}", transport.name(), lane.version()),
     );
     normalize::document(transcript, publishes, scenario.event_order)
 }

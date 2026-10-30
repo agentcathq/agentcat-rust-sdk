@@ -140,7 +140,7 @@ fn object_difference(
 
 /// The path of the field `key` of the object at `path`: `.key`, or `["key"]` when the key is not
 /// made of ASCII letters, digits, `_` and `-`.
-fn field_path(path: &str, key: &str) -> String {
+pub(super) fn field_path(path: &str, key: &str) -> String {
     let plain = !key.is_empty()
         && key
             .chars()
@@ -153,7 +153,7 @@ fn field_path(path: &str, key: &str) -> String {
 }
 
 /// `value` as JSON, cut to [`SHOWN_CHARS`] characters.
-fn shown(value: &Value) -> String {
+pub(super) fn shown(value: &Value) -> String {
     let text = value.to_string();
     match text.char_indices().nth(SHOWN_CHARS) {
         Some((cut, _)) => format!("{}... ({} characters)", &text[..cut], text.chars().count()),
