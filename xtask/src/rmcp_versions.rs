@@ -6,6 +6,7 @@
 //! which the CI matrix takes as its legs. [`latest_patches`] and [`with_macros`] hold the rules;
 //! their tests need no network.
 use std::collections::BTreeMap;
+use std::error::Error;
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
@@ -152,12 +153,12 @@ async fn get_json(client: &reqwest::Client, url: &str) -> Result<Value, String> 
     let mut last_error = String::new();
     for _ in 0..ATTEMPTS {
         let attempt = async {
-            let response = client.get(url).send().await.map_err(|e| e.to_string())?;
+            let response = client.get(url).send().await.map_err(network_error)?;
             let status = response.status();
             if !status.is_success() {
                 return Err(format!("HTTP {status}"));
             }
-            let body = response.bytes().await.map_err(|e| e.to_string())?;
+            let body = response.bytes().await.map_err(network_error)?;
             serde_json::from_slice::<Value>(&body).map_err(|e| format!("the body is not JSON: {e}"))
         };
         match attempt.await {
@@ -166,6 +167,24 @@ async fn get_json(client: &reqwest::Client, url: &str) -> Result<Value, String> 
         }
     }
     Err(last_error)
+}
+
+/// The text of a network error, for a message that names the URL once: the error without its URL,
+/// then each cause of its `source()` chain (the DNS, connect or TLS error).
+fn network_error(error: reqwest::Error) -> String {
+    error_chain(&error.without_url())
+}
+
+/// The message of `error` and of each error in its `source()` chain, joined with `: `.
+fn error_chain(error: &dyn Error) -> String {
+    let mut text = error.to_string();
+    let mut source = error.source();
+    while let Some(cause) = source {
+        text.push_str(": ");
+        text.push_str(&cause.to_string());
+        source = cause.source();
+    }
+    text
 }
 
 /// Every version of `krate`, page by page.
@@ -387,6 +406,58 @@ mod tests {
             ),
             "https://crates.io/api/v1/crates/rmcp/versions?seek=y"
         );
+    }
+
+    /// An error with an optional cause.
+    #[derive(Debug)]
+    struct Layer(&'static str, Option<Box<Layer>>);
+
+    impl std::fmt::Display for Layer {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(self.0)
+        }
+    }
+
+    impl Error for Layer {
+        fn source(&self) -> Option<&(dyn Error + 'static)> {
+            self.1
+                .as_deref()
+                .map(|cause| cause as &(dyn Error + 'static))
+        }
+    }
+
+    #[test]
+    fn an_error_names_each_cause_of_its_chain() {
+        let refused = Layer("Connection refused (os error 111)", None);
+        let connect = Layer("client error (Connect)", Some(Box::new(refused)));
+        let error = Layer("error sending request", Some(Box::new(connect)));
+        assert_eq!(
+            error_chain(&error),
+            "error sending request: client error (Connect): Connection refused (os error 111)"
+        );
+        assert_eq!(error_chain(&Layer("HTTP 500", None)), "HTTP 500");
+    }
+
+    /// A request to a closed loopback port: the text has the cause, and no URL (the caller names
+    /// it once).
+    #[test]
+    fn a_network_error_has_its_cause_and_no_url() {
+        let port = std::net::TcpListener::bind("127.0.0.1:0")
+            .and_then(|listener| listener.local_addr())
+            .unwrap()
+            .port();
+        let url = format!("http://127.0.0.1:{port}/versions");
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let client = reqwest::Client::builder().no_proxy().build().unwrap();
+        let error = runtime
+            .block_on(client.get(&url).send())
+            .expect_err("the port is closed");
+        let text = network_error(error);
+        assert!(!text.contains("127.0.0.1"), "{text}");
+        assert!(text.contains(": "), "no cause: {text}");
     }
 
     #[test]

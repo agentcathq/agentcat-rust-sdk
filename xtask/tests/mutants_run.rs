@@ -80,22 +80,35 @@ fn run(code: i32, missed: Option<&str>, ok_codes: Option<&str>) -> Run {
 
 /// [`run`] in the scratch directory `scratch`.
 fn run_in(scratch: &Scratch, code: i32, missed: Option<&str>, ok_codes: Option<&str>) -> Run {
-    let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../scripts/mutants-run.sh");
-    let mut command = Command::new("bash");
-    command
-        .arg(script)
-        .args(["--in-diff", "d.diff"])
-        .current_dir(&scratch.0)
-        .env_clear()
-        .env("PATH", system_path())
-        .env("MUTANTS_BIN", scratch.0.join("cargo-stub"))
-        .env("STUB_CODE", code.to_string());
+    let mut command = script(scratch, &["--in-diff", "d.diff"]);
+    command.env("STUB_CODE", code.to_string());
     if let Some(missed) = missed {
         command.env("STUB_MISSED", missed);
     }
     if let Some(ok_codes) = ok_codes {
         command.env("MUTANTS_OK_CODES", ok_codes);
     }
+    output_of(scratch, &mut command)
+}
+
+/// The script with the arguments `args` in the scratch directory `scratch`, from an empty
+/// environment; the stub exits 0 and lists no missed mutant.
+fn script(scratch: &Scratch, args: &[&str]) -> Command {
+    let script = Path::new(env!("CARGO_MANIFEST_DIR")).join("../scripts/mutants-run.sh");
+    let mut command = Command::new("bash");
+    command
+        .arg(script)
+        .args(args)
+        .current_dir(&scratch.0)
+        .env_clear()
+        .env("PATH", system_path())
+        .env("MUTANTS_BIN", scratch.0.join("cargo-stub"))
+        .env("STUB_CODE", "0");
+    command
+}
+
+/// Runs `command`, a [`script`] in the scratch directory `scratch`.
+fn output_of(scratch: &Scratch, command: &mut Command) -> Run {
     let output = command.output().expect("the script runs");
     Run {
         code: output.status.code(),
@@ -196,4 +209,51 @@ fn an_earlier_runs_missed_mutants_do_not_count() {
     assert!(!scratch.0.join("mutants.out").exists());
     let moved = fs::read_to_string(scratch.0.join("mutants.out.old/missed.txt"));
     assert_eq!(moved.expect("the old list moved"), MISSED);
+}
+
+/// The refusal of an output directory: the script reads mutants.out/missed.txt of the current
+/// directory.
+fn refusal(what: &str) -> String {
+    format!(
+        "mutants-run: refusing {what}: the script reads the missed mutants from \
+         mutants.out/missed.txt in the current directory\n"
+    )
+}
+
+/// With another output directory a missed mutant would pass without a word, so the script refuses
+/// one before it runs cargo-mutants.
+#[test]
+fn an_output_directory_is_refused() {
+    for (args, what) in [
+        (&["-o", "elsewhere"][..], "-o"),
+        (&["-oelsewhere"][..], "-oelsewhere"),
+        (&["--output", "elsewhere"][..], "--output"),
+        (&["--output=elsewhere"][..], "--output=elsewhere"),
+        (&["--in-diff", "d.diff", "--output", "x"][..], "--output"),
+    ] {
+        let scratch = Scratch::new();
+        let result = output_of(&scratch, &mut script(&scratch, args));
+        assert_eq!(result.code, Some(1), "{args:?}: {}", result.stderr);
+        assert_eq!(result.stderr, refusal(what), "{args:?}");
+        assert_eq!(result.args, "", "{args:?}: cargo mutants ran");
+    }
+    let scratch = Scratch::new();
+    let mut command = script(&scratch, &["--in-diff", "d.diff"]);
+    command.env("CARGO_MUTANTS_OUTPUT", "elsewhere");
+    let result = output_of(&scratch, &mut command);
+    assert_eq!(result.code, Some(1), "{}", result.stderr);
+    assert_eq!(result.stderr, refusal("CARGO_MUTANTS_OUTPUT"));
+    assert_eq!(result.args, "", "cargo mutants ran");
+}
+
+/// The arguments after `--` go to the test tool: an `-o` there is not the output option.
+#[test]
+fn an_o_after_the_double_dash_is_not_refused() {
+    let scratch = Scratch::new();
+    let result = output_of(
+        &scratch,
+        &mut script(&scratch, &["--in-diff", "d.diff", "--", "-o"]),
+    );
+    assert_eq!(result.code, Some(0), "{}", result.stderr);
+    assert_eq!(result.args, "mutants --in-diff d.diff -- -o\n");
 }

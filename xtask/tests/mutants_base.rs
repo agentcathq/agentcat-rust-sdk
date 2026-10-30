@@ -82,6 +82,22 @@ fn system_path() -> std::ffi::OsString {
     std::env::var_os("PATH").unwrap_or_default()
 }
 
+/// Whether `jq --version` runs with the `PATH` `path`.
+fn jq_found(path: &std::ffi::OsStr) -> bool {
+    Command::new("jq")
+        .arg("--version")
+        .env_clear()
+        .env("PATH", path)
+        .output()
+        .is_ok_and(|output| output.status.success())
+}
+
+/// Stops the test with a clear message when jq is missing: the fake `gh` needs it, and without
+/// this check the cause shows only in the script's captured stderr.
+fn require_jq() {
+    assert!(jq_found(&system_path()), "these tests need jq on PATH");
+}
+
 /// A command with an empty environment but `PATH`, a `HOME` in the scratch directory, an empty
 /// global git configuration, no system one, and a fixed author.
 fn clean_command(program: impl AsRef<std::ffi::OsStr>, scratch: &Path) -> Command {
@@ -165,6 +181,7 @@ impl Repo {
     /// Runs the script in CI mode; `pages` holds the runs of each page of the API answer, and
     /// `fail` makes the fake `gh` fail.
     fn run_ci(&self, pages: &[Vec<Value>], fail: bool) -> Run {
+        require_jq();
         let bin = self.scratch.0.join("bin");
         fs::create_dir_all(&bin).expect("the bin directory is created");
         fs::write(bin.join("gh"), FAKE_GH).expect("the fake gh is written");
@@ -336,6 +353,11 @@ fn ci_stops_with_exit_1_and_no_base_when_gh_fails() {
         "{}",
         result.stderr
     );
+}
+
+#[test]
+fn the_jq_check_fails_on_a_path_without_jq() {
+    assert!(!jq_found(std::ffi::OsStr::new("/nonexistent")));
 }
 
 #[test]
