@@ -40,9 +40,7 @@ cargo hack clippy --workspace --each-feature --no-dev-deps -- -D warnings
 
 # the customer examples, each against a local mock API: stdout carries only JSON-RPC, the last event
 # arrives, and the process exits 0 within 5 s of the client close
-for example in stdio streamable_http hooks stateless_http; do
-  cargo run -q -p xtask -- examples-check "$example"
-done
+cargo run -q -p xtask -- examples-check --all
 
 # test; the key-order test runs again in a build of the SDK alone, where no other workspace member can
 # turn serde_json's preserve_order on

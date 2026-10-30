@@ -495,16 +495,34 @@ fn an_unknown_example_is_a_usage_error() {
         &[][..],
         &["sse".to_owned()][..],
         &["stdio".to_owned(), "x".to_owned()][..],
+        &["--all".to_owned(), "stdio".to_owned()][..],
     ] {
         let (code, lines) = run(args, root);
         assert_eq!(code, 2);
         assert_eq!(
             lines,
             [
-                "usage: cargo run -q -p xtask -- examples-check <stdio | streamable_http | hooks | stateless_http>"
+                "usage: cargo run -q -p xtask -- examples-check <--all | stdio | streamable_http | hooks | stateless_http>"
             ]
         );
     }
+}
+
+#[test]
+fn all_selects_every_example_in_order_and_a_name_selects_one() {
+    let names = |args: &[&str]| {
+        let args: Vec<String> = args.iter().map(|arg| (*arg).to_owned()).collect();
+        selected(&args).map(|examples| examples.iter().map(|e| e.name).collect::<Vec<_>>())
+    };
+    assert_eq!(
+        names(&["--all"]),
+        Some(vec!["stdio", "streamable_http", "hooks", "stateless_http"])
+    );
+    assert_eq!(names(&["hooks"]), Some(vec!["hooks"]));
+    assert_eq!(names(&["sse"]), None);
+    assert_eq!(names(&["all"]), None);
+    assert_eq!(names(&[]), None);
+    assert_eq!(names(&["--all", "--all"]), None);
 }
 
 #[test]

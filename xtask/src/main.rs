@@ -13,8 +13,9 @@
 //! `cargo run -q -p xtask -- rmcp-versions` prints the JSON list of the rmcp versions that CI
 //! tests, from the crates.io API (see [`rmcp_versions`]).
 //!
-//! `cargo run -q -p xtask -- examples-check <stdio | streamable_http | hooks | stateless_http>`
-//! runs one customer example against a local mock API and checks it (see [`examples_check`]).
+//! `cargo run -q -p xtask -- examples-check <--all | stdio | streamable_http | hooks | stateless_http>`
+//! runs one customer example, or with `--all` every one, against a local mock API and checks it
+//! (see [`examples_check`]).
 //!
 //! [`sdk_manifest`] checks that `agentcat-sdk/Cargo.toml` turns on `serde_json`'s
 //! `preserve_order` (its test runs with every `cargo nextest run --workspace`).

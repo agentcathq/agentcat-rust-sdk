@@ -1,7 +1,8 @@
 //! The examples check: runs one customer example of `agentcat-sdk` against a local mock of the
 //! `AgentCat` API and checks what a person who copies the example expects.
 //!
-//! `cargo run -q -p xtask -- examples-check <stdio | streamable_http | hooks | stateless_http>`
+//! `cargo run -q -p xtask -- examples-check <--all | stdio | streamable_http | hooks | stateless_http>`
+//! checks one example, or with `--all` every example of [`EXAMPLES`] in order. For each, it
 //! builds the example (`cargo build -p agentcat-sdk --example <name> --all-features`), starts the
 //! mock on 127.0.0.1 and runs the example in a clean environment: every `AGENTCAT_*` and
 //! `MCPCAT_*` variable is removed, then `AGENTCAT_API_URL` is the mock, `AGENTCAT_PROJECT_ID` is
@@ -30,7 +31,7 @@
 //! exit status there; CI runs the check on Linux.
 //!
 //! It prints `ok <name>` and the time from the close to the exit, or a `FAIL <name>: <text>` line
-//! for each failed assertion and exits 1.
+//! for each failed assertion, for each example it checked, and exits 1 when any example failed.
 mod client;
 mod judge;
 mod mock;
@@ -90,7 +91,7 @@ struct Example {
     hooks: bool,
 }
 
-/// The examples the check knows.
+/// The examples the check knows; `--all` checks them in this order.
 const EXAMPLES: [Example; 4] = [
     Example {
         name: "stdio",
@@ -179,19 +180,12 @@ impl Call {
     }
 }
 
-/// Parses the arguments, builds the example and runs the check; returns the exit code and the
-/// lines to print.
+/// Parses the arguments, then builds and checks each selected example in order; returns the exit
+/// code (1 when any example failed) and the lines to print.
 #[must_use]
 pub fn run(args: &[String], root: &Path) -> (u8, Vec<String>) {
-    let [name] = args else {
+    let Some(examples) = selected(args) else {
         return usage();
-    };
-    let Some(example) = EXAMPLES.iter().find(|e| e.name == name.as_str()).copied() else {
-        return usage();
-    };
-    let binary = match build(root, example.name) {
-        Ok(binary) => binary,
-        Err(message) => return (1, vec![format!("examples-check: {message}")]),
     };
     let runtime = match tokio::runtime::Builder::new_multi_thread()
         .worker_threads(2)
@@ -206,8 +200,37 @@ pub fn run(args: &[String], root: &Path) -> (u8, Vec<String>) {
             );
         }
     };
-    let outcome = runtime.block_on(check(example, &binary, root, EXIT_BUDGET, DRAIN_BUDGET));
-    report(example, &outcome)
+    let mut code = 0;
+    let mut lines = Vec::new();
+    for example in examples {
+        let (example_code, example_lines) = match build(root, example.name) {
+            Ok(binary) => {
+                let outcome =
+                    runtime.block_on(check(example, &binary, root, EXIT_BUDGET, DRAIN_BUDGET));
+                report(example, &outcome)
+            }
+            Err(message) => (1, vec![format!("examples-check: {message}")]),
+        };
+        code = code.max(example_code);
+        lines.extend(example_lines);
+    }
+    (code, lines)
+}
+
+/// The examples that `args` select: every entry of [`EXAMPLES`] in order for `--all`, the one
+/// example for its name, and `None` for anything else (no argument, an unknown name, more than one
+/// argument).
+fn selected(args: &[String]) -> Option<Vec<Example>> {
+    let [arg] = args else {
+        return None;
+    };
+    if arg == "--all" {
+        return Some(EXAMPLES.to_vec());
+    }
+    EXAMPLES
+        .iter()
+        .find(|e| e.name == arg.as_str())
+        .map(|example| vec![*example])
 }
 
 fn usage() -> (u8, Vec<String>) {
@@ -215,7 +238,7 @@ fn usage() -> (u8, Vec<String>) {
     (
         2,
         vec![format!(
-            "usage: cargo run -q -p xtask -- examples-check <{}>",
+            "usage: cargo run -q -p xtask -- examples-check <--all | {}>",
             names.join(" | ")
         )],
     )

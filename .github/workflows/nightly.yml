@@ -1,8 +1,8 @@
 name: Nightly
 
 # GitHub schedules and dispatches only workflows on the default branch (main), so the schedule starts
-# once this file reaches main. The push trigger runs it on rewrite when this file or the mutation
-# settings change. Every job runs on every nightly run, push runs included: the Rust suite with long
+# once this file reaches main. The push trigger runs it on main when this file, the mutation settings
+# or the mutation script change. Every job runs on every nightly run, push runs included: the Rust suite with long
 # property runs, the branch coverage report (its percentage is a report and never a failure), the
 # full mutation set (`mutants-full`, `mutants-score`), and the rmcp and agentcat-api legs.
 on:
@@ -10,10 +10,11 @@ on:
     - cron: "0 6 * * *"
   workflow_dispatch:
   push:
-    branches: [rewrite]
+    branches: [main]
     paths:
       - ".github/workflows/nightly.yml"
       - ".cargo/**"
+      - "scripts/mutants-run.sh"
 
 permissions:
   contents: read
