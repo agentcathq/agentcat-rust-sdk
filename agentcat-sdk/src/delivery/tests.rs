@@ -1434,6 +1434,6 @@ fn json_features_empty_in_this_build() {
 fn feature_warning_has_the_fixed_text() {
     assert_eq!(
         super::worker::feature_warning("float_roundtrip"),
-        "Warning: serde_json feature \"float_roundtrip\" is enabled in this build; AgentCat token estimates and size checks may differ from the TypeScript SDK"
+        "Warning: serde_json feature \"float_roundtrip\" is enabled in this build; AgentCat token estimates and size checks may differ from builds without it"
     );
 }

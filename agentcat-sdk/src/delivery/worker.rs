@@ -375,10 +375,12 @@ pub(super) fn json_features() -> Vec<&'static str> {
     features
 }
 
-/// The log line for a unified `serde_json` `feature`.
+/// The log line for a unified `serde_json` `feature`. The feature changes how `serde_json` reads
+/// or writes numbers, so the JSON text that the token estimates and the size checks count can
+/// differ from that of a build without it.
 pub(super) fn feature_warning(feature: &str) -> String {
     format!(
         "Warning: serde_json feature \"{feature}\" is enabled in this build; AgentCat token \
-         estimates and size checks may differ from the TypeScript SDK"
+         estimates and size checks may differ from builds without it"
     )
 }
