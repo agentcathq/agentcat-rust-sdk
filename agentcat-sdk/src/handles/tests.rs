@@ -562,11 +562,11 @@ proptest! {
             let flat: String = agent.chars().map(|c| if c == '\r' || c == '\n' { ' ' } else { c }).collect();
             let tag = tags.get("agentcat_agent_id").and_then(Value::as_str);
             check_cut(&flat, tag.unwrap_or_default(), 200)?;
-            prop_assert_eq!(tags.get("agentcat_agent_id_source"), Some(&json!("supplied")));
+            prop_assert_eq!(tags.get("agentcat_agent_id_source").cloned(), Some(json!("supplied")));
             keys.extend(["agentcat_agent_id", "agentcat_agent_id_source"]);
         }
         if let Some(version) = protocol_version.filter(|version| !version.is_empty()) {
-            prop_assert_eq!(tags.get("agentcat_protocol_version"), Some(&json!(version)));
+            prop_assert_eq!(tags.get("agentcat_protocol_version").cloned(), Some(json!(version)));
             keys.push("agentcat_protocol_version");
         }
         prop_assert_eq!(tags.keys().map(String::as_str).collect::<Vec<_>>(), keys);
