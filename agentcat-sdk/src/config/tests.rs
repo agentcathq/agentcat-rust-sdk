@@ -1,5 +1,6 @@
 //! `Options`: each setter changes its own getter only, and an empty custom description means the
-//! default one. The default values are pinned by the harness profile `{}`, not here.
+//! default one. The default values are pinned by the end-to-end scenarios with `"options": {}`
+//! (`pagination`, `custom-events`, `schemas`), not here.
 use super::env::{
     AGENTCAT_API_URL, AGENTCAT_ENABLED, DEFAULT_API_BASE_URL, Env, MCPCAT_API_URL, MapEnv,
     ProcessEnv, resolve_api_base_url, sdk_enabled,

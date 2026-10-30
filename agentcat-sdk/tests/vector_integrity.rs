@@ -1,5 +1,5 @@
 //! Integrity of the fixture files in `tests/vectors/`: each one parses, holds named cases whose
-//! names are unique, has no provenance fields, and is loaded by at least one test.
+//! names are unique, holds only known keys, and is loaded by at least one test.
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -101,19 +101,59 @@ fn case_names_are_unique_within_a_file() -> Res<()> {
     Ok(())
 }
 
+/// The keys that a fixture file or one of its cases can hold.
+const CASE_KEYS: [&str; 26] = [
+    "calls",
+    "custom",
+    "delays",
+    "error",
+    "event",
+    "extra",
+    "fail_attempts",
+    "hook_mode",
+    "hooks",
+    "input",
+    "input_text",
+    "limits",
+    "logs",
+    "name",
+    "original",
+    "output",
+    "output_text",
+    "params",
+    "pattern",
+    "redact_event",
+    "redact_strings",
+    "replacement",
+    "request",
+    "requests",
+    "throw_at",
+    "value",
+];
+
 #[test]
-fn no_fixture_file_has_a_provenance_field() -> Res<()> {
+fn fixture_files_and_cases_hold_only_known_keys() -> Res<()> {
     for file in json_files()? {
         let doc = document(&file)?;
-        for key in ["ts_sha", "generator"] {
-            assert!(doc.get(key).is_none(), "{file}: has the field {key:?}");
-        }
+        let top = doc
+            .as_object()
+            .ok_or_else(|| format!("{file}: not an object"))?;
+        assert_eq!(
+            top.keys().collect::<Vec<_>>(),
+            ["cases"],
+            "{file}: the document holds only \"cases\""
+        );
         for case in cases(&file)? {
-            assert!(
-                case.get("ts_test").is_none(),
-                "{file}: case {} has the field \"ts_test\"",
-                case["name"]
-            );
+            let case = case
+                .as_object()
+                .ok_or_else(|| format!("{file}: a case is not an object"))?;
+            for key in case.keys() {
+                assert!(
+                    CASE_KEYS.contains(&key.as_str()),
+                    "{file}: case {} has the unknown key {key:?}",
+                    case["name"]
+                );
+            }
         }
     }
     Ok(())

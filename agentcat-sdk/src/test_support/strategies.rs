@@ -1,4 +1,4 @@
-//! The input generators the property tests share. They lean on the inputs that a naive port gets
+//! The input generators the property tests share. They lean on the inputs that are easy to get
 //! wrong: escapes, the white space `wire::trim` removes, characters outside the BMP (two UTF-16
 //! units), array-index-like object keys, and numbers that `wire::stringify` writes in its own way.
 use std::ops::{Range, RangeInclusive};
