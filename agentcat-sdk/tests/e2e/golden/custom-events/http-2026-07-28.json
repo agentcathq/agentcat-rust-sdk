@@ -252,7 +252,7 @@
           "agentcat_session_id_source": "minted"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -333,7 +333,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -433,7 +433,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -533,7 +533,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -557,7 +557,7 @@
         },
         "identify_data": {},
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -637,7 +637,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -661,7 +661,7 @@
         },
         "identify_data": {},
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -748,7 +748,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -774,7 +774,7 @@
           "kind": "custom"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -857,7 +857,7 @@
           "agentcat_session_id_source": "supplied"
         },
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",
@@ -880,7 +880,7 @@
         },
         "identify_data": {},
         "sdk_language": "Rust",
-        "agentcat_version": "1.0.0",
+        "agentcat_version": "<agentcat_version>",
         "server_name": "e2e-server",
         "server_version": "1.0.0",
         "client_name": "e2e-client",

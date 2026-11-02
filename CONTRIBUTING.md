@@ -11,9 +11,9 @@ run the checks.
 |---|---|
 | [`README.md`](README.md) | The README of the crate. GitHub and crates.io show it, and its Rust code blocks compile as doctests (`ReadmeDoctests` in `agentcat-sdk/src/lib.rs`). `agentcat-sdk/README.md` is a symlink to it. |
 | [`agentcat-sdk/`](agentcat-sdk) | The published crate: the SDK source, its tests, its examples and the CHANGELOG. |
-| [`xtask/`](xtask) | Repository tasks, run as `cargo run -q -p xtask -- <task>`: `rmcp-canary` (the SDK forwards every method of `rmcp`'s `ServerHandler`), `public-api [--bless]` (the public API against `agentcat-sdk/public-api.txt`), `package-list` (the files of the published package), `coverage` (the line coverage floors), `rmcp-versions` (the `rmcp` versions that CI tests) and `examples-check` (the customer examples). |
+| [`xtask/`](xtask) | Repository tasks, run as `cargo run -q -p xtask -- <task>`: `rmcp-canary` (the SDK forwards every method of `rmcp`'s `ServerHandler`), `public-api [--bless]` (the public API against `agentcat-sdk/public-api.txt`), `package-list` (the files of the published package), `coverage` (the line coverage floors), `rmcp-versions` (the `rmcp` versions that CI tests), `examples-check` (the customer examples) and `release` (the steps of the release workflow). |
 | [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. `mutants-base.sh`, `mutants-diff.sh` and `mutants-run.sh` pick the base commit of the mutation check, write its diff and run it. |
-| [`.github/workflows/`](.github/workflows) | `ci.yml`, the gate of every pull request, and `nightly.yml`, the full mutation run. |
+| [`.github/workflows/`](.github/workflows) | `ci.yml`, the gate of every pull request, `nightly.yml`, the full mutation run, and `release.yml`, which releases a version. |
 | [`docs/`](docs) | The images of the README (`docs/static/`, `docs/cats/`). |
 
 ## Prerequisites
@@ -105,9 +105,9 @@ per test. For the doctests, run `cargo test --workspace --doc`.
   the one that you intended, not a regression.
 - **A golden fails.** Run `UPDATE_GOLDEN=1 cargo nextest run -p agentcat-sdk --test e2e`. It
   rewrites the golden files. Read `git diff agentcat-sdk/tests/e2e/golden/` before you commit.
-- **A version bump.** The version of the crate is the `agentcat_version` field of every golden
-  file. A release re-captures the goldens with `UPDATE_GOLDEN=1`, and the diff must show only
-  that field.
+- **A version bump.** The tests and the goldens read the version of the crate (the goldens hold
+  `<agentcat_version>`), so a release changes only `Cargo.toml`, `Cargo.lock` and the
+  CHANGELOG. See [Release a version](#release-a-version).
 - **The publish schema changes.** The maintainers refresh
   `agentcat-sdk/tests/e2e/publish-event.schema.json` from the AgentCat API definition when the
   API changes its request schema.
@@ -140,6 +140,38 @@ scripts/mutants-run.sh --in-diff target/mutants.diff
 ```
 
 Read `mutants.out/missed.txt` for the missed mutants.
+
+## Release a version
+
+Every change that a user can see adds an entry to the `[Unreleased]` section of
+`agentcat-sdk/CHANGELOG.md` in its pull request. The release workflow
+(`.github/workflows/release.yml`) does the rest:
+
+1. In GitHub, open **Actions > Release > Run workflow** on `main`. Keep `patch`, or type `minor`,
+   `major` or an exact version such as `1.2.0`. The words count from the newest `v*` tag. The
+   first release has no tag yet: it is the version that `Cargo.toml` holds.
+2. The workflow opens the pull request "Release vX.Y.Z". It sets the version in
+   `agentcat-sdk/Cargo.toml` and `Cargo.lock`, and turns `[Unreleased]` into the dated section of
+   the version. It also starts CI on the pull request. An `[Unreleased]` section with no entry,
+   or a version that crates.io already has, stops the workflow.
+3. Read the pull request, and merge it when CI passes.
+4. The merge starts the workflow again. It waits for CI on the merge commit, publishes the crate
+   to crates.io, then creates the tag `vX.Y.Z` and its GitHub release, with the CHANGELOG section
+   as the notes.
+
+If a step fails, fix the cause and re-run the failed jobs of that run. The publish step skips a
+version that crates.io already has, and the tag comes last.
+
+To run a step of the workflow by hand, use `cargo run -q -p xtask -- release prepare <patch |
+minor | major | X.Y.Z> <YYYY-MM-DD>`, `release status` or `release notes <X.Y.Z>`.
+
+One-time setup, already done for this repository:
+
+- In the repository settings, **Actions > General > Allow GitHub Actions to create and approve
+  pull requests** is on, so that the workflow can open the release pull request.
+- The repository has a `release` environment, limited to the `main` branch.
+- On crates.io, the settings of `agentcat-sdk` name a trusted publisher: the repository
+  `agentcathq/agentcat-rust-sdk`, the workflow `release.yml` and the environment `release`.
 
 ## Tests never contact production
 

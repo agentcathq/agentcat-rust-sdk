@@ -17,11 +17,15 @@
 //! runs one customer example, or with `--all` every one, against a local mock API and checks it
 //! (see [`examples_check`]).
 //!
+//! `cargo run -q -p xtask -- release <prepare <patch | minor | major | X.Y.Z> <YYYY-MM-DD> | status |
+//! notes <X.Y.Z>>` runs a step of the release workflow (see [`release`]).
+//!
 //! [`sdk_manifest`] checks that `agentcat-sdk/Cargo.toml` turns on `serde_json`'s
 //! `preserve_order` (its test runs with every `cargo nextest run --workspace`).
 pub mod coverage;
 pub mod examples_check;
 pub mod public_api;
+pub mod release;
 pub mod rmcp_canary;
 pub mod rmcp_versions;
 pub mod sdk_manifest;
@@ -29,7 +33,7 @@ pub mod sdk_manifest;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
-const USAGE: &str = "usage: cargo run -p xtask -- rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json> | rmcp-versions | examples-check <--all | stdio | streamable_http | hooks | stateless_http>";
+const USAGE: &str = "usage: cargo run -p xtask -- rmcp-canary | public-api [--bless] | package-list | coverage <llvm-cov summary json> | rmcp-versions | examples-check <--all | stdio | streamable_http | hooks | stateless_http> | release <prepare <patch | minor | major | X.Y.Z> <YYYY-MM-DD> | status | notes <X.Y.Z>>";
 
 fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -67,6 +71,16 @@ fn main() -> ExitCode {
     if args.first().map(String::as_str) == Some("examples-check") {
         let (code, lines) = examples_check::run(&args[1..], &workspace_root());
         for line in &lines {
+            report_error(line);
+        }
+        return ExitCode::from(code);
+    }
+    if args.first().map(String::as_str) == Some("release") {
+        let (code, lines, problems) = release::run(&args[1..], &workspace_root());
+        for line in &lines {
+            print_text(&format!("{line}\n"));
+        }
+        for line in &problems {
             report_error(line);
         }
         return ExitCode::from(code);

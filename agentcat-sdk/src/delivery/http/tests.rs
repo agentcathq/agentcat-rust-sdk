@@ -99,7 +99,6 @@ async fn posts_to_public_events_path() {
         header("user-agent"),
         Some(format!("agentcat-rust/{}", env!("CARGO_PKG_VERSION")))
     );
-    assert_eq!(header("user-agent").as_deref(), Some("agentcat-rust/1.0.0"));
     assert!(request.headers.get("authorization").is_none());
     let body: Value = serde_json::from_slice(&request.body).unwrap();
     assert_eq!(body["project_id"], PROJECT);
