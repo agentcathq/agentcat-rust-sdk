@@ -63,8 +63,7 @@ cargo run -q -p xtask -- coverage target/coverage.json
 # with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
 # (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source, finds no
 # mutant and passes. CI runs the same gate against the newest green commit that HEAD descends from.
-mkdir -p target
-git diff "$(git merge-base "$(scripts/mutants-base.sh)" HEAD)" > target/mutants.diff
+scripts/mutants-diff.sh
 scripts/mutants-run.sh --in-diff target/mutants.diff
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
