@@ -55,7 +55,11 @@ fn file_logger_appends_prefixed_lines() {
     assert_eq!(lines.len(), 2);
     assert!(is_line(lines[0], "first message"), "{}", lines[0]);
     assert!(is_line(lines[1], "second message"), "{}", lines[1]);
-    assert!(prefix().starts_with("[sdk=1.0.0 rust="));
+    assert!(
+        prefix().starts_with(&format!("[sdk={} rust=", env!("CARGO_PKG_VERSION"))),
+        "{}",
+        prefix()
+    );
     assert!(prefix().contains(" rmcp=3."));
 }
 

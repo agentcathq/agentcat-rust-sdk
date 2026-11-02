@@ -53,6 +53,11 @@ const RULES: &[Rule] = &[
         rewrite: replace_duration,
     },
     Rule {
+        path: "$.events[*].body.agentcat_version",
+        reason: "the crate version, which each release changes",
+        rewrite: replace_crate_version,
+    },
+    Rule {
         path: "$.events[*].body.tags",
         reason: "the publish request holds the tags in a hash map: the key order changes",
         rewrite: sort_keys,
@@ -423,6 +428,14 @@ fn is_utc_timestamp(text: &str) -> bool {
 fn replace_duration(value: &mut Value, _: &mut Placeholders) {
     if value.is_u64() {
         *value = json!("<duration>");
+    }
+}
+
+/// The version of this crate becomes `<agentcat_version>`; any other value stays, so the
+/// comparison shows it.
+fn replace_crate_version(value: &mut Value, _: &mut Placeholders) {
+    if value.as_str() == Some(env!("CARGO_PKG_VERSION")) {
+        *value = json!("<agentcat_version>");
     }
 }
 
