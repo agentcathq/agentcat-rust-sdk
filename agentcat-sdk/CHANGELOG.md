@@ -7,6 +7,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-02
+
 ### Added
 
 - `track` and `AgentCat`: wrap an `rmcp` `ServerHandler` in a `Tracked` server that records each
@@ -51,4 +53,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - `testing::Fake`, a test double that records the events of its handles and sends nothing.
 - Support for `rmcp` 3.0.0 and later 3.x, on Rust 1.88 and later.
 
-[Unreleased]: https://github.com/agentcathq/agentcat-rust-sdk/commits/main
+[Unreleased]: https://github.com/agentcathq/agentcat-rust-sdk/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/agentcathq/agentcat-rust-sdk/releases/tag/v1.0.0
