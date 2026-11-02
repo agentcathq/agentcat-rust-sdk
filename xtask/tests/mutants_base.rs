@@ -1,5 +1,6 @@
-//! `scripts/mutants-base.sh`, the base commit of the mutation diff gate. Each test copies the
-//! script into a scratch git repository under a temporary directory and runs it there: in CI mode
+//! `scripts/mutants-base.sh`, the base commit of the mutation diff gate, and
+//! `scripts/mutants-diff.sh`, which writes the diff against it. Each test copies the
+//! scripts into a scratch git repository under a temporary directory and runs it there: in CI mode
 //! with a fake `gh` first on `PATH` (it answers from JSON files through `jq`, as `gh api --jq`
 //! does), or in local mode. No test contacts the network or reads this checkout's history, and no
 //! setting of the developer, the runner or a real CI run reaches git or the script: each command
@@ -120,7 +121,7 @@ fn clean_command(program: impl AsRef<std::ffi::OsStr>, scratch: &Path) -> Comman
 }
 
 /// A scratch repository: root A, then B and C on branch `work` (HEAD = C), and X on branch `side`
-/// off A, which HEAD does not descend from. The script sits in its `scripts/` directory.
+/// off A, which HEAD does not descend from. The scripts sit in its `scripts/` directory.
 struct Repo {
     scratch: Scratch,
     dir: PathBuf,
@@ -149,11 +150,7 @@ impl Repo {
         git(&["checkout", "-q", "work"]);
         let b = commit("B");
         let c = commit("C");
-        let script = dir.join("scripts/mutants-base.sh");
-        let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../scripts/mutants-base.sh");
-        fs::copy(source, &script).expect("the script is copied");
-        fs::set_permissions(&script, fs::Permissions::from_mode(0o755))
-            .expect("the script is executable");
+        copy_scripts(&dir);
         Self {
             scratch,
             dir,
@@ -178,47 +175,83 @@ impl Repo {
         Run::new(&output, Vec::new())
     }
 
-    /// Runs the script in CI mode; `pages` holds the runs of each page of the API answer, and
-    /// `fail` makes the fake `gh` fail.
+    /// Runs `scripts/mutants-base.sh` in CI mode; `pages` holds the runs of each page of the API
+    /// answer, and `fail` makes the fake `gh` fail.
     fn run_ci(&self, pages: &[Vec<Value>], fail: bool) -> Run {
-        require_jq();
-        let bin = self.scratch.0.join("bin");
-        fs::create_dir_all(&bin).expect("the bin directory is created");
-        fs::write(bin.join("gh"), FAKE_GH).expect("the fake gh is written");
-        fs::set_permissions(bin.join("gh"), fs::Permissions::from_mode(0o755))
-            .expect("the fake gh is executable");
-        let gh_dir = self.dir.join(".gh");
-        fs::create_dir_all(&gh_dir).expect("the gh directory is created");
-        for (index, runs) in pages.iter().enumerate() {
-            let page = json!({ "workflow_runs": runs });
-            fs::write(
-                gh_dir.join(format!("page-{}.json", index + 1)),
-                page.to_string(),
-            )
-            .expect("the page is written");
-        }
-        let mut path = bin.into_os_string();
-        path.push(":");
-        path.push(system_path());
-        let mut command = clean_command(self.dir.join("scripts/mutants-base.sh"), &self.scratch.0);
-        command
-            .current_dir(&self.dir)
-            .env("PATH", path)
-            .env("FAKE_GH_DIR", &gh_dir)
-            .env("GITHUB_ACTIONS", "true")
-            .env("GITHUB_REPOSITORY", "owner/repo")
-            .env("GITHUB_RUN_ID", RUN_ID.to_string())
-            .env("GITHUB_EVENT_NAME", "push")
-            .env("GITHUB_REF_NAME", "work");
-        if fail {
-            command.env("FAKE_GH_FAIL", "1");
-        }
-        let output = command.output().expect("the script runs");
-        let calls = fs::read_to_string(gh_dir.join("calls.log"))
-            .map(|log| log.lines().map(str::to_owned).collect())
-            .unwrap_or_default();
-        Run::new(&output, calls)
+        run_ci_in(&self.scratch.0, &self.dir, "mutants-base.sh", pages, fail)
     }
+}
+
+/// Copies the scripts of the gate into the `scripts/` directory of the repository `dir`.
+fn copy_scripts(dir: &Path) {
+    for name in ["mutants-base.sh", "mutants-diff.sh"] {
+        let script = dir.join("scripts").join(name);
+        let source = Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("../scripts")
+            .join(name);
+        fs::copy(source, &script).expect("the script is copied");
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o755))
+            .expect("the script is executable");
+    }
+}
+
+/// A scratch repository with one commit, A, which has no parent.
+fn root_repo() -> (Scratch, PathBuf) {
+    let scratch = Scratch::new();
+    let dir = scratch.0.join("repo");
+    fs::create_dir_all(dir.join("scripts")).expect("the repository directory is created");
+    fs::write(dir.join("A.txt"), "A").expect("the file is written");
+    for args in [
+        &["init", "-q", "-b", "work"][..],
+        &["add", "A.txt"],
+        &["commit", "-q", "-m", "A"],
+    ] {
+        run_git(&scratch.0, &dir, args);
+    }
+    copy_scripts(&dir);
+    (scratch, dir)
+}
+
+/// Runs the script `script` of the repository `dir` in CI mode; `pages` holds the runs of each
+/// page of the API answer, and `fail` makes the fake `gh` fail.
+fn run_ci_in(scratch: &Path, dir: &Path, script: &str, pages: &[Vec<Value>], fail: bool) -> Run {
+    require_jq();
+    let bin = scratch.join("bin");
+    fs::create_dir_all(&bin).expect("the bin directory is created");
+    fs::write(bin.join("gh"), FAKE_GH).expect("the fake gh is written");
+    fs::set_permissions(bin.join("gh"), fs::Permissions::from_mode(0o755))
+        .expect("the fake gh is executable");
+    let gh_dir = dir.join(".gh");
+    fs::create_dir_all(&gh_dir).expect("the gh directory is created");
+    for (index, runs) in pages.iter().enumerate() {
+        let page = json!({ "workflow_runs": runs });
+        fs::write(
+            gh_dir.join(format!("page-{}.json", index + 1)),
+            page.to_string(),
+        )
+        .expect("the page is written");
+    }
+    let mut path = bin.into_os_string();
+    path.push(":");
+    path.push(system_path());
+    let mut command = clean_command(dir.join("scripts").join(script), scratch);
+    command
+        .current_dir(dir)
+        .env("PATH", path)
+        .env("FAKE_GH_DIR", &gh_dir)
+        .env("GITHUB_ACTIONS", "true")
+        .env("GITHUB_REPOSITORY", "owner/repo")
+        .env("GITHUB_RUN_ID", RUN_ID.to_string())
+        .env("GITHUB_EVENT_NAME", "push")
+        .env("GITHUB_REF_NAME", "work");
+    if fail {
+        command.env("FAKE_GH_FAIL", "1");
+    }
+    let output = command.output().expect("the script runs");
+    let calls = fs::read_to_string(gh_dir.join("calls.log"))
+        .map(|log| log.lines().map(str::to_owned).collect())
+        .unwrap_or_default();
+    Run::new(&output, calls)
 }
 
 /// Runs git in `dir`; returns its trimmed stdout.
@@ -419,4 +452,65 @@ fn local_takes_the_upstream_else_origin_main_else_the_parent_commit() {
     assert_eq!(result.code, Some(0), "{}", result.stderr);
     assert_eq!(result.stdout, repo.a);
     assert_eq!(result.stderr, "");
+}
+
+#[test]
+fn diff_in_ci_holds_the_changes_since_the_green_ancestor() {
+    let repo = Repo::new();
+    let result = run_ci_in(
+        &repo.scratch.0,
+        &repo.dir,
+        "mutants-diff.sh",
+        &[vec![run(3, &repo.a)]],
+        false,
+    );
+    assert_eq!(result.code, Some(0), "{}", result.stderr);
+    assert_eq!(
+        result.stderr,
+        format!("mutants-diff: base commit {}\n", repo.a)
+    );
+    let diff =
+        fs::read_to_string(repo.dir.join("target/mutants.diff")).expect("the diff is written");
+    assert_eq!(diff.trim_end(), repo.git(&["diff", &repo.a, "HEAD"]));
+    assert!(
+        diff.contains("+++ b/B.txt") && diff.contains("+++ b/C.txt"),
+        "{diff}"
+    );
+}
+
+#[test]
+fn diff_of_a_commit_with_no_parent_is_empty_with_a_message() {
+    let (scratch, dir) = root_repo();
+    let result = run_ci_in(&scratch.0, &dir, "mutants-diff.sh", &[], false);
+    assert_eq!(result.code, Some(0), "{}", result.stderr);
+    assert!(
+        result
+            .stderr
+            .contains("mutants-base: HEAD has no parent; using the empty tree"),
+        "{}",
+        result.stderr
+    );
+    assert!(
+        result.stderr.contains(
+            "mutants-diff: HEAD has no parent, so the diff is empty; the nightly mutation run covers the whole crate"
+        ),
+        "{}",
+        result.stderr
+    );
+    let diff = fs::read_to_string(dir.join("target/mutants.diff")).expect("the diff is written");
+    assert_eq!(diff, "");
+}
+
+#[test]
+fn diff_stops_with_the_exit_code_of_the_base_script() {
+    let repo = Repo::new();
+    let result = run_ci_in(
+        &repo.scratch.0,
+        &repo.dir,
+        "mutants-diff.sh",
+        &[vec![run(3, &repo.b)]],
+        true,
+    );
+    assert_eq!(result.code, Some(1));
+    assert!(!repo.dir.join("target/mutants.diff").exists());
 }

@@ -12,7 +12,7 @@ run the checks.
 | [`README.md`](README.md) | The README of the crate. GitHub and crates.io show it, and its Rust code blocks compile as doctests (`ReadmeDoctests` in `agentcat-sdk/src/lib.rs`). `agentcat-sdk/README.md` is a symlink to it. |
 | [`agentcat-sdk/`](agentcat-sdk) | The published crate: the SDK source, its tests, its examples and the CHANGELOG. |
 | [`xtask/`](xtask) | Repository tasks, run as `cargo run -q -p xtask -- <task>`: `rmcp-canary` (the SDK forwards every method of `rmcp`'s `ServerHandler`), `public-api [--bless]` (the public API against `agentcat-sdk/public-api.txt`), `package-list` (the files of the published package), `coverage` (the line coverage floors), `rmcp-versions` (the `rmcp` versions that CI tests) and `examples-check` (the customer examples). |
-| [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. `mutants-base.sh` and `mutants-run.sh` pick the base commit of the mutation check and run it. |
+| [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. `mutants-base.sh`, `mutants-diff.sh` and `mutants-run.sh` pick the base commit of the mutation check, write its diff and run it. |
 | [`.github/workflows/`](.github/workflows) | `ci.yml`, the gate of every pull request, and `nightly.yml`, the full mutation run. |
 | [`docs/`](docs) | The images of the README (`docs/static/`, `docs/cats/`). |
 
@@ -124,6 +124,10 @@ per test. For the doctests, run `cargo test --workspace --doc`.
 - In CI, the base is the newest commit with a successful CI run, on any branch, that HEAD descends
   from. When no such commit exists, the base is the parent commit.
 
+`scripts/mutants-diff.sh` writes the diff to `target/mutants.diff`. The first commit of a
+repository has no parent, so its diff is empty and the check passes: the nightly run covers the
+whole crate.
+
 **Merge a pull request with a merge commit or a fast-forward, never a squash.** After a squash,
 `main` does not descend from the green commits of the branch. The check then mutates the whole
 squashed change again, and a large change can take longer than the time limit of its job.
@@ -131,8 +135,7 @@ squashed change again, and a large change can take longer than the time limit of
 To run the check by hand, use the commands of `scripts/check.sh`:
 
 ```sh
-mkdir -p target
-git diff "$(git merge-base "$(scripts/mutants-base.sh)" HEAD)" > target/mutants.diff
+scripts/mutants-diff.sh
 scripts/mutants-run.sh --in-diff target/mutants.diff
 ```
 

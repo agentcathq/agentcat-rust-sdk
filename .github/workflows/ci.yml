@@ -300,8 +300,8 @@ jobs:
 
   # The mutation diff gate: cargo-mutants mutates only the lines that changed since the newest commit
   # with a successful CI run that HEAD descends from, on any branch (scripts/mutants-base.sh; the parent
-  # commit when there is none), and no mutant may survive. An empty diff, or one with no mutable SDK source,
-  # passes. The full set runs in the nightly. The job needs `actions: read` for that lookup; the full
+  # commit when there is none), and no mutant may survive (scripts/mutants-diff.sh writes the diff). An empty
+  # diff, or one with no mutable SDK source, passes; the first commit of a repository gets an empty diff. The full set runs in the nightly. The job needs `actions: read` for that lookup; the full
   # history, because the base commit can be many commits back. Merge pull requests with a merge commit or a
   # fast-forward: a squash leaves no green ancestor, and the gate then falls back to the parent commit.
   # The mutants of the diff run in four shards, each with its own 60-minute limit; the job succeeds only when
@@ -333,10 +333,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          base="$(scripts/mutants-base.sh)"
-          echo "base commit: $base"
-          mkdir -p target
-          git diff "$base"...HEAD > target/mutants.diff
+          scripts/mutants-diff.sh
           scripts/mutants-run.sh --in-diff target/mutants.diff --shard ${{ matrix.shard }}/4
       - if: failure()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
