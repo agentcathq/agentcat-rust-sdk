@@ -1,0 +1,22 @@
+{
+  "projectId": "proj_E2E000000000000000000000000",
+  "options": {
+    "enable_tracing": false
+  },
+  "httpHeaders": { "x-test-header": "e2e" },
+  "expectPublishes": 0,
+  "sessions": [
+    {
+      "client": { "name": "e2e-client-tracing-off", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "with a context", "context": "Tracing is off, so nothing strips this" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": "start is just text", "session_id": "start", "context": "No handle is issued" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "no mirror", "context": "Structured content stays as the tool returned it" } },
+        { "op": "callTool", "name": "own_context", "args": { "context": "The tool's own context argument" } },
+        { "op": "callTool", "name": "boom", "args": { "context": "An error with tracing off" } },
+        { "op": "callTool", "name": "get_more_tools", "args": { "context": "Need a calendar tool" } }
+      ]
+    }
+  ]
+}

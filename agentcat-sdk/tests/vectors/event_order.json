@@ -1,0 +1,271 @@
+{
+  "cases": [
+    {
+      "name": "tool_call",
+      "event": [
+        {
+          "key": "id"
+        },
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "inputTokens"
+        },
+        {
+          "key": "outputTokens"
+        },
+        {
+          "key": "ipAddress",
+          "absent": true
+        },
+        {
+          "key": "sdkLanguage"
+        },
+        {
+          "key": "agentcatVersion"
+        },
+        {
+          "key": "serverName"
+        },
+        {
+          "key": "serverVersion"
+        },
+        {
+          "key": "clientName"
+        },
+        {
+          "key": "clientVersion"
+        },
+        {
+          "key": "identifyActorGivenId"
+        },
+        {
+          "key": "identifyActorName"
+        },
+        {
+          "key": "identifyActorData"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "isError",
+          "absent": true
+        },
+        {
+          "key": "error",
+          "absent": true
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        }
+      ],
+      "request": [
+        "method",
+        "params",
+        "jsonrpc",
+        "id"
+      ],
+      "params": [
+        "name",
+        "arguments",
+        "_meta"
+      ],
+      "extra": [
+        "signal",
+        "sessionId",
+        "_meta",
+        "sendNotification",
+        "sendRequest",
+        "authInfo",
+        "requestId",
+        "requestInfo",
+        "taskId",
+        "taskStore",
+        "taskRequestedTtl",
+        "closeSSEStream",
+        "closeStandaloneSSEStream"
+      ]
+    },
+    {
+      "name": "custom_string",
+      "event": [
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "isError"
+        },
+        {
+          "key": "error"
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        },
+        {
+          "key": "serverName",
+          "absent": true
+        },
+        {
+          "key": "serverVersion",
+          "absent": true
+        },
+        {
+          "key": "clientName",
+          "absent": true
+        },
+        {
+          "key": "clientVersion",
+          "absent": true
+        },
+        {
+          "key": "id"
+        }
+      ]
+    },
+    {
+      "name": "custom_server",
+      "event": [
+        {
+          "key": "id"
+        },
+        {
+          "key": "sessionId"
+        },
+        {
+          "key": "projectId"
+        },
+        {
+          "key": "eventType"
+        },
+        {
+          "key": "timestamp"
+        },
+        {
+          "key": "duration"
+        },
+        {
+          "key": "inputTokens",
+          "absent": true
+        },
+        {
+          "key": "outputTokens",
+          "absent": true
+        },
+        {
+          "key": "ipAddress",
+          "absent": true
+        },
+        {
+          "key": "sdkLanguage"
+        },
+        {
+          "key": "agentcatVersion"
+        },
+        {
+          "key": "serverName"
+        },
+        {
+          "key": "serverVersion"
+        },
+        {
+          "key": "clientName"
+        },
+        {
+          "key": "clientVersion"
+        },
+        {
+          "key": "identifyActorGivenId",
+          "absent": true
+        },
+        {
+          "key": "identifyActorName",
+          "absent": true
+        },
+        {
+          "key": "identifyActorData"
+        },
+        {
+          "key": "resourceName"
+        },
+        {
+          "key": "parameters"
+        },
+        {
+          "key": "response"
+        },
+        {
+          "key": "userIntent"
+        },
+        {
+          "key": "isError"
+        },
+        {
+          "key": "error"
+        },
+        {
+          "key": "pending",
+          "absent": true
+        },
+        {
+          "key": "tags"
+        },
+        {
+          "key": "properties"
+        }
+      ]
+    }
+  ]
+}

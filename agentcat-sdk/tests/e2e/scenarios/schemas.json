@@ -1,0 +1,38 @@
+{
+  "projectId": "proj_E2E000000000000000000000000",
+  "options": {},
+  "httpHeaders": { "x-test-header": "e2e" },
+  "expectPublishes": 19,
+  "sessions": [
+    {
+      "client": { "name": "e2e-client-schemas", "version": "1.0.0" },
+      "steps": [
+        { "op": "listTools" },
+        { "op": "callTool", "name": "echo", "args": { "msg": "issue a handle" }, "saveHandleAs": "S1" },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "customer-123" } },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "start", "x": "y" } },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "${S1}", "context": "Passing our handle to a tool that declares its own session_id" } },
+        { "op": "callTool", "name": "own_context", "args": { "context": "The tool's own context argument" } },
+        { "op": "callTool", "name": "own_context", "args": { "context": "The tool's own context, with our handle", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "structured_own", "args": { "msg": "minted" } },
+        { "op": "callTool", "name": "structured_own", "args": { "msg": "supplied", "session_id": "${S1}" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "minted" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "supplied", "session_id": "${S1}", "context": "Mirroring on a supplied handle" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "invalid", "session_id": "ses_bogus" } },
+        { "op": "callTool", "name": "nope", "args": {} },
+        { "op": "callTool", "name": "nope", "args": { "session_id": "${S1}", "context": "Calling a tool that does not exist" } },
+        { "op": "callTool", "name": "echo", "args": { "msg": 5 } },
+        { "op": "callTool", "name": "echo", "args": { "msg": 5, "session_id": "${S1}" } }
+      ]
+    },
+    {
+      "client": { "name": "e2e-client-schemas-b", "version": "1.0.0" },
+      "steps": [
+        { "op": "callTool", "name": "structured_own", "args": { "msg": "before any listing" } },
+        { "op": "callTool", "name": "own_session", "args": { "session_id": "before any listing" } },
+        { "op": "callTool", "name": "own_context", "args": { "context": "before any listing" } },
+        { "op": "callTool", "name": "structured", "args": { "msg": "before any listing", "context": "A call before any listing" } }
+      ]
+    }
+  ]
+}

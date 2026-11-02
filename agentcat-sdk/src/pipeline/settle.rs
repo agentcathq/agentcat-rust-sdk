@@ -1,0 +1,262 @@
+//! Stage 0 of the delivery pipeline: [`settle`] awaits the customer hooks a tool call started,
+//! each within its budget, and [`apply`] puts what they gave into the event.
+use std::fmt;
+use std::sync::{Mutex, PoisonError};
+use std::time::Duration;
+
+use futures::future::join4;
+use serde_json::{Map, Value};
+use tokio::task::JoinError;
+
+use super::tags::validate_tags;
+use super::{EventObject, set_field};
+use crate::capture::panic_message;
+use crate::config::{HookError, UserIdentity};
+use crate::constants::AGENTCAT_TAG_SESSION_SOURCE;
+use crate::handles::session_from_hook_value;
+use crate::hooks::{AbortOnDrop, PendingHooks};
+
+#[cfg(test)]
+mod tests;
+
+/// How long one call hook may take to settle once its event is processed. The log line of a hook
+/// that takes longer always names this budget.
+pub(crate) const HOOK_BUDGET: Duration = Duration::from_secs(30);
+
+/// One of the four call hooks: its label in the log lines, and the text written before the hook's
+/// own error.
+struct Label {
+    /// The label of the hook in the log lines.
+    name: &'static str,
+    /// The text before the error's `Display` when the hook returns an error.
+    error_prefix: &'static str,
+}
+
+/// The `resolve_session_id` hook.
+const RESOLVE_SESSION_ID: Label = Label {
+    name: "resolve_session_id",
+    error_prefix: "resolve_session_id hook error: ",
+};
+
+/// The `identify` hook.
+const IDENTIFY: Label = Label {
+    name: "identify",
+    error_prefix: "Error: identify hook returned an error - ",
+};
+
+/// The `event_tags` hook.
+const EVENT_TAGS: Label = Label {
+    name: "event_tags",
+    error_prefix: "event_tags callback error: ",
+};
+
+/// The `event_properties` hook.
+const EVENT_PROPERTIES: Label = Label {
+    name: "event_properties",
+    error_prefix: "event_properties callback error: ",
+};
+
+/// What the hooks of one call gave once they settled; `None` for a hook that is not set, gave
+/// nothing, failed or ran out of time.
+#[derive(Debug, Default)]
+pub(crate) struct HookResults {
+    /// The value of `resolve_session_id`.
+    pub(crate) session_value: Option<String>,
+    /// The identity `identify` gave.
+    pub(crate) identity: Option<UserIdentity>,
+    /// The tags of `event_tags` that passed [`validate_tags`]; `None` when none did.
+    pub(crate) tags: Option<Map<String, Value>>,
+    /// The properties `event_properties` gave, an empty object included.
+    pub(crate) properties: Option<Map<String, Value>>,
+}
+
+/// [`apply`] could not give a hook-mode event its session: minting a session ID failed.
+#[derive(Debug)]
+pub(crate) struct SessionMintFailed;
+
+impl fmt::Display for SessionMintFailed {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("could not generate a session ID")
+    }
+}
+
+/// Awaits the hook tasks of `hooks` together, each for at most `budget`, and pushes the log lines
+/// to `log`:
+///
+/// - A hook that has not settled within `budget` is aborted, after `Warning: <label> hook did not
+///   settle within 30000ms; publishing event without it`; the text names [`HOOK_BUDGET`] whatever
+///   `budget` is.
+/// - A hook whose task panicked or was cancelled (its runtime shut down) gives `Warning: <label>
+///   hook failed in background - <message>`, the panic's message or the cancellation. The process
+///   panic hook has already printed the panic, as for any task.
+/// - A hook's own error gives the text of that hook followed by the error's `Display`:
+///   `resolve_session_id hook error: `, `Error: identify hook returned an error - `,
+///   `event_tags callback error: ` or `event_properties callback error: `.
+/// - The `event_tags` result goes through [`validate_tags`] when it settles, with a line for each
+///   tag it drops.
+///
+/// The lines are in the order `settle` sees the hooks settle. Hooks that settled before `settle`
+/// first polls them, or between two of its polls, log in the label order (`resolve_session_id`,
+/// `identify`, `event_tags`, `event_properties`), whatever order they finished in. The hooks of an
+/// event that the queue drops before `settle` runs log nothing. Runs on a runtime with the
+/// time driver; the hook tasks may run on another runtime. Dropping the future aborts the hook
+/// tasks it has not settled.
+pub(crate) async fn settle(
+    mut hooks: PendingHooks,
+    budget: Duration,
+    log: &mut Vec<String>,
+) -> HookResults {
+    // Each task leaves `hooks` in a guard that aborts it when this future is dropped (a job the
+    // queue abandons) or when its budget runs out.
+    let session_task = hooks.resolve_session_id.take().map(AbortOnDrop::new);
+    let identify_task = hooks.identify.take().map(AbortOnDrop::new);
+    let tags_task = hooks.event_tags.take().map(AbortOnDrop::new);
+    let properties_task = hooks.event_properties.take().map(AbortOnDrop::new);
+    let lines = Mutex::new(Vec::new());
+    let tags = async {
+        let raw = settle_one(tags_task, &EVENT_TAGS, budget, &lines).await?;
+        let mut dropped = Vec::new();
+        let valid = validate_tags(&raw, &mut dropped);
+        push(&lines, dropped);
+        valid
+    };
+    // `join4` polls the four in this order every time, so hooks that settle together log in it.
+    let (session_value, identity, tags, properties) = join4(
+        settle_one(session_task, &RESOLVE_SESSION_ID, budget, &lines),
+        settle_one(identify_task, &IDENTIFY, budget, &lines),
+        tags,
+        settle_one(properties_task, &EVENT_PROPERTIES, budget, &lines),
+    )
+    .await;
+    log.extend(lines.into_inner().unwrap_or_else(PoisonError::into_inner));
+    HookResults {
+        session_value,
+        identity,
+        tags,
+        properties,
+    }
+}
+
+/// The value of one hook `task` (`None` when the hook is not set), awaited for at most `budget`;
+/// the log line of a failure or a timeout goes to `lines` (see [`settle`]).
+async fn settle_one<T>(
+    task: Option<AbortOnDrop<Result<Option<T>, HookError>>>,
+    hook: &Label,
+    budget: Duration,
+    lines: &Mutex<Vec<String>>,
+) -> Option<T> {
+    let task = task?;
+    let (value, line) = match tokio::time::timeout(budget, task).await {
+        Ok(Ok(Ok(value))) => (value, None),
+        Ok(Ok(Err(error))) => (None, Some(format!("{}{error}", hook.error_prefix))),
+        Ok(Err(error)) => {
+            let message = failure_message(error);
+            let line = format!(
+                "Warning: {} hook failed in background - {message}",
+                hook.name
+            );
+            (None, Some(line))
+        }
+        Err(_elapsed) => {
+            // `timeout` dropped the task's guard, which aborted it.
+            let line = format!(
+                "Warning: {} hook did not settle within {}ms; publishing event without it",
+                hook.name,
+                HOOK_BUDGET.as_millis()
+            );
+            (None, Some(line))
+        }
+    };
+    push(lines, line);
+    value
+}
+
+/// The message of a hook task that did not finish: the panic's message, or tokio's text for a
+/// cancelled task.
+pub(super) fn failure_message(error: JoinError) -> String {
+    match error.try_into_panic() {
+        Ok(payload) => panic_message(&*payload),
+        Err(error) => error.to_string(),
+    }
+}
+
+/// Appends `new` to `lines`.
+fn push(lines: &Mutex<Vec<String>>, new: impl IntoIterator<Item = String>) {
+    lines
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .extend(new);
+}
+
+/// Puts `results` into `event`, in place:
+///
+/// 1. In hook mode, the session from the hook's value (`session_from_hook_value`, salted with the
+///    event's `projectId` when it is not empty) becomes `sessionId`, and its source the
+///    `agentcat_session_id_source` tag. When minting fails, nothing more is applied and the
+///    error comes back, so the later fields stay unset.
+/// 2. An identity sets `identifyActorGivenId`, `identifyActorName` (absent without a name) and
+///    `identifyActorData` (`{}` without data).
+/// 3. The customer tags merge under the SDK tags: the customer tags first, then each SDK tag, so
+///    an SDK tag wins a name collision at the customer tag's place.
+/// 4. The properties replace `properties`, an empty object included.
+///
+/// A key the event lacks goes to its place in the order of
+/// [`TOOL_CALL_KEYS`](super::TOOL_CALL_KEYS) ([`set_field`]).
+pub(crate) fn apply(
+    event: &mut EventObject,
+    results: HookResults,
+    hook_mode: bool,
+) -> Result<(), SessionMintFailed> {
+    let HookResults {
+        session_value,
+        identity,
+        tags,
+        properties,
+    } = results;
+    if hook_mode {
+        let project = event
+            .get("projectId")
+            .and_then(Value::as_str)
+            .filter(|project| !project.is_empty());
+        let (session_id, source) =
+            session_from_hook_value(session_value.as_deref(), project).ok_or(SessionMintFailed)?;
+        set_field(event, "sessionId", Value::String(session_id));
+        let mut sdk_tags = event_tags(event);
+        sdk_tags.insert(
+            AGENTCAT_TAG_SESSION_SOURCE.to_owned(),
+            Value::String(source.as_str().to_owned()),
+        );
+        set_field(event, "tags", Value::Object(sdk_tags));
+    }
+    if let Some(identity) = identity {
+        set_field(
+            event,
+            "identifyActorGivenId",
+            Value::String(identity.user_id),
+        );
+        match identity.user_name {
+            Some(name) => set_field(event, "identifyActorName", Value::String(name)),
+            None => {
+                event.shift_remove("identifyActorName");
+            }
+        }
+        let data = identity.user_data.unwrap_or_default();
+        set_field(event, "identifyActorData", Value::Object(data));
+    }
+    if let Some(mut merged) = tags {
+        merged.extend(event_tags(event));
+        set_field(event, "tags", Value::Object(merged));
+    }
+    if let Some(properties) = properties {
+        set_field(event, "properties", Value::Object(properties));
+    }
+    Ok(())
+}
+
+/// A copy of the event's `tags`, or no tags when it has none or its `tags` is not an object.
+fn event_tags(event: &EventObject) -> Map<String, Value> {
+    match event.get("tags") {
+        Some(Value::Object(tags)) => tags.clone(),
+        _ => Map::new(),
+    }
+}

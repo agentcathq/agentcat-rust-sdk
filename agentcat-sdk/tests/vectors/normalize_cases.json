@@ -1,0 +1,9769 @@
+{
+  "cases": [
+    {
+      "name": "small-limits:array:0",
+      "input": [
+        [
+          "\u0001 AhW　 EI\tL𷉌70",
+          true,
+          true,
+          " \\\n<﻿😀d𝄞𝄞𝄞G ",
+          " \n",
+          false
+        ],
+        null,
+        {
+          "m8𝄞8\u0010Y😀.": -6948932123131811181,
+          "\\y": true,
+          "type": null,
+          "name": null
+        }
+      ],
+      "limits": [
+        3,
+        4,
+        4
+      ],
+      "output": [
+        [
+          "\u0001 A...",
+          true,
+          true,
+          " \\...",
+          "[MaxProperties ~]"
+        ],
+        null,
+        {
+          "m8𝄞8\u0010Y😀.": -6948932123131811181,
+          "\\y": true,
+          "type": null,
+          "name": null
+        }
+      ]
+    },
+    {
+      "name": "small-limits:array:1",
+      "input": [
+        1e-6,
+        "q",
+        {
+          "key": null
+        },
+        null,
+        true,
+        [
+          "😀\r𲄈\u000fK$c\"😀w\\Jv",
+          null,
+          939613006415910693,
+          -2012780442968070366,
+          null,
+          false
+        ]
+      ],
+      "limits": [
+        3,
+        2,
+        10
+      ],
+      "output": [
+        1e-6,
+        "q",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:2",
+      "input": {
+        " \nz𝄞ézé": [
+          7932494167482029985,
+          null,
+          "9😀😀世 \\C​",
+          1e-6,
+          "D 😀qXu6L0",
+          true
+        ],
+        "name": "&e\"2\"Y2 𝄞N\"\njF",
+        "H世B": [
+          true,
+          "MG𝄞😀😀\u0002t世\"<  "
+        ],
+        "v": null,
+        "-1": true,
+        "\u001d\t\\\u000eU 3": false
+      },
+      "limits": [
+        1,
+        5,
+        2
+      ],
+      "output": {
+        " \nz𝄞ézé": "[Array]",
+        "name": "&e...",
+        "H世B": "[Array]",
+        "v": null,
+        "-1": true,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:3",
+      "input": {
+        "": null,
+        "key": 3926578512103315160,
+        "\u0014𝄞": {},
+        "12": true
+      },
+      "limits": [
+        5,
+        2,
+        19
+      ],
+      "output": {
+        "12": true,
+        "": null,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:4",
+      "input": {
+        "13": {
+          "𝄞NIRRw世Z 㔋g": null,
+          "type": "b3𝄞3lm\t \u0015BB\t é",
+          "4294967294": -3225290419387746851,
+          "16": null,
+          "": null
+        },
+        "19": {},
+        "01": [
+          {
+            "$f64": "8000000000000000"
+          },
+          "󈥍﻿\u0014 \u0002񡾓é",
+          -2.6025254439937566e-270
+        ]
+      },
+      "limits": [
+        0,
+        4,
+        19
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:5",
+      "input": [
+        "y𝄞VJn",
+        {
+          "F u򺤍33 A": 9007199254740991
+        },
+        null
+      ],
+      "limits": [
+        0,
+        1,
+        11
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:6",
+      "input": {
+        "items": [
+          false,
+          true
+        ],
+        "15": {
+          "name": {
+            "": null,
+            "-1": null,
+            "01": null,
+            "z 𝄞 ": "",
+            "14": "𝄞 T"
+          },
+          "0": true,
+          "type": "􇺋世",
+          "id": "9世xAC \u0003"
+        }
+      },
+      "limits": [
+        2,
+        4,
+        14
+      ],
+      "output": {
+        "15": {
+          "0": true,
+          "name": "[Object]",
+          "type": "􇺋世",
+          "id": "9世xAC \u0003"
+        },
+        "items": [
+          false,
+          true
+        ]
+      }
+    },
+    {
+      "name": "small-limits:object:7",
+      "input": {
+        "12": null
+      },
+      "limits": [
+        5,
+        5,
+        8
+      ],
+      "output": {
+        "12": null
+      }
+    },
+    {
+      "name": "small-limits:array:8",
+      "input": [
+        [
+          "😀😀7 \\\u000bhig𝄞\nR "
+        ],
+        [],
+        [
+          "\\r𝄞kY😀"
+        ]
+      ],
+      "limits": [
+        1,
+        2,
+        3
+      ],
+      "output": [
+        "[Array]",
+        "[Array]",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:9",
+      "input": [
+        {
+          "世jé‮4é": null,
+          "13": true,
+          "name": null,
+          "...": null,
+          "😀0😀0": 1e+21
+        },
+        null,
+        [
+          true,
+          true,
+          1.7176184228008995e+270,
+          null,
+          0.0
+        ],
+        [
+          0.30000000000000004
+        ]
+      ],
+      "limits": [
+        2,
+        1,
+        17
+      ],
+      "output": [
+        {
+          "13": true,
+          "...": "[MaxProperties ~]"
+        },
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:10",
+      "input": [
+        true
+      ],
+      "limits": [
+        4,
+        1,
+        13
+      ],
+      "output": [
+        true
+      ]
+    },
+    {
+      "name": "small-limits:object:11",
+      "input": {
+        "𝄞z": null,
+        "P \u000396": null,
+        "a😀qMm世😀": true
+      },
+      "limits": [
+        3,
+        3,
+        4
+      ],
+      "output": {
+        "𝄞z": null,
+        "P \u000396": null,
+        "a😀qMm世😀": true
+      }
+    },
+    {
+      "name": "small-limits:object:12",
+      "input": {},
+      "limits": [
+        2,
+        5,
+        16
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:13",
+      "input": {
+        "1": 1e-6,
+        "12": null,
+        "𝄞": null,
+        "text": [],
+        "4": [
+          1e+21,
+          null
+        ],
+        "01": {
+          "\f": null,
+          "18": "\"😀",
+          "3": null
+        }
+      },
+      "limits": [
+        2,
+        0,
+        5
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:14",
+      "input": [
+        [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          true,
+          null,
+          true
+        ],
+        9.364055041314523e-49,
+        0.0,
+        {
+          "12": "im\u0013c\rz \u00109Q\u001a😀᠎\u000f",
+          "UY\"世\u0016": "a😀\\\r​é𝄞 \n\"😀",
+          "text": " ȺYr\u0000\u001f𝄞 \u0005😀\\\u001c😀徫",
+          "c\u0012𝄞": 1e-6
+        },
+        "Ia&\fjL\u0004\u0004XjX",
+        null
+      ],
+      "limits": [
+        4,
+        3,
+        1
+      ],
+      "output": [
+        [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          true,
+          "[MaxProperties ~]"
+        ],
+        9.364055041314523e-49,
+        0.0,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:15",
+      "input": {
+        "text": true
+      },
+      "limits": [
+        1,
+        4,
+        11
+      ],
+      "output": {
+        "text": true
+      }
+    },
+    {
+      "name": "small-limits:array:16",
+      "input": [
+        [
+          null,
+          {
+            "$f64": "246be1fc3668a2e1"
+          }
+        ],
+        {
+          "b": null,
+          "R\u001eNG\\J𝄞I": true,
+          "19": "4UF \\fk😀󶟫\"世　\"\u0010",
+          " TZozp﻿\"41": false,
+          "id": 0.0,
+          "8": -6270968311676239981
+        }
+      ],
+      "limits": [
+        5,
+        2,
+        4
+      ],
+      "output": [
+        [
+          null,
+          {
+            "$f64": "246be1fc3668a2e1"
+          }
+        ],
+        {
+          "8": -6270968311676239981,
+          "19": "4UF ...",
+          "...": "[MaxProperties ~]"
+        }
+      ]
+    },
+    {
+      "name": "small-limits:array:17",
+      "input": [
+        {},
+        {
+          "y\"e\u000b": -7172469022152732031,
+          "世T": false,
+          "5": "世8rJ>yf",
+          "id": 0.0
+        },
+        false,
+        null,
+        null
+      ],
+      "limits": [
+        1,
+        5,
+        1
+      ],
+      "output": [
+        "[Object]",
+        "[Object]",
+        false,
+        null,
+        null
+      ]
+    },
+    {
+      "name": "small-limits:array:18",
+      "input": [],
+      "limits": [
+        5,
+        5,
+        1
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:19",
+      "input": {
+        "type": null,
+        "0": false
+      },
+      "limits": [
+        4,
+        2,
+        17
+      ],
+      "output": {
+        "0": false,
+        "type": null
+      }
+    },
+    {
+      "name": "small-limits:array:20",
+      "input": [
+        {
+          "0": 17085096483846383291,
+          "": null,
+          "context": true,
+          "18": {
+            "$f64": "d155b6d9402ec814"
+          }
+        },
+        null,
+        {
+          "éé﻿ \u000bT𝄞😀Z": ""
+        },
+        [],
+        null,
+        null
+      ],
+      "limits": [
+        2,
+        0,
+        2
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:21",
+      "input": [
+        "Céé😀世😀\" .😀",
+        "dN0",
+        true,
+        {
+          "$f64": "8000000000000000"
+        },
+        true
+      ],
+      "limits": [
+        1,
+        0,
+        16
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:22",
+      "input": [
+        "😀",
+        null,
+        {
+          "13": "",
+          "id": 1e-7,
+          "value": null
+        },
+        [
+          7452067232750863231,
+          "oHW\u0004f \f[ WwVm",
+          null,
+          false,
+          "9\"0\"𝄞 4\u000bY",
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        0.0
+      ],
+      "limits": [
+        0,
+        0,
+        0
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:23",
+      "input": [
+        null,
+        -2.355251963142553e-127,
+        true
+      ],
+      "limits": [
+        0,
+        1,
+        5
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:24",
+      "input": [
+        -9.486443339147473e+302,
+        null,
+        1e-6
+      ],
+      "limits": [
+        0,
+        1,
+        2
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:25",
+      "input": [
+        1e+21,
+        " \u000bf ",
+        [
+          false,
+          " V​c\u001cWéj󏛕\u0002A\u0019Bé",
+          1e-7,
+          true,
+          false,
+          "q𝄞　?c"
+        ],
+        4934658912486348677
+      ],
+      "limits": [
+        0,
+        2,
+        0
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:26",
+      "input": {
+        "Q󿟿世n": "JȺ😀 eKDL\"\n\u0010",
+        " méQ 𝄞𱳀8y": null,
+        "name": false
+      },
+      "limits": [
+        1,
+        4,
+        2
+      ],
+      "output": {
+        "Q󿟿世n": "JȺ...",
+        " méQ 𝄞𱳀8y": null,
+        "name": false
+      }
+    },
+    {
+      "name": "small-limits:array:27",
+      "input": [
+        {
+          "name": null,
+          "a": -5209749652655960006
+        },
+        "\u000bL4b𝄞t世3S󺇵W",
+        null,
+        null,
+        null,
+        false
+      ],
+      "limits": [
+        3,
+        3,
+        13
+      ],
+      "output": [
+        {
+          "name": null,
+          "a": -5209749652655960006
+        },
+        "\u000bL4b𝄞t世3S󺇵W...",
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:28",
+      "input": {
+        "": {},
+        "4294967295": true,
+        "b": true
+      },
+      "limits": [
+        4,
+        2,
+        16
+      ],
+      "output": {
+        "": {},
+        "4294967295": true,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:29",
+      "input": [
+        4456712083370521121,
+        "😀\"\"\"F \u0015𝄞\u0007𝄞 p\ri",
+        null
+      ],
+      "limits": [
+        1,
+        2,
+        1
+      ],
+      "output": [
+        4456712083370521121,
+        "...",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:30",
+      "input": [],
+      "limits": [
+        2,
+        5,
+        0
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:31",
+      "input": [
+        [
+          -8587520819187677421,
+          -3463297722641799902,
+          null
+        ],
+        8.695183135221559e-240,
+        false,
+        null,
+        -6723234873492178097
+      ],
+      "limits": [
+        0,
+        2,
+        1
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:32",
+      "input": {
+        "14": 9007199254740991,
+        "...": "3\u00151  \u000fjFZ 𝄞",
+        "name": 1647776489187538736,
+        "text": true,
+        "a\u0001n": {},
+        "8": {
+          "...": null,
+          "13": 0.0,
+          "": 1e-7,
+          "6G\"E\u0010Jh\u000b\u001b\r\"": 3172115663045746749
+        }
+      },
+      "limits": [
+        0,
+        3,
+        3
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:object:33",
+      "input": {
+        "context": [
+          "\u00026UE😀x X",
+          "NTér3\t𝄞VDyA",
+          16012315504267983770,
+          true,
+          false,
+          ""
+        ],
+        "𝄞qéBo😀😀": [
+          "9\\😀h\\b&4😀j",
+          16305543503269017093,
+          null
+        ],
+        "...": {
+          "text": true,
+          "14": "\n𝄞",
+          "context": false,
+          "...": 8089614468461745347,
+          "type": "é᠎DCc  😀9",
+          "4294967295": false
+        },
+        "10": 17815779281703736170
+      },
+      "limits": [
+        3,
+        0,
+        17
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:34",
+      "input": {
+        "7": "\u000bQ6 \"\"𝄞R j世",
+        "name": "𝄞\r6\\世é",
+        "key": null
+      },
+      "limits": [
+        3,
+        3,
+        2
+      ],
+      "output": {
+        "7": "\u000b...",
+        "name": "𝄞...",
+        "key": null
+      }
+    },
+    {
+      "name": "small-limits:array:35",
+      "input": [],
+      "limits": [
+        5,
+        1,
+        7
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:string:36",
+      "input": "Ié",
+      "limits": [
+        1,
+        2,
+        4
+      ],
+      "output": "Ié"
+    },
+    {
+      "name": "small-limits:object:37",
+      "input": {},
+      "limits": [
+        3,
+        2,
+        17
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:38",
+      "input": [
+        null,
+        true,
+        [
+          null,
+          true,
+          "",
+          false,
+          10537227332840018429,
+          null
+        ]
+      ],
+      "limits": [
+        5,
+        4,
+        1
+      ],
+      "output": [
+        null,
+        true,
+        [
+          null,
+          true,
+          "",
+          false,
+          "[MaxProperties ~]"
+        ]
+      ]
+    },
+    {
+      "name": "small-limits:number:39",
+      "input": -1173637668791112412,
+      "limits": [
+        0,
+        2,
+        6
+      ],
+      "output": -1173637668791112412
+    },
+    {
+      "name": "small-limits:array:40",
+      "input": [],
+      "limits": [
+        1,
+        1,
+        15
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:41",
+      "input": {
+        "8": 0.0
+      },
+      "limits": [
+        2,
+        0,
+        8
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:42",
+      "input": {
+        "B𝄞W": 6634849780607098376,
+        "id": false,
+        "9": [],
+        "\"": 1e-7
+      },
+      "limits": [
+        4,
+        5,
+        8
+      ],
+      "output": {
+        "9": [],
+        "B𝄞W": 6634849780607098376,
+        "id": false,
+        "\"": 1e-7
+      }
+    },
+    {
+      "name": "small-limits:array:43",
+      "input": [],
+      "limits": [
+        3,
+        4,
+        5
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:boolean:44",
+      "input": true,
+      "limits": [
+        0,
+        0,
+        0
+      ],
+      "output": true
+    },
+    {
+      "name": "small-limits:object:45",
+      "input": {
+        "name": "EO\t\u001bD",
+        "\u001d\u001b世évO": {
+          "\u0011déu世o": null
+        },
+        "otX": {
+          "7Néi𝄞2😀😀8﻿": "𝄞2.éT\"Rl"
+        }
+      },
+      "limits": [
+        5,
+        1,
+        17
+      ],
+      "output": {
+        "name": "EO\t\u001bD",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:46",
+      "input": [
+        false,
+        [
+          "8  世é\\世\\8",
+          null,
+          false,
+          -8892650697602307921
+        ],
+        false,
+        {
+          "8": "é\u0005\"　😀\t",
+          "𝄞L世𝄞": false,
+          "\"4gV𝄞": 8173148867814152716,
+          "0": 5564320019892290463,
+          "11": "é😀\f😀B4 "
+        }
+      ],
+      "limits": [
+        0,
+        2,
+        1
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:47",
+      "input": {
+        "items": null,
+        "\u001da😀Vs": [],
+        "9": "世é"
+      },
+      "limits": [
+        5,
+        3,
+        7
+      ],
+      "output": {
+        "9": "世é",
+        "items": null,
+        "\u001da😀Vs": []
+      }
+    },
+    {
+      "name": "small-limits:array:48",
+      "input": [
+        [
+          "8I😀B世😀3I",
+          true,
+          "en😀Y",
+          true
+        ]
+      ],
+      "limits": [
+        2,
+        2,
+        11
+      ],
+      "output": [
+        [
+          "8I😀B世😀3I",
+          true,
+          "[MaxProperties ~]"
+        ]
+      ]
+    },
+    {
+      "name": "small-limits:object:49",
+      "input": {
+        "8": null,
+        "context": {
+          "14": true,
+          "m򃗥世i": null,
+          "énUO": "i ",
+          "type": null
+        },
+        "7": "5\u0011 \u00193ML"
+      },
+      "limits": [
+        4,
+        1,
+        17
+      ],
+      "output": {
+        "7": "5\u0011 \u00193ML",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:50",
+      "input": [
+        {
+          "type": "k9X Vqpk򩎠$éN\"",
+          "items": -2639777223482883366,
+          "text": 1e-7,
+          "context": true,
+          "...": null,
+          "20": true
+        },
+        true,
+        []
+      ],
+      "limits": [
+        5,
+        2,
+        16
+      ],
+      "output": [
+        {
+          "20": true,
+          "type": "k9X Vqpk򩎠$éN\"",
+          "...": "[MaxProperties ~]"
+        },
+        true,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:51",
+      "input": {
+        "7": true,
+        "6😀": null,
+        "text": "世0 X",
+        "19": false
+      },
+      "limits": [
+        0,
+        2,
+        19
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:52",
+      "input": [
+        {
+          "18": {
+            " e Mc4ÝB񵺳O\\\\": false,
+            "𝄞 \u001b🕴l世2𝄞8": false,
+            "type": " Sq\ré𝄞𝄞世😀 ",
+            "value": null,
+            "6": " \r😀5l"
+          },
+          "name": -8071444510933547169,
+          "R𝄞b": true,
+          "😀": null,
+          "text": 4159663011864683481,
+          "I𝄞 😀𝄞\f'E": false
+        },
+        579632468099002287
+      ],
+      "limits": [
+        0,
+        2,
+        18
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:53",
+      "input": {
+        "9": 9007199254740993,
+        "éé𝄞\u0000𝄞\"": "cf\\𝄞2​",
+        " ": "a\"4𝄞S😀j",
+        "": "i世95L\u00047😀H\\",
+        " é\ri\u001e\"tU8\"é": true
+      },
+      "limits": [
+        1,
+        1,
+        9
+      ],
+      "output": {
+        "9": 9007199254740993,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:54",
+      "input": [
+        true,
+        1.3797168835577756e-133
+      ],
+      "limits": [
+        2,
+        0,
+        15
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:55",
+      "input": [
+        [
+          -7168377741184796923,
+          null,
+          true,
+          ""
+        ],
+        false,
+        {
+          "15": -9.541178531542217e-180,
+          "text": null,
+          "type": "v7u.SYN  é",
+          "a": null,
+          "9": null,
+          "𝄞 Jq\u000b\u0016é": true
+        },
+        "`᠎񑛇IX\t%\tr",
+        {
+          "context": "😀y𝄞"
+        }
+      ],
+      "limits": [
+        4,
+        3,
+        15
+      ],
+      "output": [
+        [
+          -7168377741184796923,
+          null,
+          true,
+          "[MaxProperties ~]"
+        ],
+        false,
+        {
+          "9": null,
+          "15": -9.541178531542217e-180,
+          "text": null,
+          "...": "[MaxProperties ~]"
+        },
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:56",
+      "input": {},
+      "limits": [
+        4,
+        0,
+        4
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:57",
+      "input": [
+        "\u001b 世$世*😀 rQ\"c世𝄞 "
+      ],
+      "limits": [
+        1,
+        5,
+        3
+      ],
+      "output": [
+        "\u001b 世..."
+      ]
+    },
+    {
+      "name": "small-limits:object:58",
+      "input": {},
+      "limits": [
+        2,
+        1,
+        9
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:59",
+      "input": {
+        "13": true
+      },
+      "limits": [
+        2,
+        1,
+        0
+      ],
+      "output": {
+        "13": true
+      }
+    },
+    {
+      "name": "small-limits:object:60",
+      "input": {
+        "\\𝄞yq𝄞𝄞🕴C": -3305064580221302738,
+        " ": [],
+        "4294967294": [
+          null
+        ],
+        "": [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          null
+        ],
+        "data": [
+          false,
+          true,
+          "\" Yo\tTh😀a😀",
+          "𝄞E😀𝄞"
+        ],
+        "\u001c​𝄞  😀": false
+      },
+      "limits": [
+        3,
+        5,
+        0
+      ],
+      "output": {
+        "4294967294": [
+          null
+        ],
+        "\\𝄞yq𝄞𝄞🕴C": -3305064580221302738,
+        " ": [],
+        "": [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          null
+        ],
+        "data": [
+          false,
+          true,
+          "...",
+          "..."
+        ],
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:61",
+      "input": [],
+      "limits": [
+        1,
+        5,
+        11
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:62",
+      "input": {
+        "世s\\h": [
+          [
+            false,
+            8967339432568109608,
+            null
+          ],
+          null,
+          false,
+          "𝄞世h\u0010　 é𝄞😀é é 8",
+          true,
+          " t 񣢘😀😀\u0014\\世  JD"
+        ],
+        "name": null,
+        "text": {
+          "4294967294": null,
+          "é7 0": false,
+          "\\😀{": true,
+          "context": 4198537610571978076,
+          "18": true
+        }
+      },
+      "limits": [
+        1,
+        1,
+        0
+      ],
+      "output": {
+        "世s\\h": "[Array]",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:63",
+      "input": [
+        {
+          "value": true
+        },
+        0.30000000000000004,
+        "",
+        -7996032094373759147,
+        {
+          "type": "\f\u0005CZ\\𝄞7 ",
+          "gQ": "﻿z😀\u000f0世\u000b",
+          "context": null
+        }
+      ],
+      "limits": [
+        2,
+        4,
+        2
+      ],
+      "output": [
+        {
+          "value": true
+        },
+        0.30000000000000004,
+        "",
+        -7996032094373759147,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:64",
+      "input": [
+        " 𮫮t,% P​I",
+        " E \u0016𝄞",
+        {}
+      ],
+      "limits": [
+        5,
+        4,
+        4
+      ],
+      "output": [
+        " 𮫮t...",
+        " E \u0016...",
+        {}
+      ]
+    },
+    {
+      "name": "small-limits:object:65",
+      "input": {
+        "context": 15338423817694570460
+      },
+      "limits": [
+        5,
+        4,
+        1
+      ],
+      "output": {
+        "context": 15338423817694570460
+      }
+    },
+    {
+      "name": "small-limits:object:66",
+      "input": {
+        "b": null
+      },
+      "limits": [
+        1,
+        3,
+        5
+      ],
+      "output": {
+        "b": null
+      }
+    },
+    {
+      "name": "small-limits:object:67",
+      "input": {},
+      "limits": [
+        0,
+        3,
+        4
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:number:68",
+      "input": -3.560007469547168e-224,
+      "limits": [
+        1,
+        3,
+        1
+      ],
+      "output": -3.560007469547168e-224
+    },
+    {
+      "name": "small-limits:array:69",
+      "input": [
+        1e-6,
+        3605097918668329874,
+        null,
+        [
+          -4651254218339232044,
+          "mé𝄞Lp\u0013GRv\u001b",
+          null,
+          9007199254740991,
+          -5577545631794021355,
+          []
+        ],
+        "󤶍?Z*Qi \\😀b\tq",
+        false
+      ],
+      "limits": [
+        0,
+        5,
+        8
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:70",
+      "input": {
+        "a": false,
+        "...": [
+          false,
+          "8 M \"😀世 𝄞  Mu"
+        ]
+      },
+      "limits": [
+        3,
+        1,
+        3
+      ],
+      "output": {
+        "a": false,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:71",
+      "input": {
+        "text": null,
+        "type": null,
+        "2": [
+          null,
+          null,
+          "\u0011\fK😀L😀\u0013B",
+          " 󑓍\u0013j\rqh",
+          false
+        ],
+        "1.5": 2.0079211662820384e-308,
+        " éot\r": [],
+        "\\wbEU😀2sT\u001e": {
+          "hé𝄞d&𝄞﻿𝄞": -1.6362273877808288e+21,
+          "b": true
+        }
+      },
+      "limits": [
+        0,
+        0,
+        7
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:object:72",
+      "input": {
+        "text": {},
+        " 12\\𝄞\"\u001en N世​": "﻿\\😀R​7bjK ",
+        "data": [],
+        "18": "xѨiUlBr",
+        "a": []
+      },
+      "limits": [
+        5,
+        3,
+        5
+      ],
+      "output": {
+        "18": "xѨiUl...",
+        "text": {},
+        " 12\\𝄞\"\u001en N世​": "﻿\\😀R...",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:73",
+      "input": {
+        "f世󜢙Wé": -150.567198691754,
+        " k 𝄞世ms\tA0": true,
+        "...": [
+          true
+        ]
+      },
+      "limits": [
+        5,
+        3,
+        12
+      ],
+      "output": {
+        "f世󜢙Wé": -150.567198691754,
+        " k 𝄞世ms\tA0": true,
+        "...": [
+          true
+        ]
+      }
+    },
+    {
+      "name": "small-limits:object:74",
+      "input": {
+        "5": {
+          "a": "\u001b😀\u0013CtgqA\\S𝄞世Z\\ ",
+          "0": {
+            "15": "",
+            "r\"𝄞": false
+          }
+        },
+        "context": null
+      },
+      "limits": [
+        5,
+        2,
+        12
+      ],
+      "output": {
+        "5": {
+          "0": {
+            "15": "",
+            "r\"𝄞": false
+          },
+          "a": "\u001b😀\u0013CtgqA\\S..."
+        },
+        "context": null
+      }
+    },
+    {
+      "name": "small-limits:array:75",
+      "input": [
+        [
+          "OV世'U9𝄞2DN\tX😀",
+          false,
+          true,
+          null,
+          "Ué d ",
+          "I世Bi"
+        ],
+        ".😀𝄞😀K𝄞d|Z世H\\𝄞"
+      ],
+      "limits": [
+        3,
+        2,
+        0
+      ],
+      "output": [
+        [
+          "...",
+          false,
+          "[MaxProperties ~]"
+        ],
+        "..."
+      ]
+    },
+    {
+      "name": "small-limits:object:76",
+      "input": {
+        "text": -2994847225157555638,
+        "value": {
+          "$f64": "a775615ecf09c42f"
+        },
+        "15": true,
+        "context": null
+      },
+      "limits": [
+        3,
+        5,
+        19
+      ],
+      "output": {
+        "15": true,
+        "text": -2994847225157555638,
+        "value": {
+          "$f64": "a775615ecf09c42f"
+        },
+        "context": null
+      }
+    },
+    {
+      "name": "small-limits:array:77",
+      "input": [],
+      "limits": [
+        5,
+        5,
+        4
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:78",
+      "input": [
+        false,
+        "\u0017:\u0000é8é  Vv",
+        null,
+        "zC񥑨v\u0017\\Y:é😀D",
+        {
+          "type": null,
+          "text": "kpzc𝄞glLW​5"
+        },
+        {
+          "`é -YN\"GS᠎": false
+        }
+      ],
+      "limits": [
+        1,
+        3,
+        11
+      ],
+      "output": [
+        false,
+        "\u0017:\u0000é8é  Vv",
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:string:79",
+      "input": "3\fl 𝄞X\\\"hoOR",
+      "limits": [
+        3,
+        4,
+        0
+      ],
+      "output": "..."
+    },
+    {
+      "name": "small-limits:object:80",
+      "input": {
+        "id": {
+          "13": "",
+          "14": [
+            "🕴éEPL\u000e😀",
+            "\ne世é8b\\",
+            null,
+            false
+          ]
+        },
+        "f": "NXs"
+      },
+      "limits": [
+        2,
+        3,
+        8
+      ],
+      "output": {
+        "id": {
+          "13": "",
+          "14": "[Array]"
+        },
+        "f": "NXs"
+      }
+    },
+    {
+      "name": "small-limits:object:81",
+      "input": {
+        "\\\fU\rjH n𝄞\\": null,
+        "10": null,
+        "value": 17354208076472528417,
+        "4": [
+          null,
+          12056975708828005057,
+          1e+21
+        ],
+        "\\Hq": {
+          "$f64": "56a8327b886aa671"
+        },
+        "4294967294": "m😀VRK\n\"xz\u0014世😀\u0015"
+      },
+      "limits": [
+        3,
+        4,
+        16
+      ],
+      "output": {
+        "4": [
+          null,
+          12056975708828005057,
+          1e+21
+        ],
+        "10": null,
+        "4294967294": "m😀VRK\n\"xz\u0014世😀\u0015",
+        "\\\fU\rjH n𝄞\\": null,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:82",
+      "input": [
+        0.30000000000000004
+      ],
+      "limits": [
+        4,
+        0,
+        16
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:83",
+      "input": {
+        "a": 1e+21,
+        "4294967295": "😀\nTM",
+        "text": {},
+        "context": false
+      },
+      "limits": [
+        3,
+        1,
+        11
+      ],
+      "output": {
+        "a": 1e+21,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:84",
+      "input": [
+        {
+          "𝄞": true
+        },
+        2.7613845269168635e+151,
+        [
+          [],
+          "😀😀béPEzm",
+          -2.2543410723593943e-15,
+          "t\f 😀ga😀Y\u0018Ⱥ \u001fHUy\u0002"
+        ],
+        {
+          "4294967295": true,
+          "text": 15076099930530337440,
+          "5": -1.192704591724188e-308,
+          "-1": "世世",
+          " \u0005PS𝄞vT\u000b": "3\"6 😀 :74 世7efn😀"
+        },
+        null
+      ],
+      "limits": [
+        2,
+        2,
+        19
+      ],
+      "output": [
+        {
+          "𝄞": true
+        },
+        2.7613845269168635e+151,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:85",
+      "input": {
+        "15": [
+          null
+        ],
+        "...": false,
+        "value": [],
+        "\téQ世😀😀 ZP U": null,
+        "7": "𝄞n9V世"
+      },
+      "limits": [
+        1,
+        2,
+        1
+      ],
+      "output": {
+        "7": "...",
+        "15": "[Array]",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:86",
+      "input": [
+        16391946456779203998,
+        "k 9 B\"𝄞<p𝄞4󤶁",
+        "GCPt z世o"
+      ],
+      "limits": [
+        3,
+        0,
+        16
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:87",
+      "input": {
+        "dD": null,
+        "context": -7.486545285695314e-122
+      },
+      "limits": [
+        0,
+        2,
+        12
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:88",
+      "input": [
+        true,
+        true,
+        2502200158436934655,
+        [
+          null,
+          8510418554809468206,
+          null,
+          [
+            4869062083961285594,
+            true,
+            "\u0006qé O",
+            9007199254740993,
+            null
+          ],
+          16972034363150075191,
+          null
+        ]
+      ],
+      "limits": [
+        5,
+        3,
+        9
+      ],
+      "output": [
+        true,
+        true,
+        2502200158436934655,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:89",
+      "input": {
+        "XX*'󣟓🕴": true,
+        "type": [],
+        "text": [
+          0.0
+        ]
+      },
+      "limits": [
+        0,
+        1,
+        17
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:90",
+      "input": [
+        {
+          "value": null,
+          "h\u0007\"😀😀Mls": 9007199254740991,
+          "10": "V\nHABc z2😀😀\\1\"",
+          "text": [
+            "世Q😀R\f5",
+            true,
+            -3.049247201729705e-277,
+            null,
+            null,
+            "FX8C"
+          ],
+          "key": -3.941940194364208e+116
+        },
+        null,
+        [
+          "𝄞𝄞g/😀\u001c",
+          null
+        ],
+        null,
+        "éW"
+      ],
+      "limits": [
+        0,
+        0,
+        4
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:91",
+      "input": [
+        {
+          "5": [
+            "﻿\r"
+          ],
+          "13": false,
+          "text": [
+            "世\\R1𝄞k😀\u0013\\😀my",
+            null,
+            " \"=\f\\ "
+          ],
+          "9": false,
+          "18": null
+        },
+        "\u000eFXn\u0010𝄞F 𝄞\u001f2世𝄞d0",
+        null,
+        null,
+        "𝄞　😀𝄞B5",
+        null
+      ],
+      "limits": [
+        0,
+        3,
+        5
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:92",
+      "input": {},
+      "limits": [
+        0,
+        0,
+        8
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:93",
+      "input": [
+        "S世X😀😀x𝄞😀",
+        {
+          "4294967294": "h®LC😀\"𝄞/ fmOl",
+          "3": 0.0,
+          "text": "7𝄞Dn\u0011b\u0018 %\b\u000ev",
+          "3𝄞\"3": false
+        },
+        [
+          null,
+          true,
+          true,
+          -1.0856558584902799e-132,
+          1e+21,
+          -7138672047814058632
+        ],
+        null,
+        {
+          "context": "\\",
+          "8": false
+        }
+      ],
+      "limits": [
+        1,
+        4,
+        11
+      ],
+      "output": [
+        "S世X😀😀x𝄞...",
+        "[Object]",
+        "[Array]",
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:94",
+      "input": {},
+      "limits": [
+        4,
+        3,
+        13
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:95",
+      "input": {},
+      "limits": [
+        1,
+        4,
+        12
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:96",
+      "input": {
+        "é\\x\"\\\u000e😀ET": " "
+      },
+      "limits": [
+        1,
+        0,
+        16
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:97",
+      "input": [
+        [
+          6412914973020448603,
+          "世 3 :h\"G😀Ho𝄞😀\u000b%",
+          false
+        ],
+        null,
+        {
+          "9": false
+        },
+        7746934702083112856
+      ],
+      "limits": [
+        3,
+        2,
+        17
+      ],
+      "output": [
+        [
+          6412914973020448603,
+          "世 3 :h\"G😀Ho𝄞😀...",
+          "[MaxProperties ~]"
+        ],
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:98",
+      "input": {
+        "6": "򽅞򃥛5cb",
+        "items": "O\u0016𝄞"
+      },
+      "limits": [
+        3,
+        5,
+        9
+      ],
+      "output": {
+        "6": "򽅞򃥛5cb",
+        "items": "O\u0016𝄞"
+      }
+    },
+    {
+      "name": "small-limits:object:99",
+      "input": {
+        "𝄞\"\u0016Bc世C h😀": [
+          1e-7
+        ],
+        "context": {
+          "1": false,
+          "¥0\u001cle😀": null,
+          "s𝄞世": "😀A世😀𝄞",
+          "type": null,
+          "value": null
+        }
+      },
+      "limits": [
+        1,
+        2,
+        18
+      ],
+      "output": {
+        "𝄞\"\u0016Bc世C h😀": "[Array]",
+        "context": "[Object]"
+      }
+    },
+    {
+      "name": "small-limits:array:100",
+      "input": [
+        [
+          4805443725754532719
+        ]
+      ],
+      "limits": [
+        4,
+        2,
+        9
+      ],
+      "output": [
+        [
+          4805443725754532719
+        ]
+      ]
+    },
+    {
+      "name": "small-limits:object:101",
+      "input": {
+        "\u001f😀": [
+          null,
+          false
+        ]
+      },
+      "limits": [
+        4,
+        0,
+        7
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:102",
+      "input": [],
+      "limits": [
+        1,
+        4,
+        4
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:103",
+      "input": [
+        [
+          null,
+          null,
+          9007199254740993
+        ],
+        true
+      ],
+      "limits": [
+        3,
+        5,
+        9
+      ],
+      "output": [
+        [
+          null,
+          null,
+          9007199254740993
+        ],
+        true
+      ]
+    },
+    {
+      "name": "small-limits:object:104",
+      "input": {
+        "name": -176472462635484486,
+        "\fb\\": "世世t𝄞x",
+        "a": {
+          "4294967295": 1.1744192625351782e+177
+        }
+      },
+      "limits": [
+        1,
+        4,
+        19
+      ],
+      "output": {
+        "name": -176472462635484486,
+        "\fb\\": "世世t𝄞x",
+        "a": "[Object]"
+      }
+    },
+    {
+      "name": "small-limits:object:105",
+      "input": {},
+      "limits": [
+        0,
+        5,
+        12
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:106",
+      "input": [
+        null,
+        {
+          "7": "\fPP\"qC 𝄞J𝄞c\u001c",
+          "context": null,
+          "4294967294": null
+        },
+        false,
+        "FbS\\NZ\u0000 él\u0000﻿"
+      ],
+      "limits": [
+        5,
+        3,
+        3
+      ],
+      "output": [
+        null,
+        {
+          "7": "\fPP...",
+          "4294967294": null,
+          "context": null
+        },
+        false,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:107",
+      "input": {
+        "8": true,
+        "context": "",
+        "11": 0.0,
+        "01": "\\K 𝄞 \"é𝄞"
+      },
+      "limits": [
+        4,
+        5,
+        2
+      ],
+      "output": {
+        "8": true,
+        "11": 0.0,
+        "context": "",
+        "01": "\\K..."
+      }
+    },
+    {
+      "name": "small-limits:object:108",
+      "input": {
+        "17": {
+          "...": null,
+          "key": null,
+          "7": true,
+          "3": " \u0006𝄞𝄞xéYi� t \\ ",
+          "\u000e\u001aW😀N\u0013g": false
+        },
+        "b": 4.909760861507455e-37
+      },
+      "limits": [
+        4,
+        5,
+        0
+      ],
+      "output": {
+        "17": {
+          "3": "...",
+          "7": true,
+          "...": null,
+          "key": null,
+          "\u000e\u001aW😀N\u0013g": false
+        },
+        "b": 4.909760861507455e-37
+      }
+    },
+    {
+      "name": "small-limits:array:109",
+      "input": [
+        null,
+        "\"\u0015😀Q😀C\fd\u0017😀3\\",
+        "😀é世\u0017é𝄞😀U2𝄞k3w😀𝄞😀",
+        true,
+        [
+          "\" 5世\"&‮\u0016"
+        ]
+      ],
+      "limits": [
+        3,
+        2,
+        13
+      ],
+      "output": [
+        null,
+        "\"\u0015😀Q😀C\fd\u0017...",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:110",
+      "input": [
+        null,
+        true,
+        {
+          "t": "😀s\u001d😀b😀 \\\\é\u0003世\u001eQ",
+          "data": true,
+          "9": "😀\fA􄭣V𝄞T\\",
+          "4294967295": false,
+          "o\\o": 11323314162276952959
+        },
+        -1.6788977643387058e+33,
+        [
+          null,
+          "\u0015　iOeé R\\f\u001cwqéT",
+          "\\\\i😀q \"𝄞\"é"
+        ]
+      ],
+      "limits": [
+        0,
+        3,
+        18
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:111",
+      "input": [
+        -9010556317683282849
+      ],
+      "limits": [
+        0,
+        3,
+        6
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:112",
+      "input": {
+        "b": {
+          "context": null,
+          "name": true,
+          "𝄞[oh": "Teph1Zlé﻿é ‮𝄞世 ",
+          "01": " \"GchC 𝄞C",
+          "4294967295": "t  IAoI𝄞",
+          "": "KSB\u000b g  éJN\u0012😀n"
+        },
+        "name": null,
+        "O": null,
+        "value": -766740390671309360,
+        "éé\"BQ😀": false
+      },
+      "limits": [
+        5,
+        0,
+        16
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:113",
+      "input": {
+        "𝄞eBy\u0012\u001an": [
+          3.879455240058514e-285,
+          null,
+          6.453682791455134e+162,
+          "mé7 NbJ y1\"世3",
+          4.608411544511414e+33,
+          ""
+        ],
+        "M\\世 oo Wa*\\": "\"sﵼ𝄞 😀 世 HP",
+        "value": {
+          "$f64": "a5e565cb37587eed"
+        },
+        "\u0016": {
+          "17": "\u0019JJJ",
+          "name": 1.0691182358486042e+33,
+          "2": false,
+          "14": null
+        },
+        "16": true
+      },
+      "limits": [
+        2,
+        1,
+        6
+      ],
+      "output": {
+        "16": true,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:114",
+      "input": {
+        "᠎'\u0018n": "\b\"\"£Z世\u000fzU󟑬😀᠎fR\\ ",
+        "𝄞hZ": false
+      },
+      "limits": [
+        4,
+        5,
+        7
+      ],
+      "output": {
+        "᠎'\u0018n": "\b\"\"£Z世\u000f...",
+        "𝄞hZ": false
+      }
+    },
+    {
+      "name": "small-limits:object:115",
+      "input": {},
+      "limits": [
+        4,
+        0,
+        7
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:116",
+      "input": {
+        "9": {
+          "text": false
+        }
+      },
+      "limits": [
+        0,
+        0,
+        5
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:117",
+      "input": [
+        [
+          {
+            "$f64": "8000000000000000"
+          },
+          9007199254740993,
+          null,
+          -5546165683438308282,
+          false
+        ]
+      ],
+      "limits": [
+        1,
+        2,
+        16
+      ],
+      "output": [
+        "[Array]"
+      ]
+    },
+    {
+      "name": "small-limits:array:118",
+      "input": [
+        null,
+        null,
+        false
+      ],
+      "limits": [
+        0,
+        0,
+        14
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:119",
+      "input": {
+        "value": [
+          "😀񄨅é😀世𝄞J",
+          "G𝄞😀Pl",
+          1.343865454034938e-308,
+          5.743502831058461e+278
+        ],
+        "4294967294": [],
+        "": "𝄞  ",
+        "8": false,
+        "id": null,
+        "text": {}
+      },
+      "limits": [
+        1,
+        4,
+        1
+      ],
+      "output": {
+        "8": false,
+        "4294967294": "[Array]",
+        "value": "[Array]",
+        "": "...",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:120",
+      "input": [
+        false,
+        false
+      ],
+      "limits": [
+        3,
+        0,
+        1
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:121",
+      "input": {
+        "1.5": "\u0001c1  ",
+        "key": {
+          "a": null,
+          "1": {
+            "$f64": "ea36ff5779671026"
+          }
+        }
+      },
+      "limits": [
+        3,
+        3,
+        8
+      ],
+      "output": {
+        "1.5": "\u0001c1  ",
+        "key": {
+          "1": {
+            "$f64": "ea36ff5779671026"
+          },
+          "a": null
+        }
+      }
+    },
+    {
+      "name": "small-limits:array:122",
+      "input": [
+        "\"𝄞d1\u0017j\t\u001b𝄞",
+        false,
+        9007199254740991,
+        null,
+        true
+      ],
+      "limits": [
+        4,
+        2,
+        11
+      ],
+      "output": [
+        "\"𝄞d1\u0017j\t\u001b𝄞",
+        false,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:123",
+      "input": {
+        "vm𝄞": false,
+        "...": false,
+        "16": [
+          null
+        ],
+        "4294967294": "OJZSFédézxKt"
+      },
+      "limits": [
+        4,
+        0,
+        5
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:124",
+      "input": [
+        {
+          "$f64": "16371d773dab3742"
+        }
+      ],
+      "limits": [
+        3,
+        3,
+        17
+      ],
+      "output": [
+        {
+          "$f64": "16371d773dab3742"
+        }
+      ]
+    },
+    {
+      "name": "small-limits:object:125",
+      "input": {
+        "20": {
+          "1": "O\u0019T世é򡳪😀",
+          "1.5": null,
+          "20": true,
+          "\u0019 jLPB𝄞o\u0001 🕴": "v",
+          "name": "\u001a 7\tz "
+        },
+        "N=9v$　": {
+          "text": 1e-6
+        },
+        "3": null,
+        "11": [
+          "é X\u001bJé\\\u0007"
+        ],
+        "text": {
+          "😀😀\u001bvu  ": {
+            "key": null,
+            " \ré\u000b\"8": "世 𝄞s\t世L\u0007 K\u000f",
+            "type": false,
+            "\u001cH\\ér Oé f": true,
+            "W򯰐¥kG\u0000\"K": null
+          },
+          "context": 0.30000000000000004,
+          "3": 8072216842554259074
+        },
+        "1.5": []
+      },
+      "limits": [
+        4,
+        4,
+        13
+      ],
+      "output": {
+        "3": null,
+        "11": [
+          "é X\u001bJé\\\u0007"
+        ],
+        "20": {
+          "1": "O\u0019T世é򡳪😀",
+          "20": true,
+          "1.5": null,
+          "\u0019 jLPB𝄞o\u0001 🕴": "v",
+          "...": "[MaxProperties ~]"
+        },
+        "N=9v$　": {
+          "text": 1e-6
+        },
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:126",
+      "input": [
+        1831506844711443385,
+        "YyA\\"
+      ],
+      "limits": [
+        1,
+        3,
+        4
+      ],
+      "output": [
+        1831506844711443385,
+        "YyA\\"
+      ]
+    },
+    {
+      "name": "small-limits:array:127",
+      "input": [],
+      "limits": [
+        1,
+        5,
+        17
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:128",
+      "input": [
+        "A\u0011DA 1DR\"K ",
+        null,
+        {
+          "DP2X1😀é": "",
+          "\u0007😀X😀世sO𝄞": 4548949720419329799,
+          "Y世𝄞éº😀i᠎H": "\np",
+          "...": {
+            "-1": true
+          },
+          "01": false
+        }
+      ],
+      "limits": [
+        3,
+        3,
+        1
+      ],
+      "output": [
+        "A...",
+        null,
+        {
+          "DP2X1😀é": "",
+          "\u0007😀X😀世sO𝄞": 4548949720419329799,
+          "Y世𝄞éº😀i᠎H": "\n...",
+          "...": "[MaxProperties ~]"
+        }
+      ]
+    },
+    {
+      "name": "small-limits:object:129",
+      "input": {
+        "context": {
+          "...": " Dp8\\j\"d😀j"
+        }
+      },
+      "limits": [
+        1,
+        5,
+        10
+      ],
+      "output": {
+        "context": "[Object]"
+      }
+    },
+    {
+      "name": "small-limits:object:130",
+      "input": {
+        "context": "q\u0011Ué8f\td世"
+      },
+      "limits": [
+        5,
+        1,
+        13
+      ],
+      "output": {
+        "context": "q\u0011Ué8f\td世"
+      }
+    },
+    {
+      "name": "small-limits:array:131",
+      "input": [
+        10002710560579526183,
+        "KBqY ​ 😀",
+        [
+          1e-6,
+          "😀?4世hzKwE\\"
+        ],
+        [
+          null,
+          "DéI 𝄞tu",
+          "y𝮎N\\ 世\t",
+          6107109497973253360,
+          null
+        ],
+        "",
+        [
+          {
+            "$f64": "554643d5c684059a"
+          },
+          null
+        ]
+      ],
+      "limits": [
+        0,
+        3,
+        9
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:132",
+      "input": [
+        null,
+        {
+          "ff\"": null,
+          "type": null,
+          "text": null
+        },
+        [
+          2021336256581828242
+        ]
+      ],
+      "limits": [
+        5,
+        2,
+        17
+      ],
+      "output": [
+        null,
+        {
+          "ff\"": null,
+          "type": null,
+          "...": "[MaxProperties ~]"
+        },
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:133",
+      "input": {
+        "S": [
+          "jR"
+        ],
+        "1": false,
+        " ba \n😀": "\u0001\u0014jw\"󧗔 Dt",
+        "7\u000f0𝄞z": -8499107938911626039,
+        "text": 284794737.2656776
+      },
+      "limits": [
+        3,
+        1,
+        19
+      ],
+      "output": {
+        "1": false,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:134",
+      "input": [],
+      "limits": [
+        5,
+        2,
+        0
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:135",
+      "input": {
+        "text": false,
+        "items": true,
+        "value": -1.5864790836892565e-111
+      },
+      "limits": [
+        4,
+        1,
+        9
+      ],
+      "output": {
+        "text": false,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:136",
+      "input": [
+        {}
+      ],
+      "limits": [
+        1,
+        3,
+        16
+      ],
+      "output": [
+        "[Object]"
+      ]
+    },
+    {
+      "name": "small-limits:object:137",
+      "input": {
+        "20": null,
+        "12": -1.8324024297272728e-275,
+        "😀世x᠎𝄞𝄞 \\ EV\\": {}
+      },
+      "limits": [
+        3,
+        5,
+        14
+      ],
+      "output": {
+        "12": -1.8324024297272728e-275,
+        "20": null,
+        "😀世x᠎𝄞𝄞 \\ EV\\": {}
+      }
+    },
+    {
+      "name": "small-limits:object:138",
+      "input": {
+        "18": false,
+        "﻿é[": {},
+        "data": true
+      },
+      "limits": [
+        0,
+        2,
+        4
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:139",
+      "input": [
+        9007199254740993,
+        9143843951018452022,
+        {
+          "$f64": "8000000000000000"
+        },
+        {
+          "...": 1e-7,
+          "\\😀𝄞𝄞4r ": "",
+          "items": true
+        }
+      ],
+      "limits": [
+        1,
+        4,
+        16
+      ],
+      "output": [
+        9007199254740993,
+        9143843951018452022,
+        {
+          "$f64": "8000000000000000"
+        },
+        "[Object]"
+      ]
+    },
+    {
+      "name": "small-limits:array:140",
+      "input": [],
+      "limits": [
+        5,
+        5,
+        1
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:141",
+      "input": {
+        "items": null,
+        "10": "\b.SyF\u0011世TIt\\",
+        "4294967294": {
+          "id": null
+        }
+      },
+      "limits": [
+        0,
+        0,
+        16
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:142",
+      "input": [
+        {
+          "b": "😀Y WE"
+        }
+      ],
+      "limits": [
+        5,
+        4,
+        2
+      ],
+      "output": [
+        {
+          "b": "😀..."
+        }
+      ]
+    },
+    {
+      "name": "small-limits:array:143",
+      "input": [
+        [
+          true
+        ],
+        "D𠋭T😀\t  é𝄞𝄞nL4",
+        "\\𝄞\"\u001a😀",
+        "Q😀",
+        {
+          "J\"\u0014L fVjEY1": false,
+          "name": "\rKH",
+          "text": null
+        },
+        -7755432331539614141
+      ],
+      "limits": [
+        5,
+        2,
+        11
+      ],
+      "output": [
+        [
+          true
+        ],
+        "D𠋭T😀\t  é...",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:144",
+      "input": [],
+      "limits": [
+        0,
+        4,
+        0
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:145",
+      "input": [],
+      "limits": [
+        1,
+        1,
+        16
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:146",
+      "input": {
+        "value": 9007199254740991,
+        " L世\u000b\u001d世  ": [
+          814681228483374112,
+          null
+        ],
+        "9": false
+      },
+      "limits": [
+        2,
+        5,
+        15
+      ],
+      "output": {
+        "9": false,
+        "value": 9007199254740991,
+        " L世\u000b\u001d世  ": [
+          814681228483374112,
+          null
+        ]
+      }
+    },
+    {
+      "name": "small-limits:number:147",
+      "input": 2784617173041500152,
+      "limits": [
+        4,
+        3,
+        13
+      ],
+      "output": 2784617173041500152
+    },
+    {
+      "name": "small-limits:array:148",
+      "input": [
+        [
+          false,
+          true,
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        {},
+        true,
+        true
+      ],
+      "limits": [
+        5,
+        4,
+        10
+      ],
+      "output": [
+        [
+          false,
+          true,
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        {},
+        true,
+        true
+      ]
+    },
+    {
+      "name": "small-limits:array:149",
+      "input": [
+        null
+      ],
+      "limits": [
+        5,
+        5,
+        4
+      ],
+      "output": [
+        null
+      ]
+    },
+    {
+      "name": "small-limits:object:150",
+      "input": {
+        "12": {
+          "14": 0.30000000000000004,
+          "b": true,
+          "01": null,
+          "id": 0.0,
+          "": "MD世h\\qeS8"
+        },
+        "-1": true
+      },
+      "limits": [
+        3,
+        4,
+        15
+      ],
+      "output": {
+        "12": {
+          "14": 0.30000000000000004,
+          "b": true,
+          "01": null,
+          "id": 0.0,
+          "...": "[MaxProperties ~]"
+        },
+        "-1": true
+      }
+    },
+    {
+      "name": "small-limits:object:151",
+      "input": {
+        "context": false,
+        "𝄞J\tZ😀c 😀": 1990223245776550629,
+        "4294967294": null,
+        "éLA😀😀\n": [
+          -3698579473027193620
+        ]
+      },
+      "limits": [
+        4,
+        1,
+        19
+      ],
+      "output": {
+        "4294967294": null,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:152",
+      "input": [
+        "\\HnN\u0018T 𝄞'yQ",
+        7585327062942631991,
+        {
+          "b": null,
+          "...": null
+        }
+      ],
+      "limits": [
+        1,
+        2,
+        0
+      ],
+      "output": [
+        "...",
+        7585327062942631991,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:153",
+      "input": [
+        "b\u0019𝄞Ku😀",
+        [],
+        {},
+        {}
+      ],
+      "limits": [
+        4,
+        5,
+        16
+      ],
+      "output": [
+        "b\u0019𝄞Ku😀",
+        [],
+        {},
+        {}
+      ]
+    },
+    {
+      "name": "small-limits:array:154",
+      "input": [
+        null,
+        1.846882557679515e-309
+      ],
+      "limits": [
+        3,
+        4,
+        14
+      ],
+      "output": [
+        null,
+        1.846882557679515e-309
+      ]
+    },
+    {
+      "name": "small-limits:object:155",
+      "input": {
+        "a": -4.897567182036567e-209,
+        "id": 3.483646929282417e-226,
+        "key": null
+      },
+      "limits": [
+        0,
+        4,
+        16
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:156",
+      "input": [
+        {
+          "4": false,
+          "12": null,
+          "...": null,
+          "items": null
+        },
+        [],
+        null
+      ],
+      "limits": [
+        0,
+        3,
+        15
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:157",
+      "input": [],
+      "limits": [
+        5,
+        4,
+        1
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:158",
+      "input": {},
+      "limits": [
+        4,
+        3,
+        18
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:159",
+      "input": {
+        "4294967294": null,
+        "世  th😀H3TN😀": "S\u0017  VD6i\"世Hs",
+        "5": "\"😀\\2\"",
+        "WPO": [
+          null,
+          1e-6,
+          ""
+        ],
+        "4": "\\\tlv O \\",
+        "": {
+          "text": null,
+          "id": null,
+          "1.5": null,
+          "12": "7dLc \u001e򳅒᠎"
+        }
+      },
+      "limits": [
+        4,
+        5,
+        18
+      ],
+      "output": {
+        "4": "\\\tlv O \\",
+        "5": "\"😀\\2\"",
+        "4294967294": null,
+        "世  th😀H3TN😀": "S\u0017  VD6i\"世Hs",
+        "WPO": [
+          null,
+          1e-6,
+          ""
+        ],
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:160",
+      "input": [],
+      "limits": [
+        3,
+        2,
+        10
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:161",
+      "input": {
+        "...": null
+      },
+      "limits": [
+        0,
+        3,
+        15
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:object:162",
+      "input": {
+        "lsi\\t\u001cMD": [
+          null,
+          false
+        ],
+        "8": {
+          "\u0006😀Xwp": false
+        },
+        "4294967295": {
+          "5": 5736060421294416098,
+          "mj": null,
+          "text": null,
+          "id": true
+        },
+        "01": "\\`h"
+      },
+      "limits": [
+        3,
+        5,
+        0
+      ],
+      "output": {
+        "8": {
+          "\u0006😀Xwp": false
+        },
+        "lsi\\t\u001cMD": [
+          null,
+          false
+        ],
+        "4294967295": {
+          "5": 5736060421294416098,
+          "mj": null,
+          "text": null,
+          "id": true
+        },
+        "01": "..."
+      }
+    },
+    {
+      "name": "small-limits:array:163",
+      "input": [],
+      "limits": [
+        5,
+        1,
+        10
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:164",
+      "input": {
+        "name": {
+          "01": 0.30000000000000004,
+          "17": -4.921554381087725e+266
+        },
+        "1": false,
+        "text": {
+          "ré🕴\"s世O᠎": null,
+          "2": 0.0
+        }
+      },
+      "limits": [
+        5,
+        0,
+        19
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:165",
+      "input": {
+        "V<<\\é kx": null,
+        "zY ᠎r¦Be世é𝄞": null,
+        "1.5": [],
+        "é\"x": [
+          null
+        ]
+      },
+      "limits": [
+        1,
+        3,
+        6
+      ],
+      "output": {
+        "V<<\\é kx": null,
+        "zY ᠎r¦Be世é𝄞": null,
+        "1.5": "[Array]",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:166",
+      "input": {
+        "6": true,
+        "": false,
+        "15": 1e-7,
+        "data": false
+      },
+      "limits": [
+        5,
+        2,
+        13
+      ],
+      "output": {
+        "6": true,
+        "15": 1e-7,
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:167",
+      "input": [
+        true,
+        null,
+        null,
+        1e-7,
+        {
+          "16": null,
+          "items": null
+        },
+        []
+      ],
+      "limits": [
+        0,
+        3,
+        16
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:168",
+      "input": {
+        "v\"M世xD": [
+          "😀N",
+          true,
+          ""
+        ],
+        "8": [
+          false,
+          false,
+          null
+        ],
+        "4294967294": null,
+        "\u000f": [
+          "😀2\f"
+        ],
+        "...": "𝄞4"
+      },
+      "limits": [
+        4,
+        4,
+        18
+      ],
+      "output": {
+        "8": [
+          false,
+          false,
+          null
+        ],
+        "4294967294": null,
+        "v\"M世xD": [
+          "😀N",
+          true,
+          ""
+        ],
+        "\u000f": [
+          "😀2\f"
+        ],
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:169",
+      "input": {
+        "-1": true,
+        "type": "𝄞𝄞\n 󧝏",
+        "text": {
+          "a": null,
+          "\"\f𝄞BS\n": null,
+          "text": null,
+          "\n\f‮": "hjé𝄞1B éuJ ",
+          "3 P\u0016�😀5\"b ": "😀é6E😀😀　"
+        }
+      },
+      "limits": [
+        0,
+        5,
+        1
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:170",
+      "input": [
+        [
+          {
+            "$f64": "0e986afdcc5ef602"
+          },
+          null,
+          true,
+          false
+        ],
+        {
+          "$f64": "e77941f7055b20c9"
+        }
+      ],
+      "limits": [
+        0,
+        2,
+        3
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:171",
+      "input": [
+        false,
+        [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          true
+        ],
+        {
+          "19": true,
+          "U7\u001e\\\\\\Sc世世r": true,
+          "4294967295": true
+        },
+        "𝄞RV0᠎5x.5",
+        null
+      ],
+      "limits": [
+        1,
+        1,
+        5
+      ],
+      "output": [
+        false,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:172",
+      "input": {},
+      "limits": [
+        4,
+        1,
+        4
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:173",
+      "input": [
+        null,
+        null,
+        [
+          9007199254740993,
+          true,
+          true
+        ]
+      ],
+      "limits": [
+        2,
+        2,
+        12
+      ],
+      "output": [
+        null,
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:174",
+      "input": [
+        [
+          -1.973157174035185e+30,
+          "l",
+          2873287104945334049,
+          false
+        ]
+      ],
+      "limits": [
+        2,
+        3,
+        18
+      ],
+      "output": [
+        [
+          -1.973157174035185e+30,
+          "l",
+          2873287104945334049,
+          "[MaxProperties ~]"
+        ]
+      ]
+    },
+    {
+      "name": "small-limits:object:175",
+      "input": {
+        "2": false,
+        "data": "\tq\\4",
+        " u\"𝄞😀L": 5607175226614135340,
+        "01": {
+          "context": null,
+          "\u0013😀\\4\u0010L😀8 ": " é\r\u0004.😀𝄞t",
+          "name": null,
+          "b": " ZjCgcgKt\"𝄞d򼈻",
+          "18": null
+        }
+      },
+      "limits": [
+        1,
+        2,
+        11
+      ],
+      "output": {
+        "2": false,
+        "data": "\tq\\4",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:176",
+      "input": [],
+      "limits": [
+        0,
+        2,
+        16
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:177",
+      "input": {
+        "b": true,
+        "data": [
+          -4772852140774454580,
+          8148866745706748980,
+          "𝄞　Ié",
+          "S\\mE😀\f\"\"4KJg😀 ",
+          291606360238122584,
+          -2761064400775159062
+        ]
+      },
+      "limits": [
+        5,
+        3,
+        0
+      ],
+      "output": {
+        "b": true,
+        "data": [
+          -4772852140774454580,
+          8148866745706748980,
+          "...",
+          "[MaxProperties ~]"
+        ]
+      }
+    },
+    {
+      "name": "small-limits:object:178",
+      "input": {
+        "u27TJ": null,
+        "value": {
+          "...": null,
+          "type": "\"r5😀",
+          "01": false,
+          "18": null,
+          "\u000b": "\\L\\0t᠎"
+        }
+      },
+      "limits": [
+        5,
+        4,
+        11
+      ],
+      "output": {
+        "u27TJ": null,
+        "value": {
+          "18": null,
+          "...": "[MaxProperties ~]",
+          "type": "\"r5😀",
+          "01": false
+        }
+      }
+    },
+    {
+      "name": "small-limits:object:179",
+      "input": {
+        "15": "81U𝄞Yi i",
+        "type": [
+          0.0,
+          "véq  \\\u000e 世hA",
+          "　",
+          false,
+          -397167105316702575
+        ]
+      },
+      "limits": [
+        2,
+        5,
+        9
+      ],
+      "output": {
+        "15": "81U𝄞Yi ...",
+        "type": [
+          0.0,
+          "véq  \\\u000e 世...",
+          "　",
+          false,
+          -397167105316702575
+        ]
+      }
+    },
+    {
+      "name": "small-limits:array:180",
+      "input": [],
+      "limits": [
+        4,
+        0,
+        9
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:181",
+      "input": {
+        "19": -8.26465809406599e-309,
+        "11": {
+          "16": 0.0
+        }
+      },
+      "limits": [
+        5,
+        4,
+        4
+      ],
+      "output": {
+        "11": {
+          "16": 0.0
+        },
+        "19": -8.26465809406599e-309
+      }
+    },
+    {
+      "name": "small-limits:array:182",
+      "input": [
+        [
+          ""
+        ]
+      ],
+      "limits": [
+        0,
+        5,
+        11
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:array:183",
+      "input": [
+        4.590955764407781e+188,
+        "𝄞ié",
+        [
+          true
+        ],
+        {}
+      ],
+      "limits": [
+        4,
+        1,
+        7
+      ],
+      "output": [
+        4.590955764407781e+188,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:boolean:184",
+      "input": true,
+      "limits": [
+        4,
+        4,
+        13
+      ],
+      "output": true
+    },
+    {
+      "name": "small-limits:array:185",
+      "input": [],
+      "limits": [
+        5,
+        4,
+        12
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:186",
+      "input": [
+        false,
+        [
+          null,
+          "JF  zAZéo",
+          false,
+          {
+            "$f64": "8000000000000000"
+          },
+          "𝄞 𝄞",
+          "𝄞\"k😀k1iz𝄞9 \\3"
+        ],
+        {
+          "2": true,
+          "11": true
+        },
+        [
+          -2061250969200345766,
+          false,
+          true,
+          null
+        ],
+        "​😀",
+        -7.876792481760135e+303
+      ],
+      "limits": [
+        3,
+        5,
+        11
+      ],
+      "output": [
+        false,
+        [
+          null,
+          "JF  zAZéo",
+          false,
+          {
+            "$f64": "8000000000000000"
+          },
+          "𝄞 𝄞",
+          "[MaxProperties ~]"
+        ],
+        {
+          "2": true,
+          "11": true
+        },
+        [
+          -2061250969200345766,
+          false,
+          true,
+          null
+        ],
+        "​😀",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:187",
+      "input": [
+        true,
+        false,
+        [
+          "8wé"
+        ],
+        -2437276669002927070
+      ],
+      "limits": [
+        2,
+        3,
+        8
+      ],
+      "output": [
+        true,
+        false,
+        [
+          "8wé"
+        ],
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:188",
+      "input": [
+        12486133419151686131,
+        {
+          "8": 4.348355340934623e+88,
+          "13": "f世DK",
+          "type": 1641948288478276171,
+          "...": 0.0
+        }
+      ],
+      "limits": [
+        0,
+        5,
+        7
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:object:189",
+      "input": {
+        "1.5": -2.06315509359189e-261
+      },
+      "limits": [
+        3,
+        1,
+        17
+      ],
+      "output": {
+        "1.5": -2.06315509359189e-261
+      }
+    },
+    {
+      "name": "small-limits:object:190",
+      "input": {},
+      "limits": [
+        0,
+        4,
+        11
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:191",
+      "input": [
+        null,
+        1e-7
+      ],
+      "limits": [
+        2,
+        4,
+        2
+      ],
+      "output": [
+        null,
+        1e-7
+      ]
+    },
+    {
+      "name": "small-limits:object:192",
+      "input": {
+        "17": null,
+        "Y\"u\u0006\u001c\\ ": null,
+        "1": [
+          null,
+          5060263101852121999,
+          false
+        ],
+        "": "\" "
+      },
+      "limits": [
+        1,
+        4,
+        15
+      ],
+      "output": {
+        "1": "[Array]",
+        "17": null,
+        "Y\"u\u0006\u001c\\ ": null,
+        "": "\" "
+      }
+    },
+    {
+      "name": "small-limits:array:193",
+      "input": [
+        "h​d",
+        "é世世\nT5 <SU7"
+      ],
+      "limits": [
+        5,
+        3,
+        4
+      ],
+      "output": [
+        "h​d",
+        "é世世..."
+      ]
+    },
+    {
+      "name": "small-limits:array:194",
+      "input": [
+        1e-6,
+        null,
+        false,
+        true,
+        "acFuIR"
+      ],
+      "limits": [
+        4,
+        5,
+        4
+      ],
+      "output": [
+        1e-6,
+        null,
+        false,
+        true,
+        "acFu..."
+      ]
+    },
+    {
+      "name": "small-limits:array:195",
+      "input": [
+        9007199254740993,
+        {
+          "x": false,
+          "-1": null,
+          "Sé": false
+        }
+      ],
+      "limits": [
+        3,
+        3,
+        5
+      ],
+      "output": [
+        9007199254740993,
+        {
+          "x": false,
+          "-1": null,
+          "Sé": false
+        }
+      ]
+    },
+    {
+      "name": "small-limits:array:196",
+      "input": [
+        "　9😀\\﻿CB😀A3",
+        true
+      ],
+      "limits": [
+        3,
+        4,
+        4
+      ],
+      "output": [
+        "　9😀...",
+        true
+      ]
+    },
+    {
+      "name": "small-limits:object:197",
+      "input": {
+        "text": true,
+        "01": true
+      },
+      "limits": [
+        4,
+        2,
+        5
+      ],
+      "output": {
+        "text": true,
+        "01": true
+      }
+    },
+    {
+      "name": "small-limits:object:198",
+      "input": {
+        "b": false,
+        "items": [
+          "\u0006é\"\"𝄞V\u0006JohCé😀",
+          false,
+          null
+        ],
+        "C\u0016vS6": [
+          null,
+          {
+            "$f64": "8000000000000000"
+          },
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        "16": [
+          true,
+          false,
+          [
+            true,
+            true,
+            null,
+            "񩧰𝄞3wnW😀",
+            " 𝄞1😀a gé\"﻿򃽦kk​𝄞"
+          ],
+          true,
+          0.30000000000000004,
+          false
+        ],
+        "D\u001cPF": {}
+      },
+      "limits": [
+        0,
+        2,
+        5
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:199",
+      "input": [
+        null,
+        " 世᠎😀n$é",
+        "o\u0003𙏋\u001b\u0007V"
+      ],
+      "limits": [
+        5,
+        1,
+        16
+      ],
+      "output": [
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:200",
+      "input": [
+        {
+          "": null
+        },
+        "O\b hk\u001b ",
+        false,
+        null,
+        true
+      ],
+      "limits": [
+        3,
+        1,
+        0
+      ],
+      "output": [
+        {
+          "": null
+        },
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:number:201",
+      "input": 12779989399280318720,
+      "limits": [
+        1,
+        1,
+        10
+      ],
+      "output": 12779989399280318720
+    },
+    {
+      "name": "small-limits:object:202",
+      "input": {
+        "O7\u000b6z GAt": -2.4952803303464217e+48,
+        "key": {},
+        "7": 4087413018498237542,
+        "J𝄞c\\": [
+          "RX lCLr😀\u0019i😀F",
+          "񑍪O1\u0015n9",
+          14912019901905945490,
+          "\rm2\u001e e世p世4c \"$",
+          false
+        ],
+        "text": 3667238010194410594,
+        "type": false
+      },
+      "limits": [
+        1,
+        4,
+        1
+      ],
+      "output": {
+        "7": 4087413018498237542,
+        "O7\u000b6z GAt": -2.4952803303464217e+48,
+        "key": "[Object]",
+        "J𝄞c\\": "[Array]",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:number:203",
+      "input": 17930744429575034164,
+      "limits": [
+        4,
+        4,
+        1
+      ],
+      "output": 17930744429575034164
+    },
+    {
+      "name": "small-limits:object:204",
+      "input": {},
+      "limits": [
+        4,
+        0,
+        7
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:205",
+      "input": [],
+      "limits": [
+        5,
+        0,
+        6
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:206",
+      "input": {
+        "key": {
+          " \\ ": "\"I\\",
+          "p": false,
+          "c": null
+        }
+      },
+      "limits": [
+        1,
+        3,
+        1
+      ],
+      "output": {
+        "key": "[Object]"
+      }
+    },
+    {
+      "name": "small-limits:array:207",
+      "input": [
+        -8667475559374165527,
+        null
+      ],
+      "limits": [
+        4,
+        3,
+        4
+      ],
+      "output": [
+        -8667475559374165527,
+        null
+      ]
+    },
+    {
+      "name": "small-limits:array:208",
+      "input": [
+        true,
+        {
+          "1.5": false
+        },
+        null,
+        0.0,
+        {
+          "key": -8968392905088940032,
+          "id": null
+        },
+        "\u0007 T𝄞 rJéZ\"W"
+      ],
+      "limits": [
+        5,
+        2,
+        5
+      ],
+      "output": [
+        true,
+        {
+          "1.5": false
+        },
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:209",
+      "input": [
+        [
+          null
+        ],
+        null,
+        {
+          "7": null,
+          "2": null,
+          "𝄞\tK{ Ys\n9\f": "j",
+          "3": null,
+          "4294967294": false,
+          "key": -7.168145789523128e-131
+        },
+        -2.111805896792754e-308,
+        null,
+        true
+      ],
+      "limits": [
+        2,
+        0,
+        12
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:210",
+      "input": [
+        [],
+        4.7014359871564025e-272,
+        {
+          "type": true,
+          "context": false
+        },
+        {
+          "name": "\"\"Z 5񓬴lL \u0001",
+          "0": true,
+          "...": false,
+          "CBKuy  E\\": [
+            "Em",
+            {
+              "$f64": "8000000000000000"
+            },
+            null,
+            ">h世᠎DLc"
+          ]
+        },
+        null
+      ],
+      "limits": [
+        2,
+        2,
+        16
+      ],
+      "output": [
+        [],
+        4.7014359871564025e-272,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:211",
+      "input": [
+        null
+      ],
+      "limits": [
+        3,
+        0,
+        14
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:212",
+      "input": [],
+      "limits": [
+        5,
+        3,
+        9
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:array:213",
+      "input": [
+        {
+          "type": false,
+          "\u0019\u000b9i4  ﻿": null,
+          "19": true
+        },
+        null,
+        {
+          "key": "\\ ",
+          "xc\u0000v  𝄞\t": null
+        },
+        []
+      ],
+      "limits": [
+        3,
+        2,
+        6
+      ],
+      "output": [
+        {
+          "19": true,
+          "type": false,
+          "...": "[MaxProperties ~]"
+        },
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:214",
+      "input": [
+        "F𝄞\"nL ",
+        8.8509212486932e-97,
+        null,
+        {
+          "name": 3597598202881949611,
+          " 😀􎻸k世񨇗ZMB": "kV\"f a5",
+          "": 4244008435707602119,
+          "a": "0𝄞` Q﻿\" lWOOE᠎",
+          "2": "\u001an\nQ\u001b \"𝄞L\r7",
+          "id": 14050957408310359660
+        }
+      ],
+      "limits": [
+        2,
+        1,
+        9
+      ],
+      "output": [
+        "F𝄞\"nL ...",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:215",
+      "input": {
+        "11": null,
+        "text": "JX\u0010𳏷𝄞😀l[Q",
+        "1.5": true,
+        "data": "q",
+        "...": null,
+        "20": true
+      },
+      "limits": [
+        0,
+        4,
+        8
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:object:216",
+      "input": {
+        " \"񭟝é\t\\y": false,
+        "18": [
+          "𝄞\u001f\u0016p1😀世S𝄞 i U6S\u0010",
+          -2098948277932282152,
+          true,
+          "  1",
+          false
+        ]
+      },
+      "limits": [
+        3,
+        0,
+        1
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:217",
+      "input": [
+        13936603953792564260,
+        true,
+        {
+          "L": "é\f\\\u000f&",
+          "én": false,
+          "11": 0.0,
+          "10": null
+        },
+        null,
+        {}
+      ],
+      "limits": [
+        3,
+        5,
+        17
+      ],
+      "output": [
+        13936603953792564260,
+        true,
+        {
+          "10": null,
+          "11": 0.0,
+          "L": "é\f\\\u000f&",
+          "én": false
+        },
+        null,
+        {}
+      ]
+    },
+    {
+      "name": "small-limits:object:218",
+      "input": {
+        "a": [
+          "L\\𝄞 �򦵾 C\u000eaM𝄞x​",
+          16441434847404760472,
+          "\"",
+          -540511523287663400
+        ],
+        "context": null,
+        "39𝄞𝄞\u000e\"GE": {
+          "id": true,
+          "1": null,
+          "18": 9007199254740993,
+          "F򀘉s ﻿􇎔😀8aZ": "G😀bISé0𝄞\\",
+          "4294967295": 9007199254740993
+        },
+        "3": [
+          null
+        ]
+      },
+      "limits": [
+        1,
+        0,
+        14
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:object:219",
+      "input": {
+        "type": null,
+        "  \n a😀": false,
+        "text": "pk",
+        "5": {}
+      },
+      "limits": [
+        4,
+        5,
+        0
+      ],
+      "output": {
+        "5": {},
+        "type": null,
+        "  \n a😀": false,
+        "text": "..."
+      }
+    },
+    {
+      "name": "small-limits:array:220",
+      "input": [
+        null,
+        null
+      ],
+      "limits": [
+        4,
+        3,
+        4
+      ],
+      "output": [
+        null,
+        null
+      ]
+    },
+    {
+      "name": "small-limits:object:221",
+      "input": {
+        "...": {
+          "b": false,
+          "3": "F\rBé",
+          "OayAnt é𝄞\u0015e": 3490289067961747169,
+          "\\j": 0.30000000000000004,
+          "\\ 世": "\n𝄞Lé?l\u0007Am锺8😀\\򒑶"
+        },
+        "1": "😀z𝄞\\ /BU😀𝄞 \\t\u0010"
+      },
+      "limits": [
+        0,
+        1,
+        13
+      ],
+      "output": "[Object]"
+    },
+    {
+      "name": "small-limits:array:222",
+      "input": [
+        false,
+        17350772004000001543
+      ],
+      "limits": [
+        4,
+        0,
+        11
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:223",
+      "input": [
+        "é󭵛  2f \" ",
+        "😀kB9é",
+        {
+          "0": "FA",
+          "18": null
+        },
+        true,
+        false
+      ],
+      "limits": [
+        2,
+        1,
+        19
+      ],
+      "output": [
+        "é󭵛  2f \" ",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:224",
+      "input": [],
+      "limits": [
+        3,
+        0,
+        2
+      ],
+      "output": []
+    },
+    {
+      "name": "small-limits:object:225",
+      "input": {},
+      "limits": [
+        2,
+        2,
+        1
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:boolean:226",
+      "input": true,
+      "limits": [
+        3,
+        4,
+        4
+      ],
+      "output": true
+    },
+    {
+      "name": "small-limits:object:227",
+      "input": {},
+      "limits": [
+        5,
+        1,
+        8
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:228",
+      "input": {
+        "1򌬸": null,
+        "4294967294": false,
+        "K": [
+          "😀A😀😀\\\" N𝄞世𝄞\\wb31",
+          null
+        ],
+        "...": [
+          4760350149953716832,
+          "\n😀𝄞\"",
+          2.3508227868439793e+63,
+          null
+        ],
+        "data": {
+          "8 世é": false,
+          "😀 i\u0019😀😀\\38\u0011 ": null,
+          "17": null,
+          "context": null,
+          "name": -3.279361000745163e-70
+        },
+        "9": "W"
+      },
+      "limits": [
+        4,
+        5,
+        0
+      ],
+      "output": {
+        "9": "...",
+        "4294967294": false,
+        "1򌬸": null,
+        "K": [
+          "...",
+          null
+        ],
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:229",
+      "input": [
+        -6.342184915318067e-69,
+        null
+      ],
+      "limits": [
+        4,
+        0,
+        13
+      ],
+      "output": [
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:230",
+      "input": {
+        "15": true
+      },
+      "limits": [
+        2,
+        1,
+        15
+      ],
+      "output": {
+        "15": true
+      }
+    },
+    {
+      "name": "small-limits:object:231",
+      "input": {},
+      "limits": [
+        3,
+        0,
+        6
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:232",
+      "input": [
+        {
+          "1\u0013o 6\raUé": {
+            "text": 9007199254740991
+          },
+          "18": null
+        },
+        "Rdw ",
+        {
+          "type": null,
+          "\r.": "᠎p\"世Q𝄞o=KéY\\",
+          "id": "",
+          "context": "  P世\rX　\u0017\u001f\\\\I t"
+        },
+        {
+          "text": 0.0
+        },
+        null,
+        null
+      ],
+      "limits": [
+        5,
+        2,
+        10
+      ],
+      "output": [
+        {
+          "18": null,
+          "1\u0013o 6\raUé": {
+            "text": 9007199254740991
+          }
+        },
+        "Rdw ",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:233",
+      "input": {
+        "context": [
+          0.30000000000000004,
+          false,
+          "\u0004L\u0018\u000bEhwl😀?\u0000 ",
+          "C\u001c0",
+          null
+        ],
+        "10": false
+      },
+      "limits": [
+        4,
+        3,
+        11
+      ],
+      "output": {
+        "10": false,
+        "context": [
+          0.30000000000000004,
+          false,
+          "\u0004L\u0018\u000bEhwl😀...",
+          "[MaxProperties ~]"
+        ]
+      }
+    },
+    {
+      "name": "small-limits:array:234",
+      "input": [
+        "",
+        [
+          "ip𝄞\\o񙸑",
+          null
+        ],
+        [
+          2375038167231955253,
+          "y\\aI \u001a\"",
+          [
+            null
+          ],
+          0.30000000000000004,
+          false,
+          null
+        ],
+        {
+          "9": 1e-7,
+          "4294967294": null,
+          "...": 0.0
+        },
+        {
+          "context": null,
+          "\"t\u000b3": "m \u001bp𝄞t1N c😀"
+        }
+      ],
+      "limits": [
+        2,
+        1,
+        18
+      ],
+      "output": [
+        "",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:235",
+      "input": [
+        [
+          true,
+          "{oY 世z2\u0004\u0000\r ",
+          true
+        ],
+        [
+          true,
+          {
+            "$f64": "6cfa43bbc168dade"
+          },
+          -1429872456822493616
+        ],
+        [
+          null,
+          {
+            "Zo𝄞m": null,
+            "15": -8693122804378884270,
+            "\\i": "2r",
+            "\\": null,
+            "20": true
+          },
+          "",
+          null,
+          null
+        ],
+        "😀世世‮Z𝄞​ e😀",
+        {}
+      ],
+      "limits": [
+        5,
+        4,
+        1
+      ],
+      "output": [
+        [
+          true,
+          "{...",
+          true
+        ],
+        [
+          true,
+          {
+            "$f64": "6cfa43bbc168dade"
+          },
+          -1429872456822493616
+        ],
+        [
+          null,
+          {
+            "15": -8693122804378884270,
+            "20": true,
+            "Zo𝄞m": null,
+            "\\i": "2...",
+            "...": "[MaxProperties ~]"
+          },
+          "",
+          null,
+          "[MaxProperties ~]"
+        ],
+        "...",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:236",
+      "input": [
+        0.0
+      ],
+      "limits": [
+        3,
+        5,
+        8
+      ],
+      "output": [
+        0.0
+      ]
+    },
+    {
+      "name": "small-limits:object:237",
+      "input": {
+        "世\"P世  Még": [
+          "Hdg\"",
+          null,
+          true,
+          false,
+          false
+        ],
+        "01": [
+          null,
+          null,
+          null,
+          true,
+          "I",
+          9007199254740991
+        ],
+        "data": null,
+        "\"99xU😀VE": [
+          null
+        ],
+        "😀 r\f𝄞  \"  %": {
+          "$f64": "f36e708cf0e2ee45"
+        }
+      },
+      "limits": [
+        3,
+        4,
+        7
+      ],
+      "output": {
+        "世\"P世  Még": [
+          "Hdg\"",
+          null,
+          true,
+          false,
+          "[MaxProperties ~]"
+        ],
+        "01": [
+          null,
+          null,
+          null,
+          true,
+          "[MaxProperties ~]"
+        ],
+        "data": null,
+        "\"99xU😀VE": [
+          null
+        ],
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:238",
+      "input": [
+        [
+          null,
+          -266603131394734948
+        ],
+        [
+          false,
+          null,
+          false,
+          " W&世\"Q\\xé"
+        ]
+      ],
+      "limits": [
+        3,
+        3,
+        14
+      ],
+      "output": [
+        [
+          null,
+          -266603131394734948
+        ],
+        [
+          false,
+          null,
+          false,
+          "[MaxProperties ~]"
+        ]
+      ]
+    },
+    {
+      "name": "small-limits:array:239",
+      "input": [
+        null
+      ],
+      "limits": [
+        5,
+        5,
+        9
+      ],
+      "output": [
+        null
+      ]
+    },
+    {
+      "name": "small-limits:object:240",
+      "input": {},
+      "limits": [
+        5,
+        0,
+        19
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:object:241",
+      "input": {},
+      "limits": [
+        4,
+        3,
+        0
+      ],
+      "output": {}
+    },
+    {
+      "name": "small-limits:array:242",
+      "input": [
+        null,
+        9007199254740991,
+        null,
+        -7091375737037872740,
+        "o"
+      ],
+      "limits": [
+        4,
+        3,
+        6
+      ],
+      "output": [
+        null,
+        9007199254740991,
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:243",
+      "input": [
+        8471085365959742086,
+        [
+          false
+        ],
+        null
+      ],
+      "limits": [
+        1,
+        1,
+        17
+      ],
+      "output": [
+        8471085365959742086,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:object:244",
+      "input": {
+        "4\r𝄞 2\u0016\u00006𝄞\"P": {
+          "\u00114𝄞n0😀é\\": 0.0,
+          "name": null,
+          "\u001e": -5028471276774599714
+        },
+        "4": "😀\u0014𝄞𝄞xD\u0018\u0013V0𝄞\t😀",
+        "x O😀𝄞\\𝄞 y5": null,
+        "vXTpD": {
+          "18": [
+            1897524980403445270,
+            "&𝄞 55𞴹😀i",
+            "péW𝄞Z+ ​ = Y 𝄞",
+            false
+          ]
+        },
+        "\"J1D 𝄞\"D": false,
+        "id": "U\" "
+      },
+      "limits": [
+        1,
+        0,
+        11
+      ],
+      "output": {
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:245",
+      "input": [
+        0.0,
+        null,
+        5.276769613729019e+195,
+        {
+          "type": null,
+          "0": "4FV😀\"​᠎😀𝄞Yé\u0010",
+          "items": "L 𝄞é é",
+          "-1": "𝄞a IX 𝄞A\"世g😀 ",
+          "\rVbdCc𝄞": "c😀",
+          "a": null
+        },
+        "vU lU1Z世𝄞 "
+      ],
+      "limits": [
+        2,
+        2,
+        7
+      ],
+      "output": [
+        0.0,
+        null,
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:246",
+      "input": [
+        "",
+        "　 ",
+        {
+          "14": 9007199254740993,
+          "\" \\é‮5𝄞r😀Q\u0012": 0.0
+        }
+      ],
+      "limits": [
+        2,
+        4,
+        1
+      ],
+      "output": [
+        "",
+        "　...",
+        {
+          "14": 9007199254740993,
+          "\" \\é‮5𝄞r😀Q\u0012": 0.0
+        }
+      ]
+    },
+    {
+      "name": "small-limits:object:247",
+      "input": {
+        "a": "B  \u000fé8d 😀😀k",
+        "...": "Ubf",
+        "2v\\nEéURé😀😀": [
+          "O😀",
+          null,
+          null
+        ],
+        "text": 4638821246574811354,
+        "5W\u001b\u0001𝄞": {
+          "4": true,
+          "0": "y ANF R\r\"\u0004\u001d",
+          "10": true,
+          "b": 0.30000000000000004,
+          "h世\\\\😀😀gPZ😀j": {
+            "$f64": "865bce761a8a8357"
+          }
+        }
+      },
+      "limits": [
+        1,
+        2,
+        19
+      ],
+      "output": {
+        "a": "B  \u000fé8d 😀😀k",
+        "...": "[MaxProperties ~]"
+      }
+    },
+    {
+      "name": "small-limits:array:248",
+      "input": [
+        "IZ\u0012\u0012Y😀J\\𝄞 E",
+        {
+          "text": 3.506449097882375e-230
+        },
+        [],
+        {
+          "7": "g ~世&﻿󯩕\\dx\u0017",
+          "data": "U𝄞gE\u001b\fé",
+          "-1": true,
+          "6": -1740705785909591301,
+          "items": 5.192245423112222e-109
+        },
+        7404950716074768771
+      ],
+      "limits": [
+        0,
+        4,
+        13
+      ],
+      "output": "[Array]"
+    },
+    {
+      "name": "small-limits:null:249",
+      "input": null,
+      "limits": [
+        3,
+        1,
+        1
+      ],
+      "output": null
+    },
+    {
+      "name": "small-limits:array:250",
+      "input": [
+        false,
+        true
+      ],
+      "limits": [
+        1,
+        2,
+        9
+      ],
+      "output": [
+        false,
+        true
+      ]
+    },
+    {
+      "name": "small-limits:array:251",
+      "input": [
+        [
+          {
+            "": false,
+            "x\\𝄞7": "&𝄞C\f𝄞\"\u0015é j",
+            "4": true
+          },
+          false,
+          "",
+          true,
+          "k",
+          -8843758444074990025
+        ],
+        "",
+        null,
+        -2802310491792055795,
+        {
+          "id": "😀qéaW𝄞y\u000bQu😀F世𘃋5T",
+          "data": {
+            "$f64": "e5cc4f0850ae2890"
+          },
+          "key": null,
+          "12": "",
+          "9": {},
+          "name": true
+        }
+      ],
+      "limits": [
+        1,
+        1,
+        16
+      ],
+      "output": [
+        "[Array]",
+        "[MaxProperties ~]"
+      ]
+    },
+    {
+      "name": "small-limits:array:252",
+      "input": [
+        {
+          "-1": -3.066343865093666e-12,
+          "id": null,
+          "value": null
+        }
+      ],
+      "limits": [
+        5,
+        5,
+        15
+      ],
+      "output": [
+        {
+          "-1": -3.066343865093666e-12,
+          "id": null,
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "small-limits:array:253",
+      "input": [
+        true,
+        [
+          "CXFsU ",
+          null,
+          false
+        ],
+        null,
+        "NK"
+      ],
+      "limits": [
+        1,
+        5,
+        13
+      ],
+      "output": [
+        true,
+        "[Array]",
+        null,
+        "NK"
+      ]
+    },
+    {
+      "name": "small-limits:object:254",
+      "input": {
+        "context": null,
+        "  sO]5": 1e+21
+      },
+      "limits": [
+        5,
+        4,
+        17
+      ],
+      "output": {
+        "context": null,
+        "  sO]5": 1e+21
+      }
+    },
+    {
+      "name": "small-limits:array:255",
+      "input": [
+        {
+          "$f64": "8000000000000000"
+        }
+      ],
+      "limits": [
+        1,
+        1,
+        3
+      ],
+      "output": [
+        {
+          "$f64": "8000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:0",
+      "input": [
+        [
+          false,
+          null,
+          false,
+          "u\u000eH𝄞R\u0001l世\u0011k😀W\n2"
+        ]
+      ],
+      "output": [
+        [
+          false,
+          null,
+          false,
+          "u\u000eH𝄞R\u0001l世\u0011k😀W\n2"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:1",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:2",
+      "input": {
+        "16": {},
+        "...": 15257250545975500938
+      },
+      "output": {
+        "16": {},
+        "...": 15257250545975500938
+      }
+    },
+    {
+      "name": "default-limits:array:3",
+      "input": [
+        true,
+        {
+          "type": null,
+          "items": null,
+          "13": null,
+          "4294967294": true
+        }
+      ],
+      "output": [
+        true,
+        {
+          "13": null,
+          "4294967294": true,
+          "type": null,
+          "items": null
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:4",
+      "input": {
+        "9": {
+          "4": 2.444105946876113e-11
+        }
+      },
+      "output": {
+        "9": {
+          "4": 2.444105946876113e-11
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:5",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:6",
+      "input": [
+        null,
+        [
+          {
+            "$f64": "64a19f42ebced339"
+          },
+          true
+        ]
+      ],
+      "output": [
+        null,
+        [
+          {
+            "$f64": "64a19f42ebced339"
+          },
+          true
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:7",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:8",
+      "input": [
+        [
+          true
+        ]
+      ],
+      "output": [
+        [
+          true
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:9",
+      "input": [
+        [
+          "\"Wu\f0\u000bA😀世N",
+          true
+        ],
+        false,
+        null
+      ],
+      "output": [
+        [
+          "\"Wu\f0\u000bA😀世N",
+          true
+        ],
+        false,
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:10",
+      "input": {
+        "\"¥": 7422708186544351440,
+        "id": {}
+      },
+      "output": {
+        "\"¥": 7422708186544351440,
+        "id": {}
+      }
+    },
+    {
+      "name": "default-limits:array:11",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:12",
+      "input": {
+        "‮ lut񖡕": 9007199254740993,
+        "data": [
+          {
+            "$f64": "bbc708115d8dc279"
+          },
+          "世m😀\u0015;  \n\u0018\"  𝄞",
+          true,
+          10128968129014733351
+        ],
+        "Fu😀😀\\　zb": "\nM😀CruT=mJ😀e",
+        "󃴇éH𝄞J": "l😀Yg7"
+      },
+      "output": {
+        "‮ lut񖡕": 9007199254740993,
+        "data": [
+          {
+            "$f64": "bbc708115d8dc279"
+          },
+          "世m😀\u0015;  \n\u0018\"  𝄞",
+          true,
+          10128968129014733351
+        ],
+        "Fu😀😀\\　zb": "\nM😀CruT=mJ😀e",
+        "󃴇éH𝄞J": "l😀Yg7"
+      }
+    },
+    {
+      "name": "default-limits:array:13",
+      "input": [
+        true
+      ],
+      "output": [
+        true
+      ]
+    },
+    {
+      "name": "default-limits:object:14",
+      "input": {
+        "0": {
+          "\u00000𝄞𝄞\\": "𝄞😀é🕴\\",
+          "context": false
+        },
+        "2": [
+          true,
+          null,
+          "\rD  O﻿𝄞u𝄞A"
+        ],
+        "?世h𝄞𝄞": true
+      },
+      "output": {
+        "0": {
+          "\u00000𝄞𝄞\\": "𝄞😀é🕴\\",
+          "context": false
+        },
+        "2": [
+          true,
+          null,
+          "\rD  O﻿𝄞u𝄞A"
+        ],
+        "?世h𝄞𝄞": true
+      }
+    },
+    {
+      "name": "default-limits:object:15",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:16",
+      "input": {
+        "1": "K\u0012KJ𝄞\u000b\r6L𝄞'񶗆",
+        "19": [
+          null,
+          null
+        ],
+        "😀c 𝄞\u000b": [
+          -5173892317074866867
+        ],
+        "": {}
+      },
+      "output": {
+        "1": "K\u0012KJ𝄞\u000b\r6L𝄞'񶗆",
+        "19": [
+          null,
+          null
+        ],
+        "😀c 𝄞\u000b": [
+          -5173892317074866867
+        ],
+        "": {}
+      }
+    },
+    {
+      "name": "default-limits:object:17",
+      "input": {
+        "": null,
+        "b": [
+          "9m\r\u000b é"
+        ],
+        "20": null,
+        "context": [
+          null,
+          true,
+          false,
+          null
+        ]
+      },
+      "output": {
+        "20": null,
+        "": null,
+        "b": [
+          "9m\r\u000b é"
+        ],
+        "context": [
+          null,
+          true,
+          false,
+          null
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:18",
+      "input": [
+        9007199254740993,
+        [
+          null,
+          1e+21,
+          null,
+          {
+            "$f64": "ecfa920a4a189878"
+          }
+        ]
+      ],
+      "output": [
+        9007199254740993,
+        [
+          null,
+          1e+21,
+          null,
+          {
+            "$f64": "ecfa920a4a189878"
+          }
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:19",
+      "input": [
+        [
+          7160914975012227683,
+          null,
+          {
+            " f rm𝄞 N": -2083168474145961378,
+            "8": "6😀😀0\r\\𝄞\u001d𝄞éb",
+            "𝄞世yG　": null
+          },
+          null
+        ],
+        9007199254740993,
+        false
+      ],
+      "output": [
+        [
+          7160914975012227683,
+          null,
+          {
+            "8": "6😀😀0\r\\𝄞\u001d𝄞éb",
+            " f rm𝄞 N": -2083168474145961378,
+            "𝄞世yG　": null
+          },
+          null
+        ],
+        9007199254740993,
+        false
+      ]
+    },
+    {
+      "name": "default-limits:array:20",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:21",
+      "input": {
+        "16": null,
+        "i ": [
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        "PmV=G": false,
+        "2": false
+      },
+      "output": {
+        "2": false,
+        "16": null,
+        "i ": [
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        "PmV=G": false
+      }
+    },
+    {
+      "name": "default-limits:array:22",
+      "input": [
+        {
+          "e　\u0017yXn": [
+            "\u0003uC​Pé"
+          ],
+          "1.5": false,
+          "\u001fO": false
+        }
+      ],
+      "output": [
+        {
+          "e　\u0017yXn": [
+            "\u0003uC​Pé"
+          ],
+          "1.5": false,
+          "\u001fO": false
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:23",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:24",
+      "input": {
+        "18": {
+          "data": -3295877833911548482,
+          "key": "\u000b"
+        },
+        "type": {},
+        "0": [
+          null,
+          null,
+          null
+        ]
+      },
+      "output": {
+        "0": [
+          null,
+          null,
+          null
+        ],
+        "18": {
+          "data": -3295877833911548482,
+          "key": "\u000b"
+        },
+        "type": {}
+      }
+    },
+    {
+      "name": "default-limits:object:25",
+      "input": {
+        "...": true
+      },
+      "output": {
+        "...": true
+      }
+    },
+    {
+      "name": "default-limits:array:26",
+      "input": [
+        true,
+        {}
+      ],
+      "output": [
+        true,
+        {}
+      ]
+    },
+    {
+      "name": "default-limits:array:27",
+      "input": [
+        false,
+        [
+          false,
+          {
+            "$f64": "462759d99cf7492d"
+          }
+        ],
+        null
+      ],
+      "output": [
+        false,
+        [
+          false,
+          {
+            "$f64": "462759d99cf7492d"
+          }
+        ],
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:28",
+      "input": {
+        "key": 3.8466589035440787e-141
+      },
+      "output": {
+        "key": 3.8466589035440787e-141
+      }
+    },
+    {
+      "name": "default-limits:object:29",
+      "input": {
+        "8": -1.412974338586424e-260,
+        "s😀J𝄞\nGL世H": {}
+      },
+      "output": {
+        "8": -1.412974338586424e-260,
+        "s😀J𝄞\nGL世H": {}
+      }
+    },
+    {
+      "name": "default-limits:object:30",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:31",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:32",
+      "input": {
+        "u𝄞": -5894010550894691946,
+        "6": [
+          null,
+          "PbP\\",
+          "r𝄞x"
+        ],
+        "value": {},
+        "19": "wK世ékB. "
+      },
+      "output": {
+        "6": [
+          null,
+          "PbP\\",
+          "r𝄞x"
+        ],
+        "19": "wK世ékB. ",
+        "u𝄞": -5894010550894691946,
+        "value": {}
+      }
+    },
+    {
+      "name": "default-limits:array:33",
+      "input": [
+        [
+          1e-7
+        ]
+      ],
+      "output": [
+        [
+          1e-7
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:34",
+      "input": {
+        "12": null,
+        "1.5": {
+          "13": true
+        }
+      },
+      "output": {
+        "12": null,
+        "1.5": {
+          "13": true
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:35",
+      "input": {
+        "name": {
+          "4294967294": {
+            "$f64": "8000000000000000"
+          },
+          "M": true,
+          "𝄞P𝄞😀KoG世\rx": 7955040580096531562,
+          "a": null
+        }
+      },
+      "output": {
+        "name": {
+          "4294967294": {
+            "$f64": "8000000000000000"
+          },
+          "M": true,
+          "𝄞P𝄞😀KoG世\rx": 7955040580096531562,
+          "a": null
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:36",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:37",
+      "input": {
+        "text": [
+          null,
+          null
+        ],
+        "...": {
+          "context": false,
+          "items": [],
+          "text": null,
+          "\fE0񳁹😀Ué P𝄞4": null
+        },
+        "value": []
+      },
+      "output": {
+        "text": [
+          null,
+          null
+        ],
+        "...": {
+          "context": false,
+          "items": [],
+          "text": null,
+          "\fE0񳁹😀Ué P𝄞4": null
+        },
+        "value": []
+      }
+    },
+    {
+      "name": "default-limits:object:38",
+      "input": {
+        "1.5": false
+      },
+      "output": {
+        "1.5": false
+      }
+    },
+    {
+      "name": "default-limits:array:39",
+      "input": [
+        null,
+        true,
+        [
+          {
+            "򕝚2\r": "v𝄞\u000b　🕴\"3",
+            "...": "pgl😀𝄞PmB U9O4\\"
+          },
+          null,
+          null,
+          "t"
+        ]
+      ],
+      "output": [
+        null,
+        true,
+        [
+          {
+            "򕝚2\r": "v𝄞\u000b　🕴\"3",
+            "...": "pgl😀𝄞PmB U9O4\\"
+          },
+          null,
+          null,
+          "t"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:40",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:41",
+      "input": {
+        "1": [
+          1.1026592185770118e-48,
+          true,
+          1.4190782086302684e-98
+        ],
+        "3": [
+          "😀é1𝄞8NF",
+          "7 {x \u0007\\éM"
+        ]
+      },
+      "output": {
+        "1": [
+          1.1026592185770118e-48,
+          true,
+          1.4190782086302684e-98
+        ],
+        "3": [
+          "😀é1𝄞8NF",
+          "7 {x \u0007\\éM"
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:42",
+      "input": [
+        {
+          "世Y": true,
+          "14": true,
+          "r\"😀&😀 𒢐k": false
+        },
+        null,
+        {
+          "9": {
+            "$f64": "5cfdd7e0692e4b85"
+          },
+          "value": 0.0,
+          "-1": [
+            "𝄞 \\CU​𝄞X😀x世世1gY",
+            -4.67337255834466e-310,
+            "1é"
+          ]
+        },
+        [
+          null
+        ]
+      ],
+      "output": [
+        {
+          "14": true,
+          "世Y": true,
+          "r\"😀&😀 𒢐k": false
+        },
+        null,
+        {
+          "9": {
+            "$f64": "5cfdd7e0692e4b85"
+          },
+          "value": 0.0,
+          "-1": [
+            "𝄞 \\CU​𝄞X😀x世世1gY",
+            -4.67337255834466e-310,
+            "1é"
+          ]
+        },
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:43",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:44",
+      "input": {
+        "\\ék😀😀C4 ": 9007199254740991
+      },
+      "output": {
+        "\\ék😀😀C4 ": 9007199254740991
+      }
+    },
+    {
+      "name": "default-limits:array:45",
+      "input": [
+        [
+          "6é ND\\‮K 世\u0005J\n\u000bC😀"
+        ],
+        [
+          "éz\u0003ayd9l",
+          null,
+          "d𦈣　\u0004\"😀Ee\f世​"
+        ],
+        [
+          null,
+          null
+        ],
+        {}
+      ],
+      "output": [
+        [
+          "6é ND\\‮K 世\u0005J\n\u000bC😀"
+        ],
+        [
+          "éz\u0003ayd9l",
+          null,
+          "d𦈣　\u0004\"😀Ee\f世​"
+        ],
+        [
+          null,
+          null
+        ],
+        {}
+      ]
+    },
+    {
+      "name": "default-limits:array:46",
+      "input": [
+        true,
+        null
+      ],
+      "output": [
+        true,
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:47",
+      "input": {
+        "5": {
+          "7世 😀 HWR7 ": 9007199254740991
+        },
+        " \\´vMCxP󸎠Z": null
+      },
+      "output": {
+        "5": {
+          "7世 😀 HWR7 ": 9007199254740991
+        },
+        " \\´vMCxP󸎠Z": null
+      }
+    },
+    {
+      "name": "default-limits:array:48",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:49",
+      "input": [
+        [
+          true
+        ],
+        null,
+        []
+      ],
+      "output": [
+        [
+          true
+        ],
+        null,
+        []
+      ]
+    },
+    {
+      "name": "default-limits:object:50",
+      "input": {
+        "t𝄞\"": null,
+        "3": 8.724083464769522e+45
+      },
+      "output": {
+        "3": 8.724083464769522e+45,
+        "t𝄞\"": null
+      }
+    },
+    {
+      "name": "default-limits:array:51",
+      "input": [
+        [],
+        -7509285718995507507,
+        true,
+        false
+      ],
+      "output": [
+        [],
+        -7509285718995507507,
+        true,
+        false
+      ]
+    },
+    {
+      "name": "default-limits:object:52",
+      "input": {
+        "7": null,
+        "11": "F𝄞i6\\😀",
+        "1": -8790751272608729335
+      },
+      "output": {
+        "1": -8790751272608729335,
+        "7": null,
+        "11": "F𝄞i6\\😀"
+      }
+    },
+    {
+      "name": "default-limits:object:53",
+      "input": {
+        "Qc😀\u0011": [
+          "é\"𝄞Xo😀\u001e\u0017𝄞",
+          1e+21
+        ],
+        "value": {
+          "17": "r\"Z B\nn\"\u000b3",
+          "context": ""
+        },
+        "": "7RYK"
+      },
+      "output": {
+        "Qc😀\u0011": [
+          "é\"𝄞Xo😀\u001e\u0017𝄞",
+          1e+21
+        ],
+        "value": {
+          "17": "r\"Z B\nn\"\u000b3",
+          "context": ""
+        },
+        "": "7RYK"
+      }
+    },
+    {
+      "name": "default-limits:object:54",
+      "input": {
+        "w󧐪": [
+          null,
+          2740362197880968396
+        ],
+        "name": 1e-7,
+        "type": []
+      },
+      "output": {
+        "w󧐪": [
+          null,
+          2740362197880968396
+        ],
+        "name": 1e-7,
+        "type": []
+      }
+    },
+    {
+      "name": "default-limits:array:55",
+      "input": [
+        3139652424014518961,
+        {
+          "12": true
+        },
+        null,
+        true
+      ],
+      "output": [
+        3139652424014518961,
+        {
+          "12": true
+        },
+        null,
+        true
+      ]
+    },
+    {
+      "name": "default-limits:object:56",
+      "input": {
+        "": [
+          "\r ᠎ 世t\u000bpz😀𝄞",
+          true
+        ],
+        "text": null,
+        "...": false
+      },
+      "output": {
+        "": [
+          "\r ᠎ 世t\u000bpz😀𝄞",
+          true
+        ],
+        "text": null,
+        "...": false
+      }
+    },
+    {
+      "name": "default-limits:object:57",
+      "input": {
+        "3": {
+          "6Q\"": 18071706656696680063,
+          "5": " Y񗉕wq﻿\u0016😀\u00107f",
+          "OPD": "\\\"😀\u0016𝄞\u0010 \n𝄞",
+          "\u0005": null
+        },
+        "Dt世M\u000bkB\fp\fJ\"": null,
+        "4294967295": {
+          "18": null,
+          "16": "\"n7𝄞H\u001c"
+        },
+        "4294967294": {
+          "15": null
+        }
+      },
+      "output": {
+        "3": {
+          "5": " Y񗉕wq﻿\u0016😀\u00107f",
+          "6Q\"": 18071706656696680063,
+          "OPD": "\\\"😀\u0016𝄞\u0010 \n𝄞",
+          "\u0005": null
+        },
+        "4294967294": {
+          "15": null
+        },
+        "Dt世M\u000bkB\fp\fJ\"": null,
+        "4294967295": {
+          "16": "\"n7𝄞H\u001c",
+          "18": null
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:58",
+      "input": {
+        "15": [
+          "𝄞w世uq😀\u001e",
+          5939036217517642877,
+          {
+            "$f64": "8000000000000000"
+          }
+        ]
+      },
+      "output": {
+        "15": [
+          "𝄞w世uq😀\u001e",
+          5939036217517642877,
+          {
+            "$f64": "8000000000000000"
+          }
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:59",
+      "input": {
+        "9": "\"l\\P2D\u0001世"
+      },
+      "output": {
+        "9": "\"l\\P2D\u0001世"
+      }
+    },
+    {
+      "name": "default-limits:array:60",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:61",
+      "input": [
+        {},
+        null,
+        ""
+      ],
+      "output": [
+        {},
+        null,
+        ""
+      ]
+    },
+    {
+      "name": "default-limits:object:62",
+      "input": {
+        "\\😀 򱖳S😀\u0003 I ": {
+          "$f64": "8000000000000000"
+        },
+        "context": [
+          "k​𝄞mp\" \\\fe "
+        ],
+        "key": null,
+        "4": {
+          "$f64": "8000000000000000"
+        }
+      },
+      "output": {
+        "4": {
+          "$f64": "8000000000000000"
+        },
+        "\\😀 򱖳S😀\u0003 I ": {
+          "$f64": "8000000000000000"
+        },
+        "context": [
+          "k​𝄞mp\" \\\fe "
+        ],
+        "key": null
+      }
+    },
+    {
+      "name": "default-limits:array:63",
+      "input": [
+        [
+          [
+            "",
+            null,
+            "\u000bk",
+            "😀😀"
+          ]
+        ]
+      ],
+      "output": [
+        [
+          [
+            "",
+            null,
+            "\u000bk",
+            "😀😀"
+          ]
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:64",
+      "input": [
+        null,
+        {
+          "20": 1.452019082017006e-308,
+          "text": 6894917285011923947
+        }
+      ],
+      "output": [
+        null,
+        {
+          "20": 1.452019082017006e-308,
+          "text": 6894917285011923947
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:65",
+      "input": [
+        true,
+        "3 世gsx𝄞Gér\u001e😀"
+      ],
+      "output": [
+        true,
+        "3 世gsx𝄞Gér\u001e😀"
+      ]
+    },
+    {
+      "name": "default-limits:array:66",
+      "input": [
+        [],
+        [],
+        [
+          true
+        ],
+        true
+      ],
+      "output": [
+        [],
+        [],
+        [
+          true
+        ],
+        true
+      ]
+    },
+    {
+      "name": "default-limits:array:67",
+      "input": [
+        [
+          "😀gV😀\\ A",
+          null,
+          null,
+          false
+        ],
+        9007199254740991,
+        2382821574507464704
+      ],
+      "output": [
+        [
+          "😀gV😀\\ A",
+          null,
+          null,
+          false
+        ],
+        9007199254740991,
+        2382821574507464704
+      ]
+    },
+    {
+      "name": "default-limits:array:68",
+      "input": [
+        false,
+        2542498180418170133
+      ],
+      "output": [
+        false,
+        2542498180418170133
+      ]
+    },
+    {
+      "name": "default-limits:object:69",
+      "input": {
+        "...": {
+          "3": null,
+          "": true,
+          "...": "MM世"
+        },
+        "items": [
+          508314193865109137
+        ],
+        "򟧛J😀ou": true
+      },
+      "output": {
+        "...": {
+          "3": null,
+          "": true,
+          "...": "MM世"
+        },
+        "items": [
+          508314193865109137
+        ],
+        "򟧛J😀ou": true
+      }
+    },
+    {
+      "name": "default-limits:object:70",
+      "input": {
+        "01": true,
+        "16": false,
+        "5": true
+      },
+      "output": {
+        "5": true,
+        "16": false,
+        "01": true
+      }
+    },
+    {
+      "name": "default-limits:object:71",
+      "input": {
+        "16": true,
+        "éw世\\L": [
+          false,
+          null,
+          0.0
+        ],
+        "w\u00146JE\u0005": {
+          "😀iK😀w\rzs": false
+        },
+        "4294967294": "I　 "
+      },
+      "output": {
+        "16": true,
+        "4294967294": "I　 ",
+        "éw世\\L": [
+          false,
+          null,
+          0.0
+        ],
+        "w\u00146JE\u0005": {
+          "😀iK😀w\rzs": false
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:72",
+      "input": {
+        "\r\u0005M8t😀6 \\": {
+          "S\" \u0000i 6世U 😀": null,
+          "name": 3.1359926508900002e+112,
+          "15": false,
+          "type": 9101719057530570308
+        }
+      },
+      "output": {
+        "\r\u0005M8t😀6 \\": {
+          "15": false,
+          "S\" \u0000i 6世U 😀": null,
+          "name": 3.1359926508900002e+112,
+          "type": 9101719057530570308
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:73",
+      "input": [
+        {
+          "data": 9007199254740993,
+          "a": null,
+          "񍁥k2世𝄞": 9007199254740993
+        },
+        {
+          "items": " N𝄞😀世 8\u0006 "
+        },
+        [],
+        "\u001d\u001aH` vȺs 7"
+      ],
+      "output": [
+        {
+          "data": 9007199254740993,
+          "a": null,
+          "񍁥k2世𝄞": 9007199254740993
+        },
+        {
+          "items": " N𝄞😀世 8\u0006 "
+        },
+        [],
+        "\u001d\u001aH` vȺs 7"
+      ]
+    },
+    {
+      "name": "default-limits:array:74",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:number:75",
+      "input": {
+        "$f64": "8000000000000000"
+      },
+      "output": {
+        "$f64": "8000000000000000"
+      }
+    },
+    {
+      "name": "default-limits:object:76",
+      "input": {
+        "😀5 󫟝éE\"": false,
+        "a": "K m",
+        "-1": null,
+        "1": [
+          true
+        ]
+      },
+      "output": {
+        "1": [
+          true
+        ],
+        "😀5 󫟝éE\"": false,
+        "a": "K m",
+        "-1": null
+      }
+    },
+    {
+      "name": "default-limits:array:77",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:78",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:79",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:80",
+      "input": {
+        "context": {
+          "4294967295": 8259401514712806232,
+          "text": true
+        },
+        "�5cg𝄞": 1e-6
+      },
+      "output": {
+        "context": {
+          "4294967295": 8259401514712806232,
+          "text": true
+        },
+        "�5cg𝄞": 1e-6
+      }
+    },
+    {
+      "name": "default-limits:array:81",
+      "input": [
+        {
+          "name": true
+        },
+        -2.8770488164833765e-160,
+        1726120838868427211
+      ],
+      "output": [
+        {
+          "name": true
+        },
+        -2.8770488164833765e-160,
+        1726120838868427211
+      ]
+    },
+    {
+      "name": "default-limits:array:82",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:83",
+      "input": {
+        "I𝄞\"n\u0000PF\u0007𝄞\t": {
+          "18": null,
+          "14": ":\\"
+        }
+      },
+      "output": {
+        "I𝄞\"n\u0000PF\u0007𝄞\t": {
+          "14": ":\\",
+          "18": null
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:84",
+      "input": {
+        "5": {
+          " x世\u0018  \\F\\c": null,
+          "H8 R": []
+        },
+        "x\u000fU世\f7": [],
+        "15": {
+          "3 kf": null
+        }
+      },
+      "output": {
+        "5": {
+          " x世\u0018  \\F\\c": null,
+          "H8 R": []
+        },
+        "15": {
+          "3 kf": null
+        },
+        "x\u000fU世\f7": []
+      }
+    },
+    {
+      "name": "default-limits:object:85",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:86",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:87",
+      "input": {
+        "key": "IC😀é",
+        "1.5": [
+          "",
+          true
+        ],
+        "...": [
+          "F\b8􎯧?éh𝄞\f \rp\u0000P",
+          null,
+          "éW"
+        ]
+      },
+      "output": {
+        "key": "IC😀é",
+        "1.5": [
+          "",
+          true
+        ],
+        "...": [
+          "F\b8􎯧?éh𝄞\f \rp\u0000P",
+          null,
+          "éW"
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:88",
+      "input": {
+        "items": null,
+        "context": [
+          3297080148181820962,
+          true,
+          -1.803340496324245e-142,
+          "　Ué"
+        ],
+        "18": {
+          "14": false,
+          "context": "l򦼄BwB世fED\"世g"
+        },
+        "0": {
+          "o": null,
+          "\te\\𝄞U﻿😀Lx世!": null,
+          "😀 世3": null
+        }
+      },
+      "output": {
+        "0": {
+          "o": null,
+          "\te\\𝄞U﻿😀Lx世!": null,
+          "😀 世3": null
+        },
+        "18": {
+          "14": false,
+          "context": "l򦼄BwB世fED\"世g"
+        },
+        "items": null,
+        "context": [
+          3297080148181820962,
+          true,
+          -1.803340496324245e-142,
+          "　Ué"
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:89",
+      "input": {
+        "14": {
+          "text": "2𝄞世H\u00177😀世g😀\u0001y 6𝄞",
+          "10": "\n\"😀 V᠎",
+          "a": "\f򒫂\\\u000bF'F𝄞\u001b世J\u0011M𝄞"
+        },
+        "b": {
+          "0𝄞QU\u0017g\"\u0002N\téf": true,
+          "text": null,
+          "' 7\r \f😀": 0.30000000000000004,
+          "v\u0016o": false
+        },
+        "d​1xh": {
+          "  Lá𝄞ru4P ": "񔾬B😀h\""
+        },
+        "text": [
+          false,
+          true,
+          null,
+          true
+        ]
+      },
+      "output": {
+        "14": {
+          "10": "\n\"😀 V᠎",
+          "text": "2𝄞世H\u00177😀世g😀\u0001y 6𝄞",
+          "a": "\f򒫂\\\u000bF'F𝄞\u001b世J\u0011M𝄞"
+        },
+        "b": {
+          "0𝄞QU\u0017g\"\u0002N\téf": true,
+          "text": null,
+          "' 7\r \f😀": 0.30000000000000004,
+          "v\u0016o": false
+        },
+        "d​1xh": {
+          "  Lá𝄞ru4P ": "񔾬B😀h\""
+        },
+        "text": [
+          false,
+          true,
+          null,
+          true
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:90",
+      "input": {
+        "9": -1151755076285428988,
+        "data": [
+          {
+            "7": null
+          },
+          "T𝄞",
+          false,
+          true
+        ],
+        "g4\u0018s𝄞": [
+          1391004574598720623,
+          {
+            "-1": true
+          }
+        ]
+      },
+      "output": {
+        "9": -1151755076285428988,
+        "data": [
+          {
+            "7": null
+          },
+          "T𝄞",
+          false,
+          true
+        ],
+        "g4\u0018s𝄞": [
+          1391004574598720623,
+          {
+            "-1": true
+          }
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:91",
+      "input": [
+        {
+          "": false,
+          "-1": "iC𝄞v\"😀😀yM",
+          "\"W\nf﻿\u0006s\u0002": false,
+          "4294967295": true
+        },
+        true,
+        null
+      ],
+      "output": [
+        {
+          "": false,
+          "-1": "iC𝄞v\"😀😀yM",
+          "\"W\nf﻿\u0006s\u0002": false,
+          "4294967295": true
+        },
+        true,
+        null
+      ]
+    },
+    {
+      "name": "default-limits:array:92",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:93",
+      "input": [
+        []
+      ],
+      "output": [
+        []
+      ]
+    },
+    {
+      "name": "default-limits:object:94",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:95",
+      "input": {
+        "b": true,
+        "\"NM": [
+          []
+        ],
+        "key": {
+          "type": 4834758790243853150,
+          "0": null
+        },
+        "8": [
+          "0\"\\Z\\ 😀"
+        ]
+      },
+      "output": {
+        "8": [
+          "0\"\\Z\\ 😀"
+        ],
+        "b": true,
+        "\"NM": [
+          []
+        ],
+        "key": {
+          "0": null,
+          "type": 4834758790243853150
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:96",
+      "input": [
+        {
+          " ": "u\u0011 😀𝄞t\\",
+          "7": 1366747193648780293,
+          "2": [
+            "m §򍗂",
+            "世U l",
+            -3901123686274680982
+          ]
+        },
+        false
+      ],
+      "output": [
+        {
+          "2": [
+            "m §򍗂",
+            "世U l",
+            -3901123686274680982
+          ],
+          "7": 1366747193648780293,
+          " ": "u\u0011 😀𝄞t\\"
+        },
+        false
+      ]
+    },
+    {
+      "name": "default-limits:array:97",
+      "input": [
+        null,
+        {
+          "4294967294": null
+        },
+        [
+          null,
+          false,
+          null,
+          "d"
+        ]
+      ],
+      "output": [
+        null,
+        {
+          "4294967294": null
+        },
+        [
+          null,
+          false,
+          null,
+          "d"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:98",
+      "input": [
+        [
+          null,
+          null,
+          null
+        ],
+        9007199254740993,
+        null,
+        [
+          null,
+          null,
+          false
+        ]
+      ],
+      "output": [
+        [
+          null,
+          null,
+          null
+        ],
+        9007199254740993,
+        null,
+        [
+          null,
+          null,
+          false
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:99",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:100",
+      "input": {
+        "0": {
+          "text": false,
+          "򘜁\"ah<世\u000fé᠎ ": null
+        },
+        "12": {
+          "key": true,
+          "16": null,
+          "😀😀\u0010y😀𝄞𝄞\u001e𝄞": false,
+          "0": false
+        },
+        "context": true
+      },
+      "output": {
+        "0": {
+          "text": false,
+          "򘜁\"ah<世\u000fé᠎ ": null
+        },
+        "12": {
+          "0": false,
+          "16": null,
+          "key": true,
+          "😀😀\u0010y😀𝄞𝄞\u001e𝄞": false
+        },
+        "context": true
+      }
+    },
+    {
+      "name": "default-limits:object:101",
+      "input": {
+        "4294967295": true
+      },
+      "output": {
+        "4294967295": true
+      }
+    },
+    {
+      "name": "default-limits:object:102",
+      "input": {
+        "type": null,
+        "-1": 1e+21
+      },
+      "output": {
+        "type": null,
+        "-1": 1e+21
+      }
+    },
+    {
+      "name": "default-limits:object:103",
+      "input": {
+        "...": {
+          "9": "\"v😀H😀\bQy　",
+          "context": "😀4\\Ѩ\u0004\u0003 \u000b3QUc😀 A",
+          "-1": true
+        },
+        "6": 0.0,
+        "13": {
+          "13": null,
+          "-1": false,
+          "d򪋧0": true
+        },
+        "17": []
+      },
+      "output": {
+        "6": 0.0,
+        "13": {
+          "13": null,
+          "-1": false,
+          "d򪋧0": true
+        },
+        "17": [],
+        "...": {
+          "9": "\"v😀H😀\bQy　",
+          "context": "😀4\\Ѩ\u0004\u0003 \u000b3QUc😀 A",
+          "-1": true
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:104",
+      "input": {
+        "j hkd4\b \n": {
+          "😀é\u0007Eu世世sD😀𝄞": true
+        },
+        "世\"G世F U": "F﻿ ux"
+      },
+      "output": {
+        "j hkd4\b \n": {
+          "😀é\u0007Eu世世sD😀𝄞": true
+        },
+        "世\"G世F U": "F﻿ ux"
+      }
+    },
+    {
+      "name": "default-limits:object:105",
+      "input": {
+        "14": {
+          "value": -2444850188750077371,
+          "é9\u0000\\lé\"éJM": "😀D\\😀j",
+          "19": "p\u0013K𝄞\fh\u0018\by q"
+        },
+        "01": "​ Ⱥ\tw\u001b\u0018xd1 \u001a",
+        "text": {
+          "$f64": "8000000000000000"
+        }
+      },
+      "output": {
+        "14": {
+          "19": "p\u0013K𝄞\fh\u0018\by q",
+          "value": -2444850188750077371,
+          "é9\u0000\\lé\"éJM": "😀D\\😀j"
+        },
+        "01": "​ Ⱥ\tw\u001b\u0018xd1 \u001a",
+        "text": {
+          "$f64": "8000000000000000"
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:106",
+      "input": {
+        "key": [],
+        "3": {
+          "text": null,
+          "value": null,
+          "4294967295": false,
+          "19": "Of😀Ѩ<世wX &"
+        }
+      },
+      "output": {
+        "3": {
+          "19": "Of😀Ѩ<世wX &",
+          "text": null,
+          "value": null,
+          "4294967295": false
+        },
+        "key": []
+      }
+    },
+    {
+      "name": "default-limits:array:107",
+      "input": [
+        null,
+        1290093949415139553
+      ],
+      "output": [
+        null,
+        1290093949415139553
+      ]
+    },
+    {
+      "name": "default-limits:object:108",
+      "input": {
+        "text": {
+          "01": true,
+          "10": -8379097683326640155,
+          "text": null,
+          "14": "`| FOD\\@C\u0004😀UUB"
+        },
+        "...": "g"
+      },
+      "output": {
+        "text": {
+          "10": -8379097683326640155,
+          "14": "`| FOD\\@C\u0004😀UUB",
+          "01": true,
+          "text": null
+        },
+        "...": "g"
+      }
+    },
+    {
+      "name": "default-limits:object:109",
+      "input": {
+        "𝄞": {
+          "𝄞𝄞\"\u0010": true,
+          "3": "zt𝫭\u001f𝄞",
+          "Rh򅉂\u0017sPQe😀\u0007\u0010": true
+        },
+        "": {
+          "...": null,
+          "14": null,
+          "id": 9007199254740991,
+          "19": false
+        }
+      },
+      "output": {
+        "𝄞": {
+          "3": "zt𝫭\u001f𝄞",
+          "𝄞𝄞\"\u0010": true,
+          "Rh򅉂\u0017sPQe😀\u0007\u0010": true
+        },
+        "": {
+          "14": null,
+          "19": false,
+          "...": null,
+          "id": 9007199254740991
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:110",
+      "input": {
+        "𝄞c\u001eY  1": false,
+        "...": [
+          "dA k",
+          null,
+          "e😀j7vB 8\u000bDr",
+          "JG󖓥VéUr󁷔世 J\u0014"
+        ]
+      },
+      "output": {
+        "𝄞c\u001eY  1": false,
+        "...": [
+          "dA k",
+          null,
+          "e😀j7vB 8\u000bDr",
+          "JG󖓥VéUr󁷔世 J\u0014"
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:111",
+      "input": {
+        "key": {
+          "01": true,
+          "-1": -9.868230960558167e-123,
+          "16": false,
+          "TE𝄞😀𝄞5 𝄞H ": null
+        },
+        "...": 1e-7
+      },
+      "output": {
+        "key": {
+          "16": false,
+          "01": true,
+          "-1": -9.868230960558167e-123,
+          "TE𝄞😀𝄞5 𝄞H ": null
+        },
+        "...": 1e-7
+      }
+    },
+    {
+      "name": "default-limits:array:112",
+      "input": [
+        "",
+        false,
+        "j世<4  3vt",
+        1e-6
+      ],
+      "output": [
+        "",
+        false,
+        "j世<4  3vt",
+        1e-6
+      ]
+    },
+    {
+      "name": "default-limits:array:113",
+      "input": [
+        null,
+        [
+          -2.6904327988817835e+106,
+          null,
+          1e+21
+        ],
+        [
+          null,
+          false,
+          "\u001c世"
+        ],
+        {
+          "18": true,
+          "b": {
+            "dY\"=世e": "9\"6®7oM\\%",
+            "B 𝄞Nb 😀xé=": 8842699157483760580,
+            "19": null
+          }
+        }
+      ],
+      "output": [
+        null,
+        [
+          -2.6904327988817835e+106,
+          null,
+          1e+21
+        ],
+        [
+          null,
+          false,
+          "\u001c世"
+        ],
+        {
+          "18": true,
+          "b": {
+            "19": null,
+            "dY\"=世e": "9\"6®7oM\\%",
+            "B 𝄞Nb 😀xé=": 8842699157483760580
+          }
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:114",
+      "input": {
+        "context": {
+          "$f64": "52485607ce742e56"
+        },
+        "😀é𝄞Jl8\tn": []
+      },
+      "output": {
+        "context": {
+          "$f64": "52485607ce742e56"
+        },
+        "😀é𝄞Jl8\tn": []
+      }
+    },
+    {
+      "name": "default-limits:array:115",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:116",
+      "input": {
+        "2": null,
+        "1.5": "B \u001e 𝄞世😀😀"
+      },
+      "output": {
+        "2": null,
+        "1.5": "B \u001e 𝄞世😀😀"
+      }
+    },
+    {
+      "name": "default-limits:object:117",
+      "input": {
+        "13": {
+          "$f64": "e91b6b2b343f02df"
+        },
+        "4294967294": [
+          3501277189845674557,
+          "\u000bD😀\n\u0010=o😀é世 ",
+          null
+        ],
+        "16": {
+          "type": null
+        }
+      },
+      "output": {
+        "13": {
+          "$f64": "e91b6b2b343f02df"
+        },
+        "16": {
+          "type": null
+        },
+        "4294967294": [
+          3501277189845674557,
+          "\u000bD😀\n\u0010=o😀é世 ",
+          null
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:118",
+      "input": {
+        "ed\"𝄞世H𝄞\nus😀": {
+          "": null,
+          "context": 12272683013582932856
+        },
+        "name": {
+          "": null,
+          "4": null,
+          "c 0\u001c😀世Y\u0016": "k"
+        },
+        "15": [
+          {
+            "4294967295": "😀",
+            "context": "\"�JH😀i",
+            "01": true
+          }
+        ]
+      },
+      "output": {
+        "15": [
+          {
+            "4294967295": "😀",
+            "context": "\"�JH😀i",
+            "01": true
+          }
+        ],
+        "ed\"𝄞世H𝄞\nus😀": {
+          "": null,
+          "context": 12272683013582932856
+        },
+        "name": {
+          "4": null,
+          "": null,
+          "c 0\u001c😀世Y\u0016": "k"
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:119",
+      "input": [
+        true
+      ],
+      "output": [
+        true
+      ]
+    },
+    {
+      "name": "default-limits:object:120",
+      "input": {
+        "items": null,
+        "text": {
+          "17": "\"L6😀M",
+          "b": -3.539897224091836e-67
+        }
+      },
+      "output": {
+        "items": null,
+        "text": {
+          "17": "\"L6😀M",
+          "b": -3.539897224091836e-67
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:121",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:122",
+      "input": [
+        " 1n06𝄞᠎ e ",
+        [
+          false,
+          null,
+          true,
+          9007199254740993
+        ]
+      ],
+      "output": [
+        " 1n06𝄞᠎ e ",
+        [
+          false,
+          null,
+          true,
+          9007199254740993
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:123",
+      "input": {
+        "7": [
+          -1109263006422672218,
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        "6": null,
+        "context": false
+      },
+      "output": {
+        "6": null,
+        "7": [
+          -1109263006422672218,
+          {
+            "$f64": "8000000000000000"
+          }
+        ],
+        "context": false
+      }
+    },
+    {
+      "name": "default-limits:object:124",
+      "input": {
+        "8𝄞 \u000bé": {
+          "11": "g c\"😀 😀𝄞d😀",
+          "\rL𝄞 P 79\"  ": false
+        }
+      },
+      "output": {
+        "8𝄞 \u000bé": {
+          "11": "g c\"😀 😀𝄞d😀",
+          "\rL𝄞 P 79\"  ": false
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:125",
+      "input": [
+        [
+          null,
+          "u\\世 \u0000\u001e4Y7 😀\""
+        ],
+        {
+          "4": "\u0018ql0c𝄞8wj😀1t"
+        },
+        null,
+        {
+          "mKX𝄞6\u0016\"\u0014i": -1.6826246842337776e+118
+        }
+      ],
+      "output": [
+        [
+          null,
+          "u\\世 \u0000\u001e4Y7 😀\""
+        ],
+        {
+          "4": "\u0018ql0c𝄞8wj😀1t"
+        },
+        null,
+        {
+          "mKX𝄞6\u0016\"\u0014i": -1.6826246842337776e+118
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:126",
+      "input": [
+        [
+          " 世zkI\u000bd\u0014X I世",
+          true,
+          736861875445757969
+        ],
+        [
+          null,
+          0.30000000000000004,
+          true,
+          null
+        ],
+        null,
+        {
+          "name": null,
+          "\u0004😀x \u000buW\\é": 9007199254740991,
+          "18": -6737668783777891366
+        }
+      ],
+      "output": [
+        [
+          " 世zkI\u000bd\u0014X I世",
+          true,
+          736861875445757969
+        ],
+        [
+          null,
+          0.30000000000000004,
+          true,
+          null
+        ],
+        null,
+        {
+          "18": -6737668783777891366,
+          "name": null,
+          "\u0004😀x \u000buW\\é": 9007199254740991
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:127",
+      "input": {
+        "0": {
+          "𝄞N6\bh﻿": {
+            "$f64": "560246d3c3fd10c7"
+          },
+          "4294967295": "t3oL 　z<﻿",
+          "data": "B𝄞g4G3M"
+        },
+        "text": ":fb\u0014",
+        "value": [
+          null
+        ]
+      },
+      "output": {
+        "0": {
+          "𝄞N6\bh﻿": {
+            "$f64": "560246d3c3fd10c7"
+          },
+          "4294967295": "t3oL 　z<﻿",
+          "data": "B𝄞g4G3M"
+        },
+        "text": ":fb\u0014",
+        "value": [
+          null
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:128",
+      "input": {
+        "7": {
+          "key": null,
+          "12": 13599193585993080710,
+          "13": {
+            "$f64": "f060ebc4939553c9"
+          },
+          "3": 0.0
+        },
+        "4294967294": {
+          "zs9q世\bT m": true
+        }
+      },
+      "output": {
+        "7": {
+          "3": 0.0,
+          "12": 13599193585993080710,
+          "13": {
+            "$f64": "f060ebc4939553c9"
+          },
+          "key": null
+        },
+        "4294967294": {
+          "zs9q世\bT m": true
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:129",
+      "input": {
+        "01": null,
+        "type": 1197926483732573172,
+        "10": [],
+        "\\ 𝄞 7﻿𝄞": [
+          "﻿𝄞\\\"\u0002\\d",
+          null,
+          null
+        ]
+      },
+      "output": {
+        "10": [],
+        "01": null,
+        "type": 1197926483732573172,
+        "\\ 𝄞 7﻿𝄞": [
+          "﻿𝄞\\\"\u0002\\d",
+          null,
+          null
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:130",
+      "input": {
+        "FK\\FN": {
+          "13": " 😀　𝄞",
+          "8": -5943719256669218000,
+          "context": "2\"C\t𝄞l"
+        },
+        "...": "e𝄞𝄞\\RY",
+        "text": null,
+        "󒍚Né\\\u0014 1\u00073Aé": false
+      },
+      "output": {
+        "FK\\FN": {
+          "8": -5943719256669218000,
+          "13": " 😀　𝄞",
+          "context": "2\"C\t𝄞l"
+        },
+        "...": "e𝄞𝄞\\RY",
+        "text": null,
+        "󒍚Né\\\u0014 1\u00073Aé": false
+      }
+    },
+    {
+      "name": "default-limits:array:131",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:132",
+      "input": [
+        {
+          "text": null
+        },
+        false
+      ],
+      "output": [
+        {
+          "text": null
+        },
+        false
+      ]
+    },
+    {
+      "name": "default-limits:object:133",
+      "input": {
+        "b": [
+          null,
+          false
+        ]
+      },
+      "output": {
+        "b": [
+          null,
+          false
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:134",
+      "input": [
+        "y7",
+        {
+          "5": null,
+          "-1": true,
+          "0": "𝄞D𝄞6\u0000fAPA\u001b éXb",
+          "type": null
+        },
+        false
+      ],
+      "output": [
+        "y7",
+        {
+          "0": "𝄞D𝄞6\u0000fAPA\u001b éXb",
+          "5": null,
+          "-1": true,
+          "type": null
+        },
+        false
+      ]
+    },
+    {
+      "name": "default-limits:array:135",
+      "input": [
+        [
+          {
+            "...": false,
+            "text": {
+              "$f64": "8000000000000000"
+            },
+            "\"M😀\r": null
+          },
+          "h\tLé5😀",
+          false
+        ],
+        {
+          "vi\n": null,
+          "": " D𝄞dVC𝄞",
+          "\u0019\\UqZ\\": true,
+          "4294967294": null
+        }
+      ],
+      "output": [
+        [
+          {
+            "...": false,
+            "text": {
+              "$f64": "8000000000000000"
+            },
+            "\"M😀\r": null
+          },
+          "h\tLé5😀",
+          false
+        ],
+        {
+          "4294967294": null,
+          "vi\n": null,
+          "": " D𝄞dVC𝄞",
+          "\u0019\\UqZ\\": true
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:136",
+      "input": [
+        8982447403828721839,
+        "\""
+      ],
+      "output": [
+        8982447403828721839,
+        "\""
+      ]
+    },
+    {
+      "name": "default-limits:array:137",
+      "input": [
+        null,
+        {
+          "$f64": "8000000000000000"
+        }
+      ],
+      "output": [
+        null,
+        {
+          "$f64": "8000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:138",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:139",
+      "input": {
+        "...": {
+          "T\u0001\f lfdt": false,
+          "type": null,
+          "value": {
+            "$f64": "8000000000000000"
+          },
+          "11": false
+        }
+      },
+      "output": {
+        "...": {
+          "11": false,
+          "T\u0001\f lfdt": false,
+          "type": null,
+          "value": {
+            "$f64": "8000000000000000"
+          }
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:140",
+      "input": [
+        " 😀\u0010\"​1qWj𝄞😀7",
+        [],
+        {
+          " k": -5.308894149717602e+276,
+          "5\u000fGéN": "\u001b 世RIHD \\",
+          "😀򖤙\\s😀": true
+        },
+        null
+      ],
+      "output": [
+        " 😀\u0010\"​1qWj𝄞😀7",
+        [],
+        {
+          " k": -5.308894149717602e+276,
+          "5\u000fGéN": "\u001b 世RIHD \\",
+          "😀򖤙\\s😀": true
+        },
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:141",
+      "input": {
+        "a": [
+          "\u0001᠎G",
+          null,
+          []
+        ],
+        "11": null,
+        "1": false
+      },
+      "output": {
+        "1": false,
+        "11": null,
+        "a": [
+          "\u0001᠎G",
+          null,
+          []
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:142",
+      "input": [
+        {
+          "8": null,
+          "DXLi": {
+            "$f64": "f91d55c5dea51067"
+          },
+          "key": null,
+          "01": false
+        },
+        {
+          "12": {
+            "b": null,
+            "16": null,
+            "1": 3966972239318343893,
+            "13": 1e+21
+          },
+          "a": [
+            1e+21,
+            3087860490093801796
+          ],
+          "19": null
+        }
+      ],
+      "output": [
+        {
+          "8": null,
+          "DXLi": {
+            "$f64": "f91d55c5dea51067"
+          },
+          "key": null,
+          "01": false
+        },
+        {
+          "12": {
+            "1": 3966972239318343893,
+            "13": 1e+21,
+            "16": null,
+            "b": null
+          },
+          "19": null,
+          "a": [
+            1e+21,
+            3087860490093801796
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:143",
+      "input": {
+        "\\\u000b": {
+          "16": {
+            "$f64": "288d207c2bf04d65"
+          },
+          "...": null
+        },
+        "10": true,
+        "0": {
+          "t世R F\u001c\u0012 😀": -8686924180394132663,
+          "m": null,
+          "context": 1e+21,
+          "𝄞": 9007199254740991
+        },
+        "18": null
+      },
+      "output": {
+        "0": {
+          "t世R F\u001c\u0012 😀": -8686924180394132663,
+          "m": null,
+          "context": 1e+21,
+          "𝄞": 9007199254740991
+        },
+        "10": true,
+        "18": null,
+        "\\\u000b": {
+          "16": {
+            "$f64": "288d207c2bf04d65"
+          },
+          "...": null
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:144",
+      "input": {
+        "type": {}
+      },
+      "output": {
+        "type": {}
+      }
+    },
+    {
+      "name": "default-limits:array:145",
+      "input": [
+        {
+          "\u0013\\𝄞U  Q<ex\u001d": null,
+          "b": null,
+          "type": null
+        },
+        null,
+        [
+          "Q​L",
+          [
+            "世UO𝄞",
+            "\u001djéW  T𝄞𝄞"
+          ],
+          true,
+          -900390183637005990
+        ]
+      ],
+      "output": [
+        {
+          "\u0013\\𝄞U  Q<ex\u001d": null,
+          "b": null,
+          "type": null
+        },
+        null,
+        [
+          "Q​L",
+          [
+            "世UO𝄞",
+            "\u001djéW  T𝄞𝄞"
+          ],
+          true,
+          -900390183637005990
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:146",
+      "input": [
+        "o　6s r😀\fW$😀T"
+      ],
+      "output": [
+        "o　6s r😀\fW$😀T"
+      ]
+    },
+    {
+      "name": "default-limits:object:147",
+      "input": {
+        "6I᠎ \"𝄞": {
+          "世5U7d1GAl\\😀": false
+        }
+      },
+      "output": {
+        "6I᠎ \"𝄞": {
+          "世5U7d1GAl\\😀": false
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:148",
+      "input": {
+        "key": {
+          "4": {},
+          "8 A%eprO w": null,
+          "j4񅉿\u0003S\"": true
+        }
+      },
+      "output": {
+        "key": {
+          "4": {},
+          "8 A%eprO w": null,
+          "j4񅉿\u0003S\"": true
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:149",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:150",
+      "input": [
+        null
+      ],
+      "output": [
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:151",
+      "input": {
+        "11": -3647875797207633333,
+        "": {},
+        "4294967294": false
+      },
+      "output": {
+        "11": -3647875797207633333,
+        "4294967294": false,
+        "": {}
+      }
+    },
+    {
+      "name": "default-limits:object:152",
+      "input": {
+        "text": {
+          "-1": "cJ",
+          "2": 1768149956003490876,
+          " 𝄞": {
+            "$f64": "28c8ab09e5d2237b"
+          },
+          "15": null
+        },
+        "1": [],
+        "id": {
+          "😀 vééH": "éEc I"
+        }
+      },
+      "output": {
+        "1": [],
+        "text": {
+          "2": 1768149956003490876,
+          "15": null,
+          "-1": "cJ",
+          " 𝄞": {
+            "$f64": "28c8ab09e5d2237b"
+          }
+        },
+        "id": {
+          "😀 vééH": "éEc I"
+        }
+      }
+    },
+    {
+      "name": "default-limits:object:153",
+      "input": {
+        "D世 EF5 T𝄞\u0010😀": false,
+        "\u00101": true,
+        "4294967294": {}
+      },
+      "output": {
+        "4294967294": {},
+        "D世 EF5 T𝄞\u0010😀": false,
+        "\u00101": true
+      }
+    },
+    {
+      "name": "default-limits:object:154",
+      "input": {
+        "4294967294": [
+          true,
+          false,
+          null
+        ],
+        "\u001eé😀bi𝄞a": [],
+        "text": null
+      },
+      "output": {
+        "4294967294": [
+          true,
+          false,
+          null
+        ],
+        "\u001eé😀bi𝄞a": [],
+        "text": null
+      }
+    },
+    {
+      "name": "default-limits:object:155",
+      "input": {
+        "context": "é\u0004pѨȺM򔭰",
+        "7": {
+          "type": 8638797441272249721
+        }
+      },
+      "output": {
+        "7": {
+          "type": 8638797441272249721
+        },
+        "context": "é\u0004pѨȺM򔭰"
+      }
+    },
+    {
+      "name": "default-limits:array:156",
+      "input": [
+        9007199254740993,
+        {
+          "...": false,
+          "items": 1110526733896273421
+        }
+      ],
+      "output": [
+        9007199254740993,
+        {
+          "...": false,
+          "items": 1110526733896273421
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:157",
+      "input": [
+        [
+          1e-7,
+          false,
+          -1.2312112699305586e-61
+        ],
+        [
+          "\"𝄞6éx 😀世 Bu",
+          5800882982790370402
+        ],
+        null,
+        [
+          null,
+          "😀世lu𝄞　\u001e😀P"
+        ]
+      ],
+      "output": [
+        [
+          1e-7,
+          false,
+          -1.2312112699305586e-61
+        ],
+        [
+          "\"𝄞6éx 😀世 Bu",
+          5800882982790370402
+        ],
+        null,
+        [
+          null,
+          "😀世lu𝄞　\u001e😀P"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:158",
+      "input": [
+        null,
+        [
+          [
+            false,
+            1500237771529357019,
+            null,
+            null
+          ]
+        ],
+        [
+          "\"X𝄞\fyU世E　\"😀𝄞\u000bk",
+          null,
+          "世𝄞\u000bw𝄞oEVg5AS"
+        ]
+      ],
+      "output": [
+        null,
+        [
+          [
+            false,
+            1500237771529357019,
+            null,
+            null
+          ]
+        ],
+        [
+          "\"X𝄞\fyU世E　\"😀𝄞\u000bk",
+          null,
+          "世𝄞\u000bw𝄞oEVg5AS"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:159",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:string:160",
+      "input": "\"2nb\"",
+      "output": "\"2nb\""
+    },
+    {
+      "name": "default-limits:object:161",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:string:162",
+      "input": "𝄞a\u000béjC😀世\u0018𝄞Ze",
+      "output": "𝄞a\u000béjC😀世\u0018𝄞Ze"
+    },
+    {
+      "name": "default-limits:array:163",
+      "input": [
+        {
+          "...": false,
+          "items": false,
+          "b": "él",
+          "1": "\"\"A9Zt"
+        }
+      ],
+      "output": [
+        {
+          "1": "\"\"A9Zt",
+          "...": false,
+          "items": false,
+          "b": "él"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:164",
+      "input": [
+        "𝄞",
+        true
+      ],
+      "output": [
+        "𝄞",
+        true
+      ]
+    },
+    {
+      "name": "default-limits:object:165",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:166",
+      "input": [
+        {
+          "4294967294": 1e+21,
+          "8": 1e-7,
+          "2": false
+        },
+        true,
+        [
+          -1651721151735399737,
+          null,
+          false
+        ],
+        {
+          "items": "𝄞y4M𝄞T2f򇪳ka\"M\u0000"
+        }
+      ],
+      "output": [
+        {
+          "2": false,
+          "8": 1e-7,
+          "4294967294": 1e+21
+        },
+        true,
+        [
+          -1651721151735399737,
+          null,
+          false
+        ],
+        {
+          "items": "𝄞y4M𝄞T2f򇪳ka\"M\u0000"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:167",
+      "input": [
+        null,
+        5111140080278498784,
+        [
+          true,
+          1e-6,
+          " QpoSP😀😀\"é😀mT𝄞𝄞"
+        ],
+        "𝄞a`😀9EI"
+      ],
+      "output": [
+        null,
+        5111140080278498784,
+        [
+          true,
+          1e-6,
+          " QpoSP😀😀\"é😀mT𝄞𝄞"
+        ],
+        "𝄞a`😀9EI"
+      ]
+    },
+    {
+      "name": "default-limits:array:168",
+      "input": [
+        [
+          "PxUCJ𝄞ob\\K𝄞\f"
+        ],
+        {
+          "$f64": "8000000000000000"
+        },
+        {
+          "14": null
+        },
+        false
+      ],
+      "output": [
+        [
+          "PxUCJ𝄞ob\\K𝄞\f"
+        ],
+        {
+          "$f64": "8000000000000000"
+        },
+        {
+          "14": null
+        },
+        false
+      ]
+    },
+    {
+      "name": "default-limits:object:169",
+      "input": {
+        "0": 16603970845111791499,
+        "01": {}
+      },
+      "output": {
+        "0": 16603970845111791499,
+        "01": {}
+      }
+    },
+    {
+      "name": "default-limits:array:170",
+      "input": [
+        null,
+        {},
+        []
+      ],
+      "output": [
+        null,
+        {},
+        []
+      ]
+    },
+    {
+      "name": "default-limits:array:171",
+      "input": [
+        [
+          true,
+          null
+        ],
+        null,
+        {}
+      ],
+      "output": [
+        [
+          true,
+          null
+        ],
+        null,
+        {}
+      ]
+    },
+    {
+      "name": "default-limits:array:172",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:173",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:174",
+      "input": [
+        [
+          1e-7,
+          false,
+          -3867951818675969109,
+          -4.093610631744642e-105
+        ]
+      ],
+      "output": [
+        [
+          1e-7,
+          false,
+          -3867951818675969109,
+          -4.093610631744642e-105
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:175",
+      "input": {
+        "-1": -3030662217042897967,
+        "4294967295": "😀😀qB𝄞Vé﻿G 28ék"
+      },
+      "output": {
+        "-1": -3030662217042897967,
+        "4294967295": "😀😀qB𝄞Vé﻿G 28ék"
+      }
+    },
+    {
+      "name": "default-limits:object:176",
+      "input": {
+        "...": [
+          "\"jX𝄞",
+          9007199254740993
+        ],
+        "3": [
+          false,
+          0.30000000000000004,
+          false,
+          "😀\u000fn"
+        ]
+      },
+      "output": {
+        "3": [
+          false,
+          0.30000000000000004,
+          false,
+          "😀\u000fn"
+        ],
+        "...": [
+          "\"jX𝄞",
+          9007199254740993
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:177",
+      "input": [
+        []
+      ],
+      "output": [
+        []
+      ]
+    },
+    {
+      "name": "default-limits:object:178",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:179",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:180",
+      "input": [
+        [],
+        "",
+        [
+          true
+        ],
+        "jLb😀F 2W😀\\"
+      ],
+      "output": [
+        [],
+        "",
+        [
+          true
+        ],
+        "jLb😀F 2W😀\\"
+      ]
+    },
+    {
+      "name": "default-limits:array:181",
+      "input": [
+        null
+      ],
+      "output": [
+        null
+      ]
+    },
+    {
+      "name": "default-limits:object:182",
+      "input": {
+        "3": [
+          {
+            "13": -3001154622789725202
+          },
+          "𝄞\u0000kJ ",
+          false
+        ],
+        "4294967295": [
+          null,
+          true,
+          "",
+          "a\u001déM&LJ"
+        ],
+        "14": {
+          "$f64": "1cf6dd82591d3a5a"
+        },
+        "8": 16092251735614836185
+      },
+      "output": {
+        "3": [
+          {
+            "13": -3001154622789725202
+          },
+          "𝄞\u0000kJ ",
+          false
+        ],
+        "8": 16092251735614836185,
+        "14": {
+          "$f64": "1cf6dd82591d3a5a"
+        },
+        "4294967295": [
+          null,
+          true,
+          "",
+          "a\u001déM&LJ"
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:183",
+      "input": {
+        "data": [
+          1e-7,
+          true
+        ]
+      },
+      "output": {
+        "data": [
+          1e-7,
+          true
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:184",
+      "input": {
+        "B󁒐a😀᠎﻿𝄞\u0019": "𝄞񴟮NL᠎😀",
+        "-1": false,
+        "17": true
+      },
+      "output": {
+        "17": true,
+        "B󁒐a😀᠎﻿𝄞\u0019": "𝄞񴟮NL᠎😀",
+        "-1": false
+      }
+    },
+    {
+      "name": "default-limits:array:185",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:number:186",
+      "input": 3.1623641525007167e+46,
+      "output": 3.1623641525007167e+46
+    },
+    {
+      "name": "default-limits:object:187",
+      "input": {
+        "01": null,
+        "": true,
+        "x 😀u\"\u0006é世6 \u001d": [
+          true,
+          "h 6 \" "
+        ]
+      },
+      "output": {
+        "01": null,
+        "": true,
+        "x 😀u\"\u0006é世6 \u001d": [
+          true,
+          "h 6 \" "
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:188",
+      "input": {
+        "text": [
+          null,
+          "😀émé4DBZ",
+          false
+        ]
+      },
+      "output": {
+        "text": [
+          null,
+          "😀émé4DBZ",
+          false
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:189",
+      "input": [
+        {
+          "text": "U😀pl G\\",
+          "2": true,
+          "4wQ世é&faM4": "A<\u0011bQ😀j 7😀"
+        },
+        null,
+        {
+          "type": "RV0 VéMb😀\"𝄞",
+          "18": [
+            "\fXéEM\\<H",
+            "d\u001a𝄞\tp"
+          ],
+          "-1": null
+        }
+      ],
+      "output": [
+        {
+          "2": true,
+          "text": "U😀pl G\\",
+          "4wQ世é&faM4": "A<\u0011bQ😀j 7😀"
+        },
+        null,
+        {
+          "18": [
+            "\fXéEM\\<H",
+            "d\u001a𝄞\tp"
+          ],
+          "type": "RV0 VéMb😀\"𝄞",
+          "-1": null
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:190",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:191",
+      "input": {
+        "text": "U\u000b",
+        "14": null
+      },
+      "output": {
+        "14": null,
+        "text": "U\u000b"
+      }
+    },
+    {
+      "name": "default-limits:object:192",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:193",
+      "input": {
+        "name": null
+      },
+      "output": {
+        "name": null
+      }
+    },
+    {
+      "name": "default-limits:array:194",
+      "input": [
+        false,
+        {
+          "19": 1e+21,
+          "Aw\u0010ZG2Qi": true,
+          "text": {}
+        }
+      ],
+      "output": [
+        false,
+        {
+          "19": 1e+21,
+          "Aw\u0010ZG2Qi": true,
+          "text": {}
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:195",
+      "input": {
+        "13": {},
+        "type": [
+          false,
+          null,
+          null,
+          "\t​éb e\u001a\nD 2l😀"
+        ],
+        "　\u0014 😀\f": [
+          false,
+          null,
+          7355691672009227549
+        ]
+      },
+      "output": {
+        "13": {},
+        "type": [
+          false,
+          null,
+          null,
+          "\t​éb e\u001a\nD 2l😀"
+        ],
+        "　\u0014 😀\f": [
+          false,
+          null,
+          7355691672009227549
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:196",
+      "input": {
+        "13": 11612030307049253890
+      },
+      "output": {
+        "13": 11612030307049253890
+      }
+    },
+    {
+      "name": "default-limits:object:197",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:198",
+      "input": {
+        "key": null
+      },
+      "output": {
+        "key": null
+      }
+    },
+    {
+      "name": "default-limits:object:199",
+      "input": {
+        "񜑝0": [],
+        "5": null
+      },
+      "output": {
+        "5": null,
+        "񜑝0": []
+      }
+    },
+    {
+      "name": "default-limits:object:200",
+      "input": {
+        "M\"TcGQ4𝄞": " J𝄞",
+        "key": [
+          "\u001b😀T\u001bthOI᠎ ",
+          {
+            "10": "G\t\u001aU𝄞𝄞é𝄞W "
+          },
+          0.0
+        ],
+        "a": "k 　bB\\​X3\\😀"
+      },
+      "output": {
+        "M\"TcGQ4𝄞": " J𝄞",
+        "key": [
+          "\u001b😀T\u001bthOI᠎ ",
+          {
+            "10": "G\t\u001aU𝄞𝄞é𝄞W "
+          },
+          0.0
+        ],
+        "a": "k 　bB\\​X3\\😀"
+      }
+    },
+    {
+      "name": "default-limits:object:201",
+      "input": {
+        "14": {
+          "b": 7985729148671378982
+        },
+        "...": " 𝄞Jé😀",
+        "": []
+      },
+      "output": {
+        "14": {
+          "b": 7985729148671378982
+        },
+        "...": " 𝄞Jé😀",
+        "": []
+      }
+    },
+    {
+      "name": "default-limits:object:202",
+      "input": {
+        "2": {}
+      },
+      "output": {
+        "2": {}
+      }
+    },
+    {
+      "name": "default-limits:object:203",
+      "input": {
+        "17": "\\i3𝄞4　YJAN/�",
+        "text": true,
+        "0": {},
+        "": ""
+      },
+      "output": {
+        "0": {},
+        "17": "\\i3𝄞4　YJAN/�",
+        "text": true,
+        "": ""
+      }
+    },
+    {
+      "name": "default-limits:array:204",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:205",
+      "input": {
+        "2": null,
+        "-1": [
+          "S𝄞\u000boc😀az\u0000 l😀l",
+          false,
+          false
+        ],
+        "13": "déUfv"
+      },
+      "output": {
+        "2": null,
+        "13": "déUfv",
+        "-1": [
+          "S𝄞\u000boc😀az\u0000 l😀l",
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:206",
+      "input": [
+        {
+          "data": {},
+          "\u0019V\"\\": null,
+          "...": 1e+21,
+          "17": true
+        },
+        -6936201092113607434,
+        false,
+        {
+          "19": false
+        }
+      ],
+      "output": [
+        {
+          "17": true,
+          "data": {},
+          "\u0019V\"\\": null,
+          "...": 1e+21
+        },
+        -6936201092113607434,
+        false,
+        {
+          "19": false
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:207",
+      "input": [
+        {
+          "text": false,
+          "data": "\b𝄞Jn\\𝄞🹥4U\"ZC",
+          "10": 2607119737347370427
+        },
+        {},
+        [
+          null,
+          null,
+          -93584087712751409
+        ]
+      ],
+      "output": [
+        {
+          "10": 2607119737347370427,
+          "text": false,
+          "data": "\b𝄞Jn\\𝄞🹥4U\"ZC"
+        },
+        {},
+        [
+          null,
+          null,
+          -93584087712751409
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:208",
+      "input": {
+        "key": {
+          "2": 11320387126211481054
+        }
+      },
+      "output": {
+        "key": {
+          "2": 11320387126211481054
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:209",
+      "input": [
+        null,
+        {
+          "😀l": {
+            "id": "😀😀iém¥GW0éw\u0014􍊗6",
+            "20": "q",
+            "items": 9.206292332742369e-222,
+            "15": true
+          },
+          "text": null,
+          "19": "𝄞😀T\u000b",
+          "": null
+        }
+      ],
+      "output": [
+        null,
+        {
+          "19": "𝄞😀T\u000b",
+          "😀l": {
+            "15": true,
+            "20": "q",
+            "id": "😀😀iém¥GW0éw\u0014􍊗6",
+            "items": 9.206292332742369e-222
+          },
+          "text": null,
+          "": null
+        }
+      ]
+    },
+    {
+      "name": "default-limits:object:210",
+      "input": {
+        "context": null
+      },
+      "output": {
+        "context": null
+      }
+    },
+    {
+      "name": "default-limits:object:211",
+      "input": {
+        "𝄞H😀": [
+          13308252329673756504,
+          "K​😀éFS\t😀​世é😀\"",
+          false
+        ],
+        "D𝄞\u001e": [
+          "I񛲄 zH\\​5\"éd\r😀\\\b",
+          "᠎a𝄞Rs\"J𝄞5",
+          null
+        ],
+        "a": [
+          7259105095484869521,
+          " 𝄞񢣨Q\u000b1I ",
+          null
+        ]
+      },
+      "output": {
+        "𝄞H😀": [
+          13308252329673756504,
+          "K​😀éFS\t😀​世é😀\"",
+          false
+        ],
+        "D𝄞\u001e": [
+          "I񛲄 zH\\​5\"éd\r😀\\\b",
+          "᠎a𝄞Rs\"J𝄞5",
+          null
+        ],
+        "a": [
+          7259105095484869521,
+          " 𝄞񢣨Q\u000b1I ",
+          null
+        ]
+      }
+    },
+    {
+      "name": "default-limits:string:212",
+      "input": "0 😀cLN𝄞​\\😀 \"𝄞",
+      "output": "0 😀cLN𝄞​\\😀 \"𝄞"
+    },
+    {
+      "name": "default-limits:array:213",
+      "input": [
+        null
+      ],
+      "output": [
+        null
+      ]
+    },
+    {
+      "name": "default-limits:array:214",
+      "input": [
+        {
+          "01": true,
+          "1": 9007199254740993,
+          "text": null,
+          "20": 8980199716908700902
+        },
+        -3.840788738120767e-146
+      ],
+      "output": [
+        {
+          "1": 9007199254740993,
+          "20": 8980199716908700902,
+          "01": true,
+          "text": null
+        },
+        -3.840788738120767e-146
+      ]
+    },
+    {
+      "name": "default-limits:object:215",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:216",
+      "input": {
+        "ow\u00029Qy世bb": 9007199254740991
+      },
+      "output": {
+        "ow\u00029Qy世bb": 9007199254740991
+      }
+    },
+    {
+      "name": "default-limits:array:217",
+      "input": [
+        []
+      ],
+      "output": [
+        []
+      ]
+    },
+    {
+      "name": "default-limits:array:218",
+      "input": [
+        [
+          {
+            "$f64": "7a433e945a5e84bb"
+          },
+          "  i\"𝄞K\u001b q\\T",
+          "b\u0012\\\\世\"cQ😀　😀9D\f\u0007",
+          "\"éS😀XéV世I'f"
+        ]
+      ],
+      "output": [
+        [
+          {
+            "$f64": "7a433e945a5e84bb"
+          },
+          "  i\"𝄞K\u001b q\\T",
+          "b\u0012\\\\世\"cQ😀　😀9D\f\u0007",
+          "\"éS😀XéV世I'f"
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:219",
+      "input": {
+        "17": [
+          null,
+          ""
+        ],
+        "6": ""
+      },
+      "output": {
+        "6": "",
+        "17": [
+          null,
+          ""
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:220",
+      "input": [
+        [
+          "\"\"\"0\u001b😀x 𝄞Gété",
+          true,
+          {}
+        ]
+      ],
+      "output": [
+        [
+          "\"\"\"0\u001b😀x 𝄞Gété",
+          true,
+          {}
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:221",
+      "input": {
+        "w =": [
+          false,
+          true,
+          null
+        ],
+        "key": "é󖜰vso",
+        "é\"é😀𝄞I\"  Up": {
+          "\u0000😀​Q": "u𝄞𻯱0G"
+        },
+        "...": [
+          true,
+          0.0
+        ]
+      },
+      "output": {
+        "w =": [
+          false,
+          true,
+          null
+        ],
+        "key": "é󖜰vso",
+        "é\"é😀𝄞I\"  Up": {
+          "\u0000😀​Q": "u𝄞𻯱0G"
+        },
+        "...": [
+          true,
+          0.0
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:222",
+      "input": {
+        "0": {
+          "$f64": "ff36d8ee4ba97afa"
+        }
+      },
+      "output": {
+        "0": {
+          "$f64": "ff36d8ee4ba97afa"
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:223",
+      "input": [
+        true,
+        [
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          {},
+          null
+        ],
+        [
+          null,
+          null,
+          [
+            false
+          ],
+          -800392487775357316
+        ]
+      ],
+      "output": [
+        true,
+        [
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          {},
+          null
+        ],
+        [
+          null,
+          null,
+          [
+            false
+          ],
+          -800392487775357316
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:224",
+      "input": {
+        "text": {
+          " L򩙫m\"𝄞WA\f\\": "t𝄞H𝄞és"
+        },
+        "\u001a𝄞C": "𝄞",
+        "key": "󌗼BéJ\u0007"
+      },
+      "output": {
+        "text": {
+          " L򩙫m\"𝄞WA\f\\": "t𝄞H𝄞és"
+        },
+        "\u001a𝄞C": "𝄞",
+        "key": "󌗼BéJ\u0007"
+      }
+    },
+    {
+      "name": "default-limits:object:225",
+      "input": {
+        "text": [],
+        "01": 1e-7,
+        "19": false,
+        "R𝄞TW𝄞u😀 ymj": null
+      },
+      "output": {
+        "19": false,
+        "text": [],
+        "01": 1e-7,
+        "R𝄞TW𝄞u😀 ymj": null
+      }
+    },
+    {
+      "name": "default-limits:string:226",
+      "input": "9 U2W 😀😀😀世vF O\fé",
+      "output": "9 U2W 😀😀😀世vF O\fé"
+    },
+    {
+      "name": "default-limits:array:227",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:228",
+      "input": {
+        "1.5": {
+          "d😀4F\\😀m𝄞": 2037387657383100763,
+          "l 𝄞世\rKP世": 1e-6
+        },
+        "type": [
+          false
+        ]
+      },
+      "output": {
+        "1.5": {
+          "d😀4F\\😀m𝄞": 2037387657383100763,
+          "l 𝄞世\rKP世": 1e-6
+        },
+        "type": [
+          false
+        ]
+      }
+    },
+    {
+      "name": "default-limits:array:229",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:230",
+      "input": [
+        false,
+        {
+          "11": "kAUwkZI N"
+        }
+      ],
+      "output": [
+        false,
+        {
+          "11": "kAUwkZI N"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:231",
+      "input": [
+        {
+          "$f64": "8000000000000000"
+        }
+      ],
+      "output": [
+        {
+          "$f64": "8000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:232",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:233",
+      "input": [
+        {
+          "type": {
+            "3": 473167613407747713
+          },
+          "14": "g\u000b ​",
+          "value": false
+        },
+        {
+          "19": 5.412686596096997e+106,
+          "15": 14409289007008690441,
+          "17": true,
+          "01": {
+            "$f64": "76247e1158d73195"
+          }
+        }
+      ],
+      "output": [
+        {
+          "14": "g\u000b ​",
+          "type": {
+            "3": 473167613407747713
+          },
+          "value": false
+        },
+        {
+          "15": 14409289007008690441,
+          "17": true,
+          "19": 5.412686596096997e+106,
+          "01": {
+            "$f64": "76247e1158d73195"
+          }
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:234",
+      "input": [
+        [
+          {
+            "8": false,
+            "3": {
+              "$f64": "8000000000000000"
+            }
+          },
+          " s𝄞　1 ",
+          0.0,
+          [
+            null
+          ]
+        ],
+        null,
+        {
+          "E世𝄞  ": "é\u001b 😀😀é OqO9L",
+          "value": "",
+          "...": null,
+          "": 8.200865155803915e+177
+        }
+      ],
+      "output": [
+        [
+          {
+            "3": {
+              "$f64": "8000000000000000"
+            },
+            "8": false
+          },
+          " s𝄞　1 ",
+          0.0,
+          [
+            null
+          ]
+        ],
+        null,
+        {
+          "E世𝄞  ": "é\u001b 😀😀é OqO9L",
+          "value": "",
+          "...": null,
+          "": 8.200865155803915e+177
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:235",
+      "input": [
+        ""
+      ],
+      "output": [
+        ""
+      ]
+    },
+    {
+      "name": "default-limits:array:236",
+      "input": [
+        true,
+        null,
+        [
+          false,
+          null,
+          "vdb",
+          false
+        ]
+      ],
+      "output": [
+        true,
+        null,
+        [
+          false,
+          null,
+          "vdb",
+          false
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:object:237",
+      "input": {
+        "10": 0.30000000000000004,
+        "8": false,
+        "16": 13012638046005028308
+      },
+      "output": {
+        "8": false,
+        "10": 0.30000000000000004,
+        "16": 13012638046005028308
+      }
+    },
+    {
+      "name": "default-limits:string:238",
+      "input": "éu x😀𝄞\u0016YC\tP2",
+      "output": "éu x😀𝄞\u0016YC\tP2"
+    },
+    {
+      "name": "default-limits:array:239",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:240",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:241",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:array:242",
+      "input": [
+        true,
+        [
+          5.087078278438681e+204,
+          true,
+          {
+            "$f64": "fd14e32578a3c2a9"
+          }
+        ],
+        {}
+      ],
+      "output": [
+        true,
+        [
+          5.087078278438681e+204,
+          true,
+          {
+            "$f64": "fd14e32578a3c2a9"
+          }
+        ],
+        {}
+      ]
+    },
+    {
+      "name": "default-limits:object:243",
+      "input": {
+        "16": true
+      },
+      "output": {
+        "16": true
+      }
+    },
+    {
+      "name": "default-limits:array:244",
+      "input": [
+        {}
+      ],
+      "output": [
+        {}
+      ]
+    },
+    {
+      "name": "default-limits:object:245",
+      "input": {
+        "data": false,
+        "Ⱥ%3C qd﻿\u0001 \\": [],
+        "01": [
+          "Y 0😀fp\u0005Z\\😀"
+        ],
+        "context": {}
+      },
+      "output": {
+        "data": false,
+        "Ⱥ%3C qd﻿\u0001 \\": [],
+        "01": [
+          "Y 0😀fp\u0005Z\\😀"
+        ],
+        "context": {}
+      }
+    },
+    {
+      "name": "default-limits:array:246",
+      "input": [
+        {},
+        false
+      ],
+      "output": [
+        {},
+        false
+      ]
+    },
+    {
+      "name": "default-limits:array:247",
+      "input": [
+        [
+          null
+        ]
+      ],
+      "output": [
+        [
+          null
+        ]
+      ]
+    },
+    {
+      "name": "default-limits:array:248",
+      "input": [
+        null,
+        [],
+        [
+          "n8=wy",
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          0.0
+        ],
+        {
+          "context": null,
+          "18": true
+        }
+      ],
+      "output": [
+        null,
+        [],
+        [
+          "n8=wy",
+          {
+            "$f64": "8000000000000000"
+          },
+          null,
+          0.0
+        ],
+        {
+          "18": true,
+          "context": null
+        }
+      ]
+    },
+    {
+      "name": "default-limits:array:249",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:250",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:object:251",
+      "input": {},
+      "output": {}
+    },
+    {
+      "name": "default-limits:array:252",
+      "input": [],
+      "output": []
+    },
+    {
+      "name": "default-limits:object:253",
+      "input": {
+        "20": -1129716413433868401,
+        "4294967294": [
+          [
+            true,
+            null,
+            5.9299907388696974e+128
+          ],
+          true,
+          null
+        ],
+        "1.5": "😀v\u001c​",
+        "𝄞 r\t😀mh": [
+          "2\"F\\RY0𝄞u世",
+          [
+            10480998529294972293,
+            null,
+            null
+          ]
+        ]
+      },
+      "output": {
+        "20": -1129716413433868401,
+        "4294967294": [
+          [
+            true,
+            null,
+            5.9299907388696974e+128
+          ],
+          true,
+          null
+        ],
+        "1.5": "😀v\u001c​",
+        "𝄞 r\t😀mh": [
+          "2\"F\\RY0𝄞u世",
+          [
+            10480998529294972293,
+            null,
+            null
+          ]
+        ]
+      }
+    },
+    {
+      "name": "default-limits:object:254",
+      "input": {
+        "😀 O\r 3f😀iI": null,
+        "": {
+          "6": -6428610357097607770,
+          "context": [
+            -3.658842256589368e-185
+          ],
+          "type": ""
+        },
+        "6": {
+          "14": null
+        }
+      },
+      "output": {
+        "6": {
+          "14": null
+        },
+        "😀 O\r 3f😀iI": null,
+        "": {
+          "6": -6428610357097607770,
+          "context": [
+            -3.658842256589368e-185
+          ],
+          "type": ""
+        }
+      }
+    },
+    {
+      "name": "default-limits:array:255",
+      "input": [
+        "=yj😀v\\"
+      ],
+      "output": [
+        "=yj😀v\\"
+      ]
+    }
+  ]
+}

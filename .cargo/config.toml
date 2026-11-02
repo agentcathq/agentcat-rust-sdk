@@ -1,0 +1,3 @@
+# The SDK records a captured backtrace in error events and the goldens hold none; panics keep their backtraces through RUST_BACKTRACE.
+[env]
+RUST_LIB_BACKTRACE = { value = "0", force = true }

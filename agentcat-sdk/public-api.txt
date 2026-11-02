@@ -1,0 +1,215 @@
+pub mod agentcat_sdk
+pub mod agentcat_sdk::testing
+pub struct agentcat_sdk::testing::Fake
+impl agentcat_sdk::testing::Fake
+pub fn agentcat_sdk::testing::Fake::agentcat(&self, impl core::convert::Into<alloc::string::String>, agentcat_sdk::Options) -> agentcat_sdk::AgentCat
+pub async fn agentcat_sdk::testing::Fake::assert_custom_event_published(&self, &str)
+pub async fn agentcat_sdk::testing::Fake::assert_nothing_tracked(&self)
+pub async fn agentcat_sdk::testing::Fake::assert_tracked(&self, &str)
+pub async fn agentcat_sdk::testing::Fake::assert_tracked_count(&self, usize)
+pub async fn agentcat_sdk::testing::Fake::events(&self) -> alloc::vec::Vec<agentcat_sdk::Event>
+pub fn agentcat_sdk::testing::Fake::new() -> Self
+impl core::clone::Clone for agentcat_sdk::testing::Fake
+pub fn agentcat_sdk::testing::Fake::clone(&self) -> Self
+impl core::default::Default for agentcat_sdk::testing::Fake
+pub fn agentcat_sdk::testing::Fake::default() -> Self
+impl core::fmt::Debug for agentcat_sdk::testing::Fake
+pub fn agentcat_sdk::testing::Fake::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+#[non_exhaustive] pub enum agentcat_sdk::Error
+pub agentcat_sdk::Error::ProjectIdRequired
+impl core::error::Error for agentcat_sdk::Error
+impl core::fmt::Debug for agentcat_sdk::Error
+pub fn agentcat_sdk::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::fmt::Display for agentcat_sdk::Error
+pub fn agentcat_sdk::Error::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+#[non_exhaustive] pub enum agentcat_sdk::LogDestination
+pub agentcat_sdk::LogDestination::File
+pub agentcat_sdk::LogDestination::Tracing
+impl core::clone::Clone for agentcat_sdk::LogDestination
+pub fn agentcat_sdk::LogDestination::clone(&self) -> Self
+impl core::cmp::Eq for agentcat_sdk::LogDestination
+impl core::cmp::PartialEq for agentcat_sdk::LogDestination
+pub fn agentcat_sdk::LogDestination::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat_sdk::LogDestination
+pub fn agentcat_sdk::LogDestination::default() -> Self
+impl core::fmt::Debug for agentcat_sdk::LogDestination
+pub fn agentcat_sdk::LogDestination::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::Copy for agentcat_sdk::LogDestination
+impl core::marker::StructuralPartialEq for agentcat_sdk::LogDestination
+pub struct agentcat_sdk::AgentCat
+impl agentcat_sdk::AgentCat
+pub async fn agentcat_sdk::AgentCat::flush(&self, core::time::Duration) -> bool
+pub fn agentcat_sdk::AgentCat::flush_blocking(&self, core::time::Duration) -> bool
+pub fn agentcat_sdk::AgentCat::from_env(agentcat_sdk::Options) -> Self
+pub fn agentcat_sdk::AgentCat::new(impl core::convert::Into<alloc::string::String>, agentcat_sdk::Options) -> Self
+pub fn agentcat_sdk::AgentCat::publish_custom_event(&self, &str, &str, agentcat_sdk::CustomEvent) -> core::result::Result<(), agentcat_sdk::Error>
+pub async fn agentcat_sdk::AgentCat::shutdown(&self, core::time::Duration) -> bool
+pub fn agentcat_sdk::AgentCat::shutdown_blocking(&self, core::time::Duration) -> bool
+pub fn agentcat_sdk::AgentCat::track<H: rmcp::handler::server::ServerHandler>(&self, H) -> agentcat_sdk::Tracked<H>
+impl core::clone::Clone for agentcat_sdk::AgentCat
+pub fn agentcat_sdk::AgentCat::clone(&self) -> Self
+impl core::fmt::Debug for agentcat_sdk::AgentCat
+pub fn agentcat_sdk::AgentCat::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub struct agentcat_sdk::CallContext
+impl agentcat_sdk::CallContext
+pub fn agentcat_sdk::CallContext::agent_id(&self) -> core::option::Option<&str>
+pub fn agentcat_sdk::CallContext::agentcat(&self) -> &agentcat_sdk::AgentCat
+pub fn agentcat_sdk::CallContext::session_id(&self) -> core::option::Option<&str>
+impl agentcat_sdk::CallContext
+pub fn agentcat_sdk::CallContext::publish_custom_event(&self, &str, agentcat_sdk::CustomEvent) -> core::result::Result<(), agentcat_sdk::Error>
+impl core::clone::Clone for agentcat_sdk::CallContext
+pub fn agentcat_sdk::CallContext::clone(&self) -> Self
+impl core::fmt::Debug for agentcat_sdk::CallContext
+pub fn agentcat_sdk::CallContext::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub struct agentcat_sdk::CustomEvent
+impl agentcat_sdk::CustomEvent
+pub fn agentcat_sdk::CustomEvent::duration(self, core::time::Duration) -> Self
+pub fn agentcat_sdk::CustomEvent::error(self, serde_json::value::Value) -> Self
+pub fn agentcat_sdk::CustomEvent::is_error(self, bool) -> Self
+pub fn agentcat_sdk::CustomEvent::message(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::CustomEvent::new() -> Self
+pub fn agentcat_sdk::CustomEvent::parameters(self, serde_json::value::Value) -> Self
+pub fn agentcat_sdk::CustomEvent::properties(self, serde_json::map::Map<alloc::string::String, serde_json::value::Value>) -> Self
+pub fn agentcat_sdk::CustomEvent::resource_name(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::CustomEvent::response(self, serde_json::value::Value) -> Self
+pub fn agentcat_sdk::CustomEvent::session_id(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::CustomEvent::tags(self, serde_json::map::Map<alloc::string::String, serde_json::value::Value>) -> Self
+impl core::clone::Clone for agentcat_sdk::CustomEvent
+pub fn agentcat_sdk::CustomEvent::clone(&self) -> Self
+impl core::default::Default for agentcat_sdk::CustomEvent
+pub fn agentcat_sdk::CustomEvent::default() -> Self
+impl core::fmt::Debug for agentcat_sdk::CustomEvent
+pub fn agentcat_sdk::CustomEvent::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+#[non_exhaustive] pub struct agentcat_sdk::Event
+pub agentcat_sdk::Event::agentcat_version: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::client_name: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::client_version: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::duration: core::option::Option<core::time::Duration>
+pub agentcat_sdk::Event::error: core::option::Option<serde_json::value::Value>
+pub agentcat_sdk::Event::event_type: alloc::string::String
+pub agentcat_sdk::Event::id: alloc::string::String
+pub agentcat_sdk::Event::identify_actor_data: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat_sdk::Event::identify_actor_given_id: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::identify_actor_name: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::input_tokens: core::option::Option<u32>
+pub agentcat_sdk::Event::is_error: core::option::Option<bool>
+pub agentcat_sdk::Event::output_tokens: core::option::Option<u32>
+pub agentcat_sdk::Event::parameters: core::option::Option<serde_json::value::Value>
+pub agentcat_sdk::Event::project_id: alloc::string::String
+pub agentcat_sdk::Event::properties: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat_sdk::Event::resource_name: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::response: core::option::Option<serde_json::value::Value>
+pub agentcat_sdk::Event::sdk_language: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::server_name: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::server_version: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::session_id: core::option::Option<alloc::string::String>
+pub agentcat_sdk::Event::tags: core::option::Option<alloc::collections::btree::map::BTreeMap<alloc::string::String, alloc::string::String>>
+pub agentcat_sdk::Event::timestamp: std::time::SystemTime
+pub agentcat_sdk::Event::user_intent: core::option::Option<serde_json::value::Value>
+impl core::clone::Clone for agentcat_sdk::Event
+pub fn agentcat_sdk::Event::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat_sdk::Event
+pub fn agentcat_sdk::Event::eq(&self, &Self) -> bool
+impl core::default::Default for agentcat_sdk::Event
+pub fn agentcat_sdk::Event::default() -> Self
+impl core::fmt::Debug for agentcat_sdk::Event
+pub fn agentcat_sdk::Event::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat_sdk::Event
+pub struct agentcat_sdk::Options
+impl agentcat_sdk::Options
+pub fn agentcat_sdk::Options::api_base_url(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::Options::custom_context_description(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::Options::enable_agent_tracking(self, bool) -> Self
+pub fn agentcat_sdk::Options::enable_report_missing(self, bool) -> Self
+pub fn agentcat_sdk::Options::enable_tool_call_context(self, bool) -> Self
+pub fn agentcat_sdk::Options::enable_tracing(self, bool) -> Self
+pub fn agentcat_sdk::Options::event_properties<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat_sdk::ToolCall) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>, agentcat_sdk::HookError>> + core::marker::Send + 'static
+pub fn agentcat_sdk::Options::event_tags<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat_sdk::ToolCall) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>, agentcat_sdk::HookError>> + core::marker::Send + 'static
+pub fn agentcat_sdk::Options::identify<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat_sdk::ToolCall) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<core::option::Option<agentcat_sdk::UserIdentity>, agentcat_sdk::HookError>> + core::marker::Send + 'static
+pub fn agentcat_sdk::Options::log_destination(self, agentcat_sdk::LogDestination) -> Self
+pub fn agentcat_sdk::Options::redact_event<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat_sdk::Event) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<core::option::Option<agentcat_sdk::Event>, agentcat_sdk::HookError>> + core::marker::Send + 'static
+pub fn agentcat_sdk::Options::redact_sensitive_information<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(alloc::string::String) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<alloc::string::String, agentcat_sdk::HookError>> + core::marker::Send + 'static
+pub fn agentcat_sdk::Options::resolve_session_id<F, Fut>(self, F) -> Self where F: core::ops::function::Fn(agentcat_sdk::ToolCall) -> Fut + core::marker::Send + core::marker::Sync + 'static, Fut: core::future::future::Future<Output = core::result::Result<core::option::Option<alloc::string::String>, agentcat_sdk::HookError>> + core::marker::Send + 'static
+impl core::clone::Clone for agentcat_sdk::Options
+pub fn agentcat_sdk::Options::clone(&self) -> Self
+impl core::default::Default for agentcat_sdk::Options
+pub fn agentcat_sdk::Options::default() -> Self
+impl core::fmt::Debug for agentcat_sdk::Options
+pub fn agentcat_sdk::Options::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub struct agentcat_sdk::ToolCall
+impl agentcat_sdk::ToolCall
+pub fn agentcat_sdk::ToolCall::arguments(&self) -> core::option::Option<&rmcp::model::JsonObject>
+pub fn agentcat_sdk::ToolCall::client_name(&self) -> core::option::Option<&str>
+pub fn agentcat_sdk::ToolCall::client_version(&self) -> core::option::Option<&str>
+pub fn agentcat_sdk::ToolCall::headers(&self) -> core::option::Option<&serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub fn agentcat_sdk::ToolCall::meta(&self) -> &rmcp::model::JsonObject
+pub fn agentcat_sdk::ToolCall::protocol_version(&self) -> core::option::Option<&str>
+pub fn agentcat_sdk::ToolCall::request_context(&self) -> &rmcp::service::RequestContext<rmcp::service::server::RoleServer>
+pub fn agentcat_sdk::ToolCall::tool_name(&self) -> &str
+pub fn agentcat_sdk::ToolCall::transport_session_id(&self) -> core::option::Option<&str>
+impl core::clone::Clone for agentcat_sdk::ToolCall
+pub fn agentcat_sdk::ToolCall::clone(&self) -> Self
+impl core::fmt::Debug for agentcat_sdk::ToolCall
+pub fn agentcat_sdk::ToolCall::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+pub struct agentcat_sdk::Tracked<H>
+impl<H> agentcat_sdk::Tracked<H>
+pub fn agentcat_sdk::Tracked<H>::agentcat(&self) -> &agentcat_sdk::AgentCat
+pub fn agentcat_sdk::Tracked<H>::inner(&self) -> &H
+pub fn agentcat_sdk::Tracked<H>::inner_mut(&mut self) -> &mut H
+pub fn agentcat_sdk::Tracked<H>::into_inner(self) -> H
+pub fn agentcat_sdk::Tracked<H>::publish_custom_event(&self, &str, agentcat_sdk::CustomEvent) -> core::result::Result<(), agentcat_sdk::Error> where H: rmcp::handler::server::ServerHandler
+impl<H: core::clone::Clone> core::clone::Clone for agentcat_sdk::Tracked<H>
+pub fn agentcat_sdk::Tracked<H>::clone(&self) -> Self
+impl<H: rmcp::handler::server::ServerHandler> rmcp::handler::server::ServerHandler for agentcat_sdk::Tracked<H>
+pub fn agentcat_sdk::Tracked<H>::accepted_subscription_filter(&self, &rmcp::model::SubscriptionFilter) -> core::option::Option<rmcp::model::SubscriptionFilter>
+pub fn agentcat_sdk::Tracked<H>::call_tool(&self, rmcp::model::CallToolRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::mrtr::CallToolResponse, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::cancel_task(&self, rmcp::model::CancelTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::complete(&self, rmcp::model::CompleteRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::CompleteResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::discover(&self, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::DiscoverResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::get_info(&self) -> rmcp::model::InitializeResult
+pub fn agentcat_sdk::Tracked<H>::get_prompt(&self, rmcp::model::GetPromptRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::mrtr::GetPromptResponse, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::get_task(&self, rmcp::model::GetTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::task::GetTaskResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::get_tool(&self, &str) -> core::option::Option<rmcp::model::tool::Tool>
+pub fn agentcat_sdk::Tracked<H>::initialize(&self, rmcp::model::InitializeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::InitializeResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::list_prompts(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::ListPromptsResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::list_resource_templates(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::ListResourceTemplatesResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::list_resources(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::ListResourcesResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::list_tools(&self, core::option::Option<rmcp::model::PaginatedRequestParams>, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::ListToolsResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::listen(&self, rmcp::service::server::SubscriptionContext) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_cancelled(&self, rmcp::model::CancelledNotificationParam, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = ()> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_custom_notification(&self, rmcp::model::CustomNotification, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = ()> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_custom_request(&self, rmcp::model::CustomRequest, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::CustomResult, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_initialized(&self, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = ()> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_progress(&self, rmcp::model::ProgressNotificationParam, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = ()> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::on_roots_list_changed(&self, rmcp::service::NotificationContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = ()> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::ping(&self, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::read_resource(&self, rmcp::model::ReadResourceRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<rmcp::model::mrtr::ReadResourceResponse, rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::set_level(&self, rmcp::model::SetLevelRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::subscribe(&self, rmcp::model::SubscribeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::supported_protocol_versions(&self) -> alloc::borrow::Cow<'static, [rmcp::model::ProtocolVersion]>
+pub fn agentcat_sdk::Tracked<H>::unsubscribe(&self, rmcp::model::UnsubscribeRequestParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+pub fn agentcat_sdk::Tracked<H>::update_task(&self, rmcp::model::UpdateTaskParams, rmcp::service::RequestContext<rmcp::service::server::RoleServer>) -> impl core::future::future::Future<Output = core::result::Result<(), rmcp::model::ErrorData>> + rmcp::service::MaybeSendFuture + '_
+impl<H> core::fmt::Debug for agentcat_sdk::Tracked<H>
+pub fn agentcat_sdk::Tracked<H>::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+#[non_exhaustive] pub struct agentcat_sdk::UserIdentity
+pub agentcat_sdk::UserIdentity::user_data: core::option::Option<serde_json::map::Map<alloc::string::String, serde_json::value::Value>>
+pub agentcat_sdk::UserIdentity::user_id: alloc::string::String
+pub agentcat_sdk::UserIdentity::user_name: core::option::Option<alloc::string::String>
+impl agentcat_sdk::UserIdentity
+pub fn agentcat_sdk::UserIdentity::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn agentcat_sdk::UserIdentity::user_data(self, serde_json::map::Map<alloc::string::String, serde_json::value::Value>) -> Self
+pub fn agentcat_sdk::UserIdentity::user_name(self, impl core::convert::Into<alloc::string::String>) -> Self
+impl core::clone::Clone for agentcat_sdk::UserIdentity
+pub fn agentcat_sdk::UserIdentity::clone(&self) -> Self
+impl core::cmp::PartialEq for agentcat_sdk::UserIdentity
+pub fn agentcat_sdk::UserIdentity::eq(&self, &Self) -> bool
+impl core::fmt::Debug for agentcat_sdk::UserIdentity
+pub fn agentcat_sdk::UserIdentity::fmt(&self, &mut core::fmt::Formatter<'_>) -> core::fmt::Result
+impl core::marker::StructuralPartialEq for agentcat_sdk::UserIdentity
+pub const agentcat_sdk::AGENTCAT_API_URL: &str
+pub const agentcat_sdk::AGENTCAT_ENABLED: &str
+pub const agentcat_sdk::AGENTCAT_PROJECT_ID: &str
+pub const agentcat_sdk::MCPCAT_API_URL: &str
+pub fn agentcat_sdk::capture_error<E: core::error::Error + ?core::marker::Sized + 'static>(&E)
+pub fn agentcat_sdk::track<H: rmcp::handler::server::ServerHandler>(H, impl core::convert::Into<alloc::string::String>, agentcat_sdk::Options) -> agentcat_sdk::Tracked<H>
+pub type agentcat_sdk::HookError = alloc::boxed::Box<(dyn core::error::Error + core::marker::Send + core::marker::Sync + 'static)>
