@@ -7,6 +7,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+### Fixed
+
+- `Tracked` forwards the SEP-2640 Skills methods of `ServerHandler` (`list_skills`, `get_skill`
+  and `read_resource_directory`) to the wrapped handler on an `rmcp` that has them (after 3.8.0).
+  Before, the wrapper answered them with rmcp's default `-32601`. The build script finds the
+  methods in the resolved `rmcp`; `rmcp` 3.0 to 3.8 build as before. The SDK records no event
+  for these methods.
+
 ## [1.0.0] - 2026-11-02
 
 ### Added

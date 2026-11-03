@@ -245,6 +245,41 @@ fn meta_cases() -> Vec<Case> {
     ]
 }
 
+/// The SEP-2640 Skills requests, on an rmcp that has them; the [`Probe`] declares the extension.
+#[cfg(agentcat_rmcp_skills)]
+fn skills_cases() -> Vec<Case> {
+    use rmcp::model::{
+        GetSkillRequest, GetSkillRequestParams, ListSkillsRequest, ReadResourceDirectoryRequest,
+        ReadResourceDirectoryRequestParams,
+    };
+    vec![
+        Case::new(
+            "list_skills",
+            ClientRequest::ListSkillsRequest(ListSkillsRequest::default()),
+            Reached::Says,
+        ),
+        Case::new(
+            "get_skill",
+            ClientRequest::GetSkillRequest(GetSkillRequest::new(GetSkillRequestParams::new(
+                "skill://probe/SKILL.md",
+            ))),
+            Reached::Says,
+        ),
+        Case::new(
+            "read_resource_directory",
+            ClientRequest::ReadResourceDirectoryRequest(ReadResourceDirectoryRequest::new(
+                ReadResourceDirectoryRequestParams::new("file:///probe/"),
+            )),
+            Reached::Says,
+        ),
+    ]
+}
+
+#[cfg(not(agentcat_rmcp_skills))]
+fn skills_cases() -> Vec<Case> {
+    Vec::new()
+}
+
 /// What `client` receives for `request`, as JSON: `{"result": ..}`, `{"error": ..}` (a JSON-RPC
 /// error), `{"failure": ..}` (any other client error) or `{"timeout": ..}`.
 async fn answer(
@@ -272,7 +307,11 @@ async fn forwards_every_method() {
 
     // One request for each method a client can reach; `initialize` and `get_info` are checked
     // through the peer info above, and `listen` needs `accepted_subscription_filter`.
-    for case in plain_cases().into_iter().chain(meta_cases()) {
+    for case in plain_cases()
+        .into_iter()
+        .chain(meta_cases())
+        .chain(skills_cases())
+    {
         let expected = answer(&plain, case.request.clone()).await;
         assert!(
             case.reached.by(&expected, case.method),

@@ -4,7 +4,9 @@
 //! only rmcp's default `initialize` calls it, and `initialize` is forwarded. The four methods the
 //! SDK changes (`initialize`, `list_tools`, `get_tool`, `call_tool`) forward untouched when
 //! `AGENTCAT_ENABLED` turned the handle off; `call_tool` then still adds a
-//! [`CallContext`](crate::CallContext) without session or agent.
+//! [`CallContext`](crate::CallContext) without session or agent. The SEP-2640 Skills methods
+//! (`list_skills`, `get_skill`, `read_resource_directory`, after rmcp 3.8.0) are forwarded
+//! when the build script finds them in the resolved rmcp (`cfg(agentcat_rmcp_skills)`).
 
 use std::any::type_name;
 use std::borrow::Cow;
@@ -20,6 +22,11 @@ use rmcp::model::{
     ListResourceTemplatesResult, ListResourcesResult, ListToolsResult, PaginatedRequestParams,
     ProgressNotificationParam, ProtocolVersion, ReadResourceRequestParams, ReadResourceResponse,
     SubscribeRequestParams, SubscriptionFilter, Tool, UnsubscribeRequestParams, UpdateTaskParams,
+};
+#[cfg(agentcat_rmcp_skills)]
+use rmcp::model::{
+    GetSkillRequestParams, GetSkillResult, ListSkillsResult, ReadResourceDirectoryRequestParams,
+    ReadResourceDirectoryResult,
 };
 use rmcp::service::{MaybeSendFuture, NotificationContext, RequestContext, SubscriptionContext};
 use rmcp::{ErrorData, RoleServer, ServerHandler};
@@ -457,5 +464,33 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
         context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<(), ErrorData>> + MaybeSendFuture + '_ {
         self.inner.cancel_task(request, context)
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn list_skills(
+        &self,
+        request: Option<PaginatedRequestParams>,
+        context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListSkillsResult, ErrorData>> + MaybeSendFuture + '_ {
+        self.inner.list_skills(request, context)
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn get_skill(
+        &self,
+        request: GetSkillRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<GetSkillResult, ErrorData>> + MaybeSendFuture + '_ {
+        self.inner.get_skill(request, context)
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn read_resource_directory(
+        &self,
+        request: ReadResourceDirectoryRequestParams,
+        context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ReadResourceDirectoryResult, ErrorData>> + MaybeSendFuture + '_
+    {
+        self.inner.read_resource_directory(request, context)
     }
 }

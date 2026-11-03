@@ -374,7 +374,17 @@ impl ServerHandler for Probe {
     }
 
     fn get_info(&self) -> InitializeResult {
-        let mut info = InitializeResult::new(ServerCapabilities::builder().enable_tasks().build());
+        // With the Skills methods, also the Skills extension (with directory reads) and the
+        // resources capability it rides on: rmcp answers `-32601` without them.
+        #[cfg(agentcat_rmcp_skills)]
+        let capabilities = ServerCapabilities::builder()
+            .enable_resources()
+            .enable_tasks()
+            .enable_skills_with_directory_read()
+            .build();
+        #[cfg(not(agentcat_rmcp_skills))]
+        let capabilities = ServerCapabilities::builder().enable_tasks().build();
+        let mut info = InitializeResult::new(capabilities);
         info.protocol_version = ProtocolVersion::V_2025_11_25;
         info.server_info = Implementation::new("probe", "1.0.0");
         info.instructions = Some("probe".to_owned());
@@ -403,6 +413,37 @@ impl ServerHandler for Probe {
         _context: RequestContext<RoleServer>,
     ) -> impl Future<Output = Result<(), ErrorData>> + MaybeSendFuture + '_ {
         ready(Ok(()))
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn list_skills(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<rmcp::model::ListSkillsResult, ErrorData>> + MaybeSendFuture + '_
+    {
+        ready(Err(probe_error("list_skills")))
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn get_skill(
+        &self,
+        _request: rmcp::model::GetSkillRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<rmcp::model::GetSkillResult, ErrorData>> + MaybeSendFuture + '_
+    {
+        ready(Err(probe_error("get_skill")))
+    }
+
+    #[cfg(agentcat_rmcp_skills)]
+    fn read_resource_directory(
+        &self,
+        _request: rmcp::model::ReadResourceDirectoryRequestParams,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<rmcp::model::ReadResourceDirectoryResult, ErrorData>>
+    + MaybeSendFuture
+    + '_ {
+        ready(Err(probe_error("read_resource_directory")))
     }
 }
 
