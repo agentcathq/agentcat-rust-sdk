@@ -1,14 +1,18 @@
 name: Nightly
 
 # GitHub schedules and dispatches only workflows on the default branch (main), so the schedule starts
-# once this file reaches main. The push trigger runs it on main when this file, the mutation settings
-# or the mutation script change. Every job runs on every nightly run, push runs included: the Rust suite with long
-# property runs, the branch coverage report (its percentage is a report and never a failure), the
-# full mutation set (`mutants-full`, `mutants-score`), and the rmcp and agentcat-api legs.
+# once this file reaches main. The schedule runs it daily at 2 AM UTC. The push trigger runs it on main
+# when this file, the mutation settings or the mutation script change. Every job runs on every
+# scheduled, manual and push run: the Rust suite with long property runs, the branch coverage report
+# (its percentage is a report and never a failure), the full mutation set (`mutants-full`,
+# `mutants-score`), and the compat legs (rmcp-versions, rmcp-canary, rmcp-main, agentcat-api-latest).
+# On a pull request only the compat legs run, and only when the `changes` job finds SDK code in the
+# pull request's diff; the other jobs never run on a pull request.
 on:
   schedule:
-    - cron: "0 6 * * *"
+    - cron: "0 2 * * *"
   workflow_dispatch:
+  pull_request:
   push:
     branches: [main]
     paths:
@@ -27,9 +31,46 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  # sdk=true when a pull request changes SDK code: the SDK crate (its README, CHANGELOG and LICENSE
+  # left out), the xtask crate, the workspace manifest and lock, .cargo/config.toml and this file.
+  # Every other event sets sdk=true. Only the compat legs read it.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      sdk: ${{ steps.diff.outputs.sdk }}
+    steps:
+      - if: github.event_name == 'pull_request'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: diff
+        shell: bash
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" != pull_request ]; then
+            echo "sdk=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files="$(git diff --name-only "$BASE...$HEAD")"
+          printf '%s\n' "$files"
+          sdk=false
+          if printf '%s\n' "$files" \
+            | grep -Ev '^agentcat-sdk/(README\.md|CHANGELOG\.md|LICENSE)$' \
+            | grep -Eq '^(agentcat-sdk/|xtask/|Cargo\.toml$|Cargo\.lock$|\.cargo/config\.toml$|\.github/workflows/nightly\.yml$)'; then
+            sdk=true
+          fi
+          echo "sdk=$sdk" | tee -a "$GITHUB_OUTPUT"
+
   # The Rust suite on the three systems, with long property runs.
   rust:
     name: rust (${{ matrix.os }})
+    if: github.event_name != 'pull_request'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     strategy:
@@ -56,6 +97,7 @@ jobs:
   # needs. Report only: the run summary shows the percentage against its target of 85 %, and the
   # percentage never fails the run. The line floors run on every push (ci.yml, job `coverage`).
   coverage-branch:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -88,6 +130,7 @@ jobs:
   # `mutants-score` from all shards together.
   mutants-full:
     name: mutants-full (shard ${{ matrix.shard }})
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -122,7 +165,7 @@ jobs:
   # outcomes.json, and a score of partial data could pass.
   mutants-score:
     needs: mutants-full
-    if: always()
+    if: always() && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -157,6 +200,8 @@ jobs:
   # The SDK tests and the rmcp canary against rmcp's git `main`, through a [patch.crates-io] added at run
   # time (the repository is not changed). A failure means rmcp main changed; it feeds no other job.
   rmcp-main:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.sdk == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -186,6 +231,8 @@ jobs:
       - run: cargo run -q -p xtask -- rmcp-canary
 
   rmcp-versions:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.sdk == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -207,7 +254,8 @@ jobs:
   # The canary (every ServerHandler method forwarded) on the highest patch of every rmcp 3.x minor.
   rmcp-canary:
     name: rmcp-canary (${{ matrix.version }})
-    needs: rmcp-versions
+    needs: [changes, rmcp-versions]
+    if: github.event_name != 'pull_request' || needs.changes.outputs.sdk == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -230,6 +278,8 @@ jobs:
   # The SDK against the newest agentcat-api on crates.io (the workspace pins "=0.0.3"). The job
   # never fails the run: a break shows as a warning and a note in the run summary.
   agentcat-api-latest:
+    needs: changes
+    if: github.event_name != 'pull_request' || needs.changes.outputs.sdk == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true
