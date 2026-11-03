@@ -35,6 +35,12 @@ tracing = { workspace = true, features = ["std"] }
 agentcat-api = { workspace = true }
 reqwest = { workspace = true }
 
+# The build script probes this rmcp (the library's: one rmcp 3.x in the lock) for the Skills
+# methods of `ServerHandler`; see build.rs.
+[build-dependencies]
+rmcp = { version = "3.0.0", default-features = false }
+serde_json = { workspace = true }
+
 [features]
 default = ["rustls"]
 # Exactly one TLS stack is the usual choice; both together pull both.
