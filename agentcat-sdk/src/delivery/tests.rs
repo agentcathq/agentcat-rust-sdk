@@ -18,7 +18,7 @@ use agentcat_api::models::publish_event_request::EventType;
 use rmcp::ServerHandler;
 use rmcp::ServiceExt;
 use rmcp::model::{CallToolRequestParams, ClientCapabilities, Implementation};
-use rmcp::model::{InitializeRequestParams, ProtocolVersion};
+use rmcp::model::{InitializeRequestParams, InitializeResult, ProtocolVersion, ServerCapabilities};
 use serde_json::json;
 use tokio::runtime::{Builder, Handle, Runtime};
 use tokio::sync::{Semaphore, oneshot};
@@ -156,10 +156,16 @@ impl Observer for RecordingObserver {
     }
 }
 
-/// A server with no tools: its listing gives the call path a warning line.
+/// A server with no tools: its listing gives the call path a warning line. It advertises the tools
+/// capability: on rmcp's git main (after 3.10.0, rmcp #1446), the default `list_tools` of a server
+/// without it answers "method not found".
 struct Empty;
 
-impl ServerHandler for Empty {}
+impl ServerHandler for Empty {
+    fn get_info(&self) -> InitializeResult {
+        InitializeResult::new(ServerCapabilities::builder().enable_tools().build())
+    }
+}
 
 // ------------------------------------------------------------------------------- defaults
 

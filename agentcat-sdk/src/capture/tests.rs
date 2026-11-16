@@ -335,6 +335,17 @@ impl ServerHandler for PanickingInfo {
         ready(Ok(info))
     }
 
+    // An empty listing of its own: on rmcp's git main (after 3.10.0, rmcp #1446), the default
+    // `list_tools` calls `get_info`, so the registry rebuild would hit the panic too and log a
+    // second `get_info` line.
+    fn list_tools(
+        &self,
+        _request: Option<PaginatedRequestParams>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl Future<Output = Result<ListToolsResult, ErrorData>> + MaybeSendFuture + '_ {
+        ready(Ok(ListToolsResult::default()))
+    }
+
     fn call_tool(
         &self,
         request: CallToolRequestParams,
