@@ -40,11 +40,11 @@
 //! and the server name started an hour ago or more, the SDK calls the `list_tools`,
 //! `list_resources`, `list_resource_templates` and `list_prompts` methods of your handler, with
 //! the context of that request. It calls the resource methods only when the server declares the
-//! resources capability, and `list_prompts` only when it declares the prompts capability. A
-//! handle of the test fake (`testing::Fake`) starts no heartbeat. So
+//! resources capability, and `list_prompts` only when it declares the prompts capability. So
 //! the SDK calls your list methods about once an hour for each process. A process that does not
 //! live for 60 seconds sends a heartbeat for each `tools/list` request and each `get_more_tools`
-//! call instead. The SDK keeps the times in the memory of the process and writes no file.
+//! call instead. The SDK keeps the times in the memory of the process and writes no file. A
+//! handle of the test fake (`testing::Fake`) starts no heartbeat.
 //!
 //! The list calls run next to the request that started the check, inside its future, and the
 //! request never waits for them: the SDK returns the result of the request when it is ready and
