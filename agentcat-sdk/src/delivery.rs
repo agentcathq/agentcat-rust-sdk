@@ -27,7 +27,7 @@
 //!   cancelled async `flush` or `shutdown` stays in its waiting list until the queue and the
 //!   in-flight events are empty or the deadline passes, and a cancelled `shutdown` still shuts
 //!   the handle down.
-//! - A server info heartbeat ([`Report`](crate::server_info::Report)) waits in a lane of its
+//! - A server info heartbeat ([`Report`]) waits in a lane of its
 //!   own, and the worker sends one at a time, in a task that holds none of the `concurrency`
 //!   slots. `flush` and `shutdown` do not wait for it: the stop of a shutdown drops the ones that
 //!   wait and aborts the one in flight.
