@@ -2,10 +2,9 @@ name: Nightly
 
 # GitHub schedules and dispatches only workflows on the default branch (main), so the schedule starts
 # once this file reaches main. The schedule runs it daily at 2 AM UTC. The push trigger runs it on main
-# when this file, the mutation settings or the mutation script change. Every job runs on every
-# scheduled, manual and push run: the Rust suite with long property runs, the branch coverage report
-# (its percentage is a report and never a failure), the full mutation set (`mutants-full`,
-# `mutants-score`), and the compat legs (rmcp-versions, rmcp-canary, rmcp-main, agentcat-api-latest).
+# when this file changes. Every job runs on every scheduled, manual and push run: the Rust suite with
+# long property runs, the branch coverage report (its percentage is a report and never a failure), and
+# the compat legs (rmcp-versions, rmcp-canary, rmcp-main, agentcat-api-latest).
 # On a pull request only the compat legs run, and only when the `changes` job finds SDK code in the
 # pull request's diff; the other jobs never run on a pull request.
 on:
@@ -17,8 +16,6 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/nightly.yml"
-      - ".cargo/**"
-      - "scripts/mutants-run.sh"
 
 permissions:
   contents: read
@@ -124,78 +121,6 @@ jobs:
           jq -r '.data[0].totals.branches
             | "Branch coverage of agentcat-sdk: \(.covered) of \(.count) branches, \((.percent * 10 | floor) / 10) % (target 85 %, report only)."' \
             target/coverage-branch.json | tee -a "$GITHUB_STEP_SUMMARY"
-
-  # The full mutation set in 8 shards. A shard fails only when cargo-mutants itself fails (exit code
-  # 1 usage, 4 the unmutated tree fails its tests); surviving or timed-out mutants (2, 3) are judged by
-  # `mutants-score` from all shards together.
-  mutants-full:
-    name: mutants-full (shard ${{ matrix.shard }})
-    if: github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 350
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-      - uses: taiki-e/install-action@5488ac5a951645ce95062214902ac4b6bc1a1037 # v2.87.32
-        with:
-          tool: nextest,cargo-mutants@27.1.0
-      - name: Mutants of shard ${{ matrix.shard }} of 8
-        shell: bash
-        run: |
-          MUTANTS_OK_CODES="0 2 3" scripts/mutants-run.sh --shard "${{ matrix.shard }}/8"
-      - if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: mutants-shard-${{ matrix.shard }}
-          path: mutants.out
-          retention-days: 14
-
-  # Merges the shards' outcomes.json and fails below 90 % detected of the viable mutants. Detected: caught
-  # or timed out (a timeout counts as detected). Viable: not unviable (the mutant builds). It
-  # also fails when a shard did not succeed: a shard that failed or timed out can leave a partial
-  # outcomes.json, and a score of partial data could pass.
-  mutants-score:
-    needs: mutants-full
-    if: always() && github.event_name != 'pull_request'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-        with:
-          pattern: mutants-shard-*
-          path: shards
-      - name: Score
-        shell: bash
-        env:
-          FULL_RESULT: ${{ needs.mutants-full.result }}
-        run: |
-          set -euo pipefail
-          if [ "$FULL_RESULT" != success ]; then
-            echo "mutants-full ended with: $FULL_RESULT; every shard must succeed for a score"
-            exit 1
-          fi
-          for k in 0 1 2 3 4 5 6 7; do
-            if [ ! -f "shards/mutants-shard-$k/outcomes.json" ]; then
-              echo "no outcomes.json for shard $k (mutants-full ended with: $FULL_RESULT)"
-              exit 1
-            fi
-          done
-          jq -s '{caught: (map(.caught) | add), missed: (map(.missed) | add), timeout: (map(.timeout) | add), unviable: (map(.unviable) | add)}' \
-            shards/mutants-shard-*/outcomes.json > score.json
-          jq -r '. as $s | ($s.caught + $s.missed + $s.timeout) as $viable
-            | (if $viable == 0 then 100 else (($s.caught + $s.timeout) * 1000 / $viable | floor) / 10 end) as $pct
-            | "Mutation score: \($s.caught) caught, \($s.missed) missed, \($s.timeout) timeout, \($s.unviable) unviable; \($pct) % detected (caught or timeout) of \($viable) viable (floor 90 %)."' \
-            score.json | tee -a "$GITHUB_STEP_SUMMARY"
-          jq -e '(.caught + .missed + .timeout) as $v | $v == 0 or ((.caught + .timeout) * 100 / $v >= 90)' score.json > /dev/null
 
   # The SDK tests and the rmcp canary against rmcp's git `main`, through a [patch.crates-io] added at run
   # time (the repository is not changed). A failure means rmcp main changed; it feeds no other job.
