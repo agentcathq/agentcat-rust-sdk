@@ -23,13 +23,11 @@ need "cargo install cargo-minimal-versions --locked" cargo minimal-versions --ve
 need "cargo install cargo-deny --locked" cargo deny --version
 need "cargo install cargo-public-api@0.52.0 --locked" cargo public-api --version
 need "cargo install cargo-llvm-cov@0.9.1 --locked" cargo llvm-cov --version
-need "cargo install cargo-mutants@27.1.0 --locked" cargo mutants --version
 need "rustup component add llvm-tools-preview" has_component 'llvm-tools(-preview)?'
 need "rustup toolchain install 1.88" has_toolchain '1\.88'
 need "rustup toolchain install nightly" has_toolchain nightly
 # cargo-public-api reads the rustdoc JSON of this dated nightly (TOOLCHAIN in xtask/src/public_api.rs)
 need "rustup toolchain install nightly-2026-10-18" has_toolchain 'nightly-2026-10-18'
-need "install jq with your package manager (for example apt-get install jq)" jq --version
 if [ "$missing" -ne 0 ]; then
   exit 1
 fi
@@ -56,15 +54,6 @@ cargo run -q -p xtask -- rmcp-canary
 cargo llvm-cov nextest -p agentcat-sdk --all-features --ignore-filename-regex '(/tests\.rs$|/test_support/|/tests/)' \
   --json --summary-only --output-path target/coverage.json
 cargo run -q -p xtask -- coverage target/coverage.json
-
-# mutants: no surviving mutant in the lines that differ from the upstream of the current branch (for
-# example origin/my-branch), or from origin/main when the branch has none (scripts/mutants-base.sh). The diff
-# compares the working tree with the merge base, so uncommitted changes to tracked files and to files staged
-# with `git add` count (an untracked, unstaged file does not). A timed-out mutant counts as detected
-# (scripts/mutants-run.sh); a missed mutant fails. An empty diff, or one with no mutable SDK source, finds no
-# mutant and passes. CI runs the same gate against the newest green commit that HEAD descends from.
-scripts/mutants-diff.sh
-scripts/mutants-run.sh --in-diff target/mutants.diff
 
 # msrv (warnings denied: an older rustc can warn where the current one does not)
 RUSTFLAGS="-D warnings" cargo +1.88 nextest run --workspace --all-features

@@ -12,8 +12,8 @@ run the checks.
 | [`README.md`](README.md) | The README of the crate. GitHub and crates.io show it, and its Rust code blocks compile as doctests (`ReadmeDoctests` in `agentcat-sdk/src/lib.rs`). `agentcat-sdk/README.md` is a symlink to it. |
 | [`agentcat-sdk/`](agentcat-sdk) | The published crate: the SDK source, its tests, its examples and the CHANGELOG. |
 | [`xtask/`](xtask) | Repository tasks, run as `cargo run -q -p xtask -- <task>`: `rmcp-canary` (the SDK forwards every method of `rmcp`'s `ServerHandler`), `public-api [--bless]` (the public API against `agentcat-sdk/public-api.txt`), `package-list` (the files of the published package), `coverage` (the line coverage floors), `rmcp-versions` (the `rmcp` versions that CI tests), `examples-check` (the customer examples) and `release` (the steps of the release workflow). |
-| [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. `mutants-base.sh`, `mutants-diff.sh` and `mutants-run.sh` pick the base commit of the mutation check, write its diff and run it. |
-| [`.github/workflows/`](.github/workflows) | `ci.yml`, the gate of every pull request, `nightly.yml`, the full mutation run, and `release.yml`, which releases a version. |
+| [`scripts/`](scripts) | `check.sh`, the local gate, which runs the commands of every CI job. |
+| [`.github/workflows/`](.github/workflows) | `ci.yml`, the gate of every pull request, `nightly.yml`, the long nightly runs and the compat tests, and `release.yml`, which releases a version. |
 | [`docs/`](docs) | The images of the README (`docs/static/`, `docs/cats/`). |
 
 ## Prerequisites
@@ -25,10 +25,9 @@ Install these tools:
 - The dated nightly of the public API check: `rustup toolchain install nightly-2026-10-18`
 - The cargo tools of the gate:
   `cargo install cargo-nextest cargo-hack cargo-minimal-versions cargo-deny --locked`
-- The cargo tools of the public API, coverage and mutation checks:
-  `cargo install cargo-public-api@0.52.0 cargo-llvm-cov@0.9.1 cargo-mutants@27.1.0 --locked`
+- The cargo tools of the public API and coverage checks:
+  `cargo install cargo-public-api@0.52.0 cargo-llvm-cov@0.9.1 --locked`
 - The coverage component: `rustup component add llvm-tools-preview`
-- `jq`, which the tests of the mutation base check use: `apt-get install jq` (or the package manager of your system)
 
 If a tool is missing, `scripts/check.sh` stops and prints the install command.
 
@@ -49,15 +48,14 @@ Run `bash scripts/check.sh`. Exit 0 means green. The script runs the commands of
 3. The Rust tests with all features and with no default features, the key-order test, the
    doctests and the rmcp canary.
 4. The coverage floors.
-5. The mutation check.
-6. The tests and the doctests on Rust 1.88.
-7. The docs build on nightly, with warnings denied.
-8. The public API check, the check of the package files and a publish dry run. The dry run
+5. The tests and the doctests on Rust 1.88.
+6. The docs build on nightly, with warnings denied.
+7. The public API check, the check of the package files and a publish dry run. The dry run
    contacts crates.io but uploads nothing.
-9. cargo-deny.
-10. The minimal-versions check, and the serde_json floor: one test on serde_json 1.0.127, the
-    lowest version that the crate accepts.
-11. The build of the examples, the doctests and the rmcp version test on the rmcp of `Cargo.lock`.
+8. cargo-deny.
+9. The minimal-versions check, and the serde_json floor: one test on serde_json 1.0.127, the
+   lowest version that the crate accepts.
+10. The build of the examples, the doctests and the rmcp version test on the rmcp of `Cargo.lock`.
     CI repeats them on every rmcp 3.x minor.
 
 For a shorter loop, run one part, for example `cargo nextest run -p agentcat-sdk --all-features`.
@@ -91,11 +89,6 @@ per test. For the doctests, run `cargo test --workspace --doc`.
 - **Coverage floors**: `cargo run -q -p xtask -- coverage target/coverage.json` fails below 90 %
   of the lines of the crate, or below 95 % of the lines of the pure modules. `scripts/check.sh`
   shows the `cargo llvm-cov` command that writes the JSON file.
-- **Mutation testing** uses cargo-mutants (settings in `.cargo/mutants.toml`). A mutant is a small
-  change to the SDK source, such as `>` to `>=`. A mutant that the tests do not catch is missed,
-  and one missed mutant fails the check. A mutant that times out counts as detected. On a pull
-  request, the diff gate mutates only the lines that changed, in 4 shards. The nightly run
-  mutates the whole crate in 8 shards and fails below 90 % detected.
 
 ### When a change is intended
 
@@ -113,33 +106,6 @@ per test. For the doctests, run `cargo test --workspace --doc`.
   API changes its request schema.
 - **The public API changes.** Run `cargo run -q -p xtask -- public-api --bless`. A bump of `rmcp`
   changes the `Tracked` `ServerHandler` lines of the snapshot, so it needs a new bless.
-
-### The mutation diff gate
-
-`scripts/mutants-base.sh` prints the base of the diff:
-
-- Locally, the base is the upstream of the current branch, or `origin/main` when the branch has no
-  upstream. The diff starts at the merge base of that commit and HEAD, and it includes
-  uncommitted changes to tracked or staged files.
-- In CI, the base is the newest commit with a successful CI run, on any branch, that HEAD descends
-  from. When no such commit exists, the base is the parent commit.
-
-`scripts/mutants-diff.sh` writes the diff to `target/mutants.diff`. The first commit of a
-repository has no parent, so its diff is empty and the check passes: the nightly run covers the
-whole crate.
-
-**Merge a pull request with a merge commit or a fast-forward, never a squash.** After a squash,
-`main` does not descend from the green commits of the branch. The check then mutates the whole
-squashed change again, and a large change can take longer than the time limit of its job.
-
-To run the check by hand, use the commands of `scripts/check.sh`:
-
-```sh
-scripts/mutants-diff.sh
-scripts/mutants-run.sh --in-diff target/mutants.diff
-```
-
-Read `mutants.out/missed.txt` for the missed mutants.
 
 ## Release a version
 

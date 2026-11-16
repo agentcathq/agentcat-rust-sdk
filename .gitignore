@@ -1,3 +1,5 @@
 /target
+# The output of cargo-mutants runs from before we removed the mutation check; an older checkout can
+# still hold these directories.
 /mutants.out/
 /mutants.out.old/
