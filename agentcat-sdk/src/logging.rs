@@ -17,6 +17,7 @@ use std::time::SystemTime;
 use tracing::Level;
 
 use crate::config::LogDestination;
+use crate::server_info::LINE_PREFIX;
 use crate::wire::iso_millis;
 
 /// A log destination with its resolved file path.
@@ -61,6 +62,7 @@ fn emit(message: &str) {
     match level(message) {
         Level::ERROR => tracing::error!(target: "agentcat", "{message}"),
         Level::WARN => tracing::warn!(target: "agentcat", "{message}"),
+        Level::DEBUG => tracing::debug!(target: "agentcat", "{message}"),
         _ => tracing::info!(target: "agentcat", "{message}"),
     }
 }
@@ -92,9 +94,12 @@ pub(crate) fn prefix() -> &'static str {
     })
 }
 
-/// The severity of a line: ERROR for `fail` or `error` in any case, checked first, then
-/// WARN for `Warning:`, else INFO.
+/// The severity of a line: DEBUG for a line of the server info heartbeat, checked first, then
+/// ERROR for `fail` or `error` in any case, then WARN for `Warning:`, else INFO.
 pub(crate) fn level(message: &str) -> Level {
+    if message.starts_with(LINE_PREFIX) {
+        return Level::DEBUG;
+    }
     let lower = message.to_lowercase();
     if lower.contains("fail") || lower.contains("error") {
         Level::ERROR

@@ -7,7 +7,8 @@
 //! handle loads no TLS roots on the caller's thread. Any `Err` is a failed attempt whose text is
 //! the error's `Display`; the worker retries it with the delays of
 //! [`DeliveryConfig`](super::DeliveryConfig). A 2xx answer needs a JSON body under
-//! `application/json`, or `agentcat-api` fails it. No `reqwest` or `agentcat-api`
+//! `application/json`, or `agentcat-api` fails it. A server info heartbeat is one
+//! `publish_server_info` call with the same client, which the worker never repeats. No `reqwest`
 //! type leaves this module.
 use std::future::ready;
 use std::sync::{Arc, OnceLock};
@@ -15,9 +16,11 @@ use std::time::Duration;
 
 use agentcat_api::apis::configuration::Configuration;
 use agentcat_api::apis::events_api::{PublishEventParams, publish_event};
-use agentcat_api::models::PublishEventRequest;
+use agentcat_api::apis::server_info_api::{PublishServerInfoParams, publish_server_info};
+use agentcat_api::apis::{Error as ApiError, ResponseContent};
+use agentcat_api::models::{PublishEventRequest, PublishServerInfoRequest};
 
-use super::Publisher;
+use super::{Publisher, ServerInfoAnswer};
 use crate::sink::BoxFuture;
 
 /// The connect timeout of every attempt.
@@ -35,7 +38,11 @@ const NO_CLIENT: &str = "the HTTP client could not be built";
 /// Builds the HTTP client with the given per-attempt timeout; `Err` holds the error's text.
 type BuildClient = fn(Duration) -> Result<reqwest::Client, String>;
 
-/// Posts events to `<base URL>/v1/public/events/`.
+/// The status of the answer to a body that is too large.
+const TOO_LARGE: u16 = 413;
+
+/// Posts events to `<base URL>/v1/public/events/` and server info heartbeats to
+/// `<base URL>/v1/public/server-info/`.
 pub(crate) struct ApiPublisher {
     base_url: String,
     attempt_timeout: Duration,
@@ -150,6 +157,32 @@ impl Publisher for ApiPublisher {
                 .await
                 .map(|_| ())
                 .map_err(|error| error.to_string())
+        })
+    }
+
+    /// One `publish_server_info` call with the client, the headers and the timeout of an event
+    /// attempt. A `413` is [`ServerInfoAnswer::TooLarge`]; any other failure is an `Err` with the
+    /// error's `Display`.
+    fn publish_server_info(
+        &self,
+        request: PublishServerInfoRequest,
+    ) -> BoxFuture<'static, Result<ServerInfoAnswer, String>> {
+        let Some(configuration) = self.configuration(&mut Vec::new()).cloned() else {
+            return Box::pin(ready(Err(NO_CLIENT.to_owned())));
+        };
+        Box::pin(async move {
+            let params = PublishServerInfoParams {
+                publish_server_info_request: Some(request),
+            };
+            match publish_server_info(&configuration, params).await {
+                Ok(_accepted) => Ok(ServerInfoAnswer::Accepted),
+                Err(ApiError::ResponseError(ResponseContent { status, .. }))
+                    if status.as_u16() == TOO_LARGE =>
+                {
+                    Ok(ServerInfoAnswer::TooLarge)
+                }
+                Err(error) => Err(error.to_string()),
+            }
         })
     }
 }

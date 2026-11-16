@@ -27,6 +27,10 @@
 //!   cancelled async `flush` or `shutdown` stays in its waiting list until the queue and the
 //!   in-flight events are empty or the deadline passes, and a cancelled `shutdown` still shuts
 //!   the handle down.
+//! - A server info heartbeat ([`Report`](crate::server_info::Report)) waits in a lane of its
+//!   own, and the worker sends one at a time, in a task that holds none of the `concurrency`
+//!   slots. `flush` and `shutdown` do not wait for it: the stop of a shutdown drops the ones that
+//!   wait and aborts the one in flight.
 //! - The last drop of the handle runs that shutdown with `drop_drain` (5 s) and waits for the
 //!   worker's answer on a `std::sync::mpsc` channel, for at most `drop_drain` and 100 ms more, so
 //!   it never waits on the caller's runtime; the worker then exits. A drop on the worker thread
@@ -35,7 +39,7 @@ use std::future::ready;
 use std::sync::{Arc, mpsc};
 use std::time::Duration;
 
-use agentcat_api::models::PublishEventRequest;
+use agentcat_api::models::{PublishEventRequest, PublishServerInfoRequest};
 use tokio::sync::oneshot;
 
 use crate::config::Options;
@@ -44,6 +48,7 @@ use crate::event::assemble::EventJob;
 use crate::logging;
 use crate::pipeline::EventObject;
 use crate::pipeline::process::Redactors;
+use crate::server_info::{Report, not_sent_line};
 use crate::sink::{BoxFuture, Sink};
 use queue::{Job, Kind, Reply, Request};
 use worker::Shared;
@@ -60,10 +65,29 @@ mod tests;
 /// worker sends at the deadline.
 const ANSWER_GRACE: Duration = Duration::from_millis(100);
 
+/// How the API answered a server info heartbeat that it did not refuse for another reason.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum ServerInfoAnswer {
+    /// The API took the body.
+    Accepted,
+    /// `413`: the body is too large.
+    TooLarge,
+}
+
 /// Makes one attempt to post one event.
 pub(crate) trait Publisher: Send + Sync + 'static {
     /// Posts `request` once: `Err` holds the text of the failure for the delivery's log lines.
     fn publish(&self, request: PublishEventRequest) -> BoxFuture<'static, Result<(), String>>;
+
+    /// Posts the server info heartbeat `request` once. `Err` holds the text of any other answer
+    /// than the two of [`ServerInfoAnswer`], or of no answer. A publisher that only handles
+    /// events sends nothing and answers that the body was taken.
+    fn publish_server_info(
+        &self,
+        _request: PublishServerInfoRequest,
+    ) -> BoxFuture<'static, Result<ServerInfoAnswer, String>> {
+        Box::pin(ready(Ok(ServerInfoAnswer::Accepted)))
+    }
 
     /// Readies the publisher for the attempts of one event; the worker calls it on the delivery
     /// thread before each event's first attempt, so a publisher can build its HTTP client there,
@@ -235,6 +259,24 @@ impl Sink for Delivery {
 
     fn event(&self, job: EventJob) {
         self.push(Job::from(job));
+    }
+
+    /// Queues the read for the worker, which sends it apart from the events; a skipped check
+    /// queues its line. A read the queue does not take is dropped after the lock is let go.
+    fn server_info(&self, report: Report) {
+        let (dropped, start) = {
+            let mut queue = self.shared.lock();
+            let dropped = match report {
+                Report::Built(snapshot) => queue.push_server_info(snapshot),
+                Report::Skipped(why) => {
+                    queue.push_line(not_sent_line(&why));
+                    None
+                }
+            };
+            (dropped, queue.claim_start())
+        };
+        drop(dropped);
+        self.wake(start);
     }
 
     /// Queues the job and the line under one lock, so the worker writes the line before the lines

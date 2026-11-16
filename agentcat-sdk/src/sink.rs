@@ -8,6 +8,7 @@ use std::time::Duration;
 
 use crate::event::CallRecord;
 use crate::event::assemble::EventJob;
+use crate::server_info::Report;
 
 /// A boxed `Send` future, as the lifecycle methods of a [`Sink`] return it.
 pub(crate) type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
@@ -34,6 +35,10 @@ pub(crate) trait Sink: Send + Sync {
         self.event(job);
         self.log(message);
     }
+
+    /// Takes what a check of the server info heartbeat gave: the read to send, or why nothing is
+    /// sent. A sink that sends no heartbeat drops it.
+    fn server_info(&self, _report: Report) {}
 
     /// Whether everything taken so far is delivered within `timeout`.
     fn flush(&self, _timeout: Duration) -> BoxFuture<'static, bool> {

@@ -340,3 +340,147 @@ fn build_gets_the_attempt_timeout() {
         ["Failed to build the HTTP client, events will not be sent: 10s"]
     );
 }
+
+const SERVER_INFO_PATH: &str = "/v1/public/server-info/";
+
+/// A heartbeat body for [`PROJECT`].
+fn heartbeat() -> agentcat_api::models::PublishServerInfoRequest {
+    agentcat_api::models::PublishServerInfoRequest {
+        project_id: PROJECT.to_owned(),
+        server_name: Some("demo-server".to_owned()),
+        server_version: Some("1.2.3".to_owned()),
+        server_title: Some("Demo Title".to_owned()),
+        instructions: Some("Use the demo tools.".to_owned()),
+        features: Some(json!({"tools": [{"name": "alpha"}]})),
+    }
+}
+
+/// A publisher for the mock `server`, which answers a heartbeat with `answer`.
+async fn heartbeat_publisher(server: &MockServer, answer: ResponseTemplate) -> ApiPublisher {
+    Mock::given(method("POST"))
+        .and(path(SERVER_INFO_PATH))
+        .respond_with(answer)
+        .mount(server)
+        .await;
+    let publisher = ApiPublisher::with_attempt_timeout(server.uri(), ms(2_000), &mut Vec::new());
+    publisher
+        .prepare(&mut Vec::new())
+        .expect("the client is built");
+    publisher
+}
+
+/// One POST to `<custom base URL>/v1/public/server-info/`, with the body of the request
+/// model, the headers of an event attempt and no credentials.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn v14_a_heartbeat_goes_to_the_server_info_path_of_the_custom_base_url() {
+    let server = MockServer::start().await;
+    let publisher = heartbeat_publisher(&server, accepted()).await;
+    let answer = publisher.publish_server_info(heartbeat()).await;
+    assert_eq!(answer, Ok(crate::delivery::ServerInfoAnswer::Accepted));
+
+    let requests = received(&server).await;
+    assert_eq!(requests.len(), 1, "{requests:?}");
+    let request = &requests[0];
+    assert_eq!(request.method.as_str(), "POST");
+    // The request reached the mock, so it went to the custom base URL.
+    assert_eq!(request.url.path(), SERVER_INFO_PATH);
+    assert_eq!(request.url.query(), None);
+    let header = |name: &str| {
+        request
+            .headers
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+            .map(str::to_owned)
+    };
+    assert_eq!(header("content-type").as_deref(), Some("application/json"));
+    assert_eq!(
+        header("user-agent"),
+        Some(format!("agentcat-rust/{}", env!("CARGO_PKG_VERSION")))
+    );
+    assert!(request.headers.get("authorization").is_none());
+    let body: Value = serde_json::from_slice(&request.body).unwrap();
+    assert_eq!(
+        body,
+        json!({
+            "project_id": PROJECT,
+            "server_name": "demo-server",
+            "server_version": "1.2.3",
+            "server_title": "Demo Title",
+            "instructions": "Use the demo tools.",
+            "features": {"tools": [{"name": "alpha"}]},
+        })
+    );
+}
+
+/// A `413` is the answer that asks for the smaller body; it is not a failure.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn a_413_to_a_heartbeat_is_too_large() {
+    let server = MockServer::start().await;
+    let too_large = ResponseTemplate::new(413).set_body_json(json!({"error": "too large"}));
+    let publisher = heartbeat_publisher(&server, too_large).await;
+    let answer = publisher.publish_server_info(heartbeat()).await;
+    assert_eq!(answer, Ok(crate::delivery::ServerInfoAnswer::TooLarge));
+    assert_eq!(received(&server).await.len(), 1);
+}
+
+/// Any other answer is a failure with its text, and the publisher sends one request for it.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn any_other_answer_to_a_heartbeat_is_a_failure() {
+    for status in [400, 412, 414, 500, 503] {
+        let server = MockServer::start().await;
+        let refused = ResponseTemplate::new(status).set_body_json(json!({"error": "no"}));
+        let publisher = heartbeat_publisher(&server, refused).await;
+        let answer = publisher.publish_server_info(heartbeat()).await;
+        let text = answer.expect_err("a failure");
+        assert!(text.contains(&status.to_string()), "{status}: {text}");
+        assert_eq!(received(&server).await.len(), 1, "{status}");
+    }
+}
+
+/// A publisher whose client could not be built sends no heartbeat.
+#[tokio::test]
+async fn a_heartbeat_without_a_client_fails() {
+    let publisher = ApiPublisher::with_build("http://127.0.0.1:9".to_owned(), |_timeout| {
+        Err("no client today".to_owned())
+    });
+    assert!(publisher.prepare(&mut Vec::new()).is_err());
+    let answer = publisher.publish_server_info(heartbeat()).await;
+    assert_eq!(answer, Err(NO_CLIENT.to_owned()));
+}
+
+/// The whole path against the mock: a `tools/list` request on a handle with the real publisher
+/// sends the heartbeat to the base URL of the options.
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn v14_a_listing_sends_the_heartbeat_to_the_base_url_of_the_handle() {
+    crate::server_info::memory::forget();
+    let server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path(SERVER_INFO_PATH))
+        .respond_with(accepted())
+        .mount(&server)
+        .await;
+    let agentcat = handle(&server.uri(), ms(2_000));
+    let client = connect(agentcat.track(Sample), "http-client").await;
+    let listed = client.list_all_tools().await.unwrap();
+    let started = Instant::now();
+    while received(&server).await.is_empty() && started.elapsed() < WAIT {
+        tokio::time::sleep(ms(5)).await;
+    }
+    let requests = received(&server).await;
+    assert_eq!(requests.len(), 1, "{requests:?}");
+    assert_eq!(requests[0].url.path(), SERVER_INFO_PATH);
+    let body: Value = serde_json::from_slice(&requests[0].body).unwrap();
+    assert_eq!(body["project_id"], PROJECT);
+    assert_eq!(
+        body["features"]["tools"],
+        serde_json::to_value(&listed).unwrap()
+    );
+    assert_eq!(
+        body["features"]
+            .as_object()
+            .unwrap()
+            .keys()
+            .collect::<Vec<_>>(),
+        ["tools"]
+    );
+}

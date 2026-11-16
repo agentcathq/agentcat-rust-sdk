@@ -185,3 +185,59 @@ async fn a_case_is_named_after_its_scenario_transport_and_lane() {
     )
     .await;
 }
+
+/// The server info heartbeat end to end: the `tools/list` request of the `basic` scenario makes
+/// the SDK post one heartbeat to the mock API, with the server as its events name it and the
+/// tools as the client got them. The scenario's own events stay as its golden file holds them.
+async fn server_info_heartbeat(transport: suite::Transport) {
+    let lane = suite::Lane::V2025_11_25;
+    let (document, heartbeats) = suite::run_with_server_infos("basic", transport, lane, 1).await;
+    suite::assert_golden("basic", transport, lane, &document);
+
+    assert_eq!(heartbeats.len(), 1, "{heartbeats:?}");
+    let body = &heartbeats[0];
+    let keys: Vec<&str> = body
+        .as_object()
+        .expect("a heartbeat is an object")
+        .keys()
+        .map(String::as_str)
+        .collect();
+    assert_eq!(
+        keys,
+        [
+            "project_id",
+            "server_name",
+            "server_version",
+            "server_title",
+            "instructions",
+            "features"
+        ]
+    );
+    let event = &document["events"][0]["body"];
+    assert_eq!(body["project_id"], "proj_E2E000000000000000000000000");
+    assert_eq!(body["server_name"], event["server_name"]);
+    assert_eq!(body["server_version"], event["server_version"]);
+    assert_eq!(body["server_title"], "");
+    assert_eq!(body["instructions"], "");
+    let listing = document["transcript"]
+        .as_array()
+        .expect("a transcript")
+        .iter()
+        .find(|entry| entry["op"] == "listTools")
+        .expect("the scenario lists the tools");
+    assert_eq!(body["features"]["tools"], listing["result"]["tools"]);
+    assert_eq!(
+        body["features"].as_object().map(serde_json::Map::len),
+        Some(1)
+    );
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn server_info_heartbeat_over_stdio() {
+    server_info_heartbeat(suite::Transport::Stdio).await;
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn server_info_heartbeat_over_stateless_http() {
+    server_info_heartbeat(suite::Transport::HttpStateless).await;
+}

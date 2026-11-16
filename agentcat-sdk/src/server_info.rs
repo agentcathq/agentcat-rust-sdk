@@ -1,0 +1,251 @@
+//! The server info heartbeat: about once an hour, the SDK tells `AgentCat` what the server
+//! offers to agents: its name, version, title and instructions and its lists of tools,
+//! resources, resource templates and prompts.
+//!
+//! There is no timer. A handled request starts a check ([`for_listing`], [`for_call`]): a
+//! `tools/list` request, a `get_more_tools` call that the SDK answers, and any other tool call
+//! once the [`memory`] of the process is old enough. The check reads memory only. When a
+//! heartbeat is due, the request gets a [`build`](for_call) future, which reads the lists from
+//! the handler's own list methods with the context of that request ([`lists`]).
+//!
+//! rmcp gives a request context only inside a request, and the handler lives in the wrapper, so
+//! the read cannot move to another task: it runs inside the future of the request, next to it
+//! ([`beside`]). The request never waits for it. The read that ends hands owned data
+//! ([`Snapshot`]) to the sink; the delivery worker builds the body ([`body`]), runs the
+//! customer's redaction hook on its text and sends it ([`send`]), off the request's task.
+//!
+//! No failure leaves this module: a panic of a handler is contained, each list has a time
+//! limit, a read that the request outlives is dropped, and what goes wrong is one log line.
+use std::panic::{AssertUnwindSafe, catch_unwind};
+use std::pin::{Pin, pin};
+use std::task::Poll;
+
+use futures::FutureExt;
+use futures::future::poll_fn;
+use rmcp::model::{Implementation, InitializeResult};
+use rmcp::service::RequestContext;
+use rmcp::{RoleServer, ServerHandler};
+use tokio::runtime::Handle;
+use tokio::time::Instant;
+
+use crate::capture::panic_message;
+use crate::client::Inner;
+use crate::inject::InjectConfig;
+use crate::tracked::Tracked;
+
+pub(crate) mod body;
+pub(crate) mod lists;
+pub(crate) mod memory;
+pub(crate) mod send;
+
+#[cfg(test)]
+mod tests;
+
+pub(crate) use body::Snapshot;
+pub(crate) use memory::Trigger;
+
+/// The start of every log line of the heartbeat. The lines are debug lines
+/// ([`logging::level`](crate::logging::level)).
+pub(crate) const LINE_PREFIX: &str = "Server info ";
+
+/// The reason of a read that its request outlived.
+const DROPPED: &str = "the request ended before the lists were read";
+
+/// What a check that found a heartbeat due hands to the sink.
+#[derive(Debug)]
+pub(crate) enum Report {
+    /// The read ended: what it gave, for the delivery worker to send.
+    Built(Box<Snapshot>),
+    /// Nothing will be sent, for this reason.
+    Skipped(String),
+}
+
+/// The log line of a heartbeat that went out with `tools` tools in `bytes` bytes, without the
+/// lists `left_out`. It holds counts and list keys only, never the text of a list.
+pub(crate) fn sent_line(tools: usize, bytes: usize, left_out: &[&str]) -> String {
+    let mut line = format!("{LINE_PREFIX}sent: {tools} tools, {bytes} bytes");
+    if !left_out.is_empty() {
+        line.push_str(", without the lists that did not work: ");
+        line.push_str(&left_out.join(", "));
+    }
+    line
+}
+
+/// The log line of a heartbeat that was not sent, with the reason `why`.
+pub(crate) fn not_sent_line(why: &str) -> String {
+    format!("{LINE_PREFIX}not sent: {why}")
+}
+
+/// The check of a `tools/list` request on `tracked`: the read to run [`beside`] the request when
+/// a heartbeat is due, else `None`. The read is boxed, so the future of a request that starts
+/// none does not grow by its size. The server name comes from the handler's `get_info`; when
+/// that panics, nothing is due.
+pub(crate) fn for_listing<'a, H: ServerHandler>(
+    tracked: &'a Tracked<H>,
+    context: &RequestContext<RoleServer>,
+) -> Option<Pin<Box<impl Future<Output = ()> + use<'a, H>>>> {
+    let shared = tracked.agentcat().inner();
+    if !can_send(shared) {
+        return None;
+    }
+    let info = catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())).ok()?;
+    let claim = Claim::take(shared, Trigger::Listing, &info.server_info.name)?;
+    Some(Box::pin(contained(build(
+        tracked,
+        claim,
+        info,
+        context.clone(),
+    ))))
+}
+
+/// The check of a tool call on `tracked`, whose record names `server`: the read to run
+/// [`beside`] the call when a heartbeat is due, else `None`. `feedback_note` says that the call
+/// is a `get_more_tools` call that the SDK answers. The heartbeat carries the name and the
+/// version of `server`, so they equal those of the call's event. Without `server` nothing is
+/// due.
+pub(crate) fn for_call<'a, H: ServerHandler>(
+    tracked: &'a Tracked<H>,
+    feedback_note: bool,
+    server: Option<&Implementation>,
+    context: &RequestContext<RoleServer>,
+) -> Option<Pin<Box<impl Future<Output = ()> + use<'a, H>>>> {
+    let shared = tracked.agentcat().inner();
+    if !can_send(shared) {
+        return None;
+    }
+    let server = server?;
+    let trigger = if feedback_note {
+        Trigger::FeedbackNote
+    } else {
+        Trigger::ToolCall
+    };
+    let claim = Claim::take(shared, trigger, &server.name)?;
+    let mut info = match catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())) {
+        Ok(info) => info,
+        Err(payload) => {
+            let message = panic_message(&*payload);
+            claim.end(Report::Skipped(format!("get_info panicked: {message}")));
+            return None;
+        }
+    };
+    info.server_info = server.clone();
+    Some(Box::pin(contained(build(
+        tracked,
+        claim,
+        info,
+        context.clone(),
+    ))))
+}
+
+/// Whether the handle `shared` sends heartbeats at all: the SDK is on, tracing is on and the
+/// project ID is not empty.
+fn can_send(shared: &Inner) -> bool {
+    shared.enabled && shared.options.tracing() && !shared.project_id.is_empty()
+}
+
+/// The attempt that a check recorded in the [`memory`], until its read ends. A read that ends
+/// hands its [`Report`] over with [`end`](Self::end). When the read is dropped before that (its
+/// request ended first), the drop gives the attempt back to the memory and reports the read as
+/// skipped.
+struct Claim<'a> {
+    shared: &'a Inner,
+    trigger: Trigger,
+    server_name: String,
+    /// Whether the read ended.
+    ended: bool,
+}
+
+impl<'a> Claim<'a> {
+    /// Records an attempt for the project of `shared` and `server_name` when one is due now.
+    fn take(shared: &'a Inner, trigger: Trigger, server_name: &str) -> Option<Self> {
+        let due = memory::process().claim(trigger, &shared.project_id, server_name, Instant::now());
+        due.then(|| Self {
+            shared,
+            trigger,
+            server_name: server_name.to_owned(),
+            ended: false,
+        })
+    }
+
+    /// Ends the read with `report`, which goes to the sink; the attempt stays recorded.
+    fn end(mut self, report: Report) {
+        self.ended = true;
+        memory::process().settle(&self.shared.project_id, &self.server_name);
+        self.shared.sink.server_info(report);
+    }
+}
+
+impl Drop for Claim<'_> {
+    fn drop(&mut self) {
+        if !self.ended {
+            memory::process().release(self.trigger, &self.shared.project_id, &self.server_name);
+            self.shared
+                .sink
+                .server_info(Report::Skipped(DROPPED.to_owned()));
+        }
+    }
+}
+
+/// The read of a heartbeat that is due: the lists of the handler with `context`, then the
+/// [`Report`] to the sink. A panic in the read is contained and reported as the reason. The
+/// future does no other work: the body, the redaction and the POST belong to the delivery
+/// worker. Dropping it before it ends gives the attempt of `claim` back.
+async fn build<H: ServerHandler>(
+    tracked: &Tracked<H>,
+    claim: Claim<'_>,
+    info: InitializeResult,
+    context: RequestContext<RoleServer>,
+) {
+    let started = std::time::Instant::now();
+    let read = lists::read(tracked.inner(), &context, &info.capabilities);
+    let report = match AssertUnwindSafe(read).catch_unwind().await {
+        Ok(Ok(lists)) => {
+            let shared = claim.shared;
+            Report::Built(Box::new(Snapshot {
+                server: info.server_info,
+                instructions: info.instructions,
+                lists,
+                inject: InjectConfig::from_options(&shared.options),
+                state: shared.with_registry::<H, _>(|registry| registry.state_mut().clone()),
+                runtime: Handle::try_current().ok(),
+                started,
+            }))
+        }
+        Ok(Err(why)) => Report::Skipped(why),
+        Err(payload) => Report::Skipped(format!("the read panicked: {}", panic_message(&*payload))),
+    };
+    claim.end(report);
+}
+
+/// `build` with every panic of its polls contained: the future then ends, and the drop of its
+/// [`Claim`] reports the read as skipped.
+async fn contained(build: impl Future<Output = ()>) {
+    let _ = AssertUnwindSafe(build).catch_unwind().await;
+}
+
+/// Runs `request` to its end and gives its output, with the read `build` of a heartbeat next to
+/// it. Each time the future is polled, `request` is polled first. `build` is polled after it
+/// while `request` waits, and at least one time; so a read whose handlers answer at once ends
+/// also next to a request that answers at once. The output of `request` is returned in the poll
+/// that finds it ready, and `build` is then dropped, ended or not. Nothing of `build` reaches
+/// the output.
+pub(crate) async fn beside<T>(
+    request: impl Future<Output = T>,
+    build: Option<impl Future<Output = ()>>,
+) -> T {
+    let Some(build) = build else {
+        return request.await;
+    };
+    let mut request = pin!(request);
+    let mut build = pin!(build.fuse());
+    let mut polled = false;
+    poll_fn(|cx| {
+        let output = request.as_mut().poll(cx);
+        if output.is_pending() || !polled {
+            polled = true;
+            let _: Poll<()> = build.as_mut().poll(cx);
+        }
+        output
+    })
+    .await
+}

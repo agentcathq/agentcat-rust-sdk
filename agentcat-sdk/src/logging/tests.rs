@@ -177,6 +177,13 @@ fn level_follows_the_severity_order() {
     assert_eq!(level("Warning: x"), Level::WARN);
     assert_eq!(level("Warning: send failed"), Level::ERROR);
     assert_eq!(level("Successfully sent"), Level::INFO);
+    // A line of the server info heartbeat is a debug line, whatever its reason says.
+    assert_eq!(level("Server info sent: 3 tools, 9 bytes"), Level::DEBUG);
+    assert_eq!(
+        level("Server info not sent: the tools list gave an error: failed"),
+        Level::DEBUG
+    );
+    assert_eq!(level("About Server info not sent"), Level::INFO);
 }
 
 #[derive(Default)]
@@ -256,4 +263,23 @@ fn global_logger_is_silent_until_configured_and_first_call_wins() {
         text.lines().next().expect("line"),
         "after configure"
     ));
+}
+
+#[test]
+fn tracing_destination_emits_a_heartbeat_line_as_a_debug_event() {
+    let events = Arc::new(Mutex::new(Vec::new()));
+    let subscriber = Capture(Arc::clone(&events));
+    tracing::subscriber::with_default(subscriber, || {
+        let logger = Logger::new(LogDestination::Tracing, None);
+        logger.write("Server info not sent: the API answered 500 error");
+    });
+    let got = events.lock().expect("lock").clone();
+    assert_eq!(
+        got,
+        vec![(
+            "agentcat".to_owned(),
+            Level::DEBUG,
+            "Server info not sent: the API answered 500 error".to_owned()
+        )]
+    );
 }

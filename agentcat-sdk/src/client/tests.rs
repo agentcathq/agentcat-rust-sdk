@@ -336,3 +336,28 @@ fn new_handle_is_on() {
     let tracked = track(Named("on"), "", Options::default());
     assert!(tracked.agentcat().inner().enabled);
 }
+
+/// A handle that a unit test builds with `AgentCat::new` posts no heartbeat. Its transport
+/// would resolve the production URL, and its publisher answers a heartbeat in its first poll,
+/// which no request to a network can do, and it needs no HTTP client.
+#[test]
+fn v16_the_transport_of_a_unit_test_sends_no_heartbeat_to_the_network() {
+    use futures::FutureExt;
+
+    use crate::config::env::resolve_api_base_url;
+    use crate::delivery::ServerInfoAnswer;
+
+    let env = MapEnv::new(&[]);
+    let options = Options::default();
+    assert_eq!(
+        resolve_api_base_url(&options, &env),
+        "https://api.agentcat.com"
+    );
+    let transport = Transport::process(&options, &env);
+    let mut log = Vec::new();
+    assert_eq!(transport.publisher.prepare(&mut log), Ok(()));
+    let body = agentcat_api::models::PublishServerInfoRequest::new("proj_unit".to_owned());
+    let answer = transport.publisher.publish_server_info(body).now_or_never();
+    assert_eq!(answer, Some(Ok(ServerInfoAnswer::Accepted)));
+    assert!(log.is_empty() && transport.startup_lines.is_empty());
+}

@@ -2,7 +2,8 @@
 //! current-thread tokio runtime that has the time driver. Its loop writes the queued log lines,
 //! takes pending jobs while fewer than `concurrency` run, answers `flush` and `shutdown` and owns
 //! their deadlines. Each job runs as a task on the worker's runtime and holds its slot through
-//! `process` and every attempt ([`run_job`]).
+//! `process` and every attempt ([`run_job`]). A server info heartbeat runs as a task too, one at a
+//! time and without a slot ([`run_server_info`]).
 use std::mem;
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
@@ -19,6 +20,8 @@ use super::{DeliveryConfig, LineWriter, Observer, Publisher};
 use crate::event::assemble::from_call;
 use crate::pipeline::EventObject;
 use crate::pipeline::process::{Redactors, process};
+use crate::server_info::Snapshot;
+use crate::server_info::send::deliver;
 use crate::wire;
 
 /// The name of the worker thread.
@@ -171,7 +174,7 @@ async fn run(shared: &Arc<Shared>) {
     let mut waiting: Vec<Request> = Vec::new();
     let mut stopped = false;
     loop {
-        let (lines, jobs, idle, closed) = {
+        let (lines, jobs, server_info, idle, closed) = {
             let mut queue = shared.lock();
             waiting.append(&mut queue.requests);
             let mut jobs = Vec::new();
@@ -182,8 +185,22 @@ async fn run(shared: &Arc<Shared>) {
                 queue.in_flight += 1;
                 jobs.push(job);
             }
+            let server_info = if stopped || queue.sending_server_info {
+                None
+            } else {
+                queue.server_info.pop_front()
+            };
+            if server_info.is_some() {
+                queue.sending_server_info = true;
+            }
             let idle = queue.pending.is_empty() && queue.in_flight == 0;
-            (mem::take(&mut queue.lines), jobs, idle, queue.closed)
+            (
+                mem::take(&mut queue.lines),
+                jobs,
+                server_info,
+                idle,
+                queue.closed,
+            )
         };
         for line in &lines {
             shared.write(line);
@@ -192,6 +209,11 @@ async fn run(shared: &Arc<Shared>) {
         for job in jobs {
             let slot = Slot(Arc::clone(shared));
             tasks.push(tokio::spawn(run_job(Arc::clone(shared), job, slot)));
+        }
+        if let Some(snapshot) = server_info {
+            let sending = Sending(Arc::clone(shared));
+            let shared = Arc::clone(shared);
+            tasks.push(tokio::spawn(run_server_info(shared, *snapshot, sending)));
         }
 
         let now = Instant::now();
@@ -234,11 +256,19 @@ async fn run(shared: &Arc<Shared>) {
 }
 
 /// Stops the worker for good: drops the pending jobs, after the line `Shutting down with <n>
-/// events still in queue` when there are any (`<n>` counts the pending queue only), and
-/// aborts the jobs in flight. It returns once each aborted job is dropped, so the hooks and the
-/// redaction tasks of the abandoned events are aborted too before any caller hears the answer.
+/// events still in queue` when there are any (`<n>` counts the pending queue only), drops the
+/// server info heartbeats that wait, and aborts the jobs and the heartbeat in flight. It returns
+/// once each aborted task is dropped, so the hooks and the redaction tasks of the abandoned
+/// events are aborted too before any caller hears the answer.
 async fn stop(shared: &Shared, tasks: &mut Vec<JoinHandle<()>>) {
-    let abandoned = mem::take(&mut shared.lock().pending);
+    let (abandoned, heartbeats) = {
+        let mut queue = shared.lock();
+        (
+            mem::take(&mut queue.pending),
+            mem::take(&mut queue.server_info),
+        )
+    };
+    drop(heartbeats);
     if !abandoned.is_empty() {
         shared.write(&format!(
             "Shutting down with {} events still in queue",
@@ -264,6 +294,35 @@ impl Drop for Slot {
         queue.in_flight = queue.in_flight.saturating_sub(1);
         drop(queue);
         self.0.wake();
+    }
+}
+
+/// The mark of the one server info heartbeat the worker sends: dropping it, when the send ends,
+/// panics or is aborted, lets the worker take the next one and wakes the loop.
+struct Sending(Arc<Shared>);
+
+impl Drop for Sending {
+    fn drop(&mut self) {
+        self.0.lock().sending_server_info = false;
+        self.0.wake();
+    }
+}
+
+/// One server info heartbeat, holding `_sending` until it ends: the body is built, redacted and
+/// posted ([`deliver`]), and the lines of the attempt are written. It runs as a task of the
+/// worker's runtime, as an event job does, so a panic in it stays in the task.
+async fn run_server_info(shared: Arc<Shared>, snapshot: Snapshot, _sending: Sending) {
+    let mut log = Vec::new();
+    let line = deliver(
+        &shared.project_id,
+        shared.redactors.string.as_ref(),
+        shared.publisher.as_ref(),
+        snapshot,
+        &mut log,
+    )
+    .await;
+    for line in log.iter().chain([&line]) {
+        shared.write(line);
     }
 }
 

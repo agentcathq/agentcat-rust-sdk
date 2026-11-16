@@ -6,6 +6,7 @@
 //! `capture/tests.rs` its panics and captured errors; `event/tests.rs` checks its records over
 //! HTTP.
 use std::collections::HashSet;
+use std::future::ready;
 use std::panic::{AssertUnwindSafe, catch_unwind, resume_unwind};
 use std::time::{Duration, SystemTime};
 
@@ -38,6 +39,7 @@ use crate::handles::{
 };
 use crate::hooks::{PendingHooks, ToolCall, fire};
 use crate::inject::{CONTEXT_PARAM, InjectConfig, ToolEntry, build_injected_list};
+use crate::server_info::{beside, for_call};
 use crate::sink::Sink;
 use crate::tokens::{estimate_input_tokens, estimate_output_tokens};
 use crate::tracked::Tracked;
@@ -108,6 +110,8 @@ impl SchemaLogs {
 /// 7. The customer's hooks start ([`start_hooks`]), and the record of the call waits in a
 ///    [`RecordGuard`] until it is sent: when the call future is dropped before that, the record
 ///    goes to the sink as cancelled.
+///    The check of the server info heartbeat runs here too ([`for_call`]); a read that it starts
+///    runs [`beside`] step 8 and never holds its answer back.
 /// 8. The intercept is answered with the `context` argument as the intent; any other call goes
 ///    to the handler with the injected arguments stripped and a [`CallContext`] in its request
 ///    context. The handler's `call_tool` runs inside the call's [`scope`], so
@@ -163,6 +167,7 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let input_tokens = estimate_input_tokens(request_json.pointer("/params/arguments"));
     let tags = call_tags(&request, &resolution, &context);
     let server = server_info(shared, tracked.inner());
+    let heartbeat = for_call(tracked, intercept, server.as_ref(), &context);
     let mint_back = MintBack::new(&resolution, schema.mirror);
     let call_context = CallContext::new(
         resolution.session_id.clone(),
@@ -200,7 +205,8 @@ pub(crate) async fn run_call<H: ServerHandler>(
     let name = request.name.to_string();
     if intercept {
         let answer = answer_report_missing(shared, &request);
-        return Ok(finish(guard, &name, mint_back, answer.into(), None));
+        let response = finish(guard, &name, mint_back, answer.into(), None);
+        return Ok(beside(ready(response), heartbeat).await);
     }
     let forwarded = stripped(request, schema.entry.as_ref());
     context
@@ -210,7 +216,8 @@ pub(crate) async fn run_call<H: ServerHandler>(
     // boundary also cover what a hand-written handler does before it returns its future.
     let slot = CaptureSlot::default();
     let call = async move { tracked.inner().call_tool(forwarded, context).await };
-    let outcome = match scope(slot.clone(), AssertUnwindSafe(call).catch_unwind()).await {
+    let call = scope(slot.clone(), AssertUnwindSafe(call).catch_unwind());
+    let outcome = match beside(call, heartbeat).await {
         Ok(outcome) => outcome,
         Err(payload) => {
             guard.send(|record| {

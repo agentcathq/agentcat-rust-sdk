@@ -11,12 +11,19 @@ use tokio::sync::oneshot;
 
 use crate::event::CallRecord;
 use crate::event::assemble::EventJob;
+use crate::server_info::{Snapshot, not_sent_line};
 
 /// The line when a push finds `max_pending` jobs pending.
 const QUEUE_FULL: &str = "Event queue full, dropping oldest event";
 
 /// The line for a push after `shutdown`.
 const SHUTTING_DOWN: &str = "Queue is shutting down, event dropped";
+
+/// The most server info heartbeats that wait for the worker; one more is dropped.
+pub(super) const MAX_SERVER_INFO: usize = 8;
+
+/// Why a heartbeat onto [`MAX_SERVER_INFO`] waiting ones is dropped.
+const SERVER_INFO_FULL: &str = "too many heartbeats wait for the delivery thread";
 
 /// How far ahead a deadline goes when the timeout is past what [`Instant`] can hold: about a
 /// century, which is forever in practice.
@@ -119,6 +126,11 @@ pub(super) enum Worker {
 pub(super) struct Queue {
     /// The jobs no slot has taken yet, oldest first.
     pub(super) pending: VecDeque<Job>,
+    /// The server info heartbeats the worker has not taken yet, oldest first. They are not jobs:
+    /// they do not count toward `max_pending`, and no `flush` or `shutdown` waits for them.
+    pub(super) server_info: VecDeque<Box<Snapshot>>,
+    /// Whether the worker sends a server info heartbeat now.
+    pub(super) sending_server_info: bool,
     /// The log lines the worker has not written yet; they are not jobs and do not count toward
     /// `max_pending`.
     pub(super) lines: Vec<String>,
@@ -139,6 +151,8 @@ impl Queue {
     pub(super) fn new() -> Self {
         Self {
             pending: VecDeque::new(),
+            server_info: VecDeque::new(),
+            sending_server_info: false,
             lines: Vec::new(),
             requests: Vec::new(),
             in_flight: 0,
@@ -191,9 +205,26 @@ impl Queue {
         dropped
     }
 
+    /// Queues the server info heartbeat `snapshot` and gives it back when the queue does not take
+    /// it: after `shutdown`, with no worker left, or onto [`MAX_SERVER_INFO`] waiting ones, the
+    /// last with the line of a heartbeat that was not sent. The caller drops it after it lets go
+    /// of the lock.
+    pub(super) fn push_server_info(&mut self, snapshot: Box<Snapshot>) -> Option<Box<Snapshot>> {
+        if self.shutting_down || self.worker == Worker::Gone {
+            return Some(snapshot);
+        }
+        if self.server_info.len() >= MAX_SERVER_INFO {
+            self.push_line(not_sent_line(SERVER_INFO_FULL));
+            return Some(snapshot);
+        }
+        self.server_info.push_back(snapshot);
+        None
+    }
+
     /// Marks an idle worker as starting when it has work; `true` when the caller must spawn it.
     pub(super) fn claim_start(&mut self) -> bool {
-        let has_work = !self.pending.is_empty() || !self.lines.is_empty();
+        let has_work =
+            !self.pending.is_empty() || !self.lines.is_empty() || !self.server_info.is_empty();
         if self.worker == Worker::Idle && has_work {
             self.worker = Worker::Starting;
             return true;
@@ -244,6 +275,7 @@ impl Queue {
     pub(super) fn take_all(&mut self) -> (VecDeque<Job>, Vec<Request>) {
         self.worker = Worker::Gone;
         self.lines.clear();
+        self.server_info.clear();
         (mem::take(&mut self.pending), mem::take(&mut self.requests))
     }
 }

@@ -62,6 +62,18 @@ AgentCat works as a lightweight middleware inside your MCP server. When you wrap
 
 Injected parameters are stripped from arguments before your tool handler runs, so your code never sees them, and a tool that declares its own parameter with one of these names keeps it. For tools that declare an output schema, issued IDs are also mirrored into `structuredContent` (as `mcp_session`, its first key), so clients that only read structured results still receive them. To pick the session of each call yourself instead, set a `resolve_session_id` hook: the tools then get no `session_id` parameter.
 
+## Server info
+
+AgentCat also needs to know what an agent sees on your server. So, apart from the events, the SDK sends a small server info heartbeat:
+
+- **What it sends** — the name, version, title and instructions of your server, and its full lists of tools (as the SDK lists them), resources, resource templates and prompts.
+- **When** — there is no timer. A `tools/list` request, a `get_more_tools` call or, once the process is 60 seconds old, any other tool call starts a check. About once an hour for each process, the SDK then calls the list methods of your handler (`list_tools`, `list_resources`, `list_resource_templates`, `list_prompts`) with the context of that request. A runtime that keeps no memory between requests sends more often: one heartbeat for each `tools/list` request and each `get_more_tools` call.
+- **Redaction** — your `redact_sensitive_information` hook runs on the text of the heartbeat (the title, the instructions and every string of the lists). The names stay as they are: the server name and version, and the `name`, `uri` and `uriTemplate` of each list item. When the hook fails, nothing is sent.
+- **Never in the way** — the list calls run next to the request that started the check, and the request never waits for them. A list method that fails, panics or hangs costs only the heartbeat. The body is built, redacted and sent in the background, one time.
+- **No files** — the SDK keeps the time of the last heartbeat in the memory of the process. It writes no file for it.
+
+The heartbeat is on for every handle that has a project ID and tracing on.
+
 ## Getting Started
 
 To get started with AgentCat, first create an account and obtain your project ID by signing up at [agentcat.com](https://agentcat.com). For detailed setup instructions, read the [crate guide](https://docs.rs/agentcat-sdk) on docs.rs.

@@ -366,3 +366,90 @@ proptest! {
         }
     }
 }
+
+/// The walk of a server info body with a visitor that records each string and marks it.
+fn walk_server_info(body: &mut agentcat_api::models::PublishServerInfoRequest) -> Vec<String> {
+    let mut visited = Vec::new();
+    super::server_info_strings(body, &mut |text| {
+        visited.push(text.clone());
+        *text = format!("[R:{text}]");
+    });
+    visited
+}
+
+#[test]
+fn the_server_info_walk_visits_the_text_and_keeps_the_names() {
+    let mut body = agentcat_api::models::PublishServerInfoRequest {
+        project_id: "proj_1".to_owned(),
+        server_name: Some("name".to_owned()),
+        server_version: Some("version".to_owned()),
+        server_title: Some("title".to_owned()),
+        instructions: Some("instructions".to_owned()),
+        features: Some(json!({
+            "tools": [{
+                "name": "tool name",
+                "title": "tool title",
+                "inputSchema": {
+                    "properties": {"name": {"description": "nested", "uri": "nested uri"}},
+                    "required": ["name", 1, true, null],
+                },
+            }],
+            "resources": [{"uri": "resource uri", "name": "resource name", "description": "d"}],
+            "resourceTemplates": [{"uriTemplate": "template", "name": "n", "title": "t"}],
+            "prompts": ["bare", {"name": "p", "arguments": [{"name": "argument"}]}, 7],
+            "other": "not a list",
+        })),
+    };
+    let visited = walk_server_info(&mut body);
+    assert_eq!(
+        visited,
+        [
+            "title",
+            "instructions",
+            "tool title",
+            "nested",
+            "nested uri",
+            "name",
+            "d",
+            "t",
+            "bare",
+            "argument",
+        ]
+    );
+    assert_eq!(body.project_id, "proj_1");
+    assert_eq!(body.server_name.as_deref(), Some("name"));
+    assert_eq!(body.server_version.as_deref(), Some("version"));
+    assert_eq!(body.server_title.as_deref(), Some("[R:title]"));
+    assert_eq!(body.instructions.as_deref(), Some("[R:instructions]"));
+    assert_eq!(
+        body.features,
+        Some(json!({
+            "tools": [{
+                "name": "tool name",
+                "title": "[R:tool title]",
+                "inputSchema": {
+                    "properties": {
+                        "name": {"description": "[R:nested]", "uri": "[R:nested uri]"},
+                    },
+                    "required": ["[R:name]", 1, true, null],
+                },
+            }],
+            "resources": [
+                {"uri": "resource uri", "name": "resource name", "description": "[R:d]"},
+            ],
+            "resourceTemplates": [{"uriTemplate": "template", "name": "n", "title": "[R:t]"}],
+            "prompts": ["[R:bare]", {"name": "p", "arguments": [{"name": "[R:argument]"}]}, 7],
+            "other": "not a list",
+        }))
+    );
+}
+
+#[test]
+fn the_server_info_walk_of_a_body_without_text_visits_nothing() {
+    let mut body = agentcat_api::models::PublishServerInfoRequest::new("proj_1".to_owned());
+    body.server_name = Some("name".to_owned());
+    assert_eq!(walk_server_info(&mut body), [""; 0]);
+    body.features = Some(json!("not an object"));
+    assert_eq!(walk_server_info(&mut body), [""; 0]);
+    assert_eq!(body.features, Some(json!("not an object")));
+}

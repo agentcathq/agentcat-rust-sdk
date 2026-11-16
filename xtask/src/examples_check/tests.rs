@@ -4,7 +4,7 @@ use axum::http::{Method, StatusCode};
 
 use super::client::{EventStream, json_rpc_message};
 use super::judge::{event_type, issued_session_id, resource_name};
-use super::mock::{PUBLISH_PATH, Recorded};
+use super::mock::{PUBLISH_PATH, Recorded, SERVER_INFO_PATH};
 use super::sandbox::is_loopback_url;
 use super::*;
 
@@ -229,6 +229,48 @@ fn a_request_other_than_a_publish_fails() {
         failures,
         ["the mock received 2 request(s) that are not publishes"]
     );
+}
+
+#[test]
+fn a_server_info_heartbeat_is_neither_a_publish_nor_a_stray_request() {
+    let at = Instant::now();
+    let mut requests = plain_publishes(at);
+    let heartbeat = json!({"project_id": "another-project"}).to_string();
+    requests.insert(0, request(Method::POST, SERVER_INFO_PATH, &heartbeat, at));
+    requests.push(request(Method::POST, SERVER_INFO_PATH, &heartbeat, at));
+    assert_eq!(
+        judge_publishes(&requests, &STDIO.calls(), Some(at)),
+        [""; 0]
+    );
+    requests.push(request(Method::GET, SERVER_INFO_PATH, "", at));
+    assert_eq!(
+        judge_publishes(&requests, &STDIO.calls(), Some(at)),
+        ["the mock received 1 request(s) that are not publishes"]
+    );
+}
+
+#[test]
+fn the_mock_answers_a_server_info_heartbeat_with_202() {
+    let runtime = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    runtime.block_on(async {
+        let mock = MockApi::start().await.unwrap();
+        let http = reqwest::Client::builder().no_proxy().build().unwrap();
+        let heartbeat = http
+            .post(format!("{}{SERVER_INFO_PATH}", mock.url))
+            .body(r#"{"project_id":"proj_1"}"#)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(heartbeat.status(), StatusCode::ACCEPTED);
+        assert_eq!(heartbeat.text().await.unwrap(), r#"{"status":"accepted"}"#);
+        let requests = mock.requests();
+        assert_eq!(requests.len(), 1);
+        assert!(requests[0].is_server_info());
+        assert!(!requests[0].is_publish());
+    });
 }
 
 #[test]

@@ -11,6 +11,9 @@ use serde_json::Value;
 /// The path of a publish request.
 pub(super) const PUBLISH_PATH: &str = "/v1/public/events/";
 
+/// The path of a server info heartbeat.
+pub(super) const SERVER_INFO_PATH: &str = "/v1/public/server-info/";
+
 /// A request the mock received.
 #[derive(Debug, Clone)]
 pub(super) struct Recorded {
@@ -28,13 +31,19 @@ impl Recorded {
     pub(super) fn is_publish(&self) -> bool {
         self.method == Method::POST && self.path == PUBLISH_PATH
     }
+
+    /// Whether the request is a server info heartbeat, which is not a publish.
+    pub(super) fn is_server_info(&self) -> bool {
+        self.method == Method::POST && self.path == SERVER_INFO_PATH
+    }
 }
 
 /// The requests the mock received, in order.
 type Requests = Arc<Mutex<Vec<Recorded>>>;
 
 /// The mock of the `AgentCat` API: on 127.0.0.1, it answers a publish (`POST /v1/public/events/`)
-/// with `202 {"status":"accepted"}` and any other request with 404, and records every request.
+/// and a server info heartbeat (`POST /v1/public/server-info/`) with `202 {"status":"accepted"}`
+/// and any other request with 404, and records every request.
 #[derive(Debug)]
 pub(super) struct MockApi {
     /// The base URL, `http://127.0.0.1:<port>`.
@@ -104,13 +113,13 @@ async fn record(
         body,
         raw,
     };
-    let publish = request.is_publish();
+    let accepted = request.is_publish() || request.is_server_info();
     requests
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
         .push(request);
     let json = [(header::CONTENT_TYPE, "application/json")];
-    if publish {
+    if accepted {
         (StatusCode::ACCEPTED, json, r#"{"status":"accepted"}"#)
     } else {
         (StatusCode::NOT_FOUND, json, r#"{"error":"mock"}"#)

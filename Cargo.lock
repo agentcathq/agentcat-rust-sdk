@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "agentcat-api"
-version = "0.0.3"
+version = "0.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "40b3b7acf1c635df4116e5f8db5d7c5613e52ab240863af6f35dcb3ebec01ccd"
+checksum = "e0bb18ddbe2760bfa895cf32a74509c1f7a7cca56b8042a4dc6722ce0f563356"
 dependencies = [
  "chrono",
  "reqwest",

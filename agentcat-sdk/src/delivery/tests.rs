@@ -1437,3 +1437,44 @@ fn feature_warning_has_the_fixed_text() {
         "Warning: serde_json feature \"float_roundtrip\" is enabled in this build; AgentCat token estimates and size checks may differ from builds without it"
     );
 }
+
+/// A server info heartbeat waits in its own lane: it starts an idle worker, and the queue gives
+/// it back after a shutdown, with no worker left, or onto 8 waiting ones.
+#[tokio::test]
+async fn the_queue_takes_a_server_info_heartbeat_into_its_own_lane() {
+    use super::queue::MAX_SERVER_INFO;
+    use crate::test_support::server_info::snapshot;
+
+    let boxed = || Box::new(snapshot());
+    let mut queue = Queue::new();
+    assert!(!queue.claim_start());
+    assert!(queue.push_server_info(boxed()).is_none());
+    assert_eq!((queue.server_info.len(), queue.pending.len()), (1, 0));
+    assert_eq!(queue.lines.len(), 0);
+    assert!(queue.claim_start());
+    assert_eq!(queue.worker, Worker::Starting);
+
+    assert_eq!(MAX_SERVER_INFO, 8);
+    for _ in 1..MAX_SERVER_INFO {
+        assert!(queue.push_server_info(boxed()).is_none());
+    }
+    assert!(queue.push_server_info(boxed()).is_some());
+    assert_eq!(queue.server_info.len(), MAX_SERVER_INFO);
+    assert_eq!(
+        queue.lines,
+        ["Server info not sent: too many heartbeats wait for the delivery thread"]
+    );
+
+    // The worker's end drops what waits.
+    let _ = queue.take_all();
+    assert_eq!(queue.server_info.len(), 0);
+    assert_eq!(queue.worker, Worker::Gone);
+    assert!(queue.push_server_info(boxed()).is_some());
+    assert_eq!(queue.server_info.len(), 0);
+
+    let mut queue = Queue::new();
+    queue.shutting_down = true;
+    assert!(queue.push_server_info(boxed()).is_some());
+    assert!(queue.server_info.is_empty() && queue.lines.is_empty());
+    assert!(!queue.claim_start());
+}
