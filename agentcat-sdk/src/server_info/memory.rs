@@ -24,8 +24,12 @@ pub(crate) const LASTING_AGE: Duration = Duration::from_secs(60);
 /// The most keys the memory holds; a new key onto that many empties it first.
 pub(crate) const MAX_KEYS: usize = 1000;
 
-/// How many builds of tool calls in a row may be dropped before the attempt stays recorded.
+/// The dropped builds of tool calls in a row whose last one keeps its attempt.
 pub(crate) const MAX_DROPPED: u32 = 5;
+
+/// The dropped builds of listings and feedback notes in a row whose last one keeps its attempt.
+/// These requests end fast, so their builds are dropped more often than those of tool calls.
+pub(crate) const MAX_DROPPED_LISTINGS: u32 = 20;
 
 /// The kind of request that starts a check.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -45,6 +49,9 @@ struct Entry {
     attempt: Option<Instant>,
     /// The builds of tool calls dropped in a row since the last build that ended.
     dropped: u32,
+    /// The builds of listings and feedback notes dropped in a row since the last build that
+    /// ended.
+    dropped_listings: u32,
 }
 
 /// The times of one process (see the module docs).
@@ -107,35 +114,49 @@ impl Memory {
                 server_name.to_owned(),
                 Entry {
                     attempt: Some(now),
-                    dropped: 0,
+                    ..Entry::default()
                 },
             );
         self.keys += 1;
         true
     }
 
-    /// Gives back the attempt of a build that `trigger` started and that was dropped before it
-    /// ended, so the next request starts it again. The [`MAX_DROPPED`]th dropped build of tool
-    /// calls in a row keeps its attempt instead, and the count starts again.
-    pub(crate) fn release(&mut self, trigger: Trigger, project_id: &str, server_name: &str) {
+    /// Notes that a build that `trigger` started was dropped before it ended. It counts toward
+    /// the dropped builds in a row of its kind: tool calls, or listings and feedback notes. The
+    /// [`MAX_DROPPED`]th or the [`MAX_DROPPED_LISTINGS`]th of a kind keeps its attempt, starts
+    /// both counts again and gives `true`. Any other gives the attempt back, so the next request
+    /// starts it again, and gives `false`.
+    pub(crate) fn release(
+        &mut self,
+        trigger: Trigger,
+        project_id: &str,
+        server_name: &str,
+    ) -> bool {
         let Some(entry) = self.entry(project_id, server_name) else {
-            return;
+            return false;
         };
-        if trigger == Trigger::ToolCall {
-            entry.dropped += 1;
-            if entry.dropped >= MAX_DROPPED {
-                entry.dropped = 0;
-                return;
+        let (count, limit) = match trigger {
+            Trigger::ToolCall => (&mut entry.dropped, MAX_DROPPED),
+            Trigger::Listing | Trigger::FeedbackNote => {
+                (&mut entry.dropped_listings, MAX_DROPPED_LISTINGS)
             }
+        };
+        *count += 1;
+        if *count >= limit {
+            entry.dropped = 0;
+            entry.dropped_listings = 0;
+            return true;
         }
         entry.attempt = None;
+        false
     }
 
-    /// Notes that a build for the key ended, whatever its result: its attempt stays, and the
-    /// count of dropped builds starts again.
+    /// Notes that a build for the key ended, whatever its result: its attempt stays, and both
+    /// counts of dropped builds start again.
     pub(crate) fn settle(&mut self, project_id: &str, server_name: &str) {
         if let Some(entry) = self.entry(project_id, server_name) {
             entry.dropped = 0;
+            entry.dropped_listings = 0;
         }
     }
 

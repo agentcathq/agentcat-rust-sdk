@@ -9,12 +9,14 @@ use crate::inject::{InjectState, InjectedList, ToolEntry};
 #[cfg(test)]
 mod tests;
 
-/// The entries by tool name, the pipeline state and whether any listing was recorded.
+/// The entries by tool name, the pipeline state, whether any listing was recorded, and the last
+/// server name that the server info heartbeat learned.
 #[derive(Debug, Default)]
 pub(crate) struct ToolRegistry {
     state: InjectState,
     entries: HashMap<String, ToolEntry>,
     listed: bool,
+    server_name: Option<String>,
 }
 
 impl ToolRegistry {
@@ -44,6 +46,18 @@ impl ToolRegistry {
     /// Whether the tool `name` has ever declared its own `session_id`.
     pub(crate) fn declares_session(&self, name: &str) -> bool {
         self.state.declared_session_params.contains(name)
+    }
+
+    /// The last server name that [`keep_server_name`](Self::keep_server_name) kept.
+    pub(crate) fn server_name(&self) -> Option<&str> {
+        self.server_name.as_deref()
+    }
+
+    /// Keeps `name` as the server name of this handler type.
+    pub(crate) fn keep_server_name(&mut self, name: &str) {
+        if self.server_name.as_deref() != Some(name) {
+            self.server_name = Some(name.to_owned());
+        }
     }
 
     /// The pipeline state, for [`build_injected_list`](crate::inject::build_injected_list) and

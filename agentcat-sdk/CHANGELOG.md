@@ -9,10 +9,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ### Added
 
-- The server info heartbeat. About once an hour for each process, the SDK calls the list
-  methods of the wrapped handler (`list_tools`, and `list_resources`, `list_resource_templates`
-  and `list_prompts` when the server declares the capability) and sends the name, version, title
-  and instructions of the server with its full lists to `POST /v1/public/server-info/`. A
+- The server info heartbeat. About once an hour for each process and server name, the SDK
+  calls the list methods of the wrapped handler (`list_tools`, and `list_resources`,
+  `list_resource_templates` and `list_prompts` when the server declares the capability) and
+  sends the name, version, title and instructions of the server with its full lists to
+  `POST /v1/public/server-info/`. A
   `tools/list` request, a `get_more_tools` call or a tool call starts the check; no request
   waits for it. The `redact_sensitive_information` hook runs on the text of the heartbeat. The
   SDK writes no file for it. It needs `agentcat-api` 0.0.4.

@@ -19,8 +19,11 @@ use rmcp::{ErrorData, RoleServer, ServerHandler};
 use serde_json::{Value, json};
 use tokio::time::Instant;
 
+use super::memory::Trigger;
 use super::memory::{self, INTERVAL, LASTING_AGE};
-use super::{Report, beside, can_send, for_call, for_listing, not_sent_line, sent_line};
+use super::{
+    Claim, Report, beside, can_send, contained, for_call, for_listing, not_sent_line, sent_line,
+};
 use crate::client::AgentCat;
 use crate::config::{HookError, Options};
 use crate::constants::GET_MORE_TOOLS_NAME;
@@ -30,7 +33,7 @@ use crate::sink::Sink;
 use crate::test_support::json::object;
 use crate::test_support::rmcp::{bare_context, connect};
 use crate::test_support::server_info::{
-    Answer, Api, Demo, Harness, LONG, Mode, PROJECT, snapshot, tool,
+    Answer, Api, BLOCK, Demo, Harness, LONG, Mode, PROJECT, snapshot, tool,
 };
 
 /// A connected test client.
@@ -432,39 +435,66 @@ async fn v10_the_call_returns_when_it_is_ready_while_a_list_never_returns() {
         call_takes: took,
         ..Demo::new()
     };
+    let listed = Arc::clone(&demo.listed);
     let client = serve(&harness, demo).await;
 
     // Each call ends first, so its read is dropped: the call takes its own time and no more.
-    for dropped in 1..=5 {
+    // The first four dropped reads give their attempt back and write no line.
+    for _ in 1..5 {
         let started = Instant::now();
         call_alpha(&client).await;
         assert_eq!(started.elapsed(), took);
-        assert_eq!(harness.reports(), dropped);
+        assert_eq!(harness.reports(), 0);
     }
-    // After five dropped reads in a row the attempt stays, so the sixth call starts no read.
+    // The fifth keeps its attempt and writes the one line, so the next call starts no read.
+    call_alpha(&client).await;
+    assert_eq!(harness.reports(), 1);
     let started = Instant::now();
     call_alpha(&client).await;
     assert_eq!(started.elapsed(), took);
-    assert_eq!(harness.reports(), 5);
+    assert_eq!(harness.reports(), 1);
+    assert_eq!(listed.prompts.load(Ordering::SeqCst), 5);
     assert_eq!(harness.heartbeats().await.len(), 0);
-    assert_eq!(harness.lines(5).await, [DROPPED_LINE; 5]);
+    assert_eq!(harness.lines(1).await, [DROPPED_LINE]);
 
-    // A listing and a feedback note start a read each time, and return at once.
+    // A listing starts a read each time and returns at once. The twentieth dropped read keeps
+    // its attempt and writes the one line.
     tokio::time::advance(INTERVAL).await;
-    for dropped in 6..=12 {
+    for listing in 1..=20 {
         let started = Instant::now();
         assert_eq!(list(&client).await.len(), 4);
         assert_eq!(started.elapsed(), Duration::ZERO);
-        assert_eq!(harness.reports(), dropped);
+        assert_eq!(harness.reports(), usize::from(listing == 20) + 1);
     }
+    assert_eq!(listed.prompts.load(Ordering::SeqCst), 25);
     let started = Instant::now();
     send_feedback_note(&client).await;
     assert_eq!(started.elapsed(), Duration::ZERO);
-    assert_eq!(harness.reports(), 13);
-    // Those dropped reads did not count: a tool call still starts one.
     call_alpha(&client).await;
-    assert_eq!(harness.reports(), 14);
+    assert_eq!(listed.prompts.load(Ordering::SeqCst), 25);
+    assert_eq!(harness.reports(), 2);
+    assert_eq!(harness.lines(2).await, [DROPPED_LINE; 2]);
     assert_eq!(harness.heartbeats().await.len(), 0);
+}
+
+#[tokio::test(start_paused = true)]
+async fn v10_twenty_dropped_feedback_notes_in_a_row_keep_the_attempt() {
+    memory::start_aged(LASTING_AGE);
+    let harness = Harness::new();
+    let demo = Demo {
+        prompts: Some(Mode::Hangs),
+        ..Demo::new()
+    };
+    let listed = Arc::clone(&demo.listed);
+    let client = serve(&harness, demo).await;
+    for _ in 0..21 {
+        let started = Instant::now();
+        send_feedback_note(&client).await;
+        assert_eq!(started.elapsed(), Duration::ZERO);
+    }
+    assert_eq!(listed.prompts.load(Ordering::SeqCst), 20);
+    assert_eq!(harness.reports(), 1);
+    assert_eq!(harness.lines(1).await, [DROPPED_LINE]);
 }
 
 #[tokio::test(start_paused = true)]
@@ -476,9 +506,11 @@ async fn v10_a_call_that_is_ready_at_once_does_not_wait_for_a_tool_list_that_nev
         ..Demo::new()
     };
     let client = serve(&harness, demo).await;
-    let started = Instant::now();
-    call_alpha(&client).await;
-    assert_eq!(started.elapsed(), Duration::ZERO);
+    for _ in 0..5 {
+        let started = Instant::now();
+        call_alpha(&client).await;
+        assert_eq!(started.elapsed(), Duration::ZERO);
+    }
     assert_eq!(harness.lines(1).await, [DROPPED_LINE]);
 }
 
@@ -503,6 +535,34 @@ async fn v10_a_long_call_outlives_a_list_that_never_returns() {
         keys(&heartbeats[0]["features"]),
         ["tools", "resourceTemplates", "prompts"]
     );
+}
+
+#[tokio::test]
+async fn v10_a_list_handler_that_blocks_its_thread_holds_the_request_one_block_at_most() {
+    memory::start_aged(LASTING_AGE);
+    let harness = Harness::new();
+    let demo = Demo {
+        tools: Mode::Blocks,
+        ..Demo::new()
+    };
+    let listed = Arc::clone(&demo.listed);
+    let client = serve(&harness, demo).await;
+
+    // The call is ready at once; the one poll of the read that runs before its answer returns
+    // holds the thread for one block, and no more.
+    let started = std::time::Instant::now();
+    call_alpha(&client).await;
+    let took = started.elapsed();
+    assert!(took >= BLOCK, "{took:?}");
+    assert!(took < BLOCK * 2, "{took:?}");
+    assert_eq!(listed.tools.load(Ordering::SeqCst), 1);
+
+    // The next call starts no read and is not held.
+    let started = std::time::Instant::now();
+    call_alpha(&client).await;
+    let took = started.elapsed();
+    assert!(took < BLOCK, "{took:?}");
+    assert_eq!(listed.tools.load(Ordering::SeqCst), 1);
 }
 
 #[tokio::test]
@@ -882,6 +942,13 @@ async fn a_get_info_that_panics_starts_no_read() {
     // The failed attempt stays recorded.
     assert!(for_call(&tracked, true, Some(&server), &context).is_none());
     assert_eq!(sink.taken().len(), 1);
+
+    // A listing claims on the name that the call kept, and then cannot read the rest.
+    memory::forget();
+    assert!(for_listing(&tracked, &context).is_none());
+    assert_eq!(sink.taken(), ["get_info panicked", "get_info panicked"]);
+    assert!(for_listing(&tracked, &context).is_none());
+    assert_eq!(sink.taken().len(), 2);
 }
 
 #[tokio::test]
@@ -907,16 +974,152 @@ async fn a_read_that_is_dropped_unpolled_gives_its_attempt_back() {
     let tracked = agentcat.track(Demo::new());
     let context = bare_context(None);
     drop(for_listing(&tracked, &context).expect("a heartbeat is due"));
-    assert_eq!(
-        sink.taken(),
-        ["the request ended before the lists were read"]
-    );
+    assert_eq!(sink.taken(), [""; 0]);
     let read = for_listing(&tracked, &context);
     assert!(read.is_some());
     beside(ready(()), read).await;
-    assert_eq!(sink.taken().len(), 2);
-    assert_eq!(sink.taken()[1], "built");
+    assert_eq!(sink.taken(), ["built"]);
     assert!(for_listing(&tracked, &context).is_none());
+}
+
+#[tokio::test]
+async fn a_hundred_listings_on_one_handle_call_get_info_at_most_twice() {
+    memory::forget();
+    let harness = Harness::new();
+    let demo = Demo::new();
+    let listed = Arc::clone(&demo.listed);
+    let client = serve(&harness, demo.clone()).await;
+    let before = listed.infos.load(Ordering::SeqCst);
+    for _ in 0..100 {
+        assert_eq!(list(&client).await.len(), 4);
+    }
+    let infos = listed.infos.load(Ordering::SeqCst) - before;
+    assert!(infos <= 2, "{infos} calls of get_info");
+    assert_eq!(harness.reports(), 1);
+
+    // A server tracked again for each request shares the name that the handle keeps.
+    let context = bare_context(None);
+    for _ in 0..100 {
+        let tracked = harness.agentcat.track(demo.clone());
+        assert!(for_listing(&tracked, &context).is_none());
+    }
+    assert_eq!(listed.infos.load(Ordering::SeqCst) - before, infos);
+}
+
+#[tokio::test]
+async fn a_listing_claims_on_the_kept_name_and_keeps_the_name_that_get_info_gives() {
+    memory::forget();
+    let sink = Arc::new(Reports::default());
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), sink.clone());
+    let context = bare_context(None);
+    let first = agentcat.track(Demo::new());
+    beside(ready(()), for_listing(&first, &context)).await;
+    assert_eq!(sink.taken(), ["built"]);
+
+    // The kept name is not due, so a renamed server is not asked for its name.
+    let renamed = Demo {
+        name: "renamed-server",
+        ..Demo::new()
+    };
+    let listed = Arc::clone(&renamed.listed);
+    let second = agentcat.track(renamed);
+    assert!(for_listing(&second, &context).is_none());
+    assert_eq!(listed.infos.load(Ordering::SeqCst), 0);
+
+    // Once the kept name is due, get_info gives the name of the heartbeat and the name to keep.
+    memory::forget();
+    let read = for_listing(&second, &context);
+    assert_eq!(listed.infos.load(Ordering::SeqCst), 1);
+    beside(ready(()), read).await;
+    assert_eq!(sink.taken(), ["built", "built"]);
+    let kept = agentcat
+        .inner()
+        .with_registry::<Demo, _>(|registry| registry.server_name().map(str::to_owned));
+    assert_eq!(kept.as_deref(), Some("renamed-server"));
+    assert!(for_listing(&second, &context).is_some());
+}
+
+#[tokio::test]
+async fn a_tool_call_keeps_the_name_of_its_event_for_the_listings() {
+    memory::start_aged(LASTING_AGE);
+    let sink = Arc::new(Reports::default());
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), sink.clone());
+    let demo = Demo::new();
+    let listed = Arc::clone(&demo.listed);
+    let tracked = agentcat.track(demo);
+    let context = bare_context(None);
+    let server = rmcp::model::Implementation::new("demo-server", "1.2.3");
+    beside(
+        ready(()),
+        for_call(&tracked, false, Some(&server), &context),
+    )
+    .await;
+    let infos = listed.infos.load(Ordering::SeqCst);
+    assert!(for_listing(&tracked, &context).is_none());
+    assert_eq!(listed.infos.load(Ordering::SeqCst), infos);
+}
+
+/// The panic of a read that stands for a panic of the SDK's own code. It does not run the panic
+/// hook, so the test writes nothing to standard error.
+fn sdk_panic() -> Report {
+    std::panic::resume_unwind(Box::new("a panic of the SDK"))
+}
+
+#[tokio::test]
+async fn a_panic_of_the_read_keeps_the_attempt() {
+    memory::forget();
+    let sink = Arc::new(Reports::default());
+    let agentcat = AgentCat::with_sink(PROJECT, Options::default(), sink.clone());
+    let shared = agentcat.inner();
+    let claim = Claim::take(shared, Trigger::Listing, "demo-server").expect("due");
+    contained(claim, async { sdk_panic() }).await;
+    assert_eq!(sink.taken(), ["the read panicked"]);
+    assert!(Claim::take(shared, Trigger::Listing, "demo-server").is_none());
+}
+
+/// Whether `line` of standard error comes from the panic hook of the process for a panic of a
+/// test server's list handler.
+fn from_the_panic_hook(line: &str) -> bool {
+    line.is_empty()
+        || (line.starts_with("thread '") && line.contains("panicked at"))
+        || line == "demo list panic"
+        || line.starts_with("note: run with `RUST_BACKTRACE=1`")
+}
+
+/// Runs every test of this module whose name starts with `v` (the rows of the test table) in a
+/// child process of this test binary, one at a time and with the output of the tests not
+/// captured, and checks the output of the process: standard output holds the lines of the test
+/// runner only, and standard error the lines of the panic hook for a list handler that panics.
+#[test]
+fn nothing_of_the_heartbeat_reaches_standard_output() {
+    let binary = std::env::current_exe().unwrap();
+    let output = std::process::Command::new(binary)
+        .args([
+            "server_info::tests::v",
+            "--test-threads=1",
+            "--nocapture",
+            "--quiet",
+        ])
+        .env("RUST_BACKTRACE", "0")
+        .output()
+        .unwrap();
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(output.status.success(), "{stdout}{stderr}");
+    assert!(stdout.contains("test result: ok. "), "{stdout}");
+    let runner = |line: &str| {
+        line.is_empty()
+            || line.starts_with("running ")
+            || line.starts_with("test result: ok. ")
+            || line.chars().all(|mark| mark == '.')
+    };
+    let stray: Vec<&str> = stdout.lines().filter(|line| !runner(line)).collect();
+    assert_eq!(stray, [""; 0], "standard output: {stdout}");
+    let stray: Vec<&str> = stderr
+        .lines()
+        .filter(|line| !from_the_panic_hook(line))
+        .collect();
+    assert_eq!(stray, [""; 0], "standard error: {stderr}");
 }
 
 /// A future that counts its polls and is ready at poll number `ready_at` (never when 0).
@@ -1072,6 +1275,33 @@ async fn the_worker_sends_the_next_heartbeat_when_one_ends() {
         3
     );
     assert!(lines.contains(&"Server info not sent: a reason".to_owned()));
+}
+
+#[tokio::test]
+async fn a_panic_in_the_send_of_a_heartbeat_leaves_the_worker_running() {
+    memory::forget();
+    let harness = Harness::with(
+        PROJECT,
+        Options::default(),
+        Api::answering(&[Answer::Panics]),
+    );
+    let sink = &harness.agentcat.inner().sink;
+    sink.server_info(Report::Built(Box::new(snapshot())));
+    sink.server_info(Report::Built(Box::new(snapshot())));
+    // The first send panicked in its task and wrote no line; the worker sent the second one.
+    let lines = harness.lines(1).await;
+    assert_eq!(lines.len(), 1);
+    assert!(
+        lines[0].starts_with("Server info sent: 4 tools, "),
+        "{lines:?}"
+    );
+    assert_eq!(harness.api.heartbeats().len(), 2);
+
+    // Events still go out, and a flush still gets its answer.
+    let client = serve(&harness, Demo::new()).await;
+    call_alpha(&client).await;
+    assert!(harness.agentcat.flush(WAIT).await);
+    assert_eq!(harness.api.events().len(), 1);
 }
 
 #[tokio::test]

@@ -38,6 +38,9 @@ pub(crate) struct Snapshot {
     pub(crate) started: Instant,
 }
 
+/// The reason of a body whose lists cannot be written as JSON.
+const UNWRITABLE: &str = "a list is not valid JSON";
+
 /// The body for the project `project_id` from the parts of a [`Snapshot`]:
 ///
 /// - `server_name` and `server_version` are those of `server`; `server_title` is its title and
@@ -47,7 +50,8 @@ pub(crate) struct Snapshot {
 ///   that were read; a list that was not read has no key.
 /// - Each item is the JSON object that rmcp writes for it.
 ///
-/// `Err` holds the text of an item that cannot be written as JSON.
+/// `Err` holds a fixed reason when an item cannot be written as JSON. It never holds the text of
+/// the error, which can quote the item.
 pub(crate) fn body(
     project_id: &str,
     server: Implementation,
@@ -56,7 +60,7 @@ pub(crate) fn body(
     inject: &InjectConfig,
     state: &mut InjectState,
 ) -> Result<PublishServerInfoRequest, String> {
-    let unwritable = |error: serde_json::Error| format!("a list is not valid JSON: {error}");
+    let unwritable = |_error: serde_json::Error| UNWRITABLE.to_owned();
     let mut features = Map::new();
     let tools = listed_tools(lists.tool_pages, inject, state);
     features.insert(

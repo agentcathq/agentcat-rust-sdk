@@ -41,15 +41,20 @@
 //! `list_resources`, `list_resource_templates` and `list_prompts` methods of your handler, with
 //! the context of that request. It calls the resource methods only when the server declares the
 //! resources capability, and `list_prompts` only when it declares the prompts capability. So
-//! the SDK calls your list methods about once an hour for each process. A process that does not
-//! live for 60 seconds sends a heartbeat for each `tools/list` request and each `get_more_tools`
-//! call instead. The SDK keeps the times in the memory of the process and writes no file. A
-//! handle of the test fake (`testing::Fake`) starts no heartbeat.
+//! the SDK calls your list methods about once an hour for each process and server name. In its
+//! first 60 seconds a process starts a heartbeat only for a `tools/list` request or a
+//! `get_more_tools` call, not for another tool call; so a runtime that starts a new process for
+//! each request sends one heartbeat for each `tools/list` request and each `get_more_tools`
+//! call. A `tools/list` request calls your `get_info` only when a heartbeat is due or the handle
+//! does not know the server name yet. The SDK keeps the times and the server names in the
+//! memory of the process and writes no file. A handle of the test fake (`testing::Fake`) starts
+//! no heartbeat.
 //!
 //! The list calls run next to the request that started the check, inside its future, and the
 //! request never waits for them: the SDK returns the result of the request when it is ready and
 //! drops the list calls that have not ended. The next request then starts them again; after 5
-//! tool calls in a row whose list calls were dropped, the SDK waits an hour. A list method that
+//! tool calls, or 20 `tools/list` requests and `get_more_tools` calls, in a row whose list calls
+//! were dropped, the SDK waits an hour. A list method that
 //! fails, panics or takes more than 5 seconds costs only that list, and a `list_tools` that
 //! fails costs only that heartbeat. A list method that blocks its thread without an `.await`
 //! can delay the request beside it for that long, as any other code on the task can.

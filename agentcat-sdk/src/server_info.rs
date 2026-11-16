@@ -82,8 +82,10 @@ pub(crate) fn not_sent_line(why: &str) -> String {
 type Read<F> = Option<Pin<Box<F>>>;
 
 /// The check of a `tools/list` request on `tracked`: the read to run [`beside`] the request when
-/// a heartbeat is due, else `None`. The server name comes from the handler's `get_info`; when
-/// that panics, nothing is due. A panic of the check itself is contained, and nothing is due.
+/// a heartbeat is due, else `None`. The claim uses the server name that the handle keeps for the
+/// handler type. Only when no name is kept, or when the claim is due, the check calls the
+/// handler's `get_info`, and it keeps the name that `get_info` gives. When that panics, nothing
+/// is due. A panic of the check itself is contained, and nothing is due.
 pub(crate) fn for_listing<'a, H: ServerHandler>(
     tracked: &'a Tracked<H>,
     context: &RequestContext<RoleServer>,
@@ -102,14 +104,25 @@ fn check_listing<'a, H: ServerHandler>(
     if !can_send(shared) {
         return None;
     }
-    let info = catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())).ok()?;
-    let claim = Claim::take(shared, Trigger::Listing, &info.server_info.name)?;
-    Some(Box::pin(contained(build(
-        tracked,
+    let kept = shared.with_registry::<H, _>(|registry| registry.server_name().map(str::to_owned));
+    let (claim, info) = if let Some(name) = kept {
+        let claim = Claim::take(shared, Trigger::Listing, &name)?;
+        let Ok(info) = catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())) else {
+            claim.end(Report::Skipped("get_info panicked".to_owned()));
+            return None;
+        };
+        keep_server_name::<H>(shared, &info.server_info.name);
+        (claim, info)
+    } else {
+        let info = catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())).ok()?;
+        keep_server_name::<H>(shared, &info.server_info.name);
+        let claim = Claim::take(shared, Trigger::Listing, &info.server_info.name)?;
+        (claim, info)
+    };
+    Some(Box::pin(contained(
         claim,
-        info,
-        context.clone(),
-    ))))
+        build(tracked, info, context.clone()),
+    )))
 }
 
 /// The check of a tool call on `tracked`, whose record names `server`: the read to run
@@ -142,6 +155,7 @@ fn check_call<'a, H: ServerHandler>(
         return None;
     }
     let server = server?;
+    keep_server_name::<H>(shared, &server.name);
     let trigger = if feedback_note {
         Trigger::FeedbackNote
     } else {
@@ -153,12 +167,16 @@ fn check_call<'a, H: ServerHandler>(
         return None;
     };
     info.server_info = server.clone();
-    Some(Box::pin(contained(build(
-        tracked,
+    Some(Box::pin(contained(
         claim,
-        info,
-        context.clone(),
-    ))))
+        build(tracked, info, context.clone()),
+    )))
+}
+
+/// Keeps `name` as the server name of the handler type `H` on the handle `shared`, for the next
+/// check of a listing.
+fn keep_server_name<H: ServerHandler>(shared: &Inner, name: &str) {
+    shared.with_registry::<H, _>(|registry| registry.keep_server_name(name));
 }
 
 /// Whether the handle `shared` sends heartbeats at all: the SDK is on, the handle is not one of
@@ -172,8 +190,9 @@ fn can_send(shared: &Inner) -> bool {
 
 /// The attempt that a check recorded in the [`memory`], until its read ends. A read that ends
 /// hands its [`Report`] over with [`end`](Self::end). When the read is dropped before that (its
-/// request ended first), the drop gives the attempt back to the memory and reports the read as
-/// skipped.
+/// request ended first), the drop gives the attempt back to the memory, except for the last of
+/// too many dropped reads in a row ([`Memory::release`](memory::Memory::release)), which keeps
+/// the attempt and reports the read as skipped.
 struct Claim<'a> {
     shared: &'a Inner,
     trigger: Trigger,
@@ -204,8 +223,12 @@ impl<'a> Claim<'a> {
 
 impl Drop for Claim<'_> {
     fn drop(&mut self) {
-        if !self.ended {
+        if self.ended {
+            return;
+        }
+        let recorded =
             memory::process().release(self.trigger, &self.shared.project_id, &self.server_name);
+        if recorded {
             self.shared
                 .sink
                 .server_info(Report::Skipped(DROPPED.to_owned()));
@@ -213,41 +236,41 @@ impl Drop for Claim<'_> {
     }
 }
 
-/// The read of a heartbeat that is due: the lists of the handler with `context`, then the
-/// [`Report`] to the sink. A panic in the read is contained and reported, without its message. The
-/// future does no other work: the body, the redaction and the POST belong to the delivery
-/// worker. Dropping it before it ends gives the attempt of `claim` back.
+/// The read of a heartbeat that is due: the lists of the handler with `context`, and the
+/// [`Report`] of what it gave. The future does no other work: the body, the redaction and the
+/// POST belong to the delivery worker.
 async fn build<H: ServerHandler>(
     tracked: &Tracked<H>,
-    claim: Claim<'_>,
     info: InitializeResult,
     context: RequestContext<RoleServer>,
-) {
+) -> Report {
     let started = std::time::Instant::now();
-    let read = lists::read(tracked.inner(), &context, &info.capabilities);
-    let report = match AssertUnwindSafe(read).catch_unwind().await {
-        Ok(Ok(lists)) => {
-            let shared = claim.shared;
-            Report::Built(Box::new(Snapshot {
-                server: info.server_info,
-                instructions: info.instructions,
-                lists,
-                inject: InjectConfig::from_options(&shared.options),
-                state: shared.with_registry::<H, _>(|registry| registry.state_mut().clone()),
-                runtime: Handle::try_current().ok(),
-                started,
-            }))
-        }
-        Ok(Err(why)) => Report::Skipped(why),
-        Err(_payload) => Report::Skipped("the read panicked".to_owned()),
+    let lists = match lists::read(tracked.inner(), &context, &info.capabilities).await {
+        Ok(lists) => lists,
+        Err(why) => return Report::Skipped(why),
     };
-    claim.end(report);
+    let shared = tracked.agentcat().inner();
+    Report::Built(Box::new(Snapshot {
+        server: info.server_info,
+        instructions: info.instructions,
+        lists,
+        inject: InjectConfig::from_options(&shared.options),
+        state: shared.with_registry::<H, _>(|registry| registry.state_mut().clone()),
+        runtime: Handle::try_current().ok(),
+        started,
+    }))
 }
 
-/// `build` with every panic of its polls contained: the future then ends, and the drop of its
-/// [`Claim`] reports the read as skipped.
-async fn contained(build: impl Future<Output = ()>) {
-    let _ = AssertUnwindSafe(build).catch_unwind().await;
+/// Runs the read `build` of the attempt `claim` and ends the claim with its [`Report`]. A panic in
+/// any poll of `build` is contained and ends the claim as a read that panicked, without the
+/// message of the panic, so the attempt stays recorded. Dropping the future before it ends gives
+/// the attempt of `claim` back ([`Claim`]).
+async fn contained(claim: Claim<'_>, build: impl Future<Output = Report>) {
+    let report = AssertUnwindSafe(build)
+        .catch_unwind()
+        .await
+        .unwrap_or_else(|_payload| Report::Skipped("the read panicked".to_owned()));
+    let _ = catch_unwind(AssertUnwindSafe(|| claim.end(report)));
 }
 
 /// Runs `request` to its end and gives its output, with the read `build` of a heartbeat next to

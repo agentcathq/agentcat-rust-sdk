@@ -33,6 +33,9 @@ use crate::sink::{BoxFuture, Sink};
 /// A project ID of the real form: `proj_` and 27 more characters.
 pub(crate) const PROJECT: &str = "proj_0123456789abcdefghijklmnopq";
 
+/// How long a list handler in [`Mode::Blocks`] blocks its thread.
+pub(crate) const BLOCK: Duration = Duration::from_millis(200);
+
 /// The length of the description of the `beta` tool.
 pub(crate) const LONG: usize = 2000;
 
@@ -48,6 +51,8 @@ pub(crate) enum Mode {
     Fails,
     /// It never returns.
     Hangs,
+    /// It blocks its thread for [`BLOCK`] when it is polled, then gives its items.
+    Blocks,
     /// It panics.
     Panics,
     /// It gives its first page with the same cursor each time.
@@ -56,13 +61,15 @@ pub(crate) enum Mode {
     Endless,
 }
 
-/// How often each list handler of a [`Demo`] was called. Clones of the server share the counts.
+/// How often each list handler and `get_info` of a [`Demo`] were called. Clones of the server
+/// share the counts.
 #[derive(Debug, Default)]
 pub(crate) struct Listed {
     pub(crate) tools: AtomicUsize,
     pub(crate) resources: AtomicUsize,
     pub(crate) templates: AtomicUsize,
     pub(crate) prompts: AtomicUsize,
+    pub(crate) infos: AtomicUsize,
 }
 
 /// A hand-written server for the heartbeat tests. [`Demo::new`] is `demo-server` 1.2.3 with the
@@ -172,7 +179,7 @@ impl Demo {
             Mode::Panics => panic!("demo list panic"),
             Mode::SameCursor => Ok((first, Some("again".to_owned()))),
             Mode::Endless => Ok((first, Some(format!("page-{}", index + 1)))),
-            Mode::Works | Mode::Hangs => {
+            Mode::Works | Mode::Hangs | Mode::Blocks => {
                 let items = pages.get(index).cloned().unwrap_or_default();
                 let next = (index + 1 < pages.len()).then(|| format!("page-{}", index + 1));
                 Ok((items, next))
@@ -181,10 +188,12 @@ impl Demo {
     }
 
     /// The future of a list handler in `mode` whose answer is `answer`: one that never ends for
-    /// [`Mode::Hangs`].
+    /// [`Mode::Hangs`], and one that blocks its thread in its first poll for [`Mode::Blocks`].
     async fn answered<T>(mode: Mode, answer: Result<T, ErrorData>) -> Result<T, ErrorData> {
-        if mode == Mode::Hangs {
-            pending::<()>().await;
+        match mode {
+            Mode::Hangs => pending::<()>().await,
+            Mode::Blocks => std::thread::sleep(BLOCK),
+            _ => {}
         }
         answer
     }
@@ -283,6 +292,7 @@ impl ServerHandler for Demo {
     }
 
     fn get_info(&self) -> InitializeResult {
+        self.listed.infos.fetch_add(1, Ordering::SeqCst);
         let capabilities = match (self.resources.is_some(), self.prompts.is_some()) {
             (true, true) => ServerCapabilities::builder()
                 .enable_tools()
@@ -338,6 +348,8 @@ pub(crate) enum Answer {
     ServerError,
     /// No answer, ever.
     Never,
+    /// A panic in the call of the publisher, which does not run the panic hook.
+    Panics,
 }
 
 /// What the clones of one [`Api`] share.
@@ -420,6 +432,7 @@ impl Publisher for Api {
             Answer::TooLarge => Box::pin(ready(Ok(ServerInfoAnswer::TooLarge))),
             Answer::ServerError => Box::pin(ready(Err("the API answered 500".to_owned()))),
             Answer::Never => Box::pin(pending()),
+            Answer::Panics => std::panic::resume_unwind(Box::new("a panic in the send")),
         }
     }
 }
