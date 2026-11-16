@@ -259,7 +259,7 @@ async fn v5_a_tool_list_that_fails_sends_nothing() {
     assert_eq!(harness.heartbeats().await.len(), 0);
     assert_eq!(
         harness.lines(1).await,
-        ["Server info not sent: the tools list gave an error: demo list failure"]
+        ["Server info not sent: the tools list gave a JSON-RPC error"]
     );
     // The failed attempt waits like any other: the next call starts none.
     call_alpha(&client).await;
@@ -518,7 +518,7 @@ async fn v10_a_list_handler_that_panics_costs_only_the_heartbeat() {
     assert_eq!(harness.heartbeats().await.len(), 0);
     assert_eq!(
         harness.lines(1).await,
-        ["Server info not sent: the tools list panicked: demo list panic"]
+        ["Server info not sent: the tools list panicked"]
     );
     call_alpha(&client).await;
 }
@@ -621,7 +621,7 @@ async fn v12_a_redaction_hook_that_fails_sends_nothing() {
     assert_eq!(harness.heartbeats().await.len(), 0);
     assert_eq!(
         harness.lines(1).await,
-        ["Server info not sent: the redaction did not work: no redaction today"]
+        ["Server info not sent: the redaction did not work: the hook gave an error"]
     );
     // The call's own event is dropped by the same hook; nothing left the process.
     assert!(harness.agentcat.flush(WAIT).await);
@@ -878,7 +878,7 @@ async fn a_get_info_that_panics_starts_no_read() {
     // A call whose event has a server name claims the attempt, and then cannot read the rest.
     let server = rmcp::model::Implementation::new("demo-server", "1.2.3");
     assert!(for_call(&tracked, false, Some(&server), &context).is_none());
-    assert_eq!(sink.taken(), ["get_info panicked: no info"]);
+    assert_eq!(sink.taken(), ["get_info panicked"]);
     // The failed attempt stays recorded.
     assert!(for_call(&tracked, true, Some(&server), &context).is_none());
     assert_eq!(sink.taken().len(), 1);
@@ -1072,4 +1072,61 @@ async fn the_worker_sends_the_next_heartbeat_when_one_ends() {
         3
     );
     assert!(lines.contains(&"Server info not sent: a reason".to_owned()));
+}
+
+#[tokio::test]
+async fn a_line_never_holds_the_message_of_an_error_of_the_customers_code() {
+    let secret = "customer-data-in-a-message";
+    let options =
+        Options::default().redact_sensitive_information(move |_text: String| async move {
+            Err(HookError::from(secret))
+        });
+    let mut lines = Vec::new();
+    // A list that gives an error, a list that panics, and a hook that gives an error.
+    for (tools, options) in [
+        (Mode::Fails, Options::default()),
+        (Mode::Panics, Options::default()),
+        (Mode::Works, options),
+    ] {
+        memory::start_aged(LASTING_AGE);
+        let harness = Harness::with(PROJECT, options, Api::default());
+        let demo = Demo {
+            tools,
+            ..Demo::new()
+        };
+        let client = serve(&harness, demo).await;
+        call_alpha(&client).await;
+        lines.extend(harness.lines(1).await);
+    }
+    assert_eq!(
+        lines,
+        [
+            "Server info not sent: the tools list gave a JSON-RPC error",
+            "Server info not sent: the tools list panicked",
+            "Server info not sent: the redaction did not work: the hook gave an error",
+        ]
+    );
+    for message in ["demo list failure", "demo list panic", secret] {
+        assert!(
+            lines.iter().all(|line| !line.contains(message)),
+            "{message}"
+        );
+    }
+}
+
+#[cfg(feature = "test-util")]
+#[tokio::test]
+async fn a_handle_of_the_test_fake_starts_no_heartbeat() {
+    memory::start_aged(LASTING_AGE);
+    let fake = crate::testing::Fake::new();
+    let agentcat = fake.agentcat(PROJECT, Options::default());
+    assert!(!can_send(agentcat.inner()));
+    let demo = Demo::new();
+    let listed = Arc::clone(&demo.listed);
+    every_trigger(&agentcat, demo).await;
+    fake.assert_tracked("alpha").await;
+    // Only the listing of the client reached the handler.
+    assert_eq!(listed.tools.load(Ordering::SeqCst), 1);
+    assert_eq!(listed.resources.load(Ordering::SeqCst), 0);
+    assert_eq!(listed.prompts.load(Ordering::SeqCst), 0);
 }

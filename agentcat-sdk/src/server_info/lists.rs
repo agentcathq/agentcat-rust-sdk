@@ -18,8 +18,6 @@ use rmcp::model::{
 use rmcp::service::RequestContext;
 use rmcp::{ErrorData, RoleServer, ServerHandler};
 
-use crate::capture::panic_message;
-
 #[cfg(test)]
 mod tests;
 
@@ -130,7 +128,8 @@ fn kept<T>(
 }
 
 /// Every page of the list that `fetch` reads, within [`LIST_TIMEOUT`]; a panic of the handler is
-/// contained. `Err` holds what went wrong, worded to follow the name of the list.
+/// contained. `Err` holds what went wrong, worded to follow the name of the list: a fixed text,
+/// never the message of the handler's error or panic.
 async fn pages<P, F>(
     fetch: impl FnMut(PaginatedRequestParams) -> F,
 ) -> Result<Vec<Vec<P::Item>>, String>
@@ -141,7 +140,7 @@ where
     let all = AssertUnwindSafe(all_pages(fetch)).catch_unwind();
     match tokio::time::timeout(LIST_TIMEOUT, all).await {
         Ok(Ok(pages)) => pages,
-        Ok(Err(payload)) => Err(format!("panicked: {}", panic_message(&*payload))),
+        Ok(Err(_payload)) => Err("panicked".to_owned()),
         Err(_elapsed) => Err(format!(
             "did not respond within {}ms",
             LIST_TIMEOUT.as_millis()
@@ -167,7 +166,7 @@ where
         }
         let page = fetch(params)
             .await
-            .map_err(|error| format!("gave an error: {}", error.message))?;
+            .map_err(|_error| "gave a JSON-RPC error".to_owned())?;
         let (items, next) = page.into_parts();
         pages.push(items);
         let Some(cursor) = next else {

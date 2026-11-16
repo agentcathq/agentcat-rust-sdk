@@ -146,7 +146,7 @@ async fn v5_a_tool_list_that_fails_fails_the_read() {
     };
     assert_eq!(
         read_demo(&demo).await,
-        Err("the tools list gave an error: demo list failure".to_owned())
+        Err("the tools list gave a JSON-RPC error".to_owned())
     );
     assert_eq!(demo.listed.resources.load(Ordering::SeqCst), 0);
 }
@@ -159,7 +159,7 @@ async fn a_tool_list_that_panics_fails_the_read() {
     };
     assert_eq!(
         read_demo(&demo).await,
-        Err("the tools list panicked: demo list panic".to_owned())
+        Err("the tools list panicked".to_owned())
     );
 }
 

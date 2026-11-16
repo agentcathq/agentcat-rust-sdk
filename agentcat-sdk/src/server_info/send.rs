@@ -13,7 +13,6 @@ use crate::config::{HookError, StringRedactor};
 use crate::delivery::{Publisher, ServerInfoAnswer};
 use crate::hooks::AbortOnDrop;
 use crate::pipeline::redact::server_info_strings;
-use crate::pipeline::settle::failure_message;
 
 #[cfg(test)]
 mod tests;
@@ -96,7 +95,8 @@ async fn attempt(
 /// Replaces each string of `body` that the walk of [`server_info_strings`] visits by what `hook`
 /// gives for it. One task on `runtime` awaits the hook on each string in walk order and stops at
 /// its first error. `Err` holds why the body must not be sent: no runtime, the hook's error, the
-/// task's panic or cancellation, or `deadline` passed first (the task is then aborted).
+/// task's panic or cancellation, or `deadline` passed first (the task is then aborted). It is a
+/// fixed text, never the message of the hook's error or panic.
 async fn redact(
     hook: &StringRedactor,
     body: &mut PublishServerInfoRequest,
@@ -115,8 +115,9 @@ async fn redact(
         Ok::<_, HookError>(redacted)
     }));
     let redacted = match tokio::time::timeout_at(deadline.into(), task).await {
-        Ok(Ok(result)) => result.map_err(|error| error.to_string())?,
-        Ok(Err(error)) => return Err(failure_message(error)),
+        Ok(Ok(result)) => result.map_err(|_error| "the hook gave an error".to_owned())?,
+        Ok(Err(error)) if error.is_panic() => return Err("the hook panicked".to_owned()),
+        Ok(Err(_cancelled)) => return Err("the task of the hook was cancelled".to_owned()),
         Err(_elapsed) => {
             return Err(format!(
                 "it did not end within {}ms of the start of the read",

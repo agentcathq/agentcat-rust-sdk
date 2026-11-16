@@ -40,7 +40,8 @@
 //! and the server name started an hour ago or more, the SDK calls the `list_tools`,
 //! `list_resources`, `list_resource_templates` and `list_prompts` methods of your handler, with
 //! the context of that request. It calls the resource methods only when the server declares the
-//! resources capability, and `list_prompts` only when it declares the prompts capability. So
+//! resources capability, and `list_prompts` only when it declares the prompts capability. A
+//! handle of the test fake (`testing::Fake`) starts no heartbeat. So
 //! the SDK calls your list methods about once an hour for each process. A process that does not
 //! live for 60 seconds sends a heartbeat for each `tools/list` request and each `get_more_tools`
 //! call instead. The SDK keeps the times in the memory of the process and writes no file.
@@ -57,7 +58,8 @@
 //! every string of the title, the instructions and the lists, except the `name`, the `uri` and
 //! the `uriTemplate` of a list item. The server name and the server version stay as they are, as
 //! on events. When the hook fails or does not end within 30 seconds, the SDK sends nothing. No
-//! other hook runs for a heartbeat. The SDK sends each heartbeat one time, in the background,
+//! other hook runs for a heartbeat. The log line of a heartbeat that was not sent names a fixed
+//! reason, never the message of an error of your list methods or your hook. The SDK sends each heartbeat one time, in the background,
 //! and [`AgentCat::flush`] and [`AgentCat::shutdown`] do not wait for it.
 //!
 //! When a tool panics, the SDK records the panic as the error of the call and then lets the panic

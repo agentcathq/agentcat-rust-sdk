@@ -102,6 +102,9 @@ pub(crate) struct Inner {
     /// Whether the SDK is on for this handle. `AGENTCAT_ENABLED` turns it off: then the
     /// [`Tracked`] servers forward every method untouched and the sink drops everything.
     pub(crate) enabled: bool,
+    /// Whether the handle sends the server info heartbeat: every handle but one of the test
+    /// fake, whose servers get no list call of the SDK's own.
+    pub(crate) server_info: bool,
     /// Where the SDK hands its own log lines, its records and its events.
     pub(crate) sink: Arc<dyn Sink>,
     /// What the listings taught the SDK, one registry per inner handler type.
@@ -318,6 +321,7 @@ impl AgentCat {
                 project_id,
                 options,
                 enabled: false,
+                server_info: true,
                 sink: Arc::new(DisabledSink),
                 registries: Mutex::default(),
             });
@@ -352,6 +356,7 @@ impl AgentCat {
             project_id,
             options,
             enabled: true,
+            server_info: true,
             sink: Arc::new(delivery),
             registries: Mutex::default(),
         })
@@ -391,6 +396,7 @@ impl AgentCat {
             project_id,
             options,
             enabled: true,
+            server_info: false,
             sink: Arc::new(delivery),
             registries: Mutex::default(),
         })
@@ -403,6 +409,7 @@ impl AgentCat {
             project_id: project_id.to_owned(),
             options,
             enabled: true,
+            server_info: true,
             sink,
             registries: Mutex::default(),
         })
@@ -420,6 +427,7 @@ impl AgentCat {
             project_id: project_id.to_owned(),
             options,
             enabled: false,
+            server_info: true,
             sink,
             registries: Mutex::default(),
         })

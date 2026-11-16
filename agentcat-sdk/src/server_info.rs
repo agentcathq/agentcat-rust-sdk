@@ -15,7 +15,9 @@
 //! customer's redaction hook on its text and sends it ([`send`]), off the request's task.
 //!
 //! No failure leaves this module: a panic of a handler is contained, each list has a time
-//! limit, a read that the request outlives is dropped, and what goes wrong is one log line.
+//! limit, a read that the request outlives is dropped, and what goes wrong is one log line. A
+//! line names a fixed reason: it never holds the message of an error or a panic of the
+//! customer's code, which can hold the customer's data.
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::pin::{Pin, pin};
 use std::task::Poll;
@@ -28,7 +30,6 @@ use rmcp::{RoleServer, ServerHandler};
 use tokio::runtime::Handle;
 use tokio::time::Instant;
 
-use crate::capture::panic_message;
 use crate::client::Inner;
 use crate::inject::InjectConfig;
 use crate::tracked::Tracked;
@@ -76,14 +77,27 @@ pub(crate) fn not_sent_line(why: &str) -> String {
     format!("{LINE_PREFIX}not sent: {why}")
 }
 
+/// The read of a heartbeat, boxed, so the future of a request that starts none does not grow by
+/// its size.
+type Read<F> = Option<Pin<Box<F>>>;
+
 /// The check of a `tools/list` request on `tracked`: the read to run [`beside`] the request when
-/// a heartbeat is due, else `None`. The read is boxed, so the future of a request that starts
-/// none does not grow by its size. The server name comes from the handler's `get_info`; when
-/// that panics, nothing is due.
+/// a heartbeat is due, else `None`. The server name comes from the handler's `get_info`; when
+/// that panics, nothing is due. A panic of the check itself is contained, and nothing is due.
 pub(crate) fn for_listing<'a, H: ServerHandler>(
     tracked: &'a Tracked<H>,
     context: &RequestContext<RoleServer>,
-) -> Option<Pin<Box<impl Future<Output = ()> + use<'a, H>>>> {
+) -> Read<impl Future<Output = ()> + use<'a, H>> {
+    catch_unwind(AssertUnwindSafe(|| check_listing(tracked, context)))
+        .ok()
+        .flatten()
+}
+
+/// The check of [`for_listing`].
+fn check_listing<'a, H: ServerHandler>(
+    tracked: &'a Tracked<H>,
+    context: &RequestContext<RoleServer>,
+) -> Read<impl Future<Output = ()> + use<'a, H>> {
     let shared = tracked.agentcat().inner();
     if !can_send(shared) {
         return None;
@@ -102,13 +116,27 @@ pub(crate) fn for_listing<'a, H: ServerHandler>(
 /// [`beside`] the call when a heartbeat is due, else `None`. `feedback_note` says that the call
 /// is a `get_more_tools` call that the SDK answers. The heartbeat carries the name and the
 /// version of `server`, so they equal those of the call's event. Without `server` nothing is
-/// due.
+/// due. A panic of the check itself is contained, and nothing is due.
 pub(crate) fn for_call<'a, H: ServerHandler>(
     tracked: &'a Tracked<H>,
     feedback_note: bool,
     server: Option<&Implementation>,
     context: &RequestContext<RoleServer>,
-) -> Option<Pin<Box<impl Future<Output = ()> + use<'a, H>>>> {
+) -> Read<impl Future<Output = ()> + use<'a, H>> {
+    catch_unwind(AssertUnwindSafe(|| {
+        check_call(tracked, feedback_note, server, context)
+    }))
+    .ok()
+    .flatten()
+}
+
+/// The check of [`for_call`].
+fn check_call<'a, H: ServerHandler>(
+    tracked: &'a Tracked<H>,
+    feedback_note: bool,
+    server: Option<&Implementation>,
+    context: &RequestContext<RoleServer>,
+) -> Read<impl Future<Output = ()> + use<'a, H>> {
     let shared = tracked.agentcat().inner();
     if !can_send(shared) {
         return None;
@@ -120,13 +148,9 @@ pub(crate) fn for_call<'a, H: ServerHandler>(
         Trigger::ToolCall
     };
     let claim = Claim::take(shared, trigger, &server.name)?;
-    let mut info = match catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())) {
-        Ok(info) => info,
-        Err(payload) => {
-            let message = panic_message(&*payload);
-            claim.end(Report::Skipped(format!("get_info panicked: {message}")));
-            return None;
-        }
+    let Ok(mut info) = catch_unwind(AssertUnwindSafe(|| tracked.inner().get_info())) else {
+        claim.end(Report::Skipped("get_info panicked".to_owned()));
+        return None;
     };
     info.server_info = server.clone();
     Some(Box::pin(contained(build(
@@ -137,10 +161,13 @@ pub(crate) fn for_call<'a, H: ServerHandler>(
     ))))
 }
 
-/// Whether the handle `shared` sends heartbeats at all: the SDK is on, tracing is on and the
-/// project ID is not empty.
+/// Whether the handle `shared` sends heartbeats at all: the SDK is on, the handle is not one of
+/// the test fake, tracing is on and the project ID is not empty.
 fn can_send(shared: &Inner) -> bool {
-    shared.enabled && shared.options.tracing() && !shared.project_id.is_empty()
+    shared.enabled
+        && shared.server_info
+        && shared.options.tracing()
+        && !shared.project_id.is_empty()
 }
 
 /// The attempt that a check recorded in the [`memory`], until its read ends. A read that ends
@@ -187,7 +214,7 @@ impl Drop for Claim<'_> {
 }
 
 /// The read of a heartbeat that is due: the lists of the handler with `context`, then the
-/// [`Report`] to the sink. A panic in the read is contained and reported as the reason. The
+/// [`Report`] to the sink. A panic in the read is contained and reported, without its message. The
 /// future does no other work: the body, the redaction and the POST belong to the delivery
 /// worker. Dropping it before it ends gives the attempt of `claim` back.
 async fn build<H: ServerHandler>(
@@ -212,7 +239,7 @@ async fn build<H: ServerHandler>(
             }))
         }
         Ok(Err(why)) => Report::Skipped(why),
-        Err(payload) => Report::Skipped(format!("the read panicked: {}", panic_message(&*payload))),
+        Err(_payload) => Report::Skipped("the read panicked".to_owned()),
     };
     claim.end(report);
 }

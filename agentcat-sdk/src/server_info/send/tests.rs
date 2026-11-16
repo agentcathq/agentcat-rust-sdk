@@ -288,7 +288,7 @@ async fn v12_a_redaction_hook_that_fails_sends_nothing() {
     assert_eq!(api.heartbeats().len(), 0);
     assert_eq!(
         line,
-        "Server info not sent: the redaction did not work: no redaction today"
+        "Server info not sent: the redaction did not work: the hook gave an error"
     );
 }
 
@@ -303,7 +303,7 @@ async fn v12_a_redaction_hook_that_panics_sends_nothing() {
     assert_eq!(api.heartbeats().len(), 0);
     assert_eq!(
         line,
-        "Server info not sent: the redaction did not work: redaction panic"
+        "Server info not sent: the redaction did not work: the hook panicked"
     );
 }
 
@@ -371,4 +371,28 @@ async fn v10_a_redaction_hook_that_hangs_ends_at_the_build_limit_and_sends_nothi
         );
         tokio::time::sleep(Duration::from_millis(2)).await;
     }
+}
+
+#[test]
+fn a_hook_whose_runtime_is_gone_is_cancelled_and_sends_nothing() {
+    let gone = tokio::runtime::Builder::new_current_thread()
+        .build()
+        .expect("a runtime");
+    let handle = gone.handle().clone();
+    drop(gone);
+    let worker = tokio::runtime::Builder::new_current_thread()
+        .enable_time()
+        .build()
+        .expect("a runtime");
+    let api = Api::default();
+    let snapshot = Snapshot {
+        runtime: Some(handle),
+        ..secret_snapshot()
+    };
+    let (line, _log) = worker.block_on(run(&api, Some(&replace_secret()), snapshot));
+    assert_eq!(api.heartbeats().len(), 0);
+    assert_eq!(
+        line,
+        "Server info not sent: the redaction did not work: the task of the hook was cancelled"
+    );
 }

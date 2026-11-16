@@ -83,7 +83,8 @@ impl Fake {
     }
 
     /// A handle for `project_id` (empty means telemetry only) whose events this fake records and
-    /// whose publisher never sends. Wrap a server with [`AgentCat::track`].
+    /// whose publisher never sends. Wrap a server with [`AgentCat::track`]. Such a handle starts
+    /// no server info heartbeat, so the SDK makes no list call of its own on your server.
     pub fn agentcat(&self, project_id: impl Into<String>, options: Options) -> AgentCat {
         let handle = AgentCat::offline_observed(
             project_id.into(),
