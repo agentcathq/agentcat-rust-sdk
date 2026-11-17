@@ -1,3 +1,11 @@
+[advisories]
+ignore = [
+  # chrono has no maintainer: a notice, not a vulnerability, and no version fixes it. rmcp,
+  # schemars and agentcat-api depend on chrono, so this SDK cannot drop it alone. Remove this
+  # entry when those crates move to another date library.
+  { id = "RUSTSEC-2026-0543", reason = "chrono is unmaintained; rmcp, schemars and agentcat-api depend on it" },
+]
+
 [licenses]
 allow = [
   "MIT",
