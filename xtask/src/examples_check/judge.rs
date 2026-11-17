@@ -107,16 +107,19 @@ pub(super) fn resource_name(event: &Value) -> Option<&str> {
 }
 
 /// The failures of the requests the mock received: one tool-call publish per call (`calls`),
-/// every publish for [`PROJECT_ID`], no request other than a publish, and the publish of the
-/// last call before the exit at `exited_at` (`None` when the example did not exit in time).
+/// every publish for [`PROJECT_ID`], no request other than a publish or a server info heartbeat,
+/// and the publish of the last call before the exit at `exited_at` (`None` when the example did
+/// not exit in time). A heartbeat is not a publish, and an example may send any number of them.
 pub(super) fn judge_publishes(
     requests: &[Recorded],
     calls: &[Call],
     exited_at: Option<Instant>,
 ) -> Vec<String> {
     let mut failures = Vec::new();
-    let (publishes, stray): (Vec<&Recorded>, Vec<&Recorded>) =
-        requests.iter().partition(|request| request.is_publish());
+    let (publishes, stray): (Vec<&Recorded>, Vec<&Recorded>) = requests
+        .iter()
+        .filter(|request| !request.is_server_info())
+        .partition(|request| request.is_publish());
     if !stray.is_empty() {
         failures.push(format!(
             "the mock received {} request(s) that are not publishes",

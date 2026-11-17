@@ -7,7 +7,8 @@
 //! - `server`: the tracked server: its tools, its options from the scenario's profile, and how
 //!   each transport serves it.
 //! - `driver`: the scripted client, raw JSON-RPC over an in-memory pipe or HTTP.
-//! - `mock_api`: the mock `AgentCat` API that records the publish requests.
+//! - `mock_api`: the mock `AgentCat` API that records the publish requests and the server info
+//!   heartbeats.
 //! - `schema`: the API's schema of a publish body, which every recorded body must match.
 //! - `normalize`: the normalized document, and the one list of the values it replaces.
 //! - `golden`: the comparison with the golden file, and `UPDATE_GOLDEN=1`.
@@ -85,6 +86,22 @@ impl Lane {
 /// API's schema (`publish-event.schema.json`). A run with no publish passes only when the
 /// scenario expects none.
 pub(crate) async fn run_scenario(name: &str, transport: Transport, lane: Lane) -> Value {
+    run_with_server_infos(name, transport, lane, 0).await.0
+}
+
+/// [`run_scenario`] that also waits, before the SDK shuts down, until the mock received
+/// `server_infos` server info heartbeats: a shutdown does not wait for a heartbeat. It returns
+/// the document and the body of every heartbeat of the run.
+///
+/// # Panics
+///
+/// As [`run_scenario`] does, or when fewer heartbeats arrive in time.
+pub(crate) async fn run_with_server_infos(
+    name: &str,
+    transport: Transport,
+    lane: Lane,
+    server_infos: usize,
+) -> (Value, Vec<Value>) {
     check_environment();
     let scenario = scenario::Scenario::load(name);
     let mock = mock_api::MockApi::start().await;
@@ -95,6 +112,7 @@ pub(crate) async fn run_scenario(name: &str, transport: Transport, lane: Lane) -
     let served = server::serve(transport, &agentcat, &scenario).await;
     let (transcript, clients) = driver::drive(&scenario, &served, lane).await;
     mock.wait_for_publishes(scenario.expect_publishes).await;
+    mock.server_infos(server_infos).await;
     clients.close().await;
     assert!(
         agentcat.shutdown(DRAIN_TIMEOUT).await,
@@ -113,7 +131,9 @@ pub(crate) async fn run_scenario(name: &str, transport: Transport, lane: Lane) -
         &publishes,
         &format!("{name} over {} on {}", transport.name(), lane.version()),
     );
-    normalize::document(transcript, publishes, scenario.event_order)
+    let heartbeats = mock.server_infos(0).await;
+    let document = normalize::document(transcript, publishes, scenario.event_order);
+    (document, heartbeats)
 }
 
 /// Refuses an environment in which the SDK publishes other events than the goldens hold:

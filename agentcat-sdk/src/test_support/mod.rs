@@ -5,6 +5,7 @@ pub(crate) mod markers;
 pub(crate) mod queue;
 pub(crate) mod rmcp;
 pub(crate) mod rules;
+pub(crate) mod server_info;
 pub(crate) mod strategies;
 pub(crate) mod vectors;
 

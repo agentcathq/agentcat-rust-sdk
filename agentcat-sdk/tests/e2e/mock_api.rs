@@ -1,6 +1,8 @@
 //! The mock `AgentCat` API: a wiremock server on loopback that answers each publish request
-//! (`POST /v1/public/events/`) with `202 {"status": "accepted"}` and records it. Any other
-//! request gets wiremock's 404, and fails the run when the publishes are read.
+//! (`POST /v1/public/events/`) and each server info heartbeat (`POST /v1/public/server-info/`)
+//! with `202 {"status": "accepted"}` and records it. A heartbeat is not a publish: the publishes
+//! leave it out, and [`MockApi::server_infos`] gives the heartbeats. Any other request gets
+//! wiremock's 404, and fails the run when the publishes are read.
 use std::time::Duration;
 
 use serde_json::{Value, json};
@@ -9,6 +11,9 @@ use wiremock::{Mock, MockServer, Request, ResponseTemplate};
 
 /// The path of a publish request.
 const PUBLISH_PATH: &str = "/v1/public/events/";
+
+/// The path of a server info heartbeat.
+const SERVER_INFO_PATH: &str = "/v1/public/server-info/";
 
 /// How long the SDK may take to make the publishes a scenario expects.
 const PUBLISH_TIMEOUT: Duration = Duration::from_secs(10);
@@ -40,6 +45,11 @@ impl MockApi {
             .respond_with(ResponseTemplate::new(202).set_body_json(json!({"status": "accepted"})))
             .mount(&server)
             .await;
+        Mock::given(method("POST"))
+            .and(path(SERVER_INFO_PATH))
+            .respond_with(ResponseTemplate::new(202).set_body_json(json!({"status": "accepted"})))
+            .mount(&server)
+            .await;
         Self { server }
     }
 
@@ -48,14 +58,14 @@ impl MockApi {
         self.server.uri()
     }
 
-    /// Waits until the mock received `count` requests.
+    /// Waits until the mock received `count` requests that are not heartbeats.
     ///
     /// # Panics
     ///
     /// When fewer arrive within [`PUBLISH_TIMEOUT`].
     pub(crate) async fn wait_for_publishes(&self, count: usize) {
         let waited = tokio::time::timeout(PUBLISH_TIMEOUT, async {
-            while self.requests().await.len() < count {
+            while self.other_requests().await.len() < count {
                 tokio::time::sleep(POLL).await;
             }
         })
@@ -63,8 +73,42 @@ impl MockApi {
         assert!(
             waited.is_ok(),
             "the SDK made {} of {count} publishes within {PUBLISH_TIMEOUT:?}",
-            self.requests().await.len()
+            self.other_requests().await.len()
         );
+    }
+
+    /// Waits until the mock received `count` server info heartbeats, and gives their bodies in
+    /// arrival order.
+    ///
+    /// # Panics
+    ///
+    /// When fewer arrive within [`PUBLISH_TIMEOUT`], or a body is not JSON.
+    pub(crate) async fn server_infos(&self, count: usize) -> Vec<Value> {
+        let waited = tokio::time::timeout(PUBLISH_TIMEOUT, async {
+            loop {
+                let heartbeats = self.heartbeats().await;
+                if heartbeats.len() >= count {
+                    return heartbeats;
+                }
+                tokio::time::sleep(POLL).await;
+            }
+        })
+        .await;
+        let heartbeats = waited.unwrap_or_else(|_| {
+            panic!(
+                "the SDK sent fewer than {count} server info heartbeats within {PUBLISH_TIMEOUT:?}"
+            )
+        });
+        heartbeats
+            .iter()
+            .map(|request| {
+                assert!(
+                    !request.headers.contains_key("authorization"),
+                    "a heartbeat carries no Authorization header"
+                );
+                serde_json::from_slice(&request.body).expect("a heartbeat body is JSON")
+            })
+            .collect()
     }
 
     /// The publish requests, in arrival order.
@@ -73,13 +117,32 @@ impl MockApi {
     ///
     /// When the mock received another request, or a publish body that is not JSON.
     pub(crate) async fn publishes(&self) -> Vec<Publish> {
-        self.requests().await.iter().map(publish).collect()
+        self.other_requests().await.iter().map(publish).collect()
+    }
+
+    /// The requests that are not server info heartbeats, in arrival order.
+    async fn other_requests(&self) -> Vec<Request> {
+        let mut requests = self.requests().await;
+        requests.retain(|request| !is_server_info(request));
+        requests
+    }
+
+    /// The server info heartbeats, in arrival order.
+    async fn heartbeats(&self) -> Vec<Request> {
+        let mut requests = self.requests().await;
+        requests.retain(is_server_info);
+        requests
     }
 
     /// Every request received so far.
     async fn requests(&self) -> Vec<Request> {
         self.server.received_requests().await.unwrap_or_default()
     }
+}
+
+/// Whether `request` is a server info heartbeat.
+fn is_server_info(request: &Request) -> bool {
+    request.method.as_str() == "POST" && request.url.path() == SERVER_INFO_PATH
 }
 
 /// The publish of `request`.

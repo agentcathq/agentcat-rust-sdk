@@ -25,7 +25,7 @@ chrono = { version = "0.4.39", default-features = false }
 tracing = { version = "0.1.23", default-features = false, features = ["std"] }
 # An exact pin: a 0.0.x release can break on every bump. The TLS features of agentcat-sdk switch
 # the matching features on.
-agentcat-api = { version = "=0.0.3", default-features = false }
+agentcat-api = { version = "=0.0.4", default-features = false }
 # Only the client builder is used; agentcat-api brings the TLS stack through its own features.
 reqwest = { version = "0.13.0", default-features = false }
 

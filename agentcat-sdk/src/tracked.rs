@@ -4,9 +4,11 @@
 //! only rmcp's default `initialize` calls it, and `initialize` is forwarded. The four methods the
 //! SDK changes (`initialize`, `list_tools`, `get_tool`, `call_tool`) forward untouched when
 //! `AGENTCAT_ENABLED` turned the handle off; `call_tool` then still adds a
-//! [`CallContext`](crate::CallContext) without session or agent. The SEP-2640 Skills methods
-//! (`list_skills`, `get_skill`, `read_resource_directory`, after rmcp 3.8.0) are forwarded
-//! when the build script finds them in the resolved rmcp (`cfg(agentcat_rmcp_skills)`).
+//! [`CallContext`](crate::CallContext) without session or agent. `list_tools` and `call_tool`
+//! also start the check of the server info heartbeat ([`crate::server_info`]). The SEP-2640
+//! Skills methods (`list_skills`, `get_skill`, `read_resource_directory`, after rmcp 3.8.0) are
+//! forwarded when the build script finds them in the resolved rmcp
+//! (`cfg(agentcat_rmcp_skills)`).
 
 use std::any::type_name;
 use std::borrow::Cow;
@@ -40,6 +42,7 @@ use crate::event::ClientIdentity;
 use crate::inject::{
     InjectConfig, ToolEntry, build_injected_list, get_more_tools_tool, inject_tool,
 };
+use crate::server_info::{beside, for_listing};
 
 #[cfg(test)]
 mod tests;
@@ -358,7 +361,9 @@ impl<H: ServerHandler> ServerHandler for Tracked<H> {
             if !shared.enabled {
                 return self.inner.list_tools(request, context).await;
             }
-            let mut result = self.inner.list_tools(request, context).await?;
+            let heartbeat = for_listing(self, &context);
+            let listing = self.inner.list_tools(request, context);
+            let mut result = beside(listing, heartbeat).await?;
             if result.tools.is_empty() {
                 shared.sink.log(EMPTY_LISTING_WARNING.to_owned());
                 return Ok(result);

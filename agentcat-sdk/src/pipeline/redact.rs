@@ -15,6 +15,10 @@
 //! never meets one.
 //!
 //! A restored field the original lacks is removed from the hook's result.
+//!
+//! The body of a server info heartbeat has its own walk ([`server_info_strings`]), with its own
+//! rule for the strings it keeps.
+use agentcat_api::models::PublishServerInfoRequest;
 use serde_json::{Map, Value};
 
 use super::EventObject;
@@ -54,6 +58,10 @@ const STRING_HOOK_FIELD: &str = "redactionFn";
 
 /// The event field for the event-level hook, which the restore removes from the hook's result.
 const EVENT_HOOK_FIELD: &str = "eventRedactionFn";
+
+/// The keys of a list item of a server info body whose values its walk keeps: what names the
+/// item.
+const LIST_ITEM_NAMES: [&str; 3] = ["name", "uri", "uriTemplate"];
 
 /// Where an object is in the walk.
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -197,4 +205,68 @@ pub(crate) fn apply_event_redaction(
         }
     }
     Some(event)
+}
+
+/// Gives `visit` each string of the server info `body` that the customer's string-redaction hook
+/// gets, in this order: `server_title`, `instructions`, then every string of every list of
+/// `features`, at any depth and in the order of the lists, except what is under the keys `name`,
+/// `uri` and `uriTemplate` of a list item itself. `project_id`, `server_name` and
+/// `server_version` are not visited. `visit` may replace a string; the walk changes no key and
+/// no other value.
+///
+/// A caller with an async hook runs the walk twice: once to copy the strings, and, after the hook
+/// gave a result for each one, once to put the results in, in the same order.
+pub(crate) fn server_info_strings(
+    body: &mut PublishServerInfoRequest,
+    visit: &mut impl FnMut(&mut String),
+) {
+    for text in [&mut body.server_title, &mut body.instructions]
+        .into_iter()
+        .flatten()
+    {
+        visit(text);
+    }
+    for list in body.features.iter_mut().flat_map(children) {
+        for item in children(list) {
+            list_item_strings(item, visit);
+        }
+    }
+}
+
+/// The strings of one list item: an object's values except those under [`LIST_ITEM_NAMES`]; any
+/// other item as a whole.
+fn list_item_strings(item: &mut Value, visit: &mut impl FnMut(&mut String)) {
+    match item {
+        Value::Object(fields) => {
+            for (key, value) in fields.iter_mut() {
+                if !LIST_ITEM_NAMES.contains(&key.as_str()) {
+                    every_string(value, visit);
+                }
+            }
+        }
+        other => every_string(other, visit),
+    }
+}
+
+/// Gives `visit` every string in `value`, at any depth, in the order of the value.
+fn every_string(value: &mut Value, visit: &mut impl FnMut(&mut String)) {
+    match value {
+        Value::String(text) => visit(text),
+        Value::Null | Value::Bool(_) | Value::Number(_) => {}
+        container => {
+            for child in children(container) {
+                every_string(child, visit);
+            }
+        }
+    }
+}
+
+/// The values directly inside `value`: the items of an array or the values of an object, in
+/// order; none for any other value.
+fn children(value: &mut Value) -> Box<dyn Iterator<Item = &mut Value> + '_> {
+    match value {
+        Value::Array(items) => Box::new(items.iter_mut()),
+        Value::Object(fields) => Box::new(fields.values_mut()),
+        _ => Box::new(std::iter::empty()),
+    }
 }

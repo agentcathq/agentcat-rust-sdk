@@ -27,6 +27,46 @@
 //! The SDK records no other request: tool listings, resources and prompts give no events. Your
 //! code can also publish custom events of its own ([`CustomEvent`]).
 //!
+//! ## Server info
+//!
+//! Apart from the events, the SDK sends a server info heartbeat, so that `AgentCat` knows what
+//! an agent sees on your server. The heartbeat holds the name, the version, the title and the
+//! instructions of the server, and its full lists of tools (as the SDK lists them), resources,
+//! resource templates and prompts. It is always on for a handle that has a project ID and
+//! tracing on.
+//!
+//! There is no timer. A `tools/list` request, a `get_more_tools` call or, once the process is
+//! 60 seconds old, any other tool call starts a check. When the last heartbeat for the project
+//! and the server name started an hour ago or more, the SDK calls the `list_tools`,
+//! `list_resources`, `list_resource_templates` and `list_prompts` methods of your handler, with
+//! the context of that request. It calls the resource methods only when the server declares the
+//! resources capability, and `list_prompts` only when it declares the prompts capability. So
+//! the SDK calls your list methods about once an hour for each process and server name. In its
+//! first 60 seconds a process starts a heartbeat only for a `tools/list` request or a
+//! `get_more_tools` call, not for another tool call; so a runtime that starts a new process for
+//! each request sends one heartbeat for each `tools/list` request and each `get_more_tools`
+//! call. A `tools/list` request calls your `get_info` only when a heartbeat is due or the handle
+//! does not know the server name yet. The SDK keeps the times and the server names in the
+//! memory of the process and writes no file. A handle of the test fake (`testing::Fake`) starts
+//! no heartbeat.
+//!
+//! The list calls run next to the request that started the check, inside its future, and the
+//! request never waits for them: the SDK returns the result of the request when it is ready and
+//! drops the list calls that have not ended. The next request then starts them again; after 5
+//! tool calls, or 20 `tools/list` requests and `get_more_tools` calls, in a row whose list calls
+//! were dropped, the SDK waits an hour. A list method that
+//! fails, panics or takes more than 5 seconds costs only that list, and a `list_tools` that
+//! fails costs only that heartbeat. A list method that blocks its thread without an `.await`
+//! can delay the request beside it for that long, as any other code on the task can.
+//!
+//! Your [`redact_sensitive_information`](Options::redact_sensitive_information) hook runs on
+//! every string of the title, the instructions and the lists, except the `name`, the `uri` and
+//! the `uriTemplate` of a list item. The server name and the server version stay as they are, as
+//! on events. When the hook fails or does not end within 30 seconds, the SDK sends nothing. No
+//! other hook runs for a heartbeat. The log line of a heartbeat that was not sent names a fixed
+//! reason, never the message of an error of your list methods or your hook. The SDK sends each heartbeat one time, in the background,
+//! and [`AgentCat::flush`] and [`AgentCat::shutdown`] do not wait for it.
+//!
 //! When a tool panics, the SDK records the panic as the error of the call and then lets the panic
 //! go on unchanged. When a call is cancelled before it completes (its future is dropped), the event
 //! gets the error type `cancelled`. The SDK never changes the result or the error of a tool, apart
@@ -582,8 +622,8 @@
 //! # Known limits
 //!
 //! - A tracked server needs a tokio runtime with the time driver: the SDK times a rebuild of its
-//!   tool registry with `tokio::time::timeout`, and tokio panics at such a timer on a runtime
-//!   without the driver. `rmcp` uses timers too. `#[tokio::main]`, `#[tokio::test]` and
+//!   tool registry and the list calls of a server info heartbeat with `tokio::time::timeout`,
+//!   and tokio panics at such a timer on a runtime without the driver. `rmcp` uses timers too. `#[tokio::main]`, `#[tokio::test]` and
 //!   `tokio::runtime::Runtime::new` turn the time driver on. A runtime from
 //!   `tokio::runtime::Builder` needs `enable_time` or `enable_all`.
 //! - The SDK does not support the `local` feature of `rmcp`. It spawns the hooks as `Send` tasks
@@ -611,9 +651,10 @@
 //!   never drops, so the drain of the last drop never runs. Let the hook capture only what it
 //!   needs, or call [`AgentCat::shutdown`] before the process ends. A tool reaches its handle
 //!   through [`CallContext::agentcat`] and needs no clone.
-//! - The SDK gives the redaction hooks no time limit. A redaction hook that never completes holds
-//!   one of the 5 delivery slots of its handle for good. Five such hooks stop the delivery of the
-//!   handle.
+//! - The SDK gives the redaction hooks no time limit on an event. A redaction hook that never
+//!   completes holds one of the 5 delivery slots of its handle for good. Five such hooks stop the
+//!   delivery of the handle. On a server info heartbeat the hook has 30 seconds and holds no
+//!   slot.
 //!
 //! # Examples
 //!
@@ -666,6 +707,7 @@ mod inject;
 mod logging;
 mod pipeline;
 mod registry;
+mod server_info;
 mod sink;
 #[cfg(test)]
 mod test_support;
