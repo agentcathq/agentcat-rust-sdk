@@ -41,8 +41,9 @@ const META_KEY: &str = "_meta";
 /// The header of the transport session of streamable HTTP, as `http` names it (lower case).
 const SESSION_ID_HEADER: &str = "mcp-session-id";
 
-/// The headers that carry credentials. The data keeps them; `Debug` output hides their
-/// values ([`redact_headers`]).
+/// The headers that carry credentials. The record keeps them, the published event masks them
+/// ([`mask_sensitive_keys`](crate::pipeline::sensitive_keys::mask_sensitive_keys)), and `Debug`
+/// output hides their values ([`redact_headers`]).
 const CREDENTIAL_HEADERS: [&str; 4] = [
     "authorization",
     "proxy-authorization",

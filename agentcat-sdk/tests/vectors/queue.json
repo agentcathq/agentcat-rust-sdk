@@ -555,7 +555,7 @@
             "request": {
               "params": {
                 "arguments": {
-                  "apiKey": "TOP_SECRET_PAYLOAD_abc123"
+                  "apiKey": "[redacted]"
                 }
               }
             }

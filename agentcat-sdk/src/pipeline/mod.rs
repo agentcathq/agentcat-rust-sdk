@@ -1,6 +1,6 @@
 //! The event pipeline: the settling of the call hooks and the application of their results, tag
-//! validation, the event-level redaction hook's restore, string redaction, sanitization,
-//! normalization and truncation.
+//! validation, the event-level redaction hook's restore, string redaction, sanitization, the
+//! sensitive key mask, normalization and truncation.
 //!
 //! The pipeline works on the event as the delivery queue holds it ([`EventObject`]): a JSON object
 //! with camelCase field names (`sessionId`, `eventType`, `userIntent`, `inputTokens`, ...), which
@@ -16,6 +16,7 @@ pub(crate) mod normalize;
 pub(crate) mod process;
 pub(crate) mod redact;
 pub(crate) mod sanitize;
+pub(crate) mod sensitive_keys;
 pub(crate) mod settle;
 pub(crate) mod tags;
 pub(crate) mod truncate;
