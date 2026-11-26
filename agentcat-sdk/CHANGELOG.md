@@ -7,6 +7,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-11-26
+
 ### Security
 
 - The SDK now masks sensitive values in every event before the event leaves your server. It
@@ -86,6 +88,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - `testing::Fake`, a test double that records the events of its handles and sends nothing.
 - Support for `rmcp` 3.0.0 and later 3.x, on Rust 1.88 and later.
 
-[Unreleased]: https://github.com/agentcathq/agentcat-rust-sdk/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/agentcathq/agentcat-rust-sdk/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/agentcathq/agentcat-rust-sdk/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/agentcathq/agentcat-rust-sdk/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/agentcathq/agentcat-rust-sdk/releases/tag/v1.0.0

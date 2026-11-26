@@ -1,6 +1,6 @@
 [package]
 name = "agentcat-sdk"
-version = "1.1.0"
+version = "1.1.1"
 description = "AgentCat analytics SDK for MCP servers built on rmcp"
 edition.workspace = true
 rust-version.workspace = true
