@@ -14,6 +14,7 @@ use tokio::runtime::Handle;
 use super::EventObject;
 use super::redact::{apply_event_redaction, redact_strings, visit_strings};
 use super::sanitize::sanitize_event;
+use super::sensitive_keys::mask_sensitive_keys;
 use super::settle::{apply, failure_message, settle};
 use super::truncate::truncate_event;
 use crate::config::{EventRedactor, HookError, StringRedactor};
@@ -53,9 +54,10 @@ pub(crate) struct Redactors {
 ///    [`redact_strings`] in walk order, all in one task on the job's runtime, and its results
 ///    replace the strings; the first error, the task's panic or no runtime drops the event with
 ///    `Failed to redact event: <why>`.
-/// 5. [`sanitize_event`], then [`truncate_event`], each merged into the event with [`assign`]; a
-///    truncation error drops it with `Failed to truncate event: <error>` (sanitization cannot
-///    fail, so it has no line).
+/// 5. [`sanitize_event`], merged into the event with [`assign`], then [`mask_sensitive_keys`] on
+///    `parameters`, `response` and `error`, then [`truncate_event`]; a truncation error drops it
+///    with `Failed to truncate event: <error>` (sanitization and the mask cannot fail, so they
+///    have no line).
 /// 6. An event without an `id` (or with `""`) gets a new `evt_` ID; when none can be made, the
 ///    event is dropped with `Failed to deliver AgentCat event after retries: could not generate an
 ///    event ID`, the line of a failed delivery.
@@ -126,6 +128,11 @@ async fn process_with_ids(
 
     let sanitized = sanitize_event(&event);
     assign(&mut event, sanitized);
+    for field in ["parameters", "response", "error"] {
+        if let Some(value) = event.get_mut(field) {
+            *value = mask_sensitive_keys(value, false);
+        }
+    }
     event = match truncate_event(event) {
         Ok(truncated) => truncated,
         Err(error) => {

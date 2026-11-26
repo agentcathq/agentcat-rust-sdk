@@ -237,7 +237,7 @@ let options = Options::default().redact_event(|mut event: Event| async move {
 let agentcat = AgentCat::new("proj_0000000", options);
 ```
 
-On streamable HTTP, a tool-call event also carries the HTTP request of the call in `parameters.extra.requestInfo`: each header under its lower-case name, `authorization` and `cookie` included, and the URL with its query string, which can carry an API key. This `redact_event` hook removes the `authorization` and `cookie` headers and the query string; remove any other header that carries a secret, such as `x-api-key`, the same way. `Options` holds one `redact_event` hook, so merge this code with your other `redact_event` logic:
+On streamable HTTP, a tool-call event also carries the HTTP request of the call in `parameters.extra.requestInfo`: each header under its lower-case name, and the URL with its query string. The SDK replaces the value of each header that names a secret (`authorization`, `cookie`, `x-api-key` and others) with `[redacted]`, but it does not read the URL, which can carry an API key. This `redact_event` hook removes the query string, and removes the `authorization` and `cookie` headers entirely. `Options` holds one `redact_event` hook, so merge this code with your other `redact_event` logic:
 
 ```rust,no_run
 use agentcat_sdk::{AgentCat, Event, HookError, Options};
